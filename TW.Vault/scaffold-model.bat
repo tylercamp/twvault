@@ -1,0 +1,15 @@
+@echo off
+set modeldir=Scaffold_Model
+echo modeldir=%modeldir%
+if exist %modeldir% (
+	echo remove existing %modeldir%
+	rmdir /S /Q %modeldir%
+)
+echo running scaffolding
+
+REM args:
+REM   -o Output directory
+REM   -c Context name
+REM   -f Force
+dotnet ef dbcontext scaffold "Host=192.168.1.250; Port=22342; Database=vault; Username=twu_vault; Password=!!TWV@ult4Us??" Npgsql.EntityFrameworkCore.PostgreSQL -o %modeldir% -c VaultContext -f
+pause
