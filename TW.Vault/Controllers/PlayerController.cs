@@ -30,5 +30,20 @@ namespace TW.Vault.Controllers
         {
             return FindOr404<Player>(id);
         }
+
+        [HttpGet("{id}/villages")]
+        public async Task<IActionResult> GetVillages(int id)
+        {
+            var villages = await Paginated(
+                from village in context.Village
+                where village.PlayerId.Value == id
+                select village
+            ).ToListAsync();
+
+            if (villages.Any())
+                return Ok(villages);
+            else
+                return NotFound();
+        }
     }
 }

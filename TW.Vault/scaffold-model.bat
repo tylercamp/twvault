@@ -1,10 +1,6 @@
 @echo off
 set modeldir=Scaffold_Model
 echo modeldir=%modeldir%
-if exist %modeldir% (
-	echo remove existing %modeldir%
-	rmdir /S /Q %modeldir%
-)
 echo running scaffolding
 
 REM args:

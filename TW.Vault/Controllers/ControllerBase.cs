@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace TW.Vault.Controllers
 {
     public abstract class ControllerBase : Controller
     {
-        public static int PageSize => 100;
+        public static int PageSize => Configuration.Instance.GetValue("PageSize", 100);
         protected readonly VaultContext context;
 
         public ControllerBase(VaultContext context)
@@ -18,7 +19,7 @@ namespace TW.Vault.Controllers
             this.context = context;
         }
 
-        protected IQueryable<T> Paginated<T>(DbSet<T> set) where T : class
+        protected IQueryable<T> Paginated<T>(IQueryable<T> set) where T : class
         {
             int page = 0;
 

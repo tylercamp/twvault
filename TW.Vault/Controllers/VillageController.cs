@@ -31,5 +31,21 @@ namespace TW.Vault.Controllers
         {
             return FindOr404<Village>(id);
         }
+
+        [HttpGet("{id}/owner", Name = "GetOwner")]
+        public async Task<IActionResult> GetOwner(int id)
+        {
+            var owner = await (
+                from village in context.Village
+                join player in context.Player on village.PlayerId.Value equals player.PlayerId
+                where village.VillageId == id
+                select player
+            ).FirstOrDefaultAsync();
+
+            if (owner != null)
+                return Ok(owner);
+            else
+                return NotFound();
+        }
     }
 }
