@@ -13,12 +13,12 @@ namespace TW.Vault.Scaffold_Model
             ReportDefenderVillage = new HashSet<Report>();
         }
 
-        public int VillageId { get; set; }
+        public long VillageId { get; set; }
         public string VillageName { get; set; }
-        public int? X { get; set; }
-        public int? Y { get; set; }
-        public int? PlayerId { get; set; }
-        public int? Points { get; set; }
+        public short? X { get; set; }
+        public short? Y { get; set; }
+        public long? PlayerId { get; set; }
+        public short? Points { get; set; }
         public int? VillageRank { get; set; }
 
         public ICollection<Command> CommandSourceVillage { get; set; }

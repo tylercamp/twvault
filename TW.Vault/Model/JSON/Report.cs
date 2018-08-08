@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,21 +9,36 @@ namespace TW.Vault.Model.JSON
 {
     public class Report
     {
-        public int ReportId { get; set; }
-        public DateTime OccurredAt { get; set; }
+        [Required]
+        public long? ReportId { get; set; }
+        [Required]
+        public DateTime? OccurredAt { get; set; }
+        [Required]
+        public short? Morale { get; set; }
+        [Required]
+        public decimal? Luck { get; set; }
 
-        public int AttackingPlayerId { get; set; }
-        public int DefendingPlayerId { get; set; }
+        [Required]
+        public long? AttackingPlayerId { get; set; }
 
-        public int AttackingVillageId { get; set; }
-        public int DefendingVillageId { get; set; }
+        public long? DefendingPlayerId { get; set; }
 
-        public int[] AttackingArmy { get; set; }
-        public int[] AttackingArmyLosses { get; set; }
-        public int[] DefendingArmy { get; set; }
-        public int[] DefendingArmyLosses { get; set; }
-        public int[] TravelingTroops { get; set; }
+        [Required]
+        public long? AttackingVillageId { get; set; }
+        [Required]
+        public long? DefendingVillageId { get; set; }
 
-        public Dictionary<String, int> BuildingLevels { get; set; }
+        [Required]
+        [JsonProperty()]
+        public Army AttackingArmy { get; set; }
+        [Required]
+        public Army AttackingArmyLosses { get; set; }
+        public Army DefendingArmy { get; set; }
+        public Army DefendingArmyLosses { get; set; }
+        public Army TravelingTroops { get; set; }
+
+        public BuildingLevels DamagedBuildingLevels { get; set; }
+
+        public BuildingLevels BuildingLevels { get; set; }
     }
 }

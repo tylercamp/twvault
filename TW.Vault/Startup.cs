@@ -10,6 +10,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TW.Vault.Scaffold_Model;
+using Newtonsoft.Json.Serialization;
+using Microsoft.Extensions.Configuration.Json;
+using TW.Vault.Security;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace TW.Vault
 {
@@ -25,7 +29,28 @@ namespace TW.Vault
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
+            services
+                .AddMvc()
+                .AddJsonOptions(opt =>
+                {
+                    opt.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+                })
+                .AddMvcOptions(opt =>
+                {
+                    opt.Filters.Add(new IPLoggingInterceptionAttribute());
+                });
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllOrigins", builder =>
+                {
+                    builder.AllowAnyHeader();
+                    builder.AllowAnyMethod();
+                    builder.AllowAnyOrigin();
+                });
+            });
+
+            services.AddScoped<RequireAuthAttribute>();
 
             String connectionString = Configuration.GetConnectionString("Vault");
             services.AddDbContext<VaultContext>(options => options.UseNpgsql(connectionString));
@@ -39,6 +64,12 @@ namespace TW.Vault
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.All,
+                RequireHeaderSymmetry = false
+            });
+            
             app.UseMvc();
         }
     }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace TW.Vault.Scaffold_Model
 {
-    public partial class Conquers
+    public partial class Conquer
     {
         public int VaultId { get; set; }
         public long? VillageId { get; set; }

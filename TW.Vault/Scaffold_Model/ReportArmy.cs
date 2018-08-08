@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace TW.Vault.Scaffold_Model
 {
-    public partial class Army
+    public partial class ReportArmy
     {
-        public Army()
+        public ReportArmy()
         {
             ReportAttackerArmy = new HashSet<Report>();
             ReportAttackerLossesArmy = new HashSet<Report>();
@@ -14,20 +14,20 @@ namespace TW.Vault.Scaffold_Model
             ReportDefenderTravelingArmy = new HashSet<Report>();
         }
 
-        public int ArmyId { get; set; }
-        public int? UnitSpear { get; set; }
-        public int? UnitSword { get; set; }
-        public int? UnitAxe { get; set; }
-        public int? UnitArcher { get; set; }
-        public int? UnitSpy { get; set; }
-        public int? UnitLight { get; set; }
-        public int? UnitMarcher { get; set; }
-        public int? UnitHeavy { get; set; }
-        public int? UnitRam { get; set; }
-        public int? UnitCatapult { get; set; }
-        public int? UnitKnight { get; set; }
-        public int? UnitSnob { get; set; }
-        public int? UnitMilitia { get; set; }
+        public long ArmyId { get; set; }
+        public int? Spear { get; set; }
+        public int? Sword { get; set; }
+        public int? Axe { get; set; }
+        public int? Archer { get; set; }
+        public int? Spy { get; set; }
+        public int? Light { get; set; }
+        public int? Marcher { get; set; }
+        public int? Heavy { get; set; }
+        public int? Ram { get; set; }
+        public int? Catapult { get; set; }
+        public int? Knight { get; set; }
+        public int? Snob { get; set; }
+        public int? Militia { get; set; }
 
         public ICollection<Report> ReportAttackerArmy { get; set; }
         public ICollection<Report> ReportAttackerLossesArmy { get; set; }

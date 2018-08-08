@@ -1,0 +1,117 @@
+﻿function parseOwnCommandsOverviewPage($doc) {
+    $doc = $doc || $(document);
+
+    var requestManager = new RequestManager();
+    let $commandLinks = $doc.find('#commands_table tr:not(:first-of-type):not(:last-of-type) td:first-of-type a:not(.rename-icon)');
+
+    let oldCommands = JSON.parse(localStorage.getItem('vault-commands-history') || '[]');
+    let resultCommands = [];
+
+    $commandLinks.each((i, el) => {
+        let link = $(el).prop('href');
+        let $td = $(el).closest('td');
+        var commandState = $td.find('img:first-of-type').prop('src').match(/(\w+)\.png/)[1];
+
+        let commandType = commandState.contains("attack") ? "attack" : "support";
+        let isReturning = commandState.contains("return") || commandState.contains("back");
+
+        let commandId = parseInt(link.match(/id\=(\w+)/)[1]);
+        if (oldCommands.indexOf(commandId) >= 0) {
+            return;
+        }
+
+        requestManager.addRequest(link, (data, request) => {
+
+            let $doc = $(data);
+            let $container = $doc.find('#content_value');
+            let sourcePlayerId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(2) td:nth-of-type(3) a').prop('href').match(/id=(\w+)/)[1];
+            let sourceVillageId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(3) td:nth-of-type(2) a').prop('href').match(/id=(\w+)/)[1];
+            let targetPlayerId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(4) td:nth-of-type(3) a').prop('href').match(/id=(\w+)/)[1];
+            let targetVillageId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(5) td:nth-of-type(2) a').prop('href').match(/id=(\w+)/)[1];
+
+            let hasCatapult = $container.text().contains("Catapult");
+            let landsAtSelector = hasCatapult
+                ? '#content_value .vis:nth-of-type(1) tr:nth-of-type(8) td:nth-of-type(2)'
+                : '#content_value .vis:nth-of-type(1) tr:nth-of-type(7) td:nth-of-type(2)';
+            let landsAt = lib.parseTimeString($doc.find(landsAtSelector).text());
+
+            var troopCounts = {};
+            let $troopCountEntries = $container.find('.unit-item');
+            $troopCountEntries.each((i, el) => {
+                let $el = $(el);
+                let cls = $el.prop('class');
+                let troopType = cls.match(/unit\-item\-(\w+)/)[1];
+                let count = parseInt($el.text().trim());
+
+                troopCounts[troopType] = count;
+            });
+
+            let command = {
+                commandId: commandId,
+                sourcePlayerId: parseInt(sourcePlayerId),
+                sourceVillageId: parseInt(sourceVillageId),
+                targetPlayerId: parseInt(targetPlayerId),
+                targetVillageId: parseInt(targetVillageId),
+                landsAt: landsAt.toUTCString(),
+                troops: troopCounts,
+                commandType: commandType,
+                isReturning: isReturning
+            };
+
+            console.log('Made command: ', command);
+
+            updateUploadsDisplay();
+            resultCommands.push(command);
+
+            oldCommands.push(command.commandId);
+        });
+    });
+
+    if (!$commandLinks.length) {
+        alert('No commands to upload!');
+        return;
+    }
+
+    requestManager.setFinishedHandler(() => {
+        lib.postApi(lib.makeApiUrl('command'), resultCommands)
+            .done(() => {
+                localStorage.setItem('vault-commands-history', JSON.stringify(oldCommands));
+                let stats = requestManager.getStats();
+                setUploadsDisplay(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed`);
+                alert('Done!');
+            })
+            .fail((req, status, err) => {
+                alert('An error occurred...');
+                console.error(req, status, err);
+                setUploadsDisplay('Failed to upload to vault');
+            });
+    });
+
+    makeUploadsDisplay();
+
+    if (!requestManager.getStats().total) {
+        setUploadsDisplay('No new commands to upload.');
+        alert('No new commands to upload.');
+    } else {
+        requestManager.start();
+    }
+
+    function makeUploadsDisplay() {
+        let id = "vault-uploads-display";
+        if ($(`#${id}`).length)
+            $(`#${id}`).remove();
+        let $uploadsContainer = $('<div id="vault-uploads-display">');
+        $doc.find('#cancelform').prepend($uploadsContainer);
+        updateUploadsDisplay();
+    }
+
+    function updateUploadsDisplay() {
+        let stats = requestManager.getStats();
+        setUploadsDisplay(`Uploading ${stats.total} commands... (${stats.done} done, ${stats.numFailed} failed)`);
+    }
+
+    function setUploadsDisplay(contents) {
+        let $uploadsContainer = $doc.find('#vault-uploads-display');
+        $uploadsContainer.text(contents);
+    }
+}

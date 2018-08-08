@@ -1,17 +1,43 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace TW.Vault.Model.JSON
 {
+    public enum CommandType
+    {
+        Attack,
+        Support
+    }
+
     public class Command
     {
-        public int CommandId { get; set; }
-        public int SourceVillageId { get; set; }
-        public int SourcePlayerId { get; set; }
-        public int TargetVillageId { get; set; }
-        public int TargetPlayerId { get; set; }
-        public string TroopType { get; set; }
-        public DateTime LandsAt { get; set; }
-        public DateTime FirstSeenAt { get; set; }
+        [Required]
+        public long? CommandId { get; set; }
+        [Required]
+        public long? SourceVillageId { get; set; }
+        [Required]
+        public long? SourcePlayerId { get; set; }
+        [Required]
+        public long? TargetVillageId { get; set; }
+        [Required]
+        public long? TargetPlayerId { get; set; }
+        [Required]
+        public DateTime? LandsAt { get; set; }
+        [Required]
+        public bool? IsReturning { get; set; }
+
+        public Army Troops { get; set; }
+
+
+        [Required]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public CommandType? CommandType { get; set; }
+
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public TroopType? TroopType { get; set; }
     }
 }

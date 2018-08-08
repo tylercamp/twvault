@@ -13,9 +13,9 @@ namespace TW.Vault.Scaffold_Model
             ReportDefenderPlayer = new HashSet<Report>();
         }
 
-        public int PlayerId { get; set; }
+        public long PlayerId { get; set; }
         public string PlayerName { get; set; }
-        public int? TribeId { get; set; }
+        public long? TribeId { get; set; }
         public int? Villages { get; set; }
         public int? Points { get; set; }
         public int? PlayerRank { get; set; }

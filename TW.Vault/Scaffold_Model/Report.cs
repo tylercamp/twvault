@@ -5,26 +5,31 @@ namespace TW.Vault.Scaffold_Model
 {
     public partial class Report
     {
-        public int ReportId { get; set; }
-        public int AttackerVillageId { get; set; }
-        public int DefenderVillageId { get; set; }
-        public int AttackerPlayerId { get; set; }
-        public int DefenderPlayerId { get; set; }
+        public long ReportId { get; set; }
+        public long AttackerVillageId { get; set; }
+        public long DefenderVillageId { get; set; }
+        public long AttackerPlayerId { get; set; }
+        public long? DefenderPlayerId { get; set; }
         public DateTime OccuredAt { get; set; }
-        public int AttackerArmyId { get; set; }
-        public int AttackerLossesArmyId { get; set; }
-        public int? DefenderArmyId { get; set; }
-        public int? DefenderLossesArmyId { get; set; }
-        public int? DefenderTravelingArmyId { get; set; }
+        public long AttackerArmyId { get; set; }
+        public long AttackerLossesArmyId { get; set; }
+        public long? DefenderArmyId { get; set; }
+        public long? DefenderLossesArmyId { get; set; }
+        public long? DefenderTravelingArmyId { get; set; }
+        public short Morale { get; set; }
+        public decimal Luck { get; set; }
+        public long? TxId { get; set; }
 
-        public Army AttackerArmy { get; set; }
-        public Army AttackerLossesArmy { get; set; }
+        public ReportArmy AttackerArmy { get; set; }
+        public ReportArmy AttackerLossesArmy { get; set; }
         public Player AttackerPlayer { get; set; }
         public Village AttackerVillage { get; set; }
-        public Army DefenderArmy { get; set; }
-        public Army DefenderLossesArmy { get; set; }
+        public ReportArmy DefenderArmy { get; set; }
+        public ReportArmy DefenderLossesArmy { get; set; }
         public Player DefenderPlayer { get; set; }
-        public Army DefenderTravelingArmy { get; set; }
+        public ReportArmy DefenderTravelingArmy { get; set; }
         public Village DefenderVillage { get; set; }
+        public Transaction Tx { get; set; }
+        public ReportBuilding ReportBuilding { get; set; }
     }
 }
