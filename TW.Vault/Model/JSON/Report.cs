@@ -18,6 +18,8 @@ namespace TW.Vault.Model.JSON
         [Required]
         public decimal? Luck { get; set; }
 
+        public short? Loyalty { get; set; }
+
         [Required]
         public long? AttackingPlayerId { get; set; }
 
@@ -29,7 +31,6 @@ namespace TW.Vault.Model.JSON
         public long? DefendingVillageId { get; set; }
 
         [Required]
-        [JsonProperty()]
         public Army AttackingArmy { get; set; }
         [Required]
         public Army AttackingArmyLosses { get; set; }

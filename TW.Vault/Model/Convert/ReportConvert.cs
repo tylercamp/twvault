@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Scaffold = TW.Vault.Scaffold_Model;
 using JSON = TW.Vault.Model.JSON;
 
 namespace TW.Vault.Model.Convert
@@ -18,6 +17,7 @@ namespace TW.Vault.Model.Convert
             target.OccuredAt             = report.OccurredAt.Value;
             target.Morale                = report.Morale.Value;
             target.Luck                  = report.Luck.Value;
+            target.Loyalty               = report.Loyalty;
 
             target.AttackerPlayerId      = report.AttackingPlayerId.Value;
             target.AttackerVillageId     = report.AttackingVillageId.Value;
@@ -33,6 +33,26 @@ namespace TW.Vault.Model.Convert
             target.DefenderTravelingArmy = ArmyConvert.JsonToArmy(report.TravelingTroops, target.DefenderTravelingArmy, context);
 
             target.ReportBuilding        = BuildingConvert.JsonToReportBuilding(target.ReportId, report.BuildingLevels, target.ReportBuilding, context);
+
+
+
+            if (target.AttackerArmy != null)
+                target.AttackerArmy.WorldId = target.World?.Id ?? target.WorldId;
+
+            if (target.AttackerLossesArmy != null)
+                target.AttackerLossesArmy.WorldId = target.World?.Id ?? target.WorldId;
+
+            if (target.DefenderArmy != null)
+                target.DefenderArmy.WorldId = target.World?.Id ?? target.WorldId;
+
+            if (target.DefenderLossesArmy != null)
+                target.DefenderLossesArmy.WorldId = target.World?.Id ?? target.WorldId;
+
+            if (target.DefenderTravelingArmy != null)
+                target.DefenderTravelingArmy.WorldId = target.World?.Id ?? target.WorldId;
+
+            if (target.ReportBuilding != null)
+                target.ReportBuilding.WorldId = target.World?.Id ?? target.WorldId;
         }
 
         public static JSON.Report ModelToJson(Scaffold.Report report)

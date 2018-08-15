@@ -8,19 +8,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-using Scaffold = TW.Vault.Scaffold_Model;
 using JSON = TW.Vault.Model.JSON;
 using TW.Vault.Model.Convert;
 using TW.Vault.Model.Calculations;
 using TW.Vault.Features.Simulation;
+using Newtonsoft.Json;
 
 namespace TW.Vault.Controllers
 {
     [Produces("application/json")]
-    [Route("api/Village")]
+    [Route("api/{worldName}/Village")]
     [EnableCors("AllOrigins")]
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
-    public class VillageController : ControllerBase
+    public class VillageController : BaseController
     {
         public VillageController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
@@ -30,34 +30,36 @@ namespace TW.Vault.Controllers
         [HttpGet(Name = "GetVillages")]
         public async Task<IActionResult> Get()
         {
-            return Ok(await Paginated(context.Village).ToListAsync());
+            var villages = await Paginated(context.Village).FromWorld(CurrentWorldId).ToListAsync();
+            return Ok(villages.Select(VillageConvert.ModelToJson));
         }
 
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
-            return Ok(await context.Village.CountAsync());
+            return Ok(await context.Village.FromWorld(CurrentWorldId).CountAsync());
         }
 
         // GET: api/Villages/5
         [HttpGet("{id}", Name = "GetVillage")]
         public Task<IActionResult> Get(int id)
         {
-            return FindOr404<Scaffold.Village>(id);
+            return SelectOr404<Scaffold.Village>(q => q.FromWorld(CurrentWorldId), VillageConvert.ModelToJson);
         }
 
         [HttpGet("{id}/owner", Name = "GetOwner")]
         public async Task<IActionResult> GetOwner(int id)
         {
-            var owner = await (
-                from village in context.Village
-                join player in context.Player on village.PlayerId.Value equals player.PlayerId
-                where village.VillageId == id
-                select player
-            ).FirstOrDefaultAsync();
+            var owner = await Profile("Get village owner", () => (
+                    from village in context.Village.FromWorld(CurrentWorldId)
+                    join player in context.Player on village.PlayerId.Value equals player.PlayerId
+                    where village.VillageId == id
+                    select player
+                ).FirstOrDefaultAsync()
+            );
 
             if (owner != null)
-                return Ok(owner);
+                return Ok(PlayerConvert.ModelToJson(owner));
             else
                 return NotFound();
         }
@@ -65,85 +67,216 @@ namespace TW.Vault.Controllers
         [HttpGet("{villageId}/army", Name = "GetKnownArmy")]
         public async Task<IActionResult> GetVillageArmy(long villageId)
         {
-            var latestReportWithDefender = await (
-                    from report in context.Report
-                                          .Include(r => r.DefenderArmy)
-                                          .Include(r => r.DefenderLossesArmy)
-                    where report.DefenderArmyId.HasValue && report.DefenderVillageId == villageId
-                    orderby report.OccuredAt descending
-                    select report
-                ).FirstOrDefaultAsync();
+            var village = await Profile("Find village", () => context.Village.Where(v => v.VillageId == villageId && v.WorldId == CurrentWorld.Id).FirstOrDefaultAsync());
+            if (village == null)
+                return NotFound();
 
-            var latestReportAsAttacker = await (
-                    from report in context.Report
-                                          .Include(r => r.AttackerArmy)
-                                          .Include(r => r.AttackerLossesArmy)
-                    where report.AttackerVillageId == villageId && (
-                        report.AttackerArmy.Axe > 100 ||
-                        report.AttackerArmy.Light > 100 ||
-                        report.AttackerArmy.Spear > 100 ||
-                        report.AttackerArmy.Sword > 100 ||
-                        report.AttackerArmy.Heavy > 100
-                    )
-                    orderby report.OccuredAt descending
-                    select report
-                ).FirstOrDefaultAsync();
+            bool canRead = false;
+            if (!village.PlayerId.HasValue)
+            {
+                canRead = true;
+            }
+            else
+            {
+                var owningPlayer = await Profile("Get owning player", () => context.Player.Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
+                if (!owningPlayer.TribeId.HasValue || owningPlayer.TribeId.Value != CurrentTribeId || CurrentUserIsAdmin)
+                {
+                    canRead = true;
+                }
+            }
 
-            var latestReportWithTravelingTroops = await (
-                    from report in context.Report
-                                          .Include(r => r.DefenderTravelingArmy)
-                    where report.DefenderVillageId == villageId && report.DefenderTravelingArmyId.HasValue
-                    orderby report.OccuredAt descending
-                    select report
-                ).FirstOrDefaultAsync();
+            if (!canRead)
+                return StatusCode(401);
 
-            var latestReportWithBuildings = await (
-                    from report in context.Report
-                                          .Include(r => r.ReportBuilding)
-                    where report.DefenderVillageId == villageId && report.ReportBuilding != null
-                    orderby report.OccuredAt descending
-                    select report
-                ).FirstOrDefaultAsync();
+            //  Check if player has uploaded report data recently
+            var latestReportTransaction = await Profile("Find latest report transaction", () => (
+                    from tx in context.Transaction
+                        join report in context.Report on tx.TxId equals report.TxId
+                    where tx.Uid == CurrentUser.Uid
+                    orderby tx.OccurredAt descending
+                    select tx
+                ).FirstOrDefaultAsync()
+            );
 
+            if (latestReportTransaction == null || (DateTime.UtcNow - latestReportTransaction.OccurredAt) > TimeSpan.FromHours(24))
+            {
+                return StatusCode(423); // Status code "Locked"
+            }
+
+            var currentVillage = await Profile("Get current village", () => (
+                    from cv in context.CurrentVillage
+                                      .FromWorld(CurrentWorldId)
+                                      .Include(v => v.ArmyOwned)
+                                      .Include(v => v.ArmyStationed)
+                                      .Include(v => v.ArmyTraveling)
+                                      .Include(v => v.ArmyRecentLosses)
+                                      .Include(v => v.CurrentBuilding)
+                    where cv.VillageId == villageId
+                    select cv
+                ).FirstOrDefaultAsync()
+            );
+            
             var jsonData = new JSON.VillageData();
+            if (currentVillage == null)
+                return Ok(jsonData);
 
-            if (latestReportWithDefender != null)
+            Profile("Populate JSON data", () =>
             {
-                var defenderTroops = ArmyConvert.ArmyToJson(latestReportWithDefender.DefenderArmy);
-                var defenderLosses = ArmyConvert.ArmyToJson(latestReportWithDefender.DefenderLossesArmy);
+                if (currentVillage.ArmyOwned != null)
+                {
+                    jsonData.OwnedArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyOwned);
+                    jsonData.OwnedArmySeenAt = currentVillage.ArmyOwned.LastUpdated;
+                }
 
-                var finalCount = TroopCalculations.SubtractJson(defenderTroops, defenderLosses);
-                jsonData.StationedArmy = finalCount;
-                jsonData.StationedSeenAt = latestReportWithDefender.OccuredAt;
-            }
+                if (currentVillage.ArmyRecentLosses != null)
+                {
+                    jsonData.RecentlyLostArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyRecentLosses);
+                    jsonData.RecentlyLostArmySeenAt = currentVillage.ArmyRecentLosses.LastUpdated;
+                }
 
-            if (latestReportAsAttacker != null)
-            {
-                var attackerLosses = ArmyConvert.ArmyToJson(latestReportAsAttacker.AttackerLossesArmy);
+                if (currentVillage.ArmyStationed != null)
+                {
+                    jsonData.StationedArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyStationed);
+                    jsonData.StationedSeenAt = currentVillage.ArmyStationed.LastUpdated;
+                }
 
-                jsonData.RecentlyLostArmy = attackerLosses;
-                jsonData.RecentlyLostArmySeenAt = latestReportAsAttacker.OccuredAt;
-            }
+                if (currentVillage.ArmyTraveling != null)
+                {
+                    jsonData.TravelingArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyTraveling);
+                    jsonData.TravelingSeenAt = currentVillage.ArmyTraveling.LastUpdated;
+                }
 
-            if (latestReportWithTravelingTroops != null)
-            {
-                var travelingTroops = ArmyConvert.ArmyToJson(latestReportWithTravelingTroops.DefenderTravelingArmy);
-                jsonData.TravelingArmy = travelingTroops;
-                jsonData.TravelingSeenAt = latestReportWithTravelingTroops.OccuredAt;
-            }
+                jsonData.LastLoyalty = currentVillage.Loyalty;
+                jsonData.LastLoyaltySeenAt = currentVillage.LoyaltyLastUpdated;
 
-            if (latestReportWithBuildings != null)
-            {
-                var buildings = BuildingConvert.ToJSON(latestReportWithBuildings.ReportBuilding);
-                jsonData.LastBuildings = buildings;
-                jsonData.LastBuildingsSeenAt = latestReportWithBuildings.OccuredAt;
+                if (currentVillage.Loyalty != null)
+                {
+                    var loyaltyCalculator = new LoyaltyCalculator();
+                    jsonData.PossibleLoyalty = loyaltyCalculator.PossibleLoyalty(currentVillage.Loyalty.Value, CurrentServerTime - currentVillage.LoyaltyLastUpdated.Value);
+                }
 
-                //  Manual correction for server time zone and en100 server time
-                var now = DateTime.UtcNow + TimeSpan.FromHours(1);
-                jsonData.PossibleBuildings = new ConstructionCalculator().CalculatePossibleBuildings(buildings, now - latestReportWithBuildings.OccuredAt);
-            }
+                jsonData.LastBuildings = BuildingConvert.CurrentBuildingToJson(currentVillage.CurrentBuilding);
+                jsonData.LastBuildingsSeenAt = currentVillage.CurrentBuilding?.LastUpdated;
+
+                if (currentVillage.CurrentBuilding != null)
+                {
+                    var constructionCalculator = new ConstructionCalculator();
+                    jsonData.PossibleBuildings = constructionCalculator.CalculatePossibleBuildings(jsonData.LastBuildings, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated);
+                }
+
+                if (currentVillage.ArmyStationed != null)
+                {
+                    var battleSimulator = new BattleSimulator();
+                    short wallLevel = currentVillage.CurrentBuilding?.Wall ?? 20;
+                    short hqLevel = currentVillage.CurrentBuilding?.Main ?? 20;
+
+                    if (currentVillage.CurrentBuilding != null)
+                        wallLevel += new ConstructionCalculator().CalculateLevelsInTimeSpan(BuildingType.Wall, hqLevel, wallLevel, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated);
+
+                    jsonData.NukesRequired = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, 100);
+                }
+
+                if (jsonData.OwnedArmy != null && jsonData.OwnedArmy.IsEmpty())
+                    jsonData.OwnedArmy = null;
+
+                if (jsonData.StationedArmy != null && jsonData.StationedArmy.IsEmpty())
+                    jsonData.StationedArmy = null;
+
+                if (jsonData.TravelingArmy != null && jsonData.TravelingArmy.IsEmpty())
+                    jsonData.TravelingArmy = null;
+
+                if (jsonData.RecentlyLostArmy != null && jsonData.RecentlyLostArmy.IsEmpty())
+                    jsonData.RecentlyLostArmy = null;
+            });
 
             return Ok(jsonData);
+        }
+
+        [HttpPost("army/current")]
+        public async Task<IActionResult> PostCurrentArmy([FromBody]JSON.VillageArmySet[] currentArmySetJson)
+        {
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
+
+            if (currentArmySetJson.Length == 0)
+                return Ok();
+
+            var villageIds = currentArmySetJson.Select(a => a.VillageId.Value).ToList();
+
+            var scaffoldCurrentVillages = await Profile("Get existing scaffold current villages", () => (
+                    from cv in context.CurrentVillage.FromWorld(CurrentWorldId).IncludeCurrentVillageData()
+                    where villageIds.Contains(cv.VillageId)
+                    select cv
+                ).ToListAsync()
+            );
+
+            var mappedScaffoldVillages = villageIds.ToDictionary(id => id, id => scaffoldCurrentVillages.SingleOrDefault(cv => cv.VillageId == id));
+            var missingScaffoldVillageIds = mappedScaffoldVillages.Where(kvp => kvp.Value == null).Select(kvp => kvp.Key).ToList();
+
+            var missingVillageData = mappedScaffoldVillages.Values.Count(v => v == null) == 0
+                ? new List<Scaffold.Village>()
+                : await Profile("Get missing village data", () => (
+                        from v in context.Village.FromWorld(CurrentWorldId)
+                        where missingScaffoldVillageIds.Contains(v.VillageId)
+                        select v
+                    ).ToListAsync()
+                );
+
+            var villagePlayerIds = (await Profile("Get village player IDs", () => (
+                    from v in context.Village.FromWorld(CurrentWorldId)
+                    where villageIds.Contains(v.VillageId)
+                    select new { v.PlayerId, v.VillageId }
+                ).ToListAsync()
+            )).ToDictionary(v => v.VillageId, v => v.PlayerId);
+
+            var mappedMissingVillageData = missingVillageData.ToDictionary(vd => vd.VillageId, vd => vd);
+
+            //  Get or make CurrentVillage
+
+            Profile("Populating missing village data", () =>
+            {
+                foreach (var missingVillageId in missingScaffoldVillageIds)
+                {
+                    var village = mappedMissingVillageData[missingVillageId];
+                    var newCurrentVillage = new Scaffold.CurrentVillage();
+                    newCurrentVillage.VillageId = missingVillageId;
+                    newCurrentVillage.WorldId = CurrentWorldId;
+
+                    context.CurrentVillage.Add(newCurrentVillage);
+
+                    mappedScaffoldVillages[missingVillageId] = newCurrentVillage;
+                }
+            });
+
+            Profile("Generate scaffold armies", () =>
+            {
+                foreach (var armySetJson in currentArmySetJson)
+                {
+                    var currentVillage = mappedScaffoldVillages[armySetJson.VillageId.Value];
+                    var villagePlayerId = villagePlayerIds[currentVillage.VillageId];
+
+                    if (!Configuration.Security.AllowUploadArmyForNonOwner
+                            && villagePlayerId != CurrentUser.PlayerId)
+                    {
+                        context.InvalidDataRecord.Add(MakeInvalidDataRecord(
+                            JsonConvert.SerializeObject(currentArmySetJson),
+                            $"Attempted to upload current army to village {villagePlayerId} but that village is not owned by the requestor"
+                        ));
+                    }
+
+                    var fullArmy = armySetJson.Stationed + armySetJson.Traveling + armySetJson.Supporting;
+                    currentVillage.ArmyOwned = ArmyConvert.JsonToArmy(fullArmy, currentVillage.ArmyOwned, context);
+                    currentVillage.ArmyStationed = ArmyConvert.JsonToArmy(armySetJson.Stationed, currentVillage.ArmyStationed, context);
+                    currentVillage.ArmyTraveling = ArmyConvert.JsonToArmy(armySetJson.Traveling, currentVillage.ArmyTraveling, context);
+
+                    currentVillage.ArmyOwned.LastUpdated = DateTime.UtcNow;
+                    currentVillage.ArmyStationed.LastUpdated = DateTime.UtcNow;
+                    currentVillage.ArmyTraveling.LastUpdated = DateTime.UtcNow;
+                }
+            });
+
+            await Profile("Save changes", () => context.SaveChangesAsync());
+            return Ok();
         }
     }
 }

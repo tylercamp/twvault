@@ -7,17 +7,18 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Scaffold = TW.Vault.Scaffold_Model;
 using JSON = TW.Vault.Model.JSON;
 using TW.Vault.Model.Convert;
+using TW.Vault.Model.Validation;
+using Newtonsoft.Json;
 
 namespace TW.Vault.Controllers
 {
     [Produces("application/json")]
-    [Route("api/Report")]
+    [Route("api/{worldName}/Report")]
     [EnableCors("AllOrigins")]
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
-    public class ReportController : ControllerBase
+    public class ReportController : BaseController
     {
         public ReportController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
@@ -30,6 +31,7 @@ namespace TW.Vault.Controllers
         {
             var reports = await Paginated(context.Report)
                     .IncludeReportData()
+                    .FromWorld(CurrentWorldId)
                     .OrderByDescending(r => r.OccuredAt)
                     .ToListAsync();
 
@@ -41,28 +43,29 @@ namespace TW.Vault.Controllers
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
-            return Ok(await context.Report.CountAsync());
+            return Ok(await context.Report.FromWorld(CurrentWorldId).CountAsync());
         }
 
         // GET: api/Reports/5
         [HttpGet("{reportId}", Name = "GetReport")]
         public Task<IActionResult> Get(long reportId)
         {
-            return FindOr404<Scaffold.Report>(
-                q => q.Where(r => r.ReportId == reportId).IncludeReportData(),
+            return Profile("Get report by ID", () => SelectOr404<Scaffold.Report>(
+                q => q.Where(r => r.ReportId == reportId).IncludeReportData().FromWorld(CurrentWorldId),
                 r => ReportConvert.ModelToJson(r)
-            );
+            ));
         }
 
         [HttpGet("village/{villageId}", Name = nameof(GetByVillage))]
         public async Task<IActionResult> GetByVillage(long villageId)
         {
-            var reports = await Paginated(
-                    from report in context.Report.IncludeReportData()
+            var reports = await Profile("Get reports by village", () => Paginated(
+                    from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
                     where report.DefenderVillageId == villageId || report.AttackerVillageId == villageId
                     orderby report.OccuredAt descending
                     select report
-                ).ToListAsync();
+                ).ToListAsync()
+            );
 
             var jsonReports = reports.Select(ReportConvert.ModelToJson);
             return Ok(jsonReports);
@@ -71,12 +74,13 @@ namespace TW.Vault.Controllers
         [HttpGet("village/{villageId}/asDefender")]
         public async Task<IActionResult> GetByDefendingVillage(long villageId)
         {
-            var reports = await Paginated(
-                    from report in context.Report.IncludeReportData()
+            var reports = await Profile("Get reports by defending village", () => Paginated(
+                    from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
                     where report.DefenderVillageId == villageId
                     orderby report.OccuredAt descending
                     select report
-                ).ToListAsync();
+                ).ToListAsync()
+            );
 
             var jsonReports = reports.Select(ReportConvert.ModelToJson);
             return Ok(jsonReports);
@@ -85,12 +89,13 @@ namespace TW.Vault.Controllers
         [HttpGet("village/{villageId}/asAttacker")]
         public async Task<IActionResult> GetByAttackingVillage(long villageId)
         {
-            var reports = await Paginated(
-                    from report in context.Report.IncludeReportData()
+            var reports = await Profile("Get reports by attacking village", () => Paginated(
+                    from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
                     where report.AttackerVillageId == villageId
                     orderby report.OccuredAt descending
                     select report
-                ).ToListAsync();
+                ).ToListAsync()
+            );
 
             var jsonReports = reports.Select(ReportConvert.ModelToJson);
             return Ok(jsonReports);
@@ -102,26 +107,70 @@ namespace TW.Vault.Controllers
         {
             if (ModelState.IsValid)
             {
-                var scaffoldReport = await (
-                        from report in context.Report.IncludeReportData()
-                        where report.ReportId == jsonReport.ReportId.Value
-                        select report
-                    ).FirstOrDefaultAsync();
-
-                if (scaffoldReport == null)
+                if (!Configuration.Security.ReportIgnoreExpectedPopulationBounds
+                        && !ArmyValidate.MeetsPopulationRestrictions(jsonReport.AttackingArmy))
                 {
-                    scaffoldReport = new Scaffold.Report();
-                    await context.Report.AddAsync(scaffoldReport);
+                    context.InvalidDataRecord.Add(MakeInvalidDataRecord(
+                        JsonConvert.SerializeObject(jsonReport),
+                        "Troops in attacking army exceed possible village population"
+                    ));
+                    return BadRequest();
                 }
 
-                jsonReport.ToModel(scaffoldReport, context);
+                if (!Configuration.Security.ReportIgnoreExpectedPopulationBounds
+                        && !ArmyValidate.MeetsPopulationRestrictions(jsonReport.TravelingTroops))
+                {
+                    context.InvalidDataRecord.Add(MakeInvalidDataRecord(
+                        JsonConvert.SerializeObject(jsonReport),
+                        "Troops in traveling army exceed possible village population"
+                    ));
+                }
+
+                var scaffoldReport = await Profile("Find existing report", () => (
+                        from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
+                        where report.ReportId == jsonReport.ReportId.Value
+                        select report
+                    ).FirstOrDefaultAsync()
+                );
 
                 var tx = BuildTransaction();
-                await context.Transaction.AddAsync(tx);
+                context.Transaction.Add(tx);
 
-                scaffoldReport.Tx = tx;
+                Profile("Populate scaffold report", () =>
+                {
+                    if (scaffoldReport == null)
+                    {
+                        scaffoldReport = new Scaffold.Report();
+                        scaffoldReport.WorldId = CurrentWorldId;
+                        context.Report.Add(scaffoldReport);
+                    }
+                    else
+                    {
+                        var existingJsonReport = ReportConvert.ModelToJson(scaffoldReport);
 
-                await context.SaveChangesAsync();
+                        if (existingJsonReport != jsonReport && scaffoldReport.TxId.HasValue)
+                        {
+                            context.ConflictingDataRecord.Add(new Scaffold.ConflictingDataRecord
+                            {
+                                ConflictingTx = tx,
+                                OldTxId = scaffoldReport.TxId.Value
+                            });
+                        }
+                    }
+
+                    jsonReport.ToModel(scaffoldReport, context);
+
+                    scaffoldReport.Tx = tx;
+                });
+
+                try
+                {
+                    await Profile("Save changes", () => context.SaveChangesAsync());
+                }
+                catch (Exception e)
+                {
+
+                }
                 return Ok();
             }
             else

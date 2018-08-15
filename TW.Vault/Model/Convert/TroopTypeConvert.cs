@@ -8,6 +8,8 @@ namespace TW.Vault.Model.Convert
 {
     public static class TroopTypeConvert
     {
+        public static String ToTroopString(this TroopType troopType) => troopType.ToString().ToLower();
+
         public static String TroopTypeToString(TroopType? troopType)
         {
             return troopType?.ToString()?.ToLower();

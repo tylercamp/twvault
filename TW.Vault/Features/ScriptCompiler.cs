@@ -37,7 +37,7 @@ namespace TW.Vault.Features
                 if (resolvedDependencies.Contains(dependentFileName))
                     return "";
 
-                if (workingDependencies.Contains(scriptName))
+                if (workingDependencies.Contains(dependentFileName))
                 {
                     OnCircularDependency?.Invoke(workingDependencies.Concat(new[] { dependentFileName }).ToArray());
                     canContinue = false;

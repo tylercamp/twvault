@@ -1,11 +1,17 @@
 ﻿
 var lib = (() => {
 
+    //# REQUIRE twstats.js
+    //# REQUIRE twcalc.js
+
+    let twstats = getTwTroopStats();
+
     var storedScriptHost = null;
 
     var authToken = window.vaultToken || null;
     var authUserId = null;
     var authTribeId = null;
+    var wasPageHandled = false;
 
     let lib = {
 
@@ -18,8 +24,12 @@ var lib = (() => {
             ALL_REPORTS: null,
             INCOMINGS_OVERVIEW: null,
             OWN_COMMANDS_OVERVIEW: null,
+            OWN_TROOPS_OVERVIEW: null,
             MAP: null
         },
+
+        twstats: twstats,
+        twcalc: makeTwCalc(twstats),
 
         //  Gets the current server date and time from the page
         getServerDateTime: function getServerDateTime() {
@@ -170,6 +180,15 @@ var lib = (() => {
         onPage: function (pageType, callback) {
             if (lib.getCurrentPage() == pageType) {
                 callback();
+                wasPageHandled = true;
+            }
+            return lib;
+        },
+
+        onPageNotHandled: function (callback) {
+            if (!wasPageHandled) {
+                callback();
+                wasPageHandled = true;
             }
             return lib;
         },
@@ -201,7 +220,7 @@ var lib = (() => {
 
         //  POSTs JSON data to the given URL with vault auth data
         postApi: function postApi(url, object) {
-            if (typeof object != 'string')
+            if (typeof object != 'string' && !!object)
                 object = JSON.stringify(object);
 
             return $.ajax(url, {
@@ -214,6 +233,42 @@ var lib = (() => {
                     xhr.setRequestHeader('X-V-TID', authTribeId);
                 }
             });
+        },
+
+        deleteApi: function deleteApi(url, object) {
+            if (typeof object != 'string' && !!object)
+                object = JSON.stringify(object);
+
+            return $.ajax(url, {
+                data: object,
+                contentType: 'application/json',
+                type: 'DELETE',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-V-TOKEN', authToken);
+                    xhr.setRequestHeader('X-V-PID', authUserId);
+                    xhr.setRequestHeader('X-V-TID', authTribeId);
+                }
+            });
+        },
+
+        checkContainsCaptcha: function checkContainsCaptcha($doc_) {
+            $doc_ = $doc_ || $(document);
+            return !!$doc_.find('#bot_check').length;
+        },
+
+        saveAsFile: function saveAsFile(filename, fileContents) {
+            //  https://gist.github.com/liabru/11263260
+            let blob = new Blob([fileContents], { type: 'text/plain' });
+            let anchor = $('<a>')[0];
+
+            anchor.download = filename;
+            anchor.href = (window.URL || window.webkitURL).createObjectURL(blob);
+            anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
+            anchor.click();
+        },
+
+        getCurrentServer: function getCurrentServer() {
+            return location.hostname.split('.')[0];
         },
 
         //  Make a local tribalwars server link, using sitter tag '&t=NNN'
@@ -261,23 +316,16 @@ var lib = (() => {
 
             let pathParts = path.split('/');
 
-            //  Wanted to do this generically, but for some reason stack trace URL is incorrect??
             //  Known server API base paths
-            //let rootPaths = [
-            //    'api',
-            //    'script'
-            //];
-
-            //var apiBasePath;
-            //rootPaths.forEach((p) => path.contains(p) ? apiBasePath = path.substr(0, path.indexOf(p)) : null);
+            let rootPaths = [
+                'api',
+                'script'
+            ];
 
             var apiBasePath;
-            if (pathParts[0] == 'dev')
-                apiBasePath = 'dev';
-            else
-                apiBasePath = '';
+            rootPaths.forEach((p) => path.contains(p) ? apiBasePath = path.substr(0, path.indexOf(p)) : null);
 
-            let result = `${serverBase.trim('/')}${apiBasePath ? '/' + apiBasePath.trim('/') : ''}/api/${url.trim('/')}`;
+            let result = `${serverBase.trim('/')}${apiBasePath ? '/' + apiBasePath.trim('/') : ''}/api/${lib.getCurrentServer()}/${url.trim('/')}`;
             return result;
         },
 
@@ -294,6 +342,10 @@ var lib = (() => {
 
                 callback(playerId, tribeId);
             });
+        },
+
+        checkUserHasPremium: function userHasPremium() {
+            return !!$('.menu-column-item a[href*=quickbar]').length;
         },
 
         //  Gets the URL that the script was requested from
@@ -417,6 +469,7 @@ var lib = (() => {
     pageValidators[lib.pageTypes.INCOMINGS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=incomings");
     pageValidators[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=commands");
     pageValidators[lib.pageTypes.MAP] = () => href.contains("screen=map");
+    pageValidators[lib.pageTypes.OWN_TROOPS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=units");
 
     pageValidators[lib.pageTypes.UNKNOWN] = () => lib.getCurrentPage() == lib.pageTypes.UNKNOWN;
 
@@ -427,6 +480,7 @@ var lib = (() => {
     pageUrls[lib.pageTypes.INCOMINGS_OVERVIEW] = 'screen=overview_villages&mode=incomings&type=all&subtype=all&group=0&page=-1&subtype=all';
     pageUrls[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = 'screen=overview_villages&mode=commands&type=all&group=0&page=-1&&type=all';
     pageUrls[lib.pageTypes.MAP] = 'screen=map';
+    pageUrls[lib.pageTypes.OWN_TROOPS_OVERVIEW] = 'screen=overview_villages&mode=units&group=0&page=-1&type=complete';
 
     //  Make sure all page types have validators
     lib.objForEach(lib.pageTypes, (type) => !pageValidators[type] ? console.warn('No pageValidator set for pageType: ', type) : null);

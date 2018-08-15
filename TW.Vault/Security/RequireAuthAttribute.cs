@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Scaffold = TW.Vault.Scaffold_Model;
+using TW.Vault.Features;
 
 namespace TW.Vault.Security
 {
@@ -43,10 +43,40 @@ namespace TW.Vault.Security
                 return;
             }
 
+            var requestedWorld = context.RouteData.Values["worldName"] as String;
+            if (requestedWorld == null)
+            {
+                var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
+                failedRequest.Reason = "Attempted to request a protected endpoint without worldName [programmer error]";
+
+                dbContext.Add(failedRequest);
+                dbContext.SaveChanges();
+
+                LogFailedRequest(failedRequest);
+
+                context.Result = new StatusCodeResult(401);
+                return;
+            }
+
+            var world = dbContext.World.Where(w => w.Name == requestedWorld).FirstOrDefault();
+            if (world == null)
+            {
+                var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
+                failedRequest.Reason = "Attempted to request a protected endpoint for a world that does not exist";
+
+                dbContext.Add(failedRequest);
+                dbContext.SaveChanges();
+
+                LogFailedRequest(failedRequest);
+
+                context.Result = new StatusCodeResult(401);
+                return;
+            }
+
             var authToken = authHeaders.AuthToken;
             var discoveredUser = (
                     from user in dbContext.User
-                    where user.AuthToken == authToken
+                    where user.AuthToken == authToken && (user.WorldId == null || user.WorldId == world.Id)
                     select user
                 ).FirstOrDefault();
 
@@ -56,7 +86,7 @@ namespace TW.Vault.Security
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
                 if (discoveredUser == null)
-                    failedRequest.Reason = "No user found with given token";
+                    failedRequest.Reason = $"No user found with given token: '{authToken}'";
                 else
                     failedRequest.Reason = "Requested by disabled user";
 
@@ -78,7 +108,31 @@ namespace TW.Vault.Security
                 dbContext.SaveChanges();
             }
 
+            if (discoveredUser.PermissionsLevel < Configuration.Security.MinimumRequiredPriveleges)
+            {
+                var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
+                failedRequest.Reason = $"User privileges '{discoveredUser.PermissionsLevel}' was less than the minimum '{Configuration.Security.MinimumRequiredPriveleges}'";
+            }
+
+
+            context.HttpContext.Items["TribeId"] = authHeaders.TribeId.Value;
             context.HttpContext.Items["User"] = discoveredUser;
+        }
+
+        public override void OnResultExecuting(ResultExecutingContext context)
+        {
+            base.OnResultExecuting(context);
+        }
+
+        public override void OnResultExecuted(ResultExecutedContext context)
+        {
+            base.OnResultExecuted(context);
+        }
+
+        public override void OnActionExecuted(ActionExecutedContext context)
+        {
+            Profiling.StoreData(dbContext).Wait();
+            base.OnActionExecuted(context);
         }
 
         //public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)

@@ -7,15 +7,17 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Scaffold_Model;
+using TW.Vault.Scaffold;
+using TW;
+using TW.Vault.Model.Convert;
 
 namespace TW.Vault.Controllers
 {
     [Produces("application/json")]
-    [Route("api/Ally")]
+    [Route("api/{worldName}/Ally")]
     [EnableCors("AllOrigins")]
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
-    public class AllyController : ControllerBase
+    public class AllyController : BaseController
     {
         public AllyController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
@@ -25,33 +27,34 @@ namespace TW.Vault.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            return Ok(await Paginated(context.Ally).ToListAsync());
+            var result = await Paginated(context.Ally).FromWorld(CurrentWorldId).ToListAsync();
+            return Ok(result.Select(r => AllyConvert.ModelToJson(r)));
         }
 
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
-            return Ok(await context.Ally.CountAsync());
+            return Ok(await context.Ally.FromWorld(CurrentWorldId).CountAsync());
         }
 
         // GET: api/Ally/5
         [HttpGet("{id}", Name = "GetAlly")]
-        public Task<IActionResult> Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            return FindOr404<Ally>(id);
+            return await SelectOr404<Ally>((q) => q.FromWorld(CurrentWorldId), (a) => AllyConvert.ModelToJson(a));
         }
 
         [HttpGet("{id}/members", Name = "GetTribeMembers")]
         public async Task<IActionResult> GetMembers(int id)
         {
             var players = await (
-                from player in context.Player
+                from player in context.Player.FromWorld(CurrentWorldId)
                 where player.TribeId.Value == id
                 select player
             ).ToListAsync();
 
             if (players.Any())
-                return Ok(players);
+                return Ok(players.Select(p => PlayerConvert.ModelToJson(p)));
             else
                 return NotFound();
         }
@@ -59,15 +62,16 @@ namespace TW.Vault.Controllers
         [HttpGet("{id}/villages", Name = "GetTribeVillages")]
         public async Task<IActionResult> GetVillages(int id)
         {
-            var villages = await Paginated (
-                from player in context.Player
-                where player.TribeId.HasValue && player.TribeId.Value == id
-                join village in context.Village on player.PlayerId equals village.PlayerId.Value
-                select village
-            ).ToListAsync();
+            var villages = await Profile("GetTribeVillages", () => Paginated (
+                    from player in context.Player.FromWorld(CurrentWorldId)
+                    where player.TribeId.HasValue && player.TribeId.Value == id
+                    join village in context.Village on player.PlayerId equals village.PlayerId.Value
+                    select village
+                ).ToListAsync()
+            );
 
             if (villages.Any())
-                return Ok(villages);
+                return Ok(villages.Select(v => VillageConvert.ModelToJson(v)));
             else
                 return NotFound();
         }

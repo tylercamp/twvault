@@ -39,5 +39,35 @@ namespace TW.Vault.Model.JSON
 
         [JsonConverter(typeof(StringEnumConverter))]
         public TroopType? TroopType { get; set; }
+
+        public static bool operator ==(Command a, Command b)
+        {
+            bool aIsNull = Object.ReferenceEquals(a, null);
+            bool bIsNull = Object.ReferenceEquals(b, null);
+
+            if (aIsNull && bIsNull)
+                return true;
+
+            if (aIsNull != bIsNull)
+                return false;
+
+            if (a.CommandId != b.CommandId ||
+                a.SourceVillageId != b.SourceVillageId ||
+                a.SourcePlayerId != b.SourcePlayerId ||
+                a.TargetVillageId != b.TargetVillageId ||
+                a.TargetPlayerId != b.TargetPlayerId ||
+                a.LandsAt != b.LandsAt ||
+                a.IsReturning != b.IsReturning ||
+                a.Troops != b.Troops)
+                return false;
+
+            return true;
+        }
+
+        public static bool operator !=(Command a, Command b) => !(a == b);
+
+        public override bool Equals(object obj) => this == obj as Command;
+
+        public override int GetHashCode() => base.GetHashCode();
     }
 }

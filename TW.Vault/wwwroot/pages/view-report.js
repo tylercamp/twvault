@@ -1,5 +1,5 @@
 ﻿
-function parseReportPage($doc, href_, showNotice_) {
+function parseReportPage($doc, href_, showNotice_, onError_) {
 
     //# REQUIRE lib.js
 
@@ -9,16 +9,20 @@ function parseReportPage($doc, href_, showNotice_) {
     if (typeof showNotice_ == 'undefined')
         showNotice_ = true; // Show "complete/error" notice by default
 
+    if (lib.checkContainsCaptcha($doc)) {
+        if (showNotice_) {
+            alert('Captcha has been triggered, refresh the page.');
+        }
+        onError_('captcha');
+        return;
+    }
+
     var $attackInfo = $doc.find('#attack_info_att')
     var $defenseInfo = $doc.find('#attack_info_def')
     var defendingPlayer = $defenseInfo.find('a[href*=info_player]');
 
     var reportInfo = {};
     reportInfo.reportId = parseInt(href.match(/view=(\d+)/)[1]);
-
-    var reportsHistory = JSON.parse(localStorage.getItem('vault-reports-history') || '[]');
-    reportsHistory.push(reportInfo.reportId);
-    localStorage.setItem('vault-reports-history', JSON.stringify(reportsHistory));
 
     if (!$attackInfo.length) {
         if (showNotice_) {
@@ -29,6 +33,10 @@ function parseReportPage($doc, href_, showNotice_) {
     
     reportInfo.luck = parseInt($doc.find('#attack_luck').text().match(/(\-?\d.+)\%/)[1]);
     reportInfo.morale = parseInt($doc.find('.report_ReportAttack h4:nth-of-type(2)').text().match(/(\d+)\%/)[1]);
+
+    var loyalty = $doc.find('#attack_results tr').filter((i, el) => $(el).text().indexOf('Loyalty') >= 0).text().match(/from\s+\d+\s+to\s+(\-?\d+)/);
+    if (loyalty)
+        reportInfo.loyalty = parseInt(loyalty[1]);
 
 
     var occurredAt = $doc.find('td.nopad > .vis:nth-of-type(2) > tbody > tr:nth-of-type(2) td:nth-of-type(2)').text().trim();
@@ -106,6 +114,10 @@ function parseReportPage($doc, href_, showNotice_) {
 
     lib.postApi(reportsEndpoint, reportInfo)
         .done(() => {
+            var reportsHistory = JSON.parse(localStorage.getItem('vault-reports-history') || '[]');
+            reportsHistory.push(reportInfo.reportId);
+            localStorage.setItem('vault-reports-history', JSON.stringify(reportsHistory));
+
             if (showNotice_)
                 alert('Uploaded the report!');
         })
@@ -113,5 +125,7 @@ function parseReportPage($doc, href_, showNotice_) {
             if (showNotice_)
                 alert('An error occurred...');
             console.error('POST request failed: ', req, status, err);
+            if (onError_)
+                onError_();
         });
 }

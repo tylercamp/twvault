@@ -31,5 +31,31 @@ namespace TW.Vault
                 return cachedRoot;
             }
         }
+
+        public static SecurityConfiguration Security
+        {
+            get
+            {
+                SecurityConfiguration cfg = new SecurityConfiguration();
+                Instance.GetSection("Security").Bind(cfg);
+
+                var envMinAuthLevel = Environment.GetEnvironmentVariable("TW_VAULT_MIN_PRIVELEGES");
+                if (envMinAuthLevel != null)
+                {
+                    short minAuthLevel = short.Parse(envMinAuthLevel);
+                    cfg.MinimumRequiredPriveleges = minAuthLevel;
+                }
+                return cfg;
+            }
+        }
+    }
+
+    public class SecurityConfiguration
+    {
+        public bool AllowUploadArmyForNonOwner { get; set; }
+        public bool ReportIgnoreExpectedPopulationBounds { get; set; }
+        public bool AllowCommandArrivalBeforeServerTime { get; set; }
+
+        public short MinimumRequiredPriveleges { get; set; }
     }
 }

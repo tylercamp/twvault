@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using TW.Vault.Scaffold_Model;
+using TW.Vault.Scaffold;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Configuration.Json;
 using TW.Vault.Security;
@@ -47,10 +47,12 @@ namespace TW.Vault
                     builder.AllowAnyHeader();
                     builder.AllowAnyMethod();
                     builder.AllowAnyOrigin();
+                    //builder.AllowCredentials();
                 });
             });
 
-            services.AddScoped<RequireAuthAttribute>();
+            services
+                .AddScoped<RequireAuthAttribute>();
 
             String connectionString = Configuration.GetConnectionString("Vault");
             services.AddDbContext<VaultContext>(options => options.UseNpgsql(connectionString));
@@ -63,6 +65,8 @@ namespace TW.Vault
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCors("AllOrigins");
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {

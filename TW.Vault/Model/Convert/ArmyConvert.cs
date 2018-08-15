@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Scaffold = TW.Vault.Scaffold_Model;
 using JSON = TW.Vault.Model.JSON;
 using static TW.Vault.Model.Convert.ConvertUtil;
 
@@ -48,13 +47,9 @@ namespace TW.Vault.Model.Convert
                 var troopProperty = scaffoldArmyType.GetProperty(troopType, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                 
                 if (typeof(short?).IsAssignableFrom(troopProperty.PropertyType))
-                {
                     troopProperty.SetValue(result, troopCount?.ToShort());
-                }
                 else
-                {
                     troopProperty.SetValue(result, troopCount);
-                }
             }
 
             return result;
@@ -89,5 +84,15 @@ namespace TW.Vault.Model.Convert
 
             return result;
         }
+
+        public static JSON.TroopType StringToType(String troopType)
+        {
+            if (!Char.IsUpper(troopType[0]))
+                troopType = Char.ToUpper(troopType[0]) + troopType.Substring(1);
+
+            return Enum.Parse<JSON.TroopType>(troopType);
+        }
+
+        public static String TypeToString(JSON.TroopType troopType) => troopType.ToString().ToLower();
     }
 }

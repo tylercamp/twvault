@@ -7,7 +7,7 @@ namespace TW.Vault.Security
 {
     public class AuthHeaders
     {
-        public Guid AuthToken { get; set; }
+        public Guid? AuthToken { get; set; }
         public long? TribeId { get; set; }
         public long? PlayerId { get; set; }
 

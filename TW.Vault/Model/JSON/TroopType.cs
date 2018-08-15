@@ -21,4 +21,11 @@ namespace TW.Vault.Model.JSON
         Snob,
         Militia
     }
+
+    public enum UnitType
+    {
+        Infantry,
+        Cavalry,
+        Archer
+    }
 }

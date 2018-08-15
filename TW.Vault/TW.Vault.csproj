@@ -13,7 +13,7 @@
   <ItemGroup>
     <Content Include="Controllers\AllyController.cs" />
     <Content Include="Controllers\CommandController.cs" />
-    <Content Include="Controllers\ControllerBase.cs" />
+    <Content Include="Controllers\BaseController.cs" />
     <Content Include="Controllers\PlayerController.cs" />
     <Content Include="Controllers\ReportController.cs" />
     <Content Include="Controllers\ScriptController.cs" />
@@ -31,6 +31,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.1.1.1" />
+    <PackageReference Include="NUglify" Version="1.5.11" />
     <PackageReference Include="Serilog.AspNetCore" Version="2.1.1" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="2.6.1" />
     <PackageReference Include="Serilog.Sinks.Async" Version="1.3.0" />

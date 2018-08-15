@@ -1,9 +1,12 @@
-﻿function parseIncomingsOverviewPage($doc) {
+﻿function parseIncomingsOverviewPage($doc, onProgress_, onDone_) {
     $doc = $doc || $(document);
 
     let $incomingRows = $doc.find('#incomings_table tr:not(:first-of-type):not(:last-of-type)');
 
     let commandsData = [];
+
+    if (onProgress_)
+        onProgress_('Collecting incomings...');
 
     $incomingRows.each((i, el) => {
         let $el = $(el);
@@ -40,6 +43,9 @@
 
     console.log('Made commands data: ', commandsData);
 
+    if (onProgress_)
+        onProgress_('Uploading data...');
+
     lib.queryCurrentPlayerInfo((playerId) => {
         commandsData.forEach((data) => data.targetPlayerId = playerId);
 
@@ -48,10 +54,27 @@
         lib.postApi(lib.makeApiUrl('command'), commandsData)
             .done(() => {
                 $doc.find('input[name*=id_][type=checkbox]').prop('checked', true);
-                alert('Uploaded commands!');
+
+                if (onProgress_) {
+                    onProgress_('Uploaded ' + commandsData.length + ' incomings.');
+                }
+
+                if (!onDone_)
+                    alert('Uploaded commands!');
+                else {
+                    onDone_();
+                }
             })
             .fail((req, status, err) => {
-                alert('An error occurred...');
+                if (onProgress_) {
+                    onProgress_('An error occurred while uploading data.');
+                }
+
+                if (!onDone_) {
+                    alert('An error occurred...');
+                } else {
+                    onDone_();
+                }
                 console.error('POST request failed: ', req, status, err);
             });
     });

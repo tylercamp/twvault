@@ -2,20 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Scaffold = TW.Vault.Scaffold_Model;
 using JSON = TW.Vault.Model.JSON;
 
 namespace TW.Vault.Model.Convert
 {
     public static class CommandConvert
     {
-        public static Scaffold.Command ToModel(this JSON.Command command, Scaffold.Command existingCommand = null, Scaffold.VaultContext context = null) =>
+        public static Scaffold.Command ToModel(this JSON.Command command, Scaffold.Command existingCommand, Scaffold.VaultContext context = null) =>
             JsonToModel(command, existingCommand, context);
 
         public static JSON.Command ToJson(this Scaffold.Command command) =>
             ModelToJson(command);
 
-        public static Scaffold.Command JsonToModel(JSON.Command command, Scaffold.Command existingCommand = null, Scaffold.VaultContext context = null)
+        public static Scaffold.Command JsonToModel(JSON.Command command, Scaffold.Command existingCommand, Scaffold.VaultContext context = null)
         {
             if (command == null)
             {
@@ -50,6 +49,8 @@ namespace TW.Vault.Model.Convert
 
             result.Army             = ArmyConvert.JsonToArmy(command.Troops, result.Army, context);
             result.TroopType        = TroopTypeConvert.TroopTypeToString(command.TroopType);
+
+            if (result.Army != null) result.Army.WorldId = existingCommand.World?.Id ?? existingCommand.WorldId;
 
             return result;
         }

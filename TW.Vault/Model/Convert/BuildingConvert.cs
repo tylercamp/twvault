@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Scaffold = TW.Vault.Scaffold_Model;
 using JSON = TW.Vault.Model.JSON;
 using static TW.Vault.Model.Convert.ConvertUtil;
 
@@ -41,6 +40,35 @@ namespace TW.Vault.Model.Convert
             AddIfNotNull(result, "storage", reportBuildings.Storage);
             AddIfNotNull(result, "watchtower", reportBuildings.Watchtower);
             AddIfNotNull(result, "garage", reportBuildings.Garage);
+
+            return result;
+        }
+
+        public static JSON.BuildingLevels CurrentBuildingToJson(Scaffold.CurrentBuilding currentBuildings)
+        {
+            if (currentBuildings == null)
+                return null;
+
+            var result = new JSON.BuildingLevels();
+
+            AddIfNotNull(result, "snob", currentBuildings.Snob);
+            AddIfNotNull(result, "barracks", currentBuildings.Barracks);
+            AddIfNotNull(result, "church", currentBuildings.Church);
+            AddIfNotNull(result, "stone", currentBuildings.Stone);
+            AddIfNotNull(result, "farm", currentBuildings.Farm);
+            AddIfNotNull(result, "main", currentBuildings.Main);
+            AddIfNotNull(result, "hide", currentBuildings.Hide);
+            AddIfNotNull(result, "iron", currentBuildings.Iron);
+            AddIfNotNull(result, "market", currentBuildings.Market);
+            AddIfNotNull(result, "place", currentBuildings.Place);
+            AddIfNotNull(result, "smith", currentBuildings.Smith);
+            AddIfNotNull(result, "stable", currentBuildings.Stable);
+            AddIfNotNull(result, "status", currentBuildings.Statue);
+            AddIfNotNull(result, "wood", currentBuildings.Wood);
+            AddIfNotNull(result, "wall", currentBuildings.Wall);
+            AddIfNotNull(result, "storage", currentBuildings.Storage);
+            AddIfNotNull(result, "watchtower", currentBuildings.Watchtower);
+            AddIfNotNull(result, "garage", currentBuildings.Garage);
 
             return result;
         }

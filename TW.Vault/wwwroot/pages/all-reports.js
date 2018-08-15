@@ -1,4 +1,4 @@
-﻿function parseAllReportsPage($doc) {
+﻿function parseAllReportsPage($doc, onProgress_, onDone_) {
 
     $doc = $doc || $(document);
 
@@ -8,7 +8,7 @@
     lib.ensurePage(lib.pageTypes.ALL_REPORTS);
 
     var requestManager = new RequestManager();
-    requestManager.refreshDelay = 300;
+    requestManager.refreshDelay = 500;
 
     let previousReports = JSON.parse(localStorage.getItem('vault-reports-history') || '[]');
 
@@ -23,32 +23,83 @@
             return;
         }
 
+        let $icon = $el.closest('td').find('img:first-of-type');
+
+        var isBattleReport = false;
+        $icon.each((_, el) => {
+            let icon = $(el).attr('src');
+            if (icon.contains("/dots/") || icon.contains("attack"))
+                isBattleReport = true;
+        });
+
+        if (!isBattleReport)
+            return;
+
+
+
         requestManager.addRequest(link, (data, request) => {
             if (data) {
                 let $doc = $(data);
-                parseReportPage($doc, link, false);
+                if (lib.checkContainsCaptcha($doc)) {
+                    requestManager.stop();
+                    let statusMessage = `Tribal wars Captcha was triggered, please refresh the page and try again.`;
+                    if (onProgress_)
+                        onProgress_(statusMessage);
+
+                    if (onDone_)
+                        onDone_('captcha');
+                    else
+                        alert(statusMessage);
+                }
+
+                parseReportPage($doc, link, false, () => {
+                    //  onError
+                    requestManager.getStats().numFailed++;
+                    toggleReport($el, false);
+                });
                 toggleReport($el);
             }
+
             updateUploadsDisplay();
         });
     });
 
     requestManager.setFinishedHandler(() => {
-        alert('Done!');
         let stats = requestManager.getStats();
-        setUploadsDisplay(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed`);
+
+        let statusMessage = `Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`;
+        if (onProgress_)
+            onProgress_(statusMessage);
+
+        if (!onDone_) {
+            alert('Done!');
+            let stats = requestManager.getStats();
+            setUploadsDisplay(statusMessage);
+        } else {
+            onDone_(false);
+        }
     });
 
     makeUploadsDisplay();
 
     if (!requestManager.getStats().total) {
-        setUploadsDisplay('No new reports to upload.');
-        alert('No new reports to upload!');
+        if (!onDone_) {
+            setUploadsDisplay('No new reports to upload.');
+            alert('No new reports to upload!');
+        } else {
+            if (onProgress_)
+                onProgress_('Done - no new reports to upload.');
+            if (onDone_)
+                onDone_(false);
+        }
     } else {
         requestManager.start();
     }
 
     function makeUploadsDisplay() {
+        if (onDone_ || onProgress_)
+            return;
+
         let $uploadsContainer = $('<div id="vault-uploads-display">');
         $doc.find('#report_list').parent().prepend($uploadsContainer);
         updateUploadsDisplay();
@@ -56,16 +107,31 @@
 
     function updateUploadsDisplay() {
         let stats = requestManager.getStats();
-        setUploadsDisplay(`Uploading ${stats.total} reports... (${stats.done} done, ${stats.numFailed} failed)`);
+        let statusMessage = `Uploading ${stats.total} reports... (${stats.done} done, ${stats.numFailed} failed.)`;
+
+        if (!onProgress_) {
+            setUploadsDisplay(statusMessage);
+        } else {
+            onProgress_(statusMessage);
+        }
     }
 
     function setUploadsDisplay(contents) {
+        if (onDone_ || onProgress_)
+            return;
+
         let $uploadsContainer = $doc.find('#vault-uploads-display');
         $uploadsContainer.text(contents);
     }
 
-    function toggleReport($link) {
-        $link.closest('tr').find('td:first-of-type input').prop('checked', true);
+    function toggleReport($link, checked_) {
+        if (onDone_ || onProgress_)
+            return;
+
+        if (typeof checked_ == 'undefined')
+            checked_ = true;
+
+        $link.closest('tr').find('td:first-of-type input').prop('checked', checked_);
     }
 
 };

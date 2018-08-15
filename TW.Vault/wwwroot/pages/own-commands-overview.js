@@ -1,4 +1,4 @@
-﻿function parseOwnCommandsOverviewPage($doc) {
+﻿function parseOwnCommandsOverviewPage($doc, onProgress_, onDone_) {
     $doc = $doc || $(document);
 
     var requestManager = new RequestManager();
@@ -68,7 +68,14 @@
     });
 
     if (!$commandLinks.length) {
-        alert('No commands to upload!');
+        if (onProgress_) {
+            onProgress_('No commands to upload.');
+        }
+
+        if (!onDone_)
+            alert('No commands to upload!');
+        else
+            onDone_(false);
         return;
     }
 
@@ -77,13 +84,20 @@
             .done(() => {
                 localStorage.setItem('vault-commands-history', JSON.stringify(oldCommands));
                 let stats = requestManager.getStats();
-                setUploadsDisplay(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed`);
-                alert('Done!');
+                setUploadsDisplay(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`);
+
+                if (!onDone_)
+                    alert('Done!');
+                else
+                    onDone_(false);
             })
             .fail((req, status, err) => {
-                alert('An error occurred...');
+                if (!onDone_)
+                    alert('An error occurred...');
+                else
+                    onDone_(true);
                 console.error(req, status, err);
-                setUploadsDisplay('Failed to upload to vault');
+                setUploadsDisplay('Failed to upload to vault.');
             });
     });
 
@@ -91,12 +105,19 @@
 
     if (!requestManager.getStats().total) {
         setUploadsDisplay('No new commands to upload.');
-        alert('No new commands to upload.');
+
+        if (!onDone_)
+            alert('No new commands to upload.');
+        else
+            onDone_(false)
     } else {
         requestManager.start();
     }
 
     function makeUploadsDisplay() {
+        if (onProgress_)
+            return;
+
         let id = "vault-uploads-display";
         if ($(`#${id}`).length)
             $(`#${id}`).remove();
@@ -107,10 +128,14 @@
 
     function updateUploadsDisplay() {
         let stats = requestManager.getStats();
-        setUploadsDisplay(`Uploading ${stats.total} commands... (${stats.done} done, ${stats.numFailed} failed)`);
+        setUploadsDisplay(`Uploading ${stats.total} commands... (${stats.done} done, ${stats.numFailed} failed.)`);
     }
 
     function setUploadsDisplay(contents) {
+        if (onProgress_) {
+            onProgress_(contents);
+        }
+
         let $uploadsContainer = $doc.find('#vault-uploads-display');
         $uploadsContainer.text(contents);
     }
