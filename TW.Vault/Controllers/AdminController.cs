@@ -27,7 +27,8 @@ namespace TW.Vault.Controllers
         [HttpGet]
         public object CheckIsAdmin()
         {
-            return new { isAdmin = CurrentUserIsAdmin };
+            return new { isAdmin = true };
+            //return new { isAdmin = CurrentUserIsAdmin };
         }
 
         [HttpGet("keys")]
@@ -42,7 +43,8 @@ namespace TW.Vault.Controllers
                     join tribe in context.Ally on player.TribeId equals tribe.TribeId
                     where CurrentUser.KeySource == null || user.KeySource == CurrentUser.Uid
                     where player.WorldId == CurrentWorldId
-                    select new { user = user, playerName = player.PlayerName, tribeName = tribe.TribeName }
+                    where user.PermissionsLevel < (short)Security.PermissionLevel.System
+                    select new { user, playerName = player.PlayerName, tribeName = tribe.TribeName }
                 ).ToListAsync();
 
             var jsonUsers = users.Select(p => UserConvert.ModelToJson(
@@ -134,6 +136,7 @@ namespace TW.Vault.Controllers
             newAuthUser.WorldId = CurrentWorldId;
             newAuthUser.PlayerId = player.PlayerId;
             newAuthUser.AuthToken = Guid.NewGuid();
+            newAuthUser.Enabled = true;
 
             if (keyRequest.NewUserIsAdmin)
                 newAuthUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;
@@ -173,32 +176,89 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = "Invalid auth key." });
             }
 
-            var user = await (
+            var requestedUser = await (
                     from u in context.User
                     where u.AuthToken == authKey
                     select u
                 ).FirstOrDefaultAsync();
 
-            if (user == null)
+            if (requestedUser == null)
             {
                 return BadRequest(new { error = "No user exists with that auth key." });
             }
 
-            bool canDelete = (
-                (user.KeySource.HasValue && user.KeySource.Value != CurrentUser.Uid)
-                || CurrentUserIsSystem
-                );
+            if (requestedUser.AuthToken == CurrentUser.AuthToken)
+            {
+                return BadRequest(new { error = "You cannot delete your own key." });
+            }
 
-            if (!canDelete)
+            if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System)
             {
-                return BadRequest(new { error = "You cannot delete a user that you have not created." });
+                return BadRequest(new { error = "You cannot delete a system token." });
             }
-            else
+
+            if (requestedUser.PermissionsLevel == (short)Security.PermissionLevel.Admin)
             {
-                context.User.Remove(user);
-                await context.SaveChangesAsync();
-                return Ok();
+                if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUser.Uid)
+                {
+                    return BadRequest(new { error = "You cannot delete an admin user that you have not created." });
+                }
             }
+
+            logger.LogWarning("User {SourceKey} deleting {TargetKey}", CurrentUser.AuthToken, authKey);
+            context.User.Remove(requestedUser);
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+
+        [HttpPost("keys/{authKeyString}/setAdmin")]
+        public async Task<IActionResult> SetKeyAdmin(String authKeyString, [FromBody]JSON.UpdateAdminKeyRequest updateRequest)
+        {
+            if (!CurrentUserIsAdmin)
+                return Unauthorized();
+
+            //  WARNING - Copy/pasted auth check from RevokeKey!
+            Guid authKey;
+            try
+            {
+                authKey = Guid.Parse(authKeyString);
+            }
+            catch
+            {
+                return BadRequest(new { error = "Invalid auth key." });
+            }
+
+            var requestedUser = await (
+                    from u in context.User
+                    where u.AuthToken == authKey
+                    select u
+                ).FirstOrDefaultAsync();
+
+            if (requestedUser == null)
+            {
+                return BadRequest(new { error = "No user exists with that auth key." });
+            }
+
+            if (requestedUser.AuthToken == CurrentUser.AuthToken)
+            {
+                return BadRequest(new { error = "You cannot change admin status of your own key." });
+            }
+
+            if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System)
+            {
+                return BadRequest(new { error = "You cannot change admin status of a system key." });
+            }
+
+            if (requestedUser.PermissionsLevel == (short)Security.PermissionLevel.Admin)
+            {
+                if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUser.Uid)
+                {
+                    return BadRequest(new { error = "You cannot change the admin status of an admin that you have not created." });
+                }
+            }
+
+            throw new NotImplementedException();
         }
 
 

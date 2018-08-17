@@ -110,7 +110,7 @@ namespace TW.Vault.Controllers
         protected long CurrentTribeId => (long)HttpContext.Items["TribeId"];
 
         //  TODO - This should change per requested server
-        protected DateTime CurrentServerTime => DateTime.Now + TimeSpan.FromHours(1);
+        protected DateTime CurrentServerTime => DateTime.UtcNow + TimeSpan.FromHours(1);
 
         private String FormatProfileLabel(String label)
         {

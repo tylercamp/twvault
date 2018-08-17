@@ -12,8 +12,8 @@ namespace TW.Vault.Model.Convert
         public static JSON.BuildingLevels ToJSON(this Scaffold.ReportBuilding reportBuildings)
             => ReportBuildingToJson(reportBuildings);
 
-        public static Scaffold.ReportBuilding ToModel(this JSON.BuildingLevels jsonBuildings, long reportId, Scaffold.ReportBuilding existingBuildings = null, Scaffold.VaultContext context = null)
-            => JsonToReportBuilding(reportId, jsonBuildings, existingBuildings, context);
+        public static Scaffold.ReportBuilding ToModel(this JSON.BuildingLevels jsonBuildings, Scaffold.ReportBuilding existingBuildings = null, Scaffold.VaultContext context = null)
+            => JsonToReportBuilding(jsonBuildings, existingBuildings, context);
 
         public static JSON.BuildingLevels ReportBuildingToJson(Scaffold.ReportBuilding reportBuildings)
         {
@@ -73,7 +73,7 @@ namespace TW.Vault.Model.Convert
             return result;
         }
 
-        public static Scaffold.ReportBuilding JsonToReportBuilding(long reportId, JSON.BuildingLevels buildingLevels, Scaffold.ReportBuilding existingBuildings = null, Scaffold.VaultContext context = null)
+        public static Scaffold.ReportBuilding JsonToReportBuilding(JSON.BuildingLevels buildingLevels, Scaffold.ReportBuilding existingBuildings = null, Scaffold.VaultContext context = null)
         {
             if (buildingLevels == null || buildingLevels.Count == 0)
             {
@@ -91,12 +91,9 @@ namespace TW.Vault.Model.Convert
             else
             {
                 result = new Scaffold.ReportBuilding();
-                result.ReportId = reportId;
                 if (context != null)
                     context.Add(result);
             }
-
-            result.ReportId     = reportId;
 
             result.Barracks   = GetOrNull(buildingLevels, "barracks");
             result.Church     = GetOrNull(buildingLevels, "church");

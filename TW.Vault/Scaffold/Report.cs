@@ -21,11 +21,13 @@ namespace TW.Vault.Scaffold
         public long? TxId { get; set; }
         public short WorldId { get; set; }
         public short? Loyalty { get; set; }
+        public long? BuildingId { get; set; }
 
         public ReportArmy AttackerArmy { get; set; }
         public ReportArmy AttackerLossesArmy { get; set; }
         public Player AttackerPlayer { get; set; }
         public Village AttackerVillage { get; set; }
+        public ReportBuilding Building { get; set; }
         public ReportArmy DefenderArmy { get; set; }
         public ReportArmy DefenderLossesArmy { get; set; }
         public Player DefenderPlayer { get; set; }
@@ -33,6 +35,5 @@ namespace TW.Vault.Scaffold
         public Village DefenderVillage { get; set; }
         public Transaction Tx { get; set; }
         public World World { get; set; }
-        public ReportBuilding ReportBuilding { get; set; }
     }
 }

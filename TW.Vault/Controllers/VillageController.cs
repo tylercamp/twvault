@@ -161,7 +161,7 @@ namespace TW.Vault.Controllers
                 if (currentVillage.CurrentBuilding != null)
                 {
                     var constructionCalculator = new ConstructionCalculator();
-                    jsonData.PossibleBuildings = constructionCalculator.CalculatePossibleBuildings(jsonData.LastBuildings, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated);
+                    jsonData.PossibleBuildings = constructionCalculator.CalculatePossibleBuildings(jsonData.LastBuildings, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated.Value);
                 }
 
                 if (currentVillage.ArmyStationed != null)
@@ -171,21 +171,21 @@ namespace TW.Vault.Controllers
                     short hqLevel = currentVillage.CurrentBuilding?.Main ?? 20;
 
                     if (currentVillage.CurrentBuilding != null)
-                        wallLevel += new ConstructionCalculator().CalculateLevelsInTimeSpan(BuildingType.Wall, hqLevel, wallLevel, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated);
+                        wallLevel += new ConstructionCalculator().CalculateLevelsInTimeSpan(BuildingType.Wall, hqLevel, wallLevel, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated.Value);
 
                     jsonData.NukesRequired = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, 100);
                 }
 
-                if (jsonData.OwnedArmy != null && jsonData.OwnedArmy.IsEmpty())
+                if (jsonData.OwnedArmy != null && jsonData.OwnedArmySeenAt == null)
                     jsonData.OwnedArmy = null;
 
-                if (jsonData.StationedArmy != null && jsonData.StationedArmy.IsEmpty())
+                if (jsonData.StationedArmy != null && jsonData.StationedSeenAt == null)
                     jsonData.StationedArmy = null;
 
-                if (jsonData.TravelingArmy != null && jsonData.TravelingArmy.IsEmpty())
+                if (jsonData.TravelingArmy != null && jsonData.TravelingSeenAt == null)
                     jsonData.TravelingArmy = null;
 
-                if (jsonData.RecentlyLostArmy != null && jsonData.RecentlyLostArmy.IsEmpty())
+                if (jsonData.RecentlyLostArmy != null && jsonData.RecentlyLostArmySeenAt == null)
                     jsonData.RecentlyLostArmy = null;
             });
 

@@ -16,7 +16,7 @@ namespace TW.Vault
                 .Include(r => r.DefenderArmy)
                 .Include(r => r.DefenderLossesArmy)
                 .Include(r => r.DefenderTravelingArmy)
-                .Include(r => r.ReportBuilding);
+                .Include(r => r.Building);
 
         public static IQueryable<Command> IncludeCommandData(this IQueryable<Command> commandsQuery) =>
             commandsQuery

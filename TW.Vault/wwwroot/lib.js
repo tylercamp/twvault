@@ -253,7 +253,11 @@ var lib = (() => {
 
         checkContainsCaptcha: function checkContainsCaptcha($doc_) {
             $doc_ = $doc_ || $(document);
-            return !!$doc_.find('#bot_check').length;
+            let $body = $doc_.find('#ds_body');
+
+            let foundCaptcha = $body.length && !!$body.data('bot-protect')
+            if (foundCaptcha) console.log('Found captcha!');
+            return foundCaptcha;
         },
 
         saveAsFile: function saveAsFile(filename, fileContents) {

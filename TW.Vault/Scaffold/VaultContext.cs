@@ -564,6 +564,9 @@ namespace TW.Vault.Scaffold
                     .HasName("idx_report_attacker_village_id")
                     .ForNpgsqlHasMethod("hash");
 
+                entity.HasIndex(e => e.BuildingId)
+                    .HasName("fki_fk_building_id");
+
                 entity.HasIndex(e => e.DefenderPlayerId)
                     .HasName("idx_report_defender_player_id")
                     .ForNpgsqlHasMethod("hash");
@@ -587,6 +590,8 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.AttackerPlayerId).HasColumnName("attacker_player_id");
 
                 entity.Property(e => e.AttackerVillageId).HasColumnName("attacker_village_id");
+
+                entity.Property(e => e.BuildingId).HasColumnName("building_id");
 
                 entity.Property(e => e.DefenderArmyId).HasColumnName("defender_army_id");
 
@@ -633,6 +638,11 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey(d => d.AttackerVillageId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_attacker_village_id");
+
+                entity.HasOne(d => d.Building)
+                    .WithMany(p => p.Report)
+                    .HasForeignKey(d => d.BuildingId)
+                    .HasConstraintName("fk_building_id");
 
                 entity.HasOne(d => d.DefenderArmy)
                     .WithMany(p => p.ReportDefenderArmy)
@@ -723,17 +733,15 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<ReportBuilding>(entity =>
             {
-                entity.HasKey(e => e.ReportId);
-
                 entity.ToTable("report_building", "tw");
 
                 entity.HasIndex(e => e.WorldId)
                     .HasName("idx_report_building_world_id")
                     .ForNpgsqlHasMethod("hash");
 
-                entity.Property(e => e.ReportId)
-                    .HasColumnName("report_id")
-                    .ValueGeneratedNever();
+                entity.Property(e => e.ReportBuildingId)
+                    .HasColumnName("report_building_id")
+                    .HasDefaultValueSql("nextval('tw.report_building_report_building_id_seq'::regclass)");
 
                 entity.Property(e => e.Barracks).HasColumnName("barracks");
 
@@ -774,12 +782,6 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.Wood).HasColumnName("wood");
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
-
-                entity.HasOne(d => d.Report)
-                    .WithOne(p => p.ReportBuilding)
-                    .HasForeignKey<ReportBuilding>(d => d.ReportId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_report_id");
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.ReportBuilding)
@@ -938,6 +940,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.HasSequence("performance_record_id_seq");
 
             modelBuilder.HasSequence("report_armies_army_id_seq");
+
+            modelBuilder.HasSequence("report_building_report_building_id_seq");
 
             modelBuilder.HasSequence("tx_id_seq");
 
