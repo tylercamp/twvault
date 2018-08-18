@@ -15,7 +15,9 @@ namespace TW.Vault.Model.Convert
             result.Priveleges = user.PermissionsLevel;
             result.PlayerName = playerName;
             result.TribeName = tribeName;
-            result.Key = user.AuthToken.ToString();
+
+            if (user.PermissionsLevel < (short)Security.PermissionLevel.System)
+                result.Key = user.AuthToken.ToString();
 
             return result;
         }

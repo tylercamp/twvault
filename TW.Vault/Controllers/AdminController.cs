@@ -42,8 +42,9 @@ namespace TW.Vault.Controllers
                     join player in context.Player on user.PlayerId equals player.PlayerId
                     join tribe in context.Ally on player.TribeId equals tribe.TribeId
                     where CurrentUser.KeySource == null || user.KeySource == CurrentUser.Uid
+                    where user.Enabled
                     where player.WorldId == CurrentWorldId
-                    where user.PermissionsLevel < (short)Security.PermissionLevel.System
+                    where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
                     select new { user, playerName = player.PlayerName, tribeName = tribe.TribeName }
                 ).ToListAsync();
 
@@ -74,10 +75,7 @@ namespace TW.Vault.Controllers
 
                 if (possiblePlayer == null)
                 {
-                    return BadRequest(new
-                    {
-                        error = "No player could be found with the given player ID."
-                    });
+                    return BadRequest(new { error = "No player could be found with the given player ID." });
                 }
 
                 player = possiblePlayer;
@@ -94,42 +92,32 @@ namespace TW.Vault.Controllers
 
                 if (possiblePlayer == null)
                 {
-                    return BadRequest(new
-                    {
-                        error = "No user could be found with the given name."
-                    });
+                    return BadRequest(new { error = "No user could be found with the given name." });
                 }
 
                 player = possiblePlayer;
             }
             else
             {
-                return BadRequest(new
-                {
-                    error = "Either the player ID or player name must be specified."
-                });
+                return BadRequest(new { error = "Either the player ID or player name must be specified." });
             }
 
             if (!CurrentUserIsSystem && player.TribeId != CurrentTribeId)
             {
-                return BadRequest(new
-                {
-                    error = "Cannot request a key for a player that's not in your tribe."
-                });
+                return BadRequest(new { error = "Cannot request a key for a player that's not in your tribe." });
             }
 
             bool userExists = await (
                     from user in context.User
                     where user.PlayerId == player.PlayerId
+                    where user.WorldId == null || user.WorldId == CurrentWorldId
+                    where user.Enabled
                     select user
                 ).AnyAsync();
 
             if (userExists)
             {
-                return BadRequest(new
-                {
-                    error = "This user already has an auth key."
-                });
+                return BadRequest(new { error = "This user already has an auth key." });
             }
 
             var newAuthUser = new Scaffold.User();
@@ -137,6 +125,9 @@ namespace TW.Vault.Controllers
             newAuthUser.PlayerId = player.PlayerId;
             newAuthUser.AuthToken = Guid.NewGuid();
             newAuthUser.Enabled = true;
+            newAuthUser.TransactionTime = DateTime.UtcNow;
+            newAuthUser.AdminAuthToken = CurrentUser.AuthToken;
+            newAuthUser.AdminPlayerId = CurrentUser.PlayerId;
 
             if (keyRequest.NewUserIsAdmin)
                 newAuthUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;
@@ -205,8 +196,13 @@ namespace TW.Vault.Controllers
                 }
             }
 
-            logger.LogWarning("User {SourceKey} deleting {TargetKey}", CurrentUser.AuthToken, authKey);
-            context.User.Remove(requestedUser);
+            logger.LogWarning("User {SourceKey} disabling {TargetKey}", CurrentUser.AuthToken, authKey);
+            requestedUser.Enabled = false;
+            requestedUser.AdminAuthToken = CurrentUser.AuthToken;
+            requestedUser.AdminPlayerId = CurrentUser.PlayerId;
+            requestedUser.TransactionTime = DateTime.UtcNow;
+
+            context.User.Update(requestedUser);
             await context.SaveChangesAsync();
             return Ok();
         }

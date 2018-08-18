@@ -92,7 +92,12 @@ RequestManager.prototype.start = function () {
 
 RequestManager.prototype.stop = function () {
     this._interval && clearInterval(this._interval);
+    this._interval = null;
 };
+
+RequestManager.prototype.isRunning = function () {
+    return this._interval != null;
+}
 
 RequestManager.prototype.addRequest = function (url, callback, beforeRunCallback_) {
     if (this._urlHistory[url]) {

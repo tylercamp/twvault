@@ -9,14 +9,6 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     if (typeof showNotice_ == 'undefined')
         showNotice_ = true; // Show "complete/error" notice by default
 
-    if (lib.checkContainsCaptcha($doc)) {
-        if (showNotice_) {
-            alert('Captcha has been triggered, refresh the page.');
-        }
-        onError_('captcha');
-        return;
-    }
-
     var $attackInfo = $doc.find('#attack_info_att')
     var $defenseInfo = $doc.find('#attack_info_def')
     var defendingPlayer = $defenseInfo.find('a[href*=info_player]');

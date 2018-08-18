@@ -39,19 +39,24 @@
 
         requestManager.addRequest(link, (data, request) => {
             if (data) {
-                let $doc = $(data);
-                if (lib.checkContainsCaptcha($doc)) {
-                    requestManager.stop();
-                    let statusMessage = `Tribal wars Captcha was triggered, please refresh the page and try again.`;
-                    if (onProgress_)
-                        onProgress_(statusMessage);
+                if (lib.checkContainsCaptcha(data)) {
 
-                    if (onDone_)
-                        onDone_('captcha');
-                    else
-                        alert(statusMessage);
+                    if (requestManager.isRunning()) {
+                        requestManager.stop();
+                        let statusMessage = `Tribal wars Captcha was triggered, please refresh the page and try again.`;
+                        if (onProgress_)
+                            onProgress_(statusMessage);
+
+                        if (onDone_)
+                            onDone_('captcha');
+                        else
+                            alert(statusMessage);
+                    }
+
+                    return;
                 }
 
+                let $doc = $(data);
                 parseReportPage($doc, link, false, () => {
                     //  onError
                     requestManager.getStats().numFailed++;

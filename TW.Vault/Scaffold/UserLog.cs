@@ -3,14 +3,10 @@ using System.Collections.Generic;
 
 namespace TW.Vault.Scaffold
 {
-    public partial class User
+    public partial class UserLog
     {
-        public User()
-        {
-            InvalidDataRecord = new HashSet<InvalidDataRecord>();
-        }
-
-        public int Uid { get; set; }
+        public long Id { get; set; }
+        public long Uid { get; set; }
         public long PlayerId { get; set; }
         public short PermissionsLevel { get; set; }
         public string Label { get; set; }
@@ -21,8 +17,8 @@ namespace TW.Vault.Scaffold
         public DateTime TransactionTime { get; set; }
         public Guid? AdminAuthToken { get; set; }
         public long? AdminPlayerId { get; set; }
+        public string OperationType { get; set; }
 
         public World World { get; set; }
-        public ICollection<InvalidDataRecord> InvalidDataRecord { get; set; }
     }
 }

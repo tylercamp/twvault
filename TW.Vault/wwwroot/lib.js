@@ -5,6 +5,8 @@ var lib = (() => {
     //# REQUIRE twcalc.js
 
     let twstats = getTwTroopStats();
+    let localStoragePrefix = 'vls-';
+    let cookiePrefix = 'vc-';
 
     var storedScriptHost = null;
 
@@ -251,11 +253,16 @@ var lib = (() => {
             });
         },
 
-        checkContainsCaptcha: function checkContainsCaptcha($doc_) {
-            $doc_ = $doc_ || $(document);
-            let $body = $doc_.find('#ds_body');
+        checkContainsCaptcha: function checkContainsCaptcha(docOrHtml) {
+            var foundCaptcha = false;
+            if (typeof docOrHtml == 'string') {
+                foundCaptcha = !!docOrHtml.match(/data\-bot\-protect=/);
+            } else {
+                let $doc = $(docOrHtml);
+                let $body = $doc_.find('#ds_body');
+                foundCaptcha = $body.length && !!$body.data('bot-protect')
+            }
 
-            let foundCaptcha = $body.length && !!$body.data('bot-protect')
             if (foundCaptcha) console.log('Found captcha!');
             return foundCaptcha;
         },
@@ -334,6 +341,9 @@ var lib = (() => {
         },
 
         queryCurrentPlayerInfo: function (callback) {
+            callback(9834678, 1096)
+            return;
+
             let queryUrl = lib.makeTwUrl('screen=ranking&mode=player');
             $.get(queryUrl, (data) => {
                 let $doc = $(data);
@@ -371,6 +381,100 @@ var lib = (() => {
             storedScriptHost = scriptHost;
         },
 
+        getCookie: function getCookie(name) {
+            let finalName = `${cookiePrefix}${name}`;
+            var match = document.cookie.match(new RegExp(`${finalName}=([^\s\;]+)`));
+            let value = match ? match[1] : null;
+            if (value) {
+                try {
+                    return lib.jsonParse(value);
+                } catch {
+                    return value;
+                }
+            } else {
+                return value;
+            }
+        },
+
+        setCookie: function setCookie(name, value) {
+            if (!value) value = '';
+            if (typeof value != 'string') throw "Cookie value must be a string! (Don't store JSON.stringify in cookie either!)";
+            let finalName = `${cookiePrefix}${name}`;
+            document.cookie = `${finalName}=${value}`;
+        },
+
+        clearCookie: function clearCookie(name) {
+            let finalName = `${cookiePrefix}${name}`;
+            document.cookie = `${finalName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        },
+
+        setLocalStorage: function setLocalStorage(key, value) {
+            let finalKey = `${localStoragePrefix}${key}`;
+            window.localStorage.setItem(finalKey, lib.jsonStringify(value));
+        },
+
+        getLocalStorage: function getLocalStorage(key, value) {
+            let finalKey = `${localStoragePrefix}${key}`;
+            return lib.jsonParse(window.localStorage.getItem(finalKey) || 'null');
+        },
+
+        //  Stringify JSON while preserving Date formatting
+        jsonStringify: function jsonStringifyWithDates(object) {
+            if (typeof object == 'string')
+                return object;
+
+            if (object instanceof Date) {
+                return object.toUTCString();
+            }
+
+            let result = lib.clone(object);
+            lib.recursiveObjForEach(result, (prop, value, obj) => {
+                if (value instanceof Date) {
+                    obj[prop] = value.toUTCString();
+                }
+            });
+
+            return JSON.stringify(result);
+        },
+
+        //  Parse JSON while checking for date formatting
+        jsonParse: function jsonParseWithDates(json) {
+            let stringIsDate = (str) => !!str.match(/^\w+,?\s+\d+\s+\w+\s+\d+\s+\d+:\d+:\d+/);
+
+            if (stringIsDate(json))
+                return new Date(json);
+
+            let result = JSON.parse(json);
+            if (result == null)
+                return null;
+
+            lib.recursiveObjForEach(result, (prop, value, obj) => {
+                if (typeof value == 'string' && stringIsDate(value)) {
+                    obj[prop] = new Date(value);
+                }
+            });
+
+            return result;
+        },
+
+        clone: function cloneObject(object) {
+            if (typeof object != 'object')
+                return object;
+
+            let result = {};
+            for (var prop in object) {
+                if (!object.hasOwnProperty(prop)) continue;
+                if (object[prop] instanceof Date) {
+                    result[prop] = object[prop];
+                } else if (typeof object[prop] == 'object') {
+                    result[prop] = lib.clone(object[prop]);
+                } else {
+                    result[prop] = object[prop];
+                }
+            }
+            return result;
+        },
+
         //  Converts an array to an object using either the "keySelector/valueSelector" parameters,
         //  or by calling the 'transformer'
         //  keySelector: (entry) => key
@@ -401,6 +505,23 @@ var lib = (() => {
                 result[keySelector(val, prop)] = valueSelector(val, prop);
             });
             return result;
+        },
+
+        recursiveObjForEach: function recursiveObjectForEach(object, callback, sourceObject_) {
+            if (typeof object != 'object') {
+                return object;
+            }
+
+            for (var prop in object) {
+                if (!object.hasOwnProperty(prop)) continue;
+                if (typeof object[prop] == 'function') continue;
+
+                callback.call(object, prop, object[prop], object, sourceObject_);
+
+                if (typeof object[prop] == 'object') {
+                    lib.recursiveObjForEach(object[prop], callback, sourceObject_ || object);
+                }
+            }
         },
 
         init: function init(callback) {
@@ -480,7 +601,7 @@ var lib = (() => {
     //  URLs for each given page type
     let pageUrls = {};
     pageUrls[lib.pageTypes.VIEW_REPORT] = null; // there's no generic "view report" page, it's specific to each report
-    pageUrls[lib.pageTypes.ALL_REPORTS] = 'screen=report&mode=all';
+    pageUrls[lib.pageTypes.ALL_REPORTS] = 'screen=report&mode=all&group_id=-1';
     pageUrls[lib.pageTypes.INCOMINGS_OVERVIEW] = 'screen=overview_villages&mode=incomings&type=all&subtype=all&group=0&page=-1&subtype=all';
     pageUrls[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = 'screen=overview_villages&mode=commands&type=all&group=0&page=-1&&type=all';
     pageUrls[lib.pageTypes.MAP] = 'screen=map';
@@ -489,6 +610,7 @@ var lib = (() => {
     //  Make sure all page types have validators
     lib.objForEach(lib.pageTypes, (type) => !pageValidators[type] ? console.warn('No pageValidator set for pageType: ', type) : null);
 
+    window._vlib = lib;
     return lib;
 
 })();

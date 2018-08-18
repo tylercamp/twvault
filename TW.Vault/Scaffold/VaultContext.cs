@@ -32,6 +32,7 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<ReportBuilding> ReportBuilding { get; set; }
         public virtual DbSet<Transaction> Transaction { get; set; }
         public virtual DbSet<User> User { get; set; }
+        public virtual DbSet<UserLog> UserLog { get; set; }
         public virtual DbSet<Village> Village { get; set; }
         public virtual DbSet<World> World { get; set; }
         public virtual DbSet<WorldSettings> WorldSettings { get; set; }
@@ -827,6 +828,10 @@ namespace TW.Vault.Scaffold
                     .HasColumnName("uid")
                     .HasDefaultValueSql("nextval('tw.users_uid_seq'::regclass)");
 
+                entity.Property(e => e.AdminAuthToken).HasColumnName("admin_auth_token");
+
+                entity.Property(e => e.AdminPlayerId).HasColumnName("admin_player_id");
+
                 entity.Property(e => e.AuthToken).HasColumnName("auth_token");
 
                 entity.Property(e => e.Enabled).HasColumnName("enabled");
@@ -839,10 +844,53 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.PlayerId).HasColumnName("player_id");
 
+                entity.Property(e => e.TransactionTime).HasColumnName("transaction_time");
+
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.User)
+                    .HasForeignKey(d => d.WorldId)
+                    .HasConstraintName("fk_world_id");
+            });
+
+            modelBuilder.Entity<UserLog>(entity =>
+            {
+                entity.ToTable("user_log", "security");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('security.user_log_id_seq'::regclass)");
+
+                entity.Property(e => e.AdminAuthToken).HasColumnName("admin_auth_token");
+
+                entity.Property(e => e.AdminPlayerId).HasColumnName("admin_player_id");
+
+                entity.Property(e => e.AuthToken).HasColumnName("auth_token");
+
+                entity.Property(e => e.Enabled).HasColumnName("enabled");
+
+                entity.Property(e => e.KeySource).HasColumnName("key_source");
+
+                entity.Property(e => e.Label).HasColumnName("label");
+
+                entity.Property(e => e.OperationType)
+                    .IsRequired()
+                    .HasColumnName("operation_type")
+                    .HasColumnType("character varying");
+
+                entity.Property(e => e.PermissionsLevel).HasColumnName("permissions_level");
+
+                entity.Property(e => e.PlayerId).HasColumnName("player_id");
+
+                entity.Property(e => e.TransactionTime).HasColumnName("transaction_time");
+
+                entity.Property(e => e.Uid).HasColumnName("uid");
+
+                entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.HasOne(d => d.World)
+                    .WithMany(p => p.UserLog)
                     .HasForeignKey(d => d.WorldId)
                     .HasConstraintName("fk_world_id");
             });
@@ -932,6 +980,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.HasSequence("conflicting_data_record_id_seq");
 
             modelBuilder.HasSequence("invalid_data_record_id_seq");
+
+            modelBuilder.HasSequence("user_log_id_seq");
 
             modelBuilder.HasSequence("command_army_id_seq");
 
