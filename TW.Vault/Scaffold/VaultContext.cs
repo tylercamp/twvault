@@ -22,6 +22,7 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<Conquer> Conquer { get; set; }
         public virtual DbSet<CurrentArmy> CurrentArmy { get; set; }
         public virtual DbSet<CurrentBuilding> CurrentBuilding { get; set; }
+        public virtual DbSet<CurrentPlayer> CurrentPlayer { get; set; }
         public virtual DbSet<CurrentVillage> CurrentVillage { get; set; }
         public virtual DbSet<FailedAuthorizationRecord> FailedAuthorizationRecord { get; set; }
         public virtual DbSet<InvalidDataRecord> InvalidDataRecord { get; set; }
@@ -33,6 +34,7 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<Transaction> Transaction { get; set; }
         public virtual DbSet<User> User { get; set; }
         public virtual DbSet<UserLog> UserLog { get; set; }
+        public virtual DbSet<UserUploadHistory> UserUploadHistory { get; set; }
         public virtual DbSet<Village> Village { get; set; }
         public virtual DbSet<World> World { get; set; }
         public virtual DbSet<WorldSettings> WorldSettings { get; set; }
@@ -367,6 +369,27 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.CurrentBuilding)
+                    .HasForeignKey(d => d.WorldId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_world_id");
+            });
+
+            modelBuilder.Entity<CurrentPlayer>(entity =>
+            {
+                entity.HasKey(e => e.PlayerId);
+
+                entity.ToTable("current_player", "tw");
+
+                entity.Property(e => e.PlayerId)
+                    .HasColumnName("player_id")
+                    .ValueGeneratedNever();
+
+                entity.Property(e => e.CurrentPossibleNobles).HasColumnName("current_possible_nobles");
+
+                entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.HasOne(d => d.World)
+                    .WithMany(p => p.CurrentPlayer)
                     .HasForeignKey(d => d.WorldId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_world_id");
@@ -895,6 +918,31 @@ namespace TW.Vault.Scaffold
                     .HasConstraintName("fk_world_id");
             });
 
+            modelBuilder.Entity<UserUploadHistory>(entity =>
+            {
+                entity.ToTable("user_upload_history", "security");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('security.user_upload_history_id_seq'::regclass)");
+
+                entity.Property(e => e.LastUploadedCommandsAt).HasColumnName("last_uploaded_commands_at");
+
+                entity.Property(e => e.LastUploadedIncomingsAt).HasColumnName("last_uploaded_incomings_at");
+
+                entity.Property(e => e.LastUploadedReportsAt).HasColumnName("last_uploaded_reports_at");
+
+                entity.Property(e => e.LastUploadedTroopsAt).HasColumnName("last_uploaded_troops_at");
+
+                entity.Property(e => e.Uid).HasColumnName("uid");
+
+                entity.HasOne(d => d.U)
+                    .WithMany(p => p.UserUploadHistory)
+                    .HasForeignKey(d => d.Uid)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_uid");
+            });
+
             modelBuilder.Entity<Village>(entity =>
             {
                 entity.ToTable("village", "tw_provided");
@@ -982,6 +1030,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.HasSequence("invalid_data_record_id_seq");
 
             modelBuilder.HasSequence("user_log_id_seq");
+
+            modelBuilder.HasSequence("user_upload_history_id_seq");
 
             modelBuilder.HasSequence("command_army_id_seq");
 

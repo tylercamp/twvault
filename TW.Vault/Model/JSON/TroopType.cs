@@ -28,4 +28,11 @@ namespace TW.Vault.Model.JSON
         Cavalry,
         Archer
     }
+
+    public enum UnitBuild
+    {
+        Defensive,
+        Offensive,
+        Neutral
+    }
 }

@@ -9,6 +9,36 @@ namespace TW.Testing
     {
         static void Main(string[] args)
         {
+            //TestBattleSimulation();
+            TestRecruitment();
+
+            Console.ReadLine();
+        }
+
+
+
+
+        static void TestRecruitment()
+        {
+            var calculator = new RecruitmentCalculator(2, 25, 20, 10, 1);
+
+            for (int i = 0; i < 5; i++)
+            {
+                var timeSpan = TimeSpan.FromDays(3 * (i + 1));
+                var defense = calculator.CalculatePossibleDefenseRecruitment(timeSpan);
+                var offense = calculator.CalculatePossibleOffenseRecruitment(timeSpan);
+
+                Console.WriteLine("\n\nIn {0} hours:", timeSpan.TotalHours);
+                Console.WriteLine("[Offense]");
+                PrintArmy(offense);
+
+                Console.WriteLine("\n[Defense]");
+                PrintArmy(defense);
+            }
+        }
+
+        static void TestBattleSimulation()
+        {
             var attackingArmy = new Army
             {
                 { "axe", 7000 },
@@ -22,7 +52,7 @@ namespace TW.Testing
                 { "spear", 10000 },
                 { "sword", 10000 }
             };
-            
+
             int testWallLevel = 15;
 
             var simulator = new BattleSimulator();
@@ -53,8 +83,14 @@ namespace TW.Testing
 
             Console.WriteLine("It would take {0} total attacks like this to defeat all defending troops.", numNukes);
             Console.WriteLine("Took {0}ms to simulate", (end - start).TotalMilliseconds);
+        }
 
-            Console.ReadLine();
+        static void PrintArmy(Army army)
+        {
+            foreach (var troop in army.Keys)
+            {
+                Console.WriteLine("--- {0}: {1}", troop, army[troop]);
+            }
         }
 
         static void PrintArmy(Army army, Army newArmy)

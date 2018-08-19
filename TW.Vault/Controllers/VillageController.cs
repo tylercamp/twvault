@@ -13,6 +13,7 @@ using TW.Vault.Model.Convert;
 using TW.Vault.Model.Calculations;
 using TW.Vault.Features.Simulation;
 using Newtonsoft.Json;
+using TW.Vault.Model.Native;
 
 namespace TW.Vault.Controllers
 {
@@ -187,21 +188,40 @@ namespace TW.Vault.Controllers
 
                 if (jsonData.RecentlyLostArmy != null && jsonData.RecentlyLostArmySeenAt == null)
                     jsonData.RecentlyLostArmy = null;
+
+
+
+                //  Add recruitment estimations
+                if (jsonData.StationedArmy != null)
+                {
+                    var timeSinceSeen = CurrentServerTime - jsonData.StationedSeenAt.Value;
+
+                    //  No point in estimating troops if there's been 2 weeks since we saw stationed troops
+                    if (timeSinceSeen.TotalDays < 14)
+                    {
+                        var calculator = new RecruitmentCalculator(2, jsonData.LastBuildings);
+                        var existingPop = ArmyStats.CalculateTotalPopulation(jsonData.StationedArmy);
+                        var availablePop = Math.Max(0, calculator.MaxPopulation - existingPop);
+
+                        jsonData.PossibleRecruitedOffensiveArmy = calculator.CalculatePossibleOffenseRecruitment(timeSinceSeen);
+                        jsonData.PossibleRecruitedDefensiveArmy = calculator.CalculatePossibleDefenseRecruitment(timeSinceSeen);
+                    }
+                }
             });
 
             return Ok(jsonData);
         }
 
         [HttpPost("army/current")]
-        public async Task<IActionResult> PostCurrentArmy([FromBody]JSON.VillageArmySet[] currentArmySetJson)
+        public async Task<IActionResult> PostCurrentArmy([FromBody]JSON.PlayerArmy currentArmySetJson)
         {
             if (!ModelState.IsValid)
                 return ValidationProblem(ModelState);
 
-            if (currentArmySetJson.Length == 0)
+            if (currentArmySetJson.TroopData.Count == 0)
                 return Ok();
 
-            var villageIds = currentArmySetJson.Select(a => a.VillageId.Value).ToList();
+            var villageIds = currentArmySetJson.TroopData.Select(a => a.VillageId.Value).ToList();
 
             var scaffoldCurrentVillages = await Profile("Get existing scaffold current villages", () => (
                     from cv in context.CurrentVillage.FromWorld(CurrentWorldId).IncludeCurrentVillageData()
@@ -250,7 +270,7 @@ namespace TW.Vault.Controllers
 
             Profile("Generate scaffold armies", () =>
             {
-                foreach (var armySetJson in currentArmySetJson)
+                foreach (var armySetJson in currentArmySetJson.TroopData)
                 {
                     var currentVillage = mappedScaffoldVillages[armySetJson.VillageId.Value];
                     var villagePlayerId = villagePlayerIds[currentVillage.VillageId];
@@ -274,6 +294,12 @@ namespace TW.Vault.Controllers
                     currentVillage.ArmyTraveling.LastUpdated = DateTime.UtcNow;
                 }
             });
+
+            var currentPlayer = await EFUtil.GetOrCreateCurrentPlayer(context, CurrentUser.PlayerId, CurrentWorldId);
+            currentPlayer.CurrentPossibleNobles = currentArmySetJson.PossibleNobles;
+
+            var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+            userUploadHistory.LastUploadedTroopsAt = DateTime.UtcNow;
 
             await Profile("Save changes", () => context.SaveChangesAsync());
             return Ok();

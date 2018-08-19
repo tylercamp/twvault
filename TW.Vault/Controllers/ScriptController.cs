@@ -43,9 +43,9 @@ namespace TW.Vault.Controllers
             if (notFoundString != null)
                 return NotFound();
 
-            var minified = Uglify.Js(scriptContents).Code;
-
-            return Content(minified, "application/json");
+            //var minified = Uglify.Js(scriptContents).Code;
+            //return Content(minified, "application/json");
+            return Content(scriptContents, "application/json");
         }
 
         [HttpGet("real/{authToken}/{name}", Name = "GetCompiledUnobfuscatedScript")]

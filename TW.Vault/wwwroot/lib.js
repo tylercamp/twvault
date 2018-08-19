@@ -27,6 +27,7 @@ var lib = (() => {
             INCOMINGS_OVERVIEW: null,
             OWN_COMMANDS_OVERVIEW: null,
             OWN_TROOPS_OVERVIEW: null,
+            BUILDINGS_OVERVIEW: null,
             MAP: null
         },
 
@@ -195,6 +196,16 @@ var lib = (() => {
             return lib;
         },
 
+        onFirstRun: function (callback) {
+            var hasRan = lib.getCookie('consented');
+            let approvedRunCallback = () => lib.setCookie('consented', true);
+            if (!hasRan) {
+                callback(approvedRunCallback);
+            }
+
+            return !hasRan;
+        },
+
         //  Iterates over the properties of an object similar to iterating over an array
         objForEach: function objForEach(obj, callback) {
             for (var prop in obj) {
@@ -341,9 +352,6 @@ var lib = (() => {
         },
 
         queryCurrentPlayerInfo: function (callback) {
-            callback(9834678, 1096)
-            return;
-
             let queryUrl = lib.makeTwUrl('screen=ranking&mode=player');
             $.get(queryUrl, (data) => {
                 let $doc = $(data);
@@ -398,7 +406,7 @@ var lib = (() => {
 
         setCookie: function setCookie(name, value) {
             if (!value) value = '';
-            if (typeof value != 'string') throw "Cookie value must be a string! (Don't store JSON.stringify in cookie either!)";
+            if (typeof value == 'function' || typeof value == 'object') throw "Cookie value cannot be a function or object! (Don't store JSON.stringify in cookie either!)";
             let finalName = `${cookiePrefix}${name}`;
             document.cookie = `${finalName}=${value}`;
         },
@@ -595,6 +603,7 @@ var lib = (() => {
     pageValidators[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=commands");
     pageValidators[lib.pageTypes.MAP] = () => href.contains("screen=map");
     pageValidators[lib.pageTypes.OWN_TROOPS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=units");
+    pageValidators[lib.pageTypes.BUILDINGS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=buildings");
 
     pageValidators[lib.pageTypes.UNKNOWN] = () => lib.getCurrentPage() == lib.pageTypes.UNKNOWN;
 
@@ -606,6 +615,7 @@ var lib = (() => {
     pageUrls[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = 'screen=overview_villages&mode=commands&type=all&group=0&page=-1&&type=all';
     pageUrls[lib.pageTypes.MAP] = 'screen=map';
     pageUrls[lib.pageTypes.OWN_TROOPS_OVERVIEW] = 'screen=overview_villages&mode=units&group=0&page=-1&type=complete';
+    pageUrls[lib.pageTypes.BUILDINGS_OVERVIEW] = 'screen=overview_villages&mode=buildings&group=0&page=-1';
 
     //  Make sure all page types have validators
     lib.objForEach(lib.pageTypes, (type) => !pageValidators[type] ? console.warn('No pageValidator set for pageType: ', type) : null);

@@ -9,6 +9,31 @@ namespace TW.Vault
 {
     public static class EFUtil
     {
+        public static async Task<UserUploadHistory> GetOrCreateUserUploadHistory(VaultContext context, int uid)
+        {
+            var userUploadHistory = await context.UserUploadHistory.Where(h => h.Uid == uid).FirstOrDefaultAsync();
+            if (userUploadHistory == null)
+            {
+                userUploadHistory = new UserUploadHistory();
+                userUploadHistory.Uid = uid;
+                context.Add(userUploadHistory);
+            }
+            return userUploadHistory;
+        }
+
+        public static async Task<CurrentPlayer> GetOrCreateCurrentPlayer(VaultContext context, long playerId, short worldId)
+        {
+            var currentPlayer = await context.CurrentPlayer.FromWorld(worldId).Where(p => p.PlayerId == playerId).FirstOrDefaultAsync();
+            if (currentPlayer == null)
+            {
+                currentPlayer = new CurrentPlayer();
+                currentPlayer.PlayerId = playerId;
+                currentPlayer.WorldId = worldId;
+                context.Add(currentPlayer);
+            }
+            return currentPlayer;
+        }
+
         public static IQueryable<Report> IncludeReportData(this IQueryable<Report> reportsQuery) =>
             reportsQuery
                 .Include(r => r.AttackerArmy)
@@ -83,6 +108,10 @@ namespace TW.Vault
 
         public static IQueryable<Village> FromWorld(this IQueryable<Village> currentVillagesQuery, long worldId) =>
             currentVillagesQuery
+                .Where(q => q.WorldId == worldId);
+
+        public static IQueryable<CurrentPlayer> FromWorld(this IQueryable<CurrentPlayer> currentPlayerQuery, long worldId) =>
+            currentPlayerQuery
                 .Where(q => q.WorldId == worldId);
 
         #endregion

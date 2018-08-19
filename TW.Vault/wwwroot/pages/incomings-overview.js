@@ -51,7 +51,11 @@
 
         console.log('Filled commands with target player ID from current player: ', commandsData);
 
-        lib.postApi(lib.makeApiUrl('command'), commandsData)
+        let data = {
+            isOwnCommands: false,
+            commands: commandsData
+        };
+        lib.postApi(lib.makeApiUrl('command'), data)
             .done(() => {
                 $doc.find('input[name*=id_][type=checkbox]').prop('checked', true);
 

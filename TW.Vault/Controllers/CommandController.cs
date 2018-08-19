@@ -44,6 +44,26 @@ namespace TW.Vault.Controllers
             );
         }
 
+        [HttpGet("{id}/tags", Name = "GetIncomingTags")]
+        public async Task<IActionResult> GetIncomingTags(long id)
+        {
+            var incoming = await (
+                    from command in context.Command.FromWorld(CurrentWorldId)
+                                                   .Include(c => c.SourceVillage)
+                                                   .Include(c => c.SourceVillage.CurrentVillage)
+                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyOwned)
+                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyStationed)
+                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyTraveling)
+                    where command.CommandId == id
+                    select command
+                ).FirstOrDefaultAsync();
+
+            if (incoming == null)
+                return NotFound();
+
+            return Ok();
+        }
+
         [HttpGet("village/target/{villageId}")]
         public async Task<IActionResult> GetByTargetVillage(long villageId)
         {
@@ -102,8 +122,8 @@ namespace TW.Vault.Controllers
         {
             if (ModelState.IsValid)
             {
-                var mappedCommands = jsonCommands.ToDictionary(c => c.CommandId, c => c);
-                var commandIds = jsonCommands.Select(c => c.CommandId).ToList();
+                var mappedCommands = jsonCommands.Commands.ToDictionary(c => c.CommandId, c => c);
+                var commandIds = jsonCommands.Commands.Select(c => c.CommandId).ToList();
 
 
                 var scaffoldCommands = await Profile("Get existing scaffold commands", () => (
@@ -120,7 +140,7 @@ namespace TW.Vault.Controllers
 
                 Profile("Generate scaffold commands", () =>
                 {
-                    foreach (var jsonCommand in jsonCommands)
+                    foreach (var jsonCommand in jsonCommands.Commands)
                     {
                         if (!Configuration.Security.AllowCommandArrivalBeforeServerTime
                                 && jsonCommand.LandsAt.HasValue
@@ -169,6 +189,12 @@ namespace TW.Vault.Controllers
                         scaffoldCommand.Tx = tx;
                     }
                 });
+
+                var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+                if (jsonCommands.IsOwnCommands.Value)
+                    userUploadHistory.LastUploadedCommandsAt = DateTime.UtcNow;
+                else
+                    userUploadHistory.LastUploadedIncomingsAt = DateTime.UtcNow;
 
                 await Profile("Save changes", () => context.SaveChangesAsync());
 

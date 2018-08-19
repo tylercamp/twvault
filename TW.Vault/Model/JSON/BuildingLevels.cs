@@ -7,10 +7,26 @@ namespace TW.Vault.Model.JSON
 {
     public class BuildingLevels : Dictionary<String, short>
     {
+        public BuildingLevels()
+        {
+
+        }
+
+        public BuildingLevels(BuildingLevels source)
+        {
+            foreach (var kvp in source)
+                this.Add(kvp.Key, kvp.Value);
+        }
+
         public short this[Native.BuildingType buildingType]
         {
             get => this[buildingType.ToString().ToLower()];
             set => this[buildingType.ToString().ToLower()] = value;
+        }
+
+        public bool ContainsKey(Native.BuildingType buildingType)
+        {
+            return this.ContainsKey(buildingType.ToString().ToLower());
         }
 
         public short GetValueOrDefault(Native.BuildingType buildingType, short defaultValue)

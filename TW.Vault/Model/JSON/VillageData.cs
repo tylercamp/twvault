@@ -26,6 +26,9 @@ namespace TW.Vault.Model.JSON
         public short? PossibleLoyalty { get; set; }
         public DateTime? LastLoyaltySeenAt { get; set; }
 
+        public Army PossibleRecruitedDefensiveArmy { get; set; }
+        public Army PossibleRecruitedOffensiveArmy { get; set; }
+
         public int? NukesRequired { get; set; }
     }
 }

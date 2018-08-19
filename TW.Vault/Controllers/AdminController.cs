@@ -27,8 +27,7 @@ namespace TW.Vault.Controllers
         [HttpGet]
         public object CheckIsAdmin()
         {
-            return new { isAdmin = true };
-            //return new { isAdmin = CurrentUserIsAdmin };
+            return new { isAdmin = CurrentUserIsAdmin };
         }
 
         [HttpGet("keys")]
@@ -275,6 +274,13 @@ namespace TW.Vault.Controllers
                     select new { player, currentVillage }
                 ).ToListAsync();
 
+            var currentPlayers = await (
+                    from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
+                    join player in context.Player on currentPlayer.PlayerId equals player.PlayerId
+                    where player.TribeId == CurrentTribeId
+                    select currentPlayer
+                ).ToListAsync();
+
             var villagesByPlayer = tribeVillages
                                         .Select(v => v.player)
                                         .Distinct()
@@ -284,6 +290,8 @@ namespace TW.Vault.Controllers
                                                               .Select(tv => tv.currentVillage)
                                                               .ToList()
                                          );
+
+            var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
 
             var jsonData = new List<JSON.PlayerSummary>();
             foreach (var kvp in villagesByPlayer)
@@ -295,6 +303,9 @@ namespace TW.Vault.Controllers
                 playerSummary.PlayerName = WebUtility.UrlDecode(playerName);
                 playerSummary.PlayerId = kvp.Key.PlayerId;
                 playerSummary.Armies = new List<JSON.Army>();
+
+                if (maxNoblesByPlayer.ContainsKey(kvp.Key.PlayerId))
+                    playerSummary.MaxPossibleNobles = maxNoblesByPlayer[kvp.Key.PlayerId];
 
                 var oldestUpload = villages.Select(v => v.ArmyOwned.LastUpdated).Min();
                 if (oldestUpload != null)

@@ -8,6 +8,7 @@ namespace TW.Vault.Scaffold
         public User()
         {
             InvalidDataRecord = new HashSet<InvalidDataRecord>();
+            UserUploadHistory = new HashSet<UserUploadHistory>();
         }
 
         public int Uid { get; set; }
@@ -24,5 +25,6 @@ namespace TW.Vault.Scaffold
 
         public World World { get; set; }
         public ICollection<InvalidDataRecord> InvalidDataRecord { get; set; }
+        public ICollection<UserUploadHistory> UserUploadHistory { get; set; }
     }
 }

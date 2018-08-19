@@ -163,14 +163,10 @@ namespace TW.Vault.Controllers
                     scaffoldReport.Tx = tx;
                 });
 
-                try
-                {
-                    await Profile("Save changes", () => context.SaveChangesAsync());
-                }
-                catch (Exception e)
-                {
+                var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+                userUploadHistory.LastUploadedReportsAt = DateTime.UtcNow;
 
-                }
+                await Profile("Save changes", () => context.SaveChangesAsync());
                 return Ok();
             }
             else

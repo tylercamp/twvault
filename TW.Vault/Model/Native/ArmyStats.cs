@@ -10,18 +10,18 @@ namespace TW.Vault.Model.Native
     {
         public static readonly Dictionary<JSON.TroopType, TimeSpan> BaseRecruitTime = new Dictionary<JSON.TroopType, TimeSpan>
         {
-            { JSON.TroopType.Spear,     TimeSpan.FromSeconds(2*60 + 39) },
-            { JSON.TroopType.Sword,     TimeSpan.FromSeconds(3*60 + 53) },
-            { JSON.TroopType.Axe,       TimeSpan.FromSeconds(3*60 + 26) },
-            { JSON.TroopType.Archer,    TimeSpan.FromSeconds(4*60 + 40) },
-            { JSON.TroopType.Spy,       TimeSpan.FromSeconds(3*60 + 8) },
-            { JSON.TroopType.Light,     TimeSpan.FromSeconds(6*60 + 15) },
-            { JSON.TroopType.Marcher,   TimeSpan.FromSeconds(9*60 + 22) },
-            { JSON.TroopType.Heavy,     TimeSpan.FromSeconds(12*60 + 19) },
-            { JSON.TroopType.Ram,       TimeSpan.FromSeconds(22*60 + 16) },
-            { JSON.TroopType.Catapult,  TimeSpan.FromSeconds(33*60 + 23) },
-            { JSON.TroopType.Knight,    TimeSpan.FromHours(3) },
-            { JSON.TroopType.Snob,      TimeSpan.FromSeconds(60*(60 + 34) + 12) },
+            { JSON.TroopType.Spear,     TimeSpan.FromSeconds(1020) },
+            { JSON.TroopType.Sword,     TimeSpan.FromSeconds(1500) },
+            { JSON.TroopType.Axe,       TimeSpan.FromSeconds(1320) },
+            { JSON.TroopType.Archer,    TimeSpan.FromSeconds(1800) },
+            { JSON.TroopType.Spy,       TimeSpan.FromSeconds(900) },
+            { JSON.TroopType.Light,     TimeSpan.FromSeconds(1800) },
+            { JSON.TroopType.Marcher,   TimeSpan.FromSeconds(3600) },
+            { JSON.TroopType.Heavy,     TimeSpan.FromSeconds(4800) },
+            { JSON.TroopType.Ram,       TimeSpan.FromSeconds(4800) },
+            { JSON.TroopType.Catapult,  TimeSpan.FromSeconds(7200) },
+            { JSON.TroopType.Knight,    TimeSpan.FromSeconds(21600) },
+            { JSON.TroopType.Snob,      TimeSpan.FromSeconds(18000) },
             { JSON.TroopType.Militia,   TimeSpan.FromSeconds(0) }
         };
 
@@ -91,6 +91,38 @@ namespace TW.Vault.Model.Native
             { JSON.TroopType.Knight, JSON.UnitType.Infantry },
             { JSON.TroopType.Snob, JSON.UnitType.Infantry },
             { JSON.TroopType.Militia, JSON.UnitType.Infantry },
+        };
+
+        public static readonly Dictionary<JSON.TroopType, JSON.UnitBuild> UnitBuild = new Dictionary<JSON.TroopType, JSON.UnitBuild>
+        {
+            { JSON.TroopType.Spear, JSON.UnitBuild.Defensive },
+            { JSON.TroopType.Sword, JSON.UnitBuild.Defensive },
+            { JSON.TroopType.Axe, JSON.UnitBuild.Offensive },
+            { JSON.TroopType.Archer, JSON.UnitBuild.Defensive },
+            { JSON.TroopType.Spy, JSON.UnitBuild.Neutral },
+            { JSON.TroopType.Light, JSON.UnitBuild.Offensive },
+            { JSON.TroopType.Marcher, JSON.UnitBuild.Offensive },
+            { JSON.TroopType.Heavy, JSON.UnitBuild.Defensive },
+            { JSON.TroopType.Ram, JSON.UnitBuild.Offensive },
+            { JSON.TroopType.Catapult, JSON.UnitBuild.Offensive },
+            { JSON.TroopType.Knight, JSON.UnitBuild.Neutral },
+            { JSON.TroopType.Snob, JSON.UnitBuild.Offensive },
+            { JSON.TroopType.Militia, JSON.UnitBuild.Neutral }
+        };
+
+        public static readonly Dictionary<JSON.TroopType, BuildingType> UnitSource = new Dictionary<JSON.TroopType, BuildingType>
+        {
+            { JSON.TroopType.Spear, BuildingType.Barracks },
+            { JSON.TroopType.Sword, BuildingType.Barracks },
+            { JSON.TroopType.Axe, BuildingType.Barracks },
+            { JSON.TroopType.Archer, BuildingType.Barracks },
+            { JSON.TroopType.Spy, BuildingType.Stable },
+            { JSON.TroopType.Light, BuildingType.Stable },
+            { JSON.TroopType.Marcher, BuildingType.Stable },
+            { JSON.TroopType.Heavy, BuildingType.Stable },
+            { JSON.TroopType.Ram, BuildingType.Garage },
+            { JSON.TroopType.Catapult, BuildingType.Garage },
+            { JSON.TroopType.Snob, BuildingType.Snob }
         };
 
         public static readonly Dictionary<int, float> WallDefenseBuff = new Dictionary<int, float>

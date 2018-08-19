@@ -55,15 +55,21 @@ RequestManager.prototype.start = function () {
                         var numCompleted = self.stats.done + "/" + self.stats.total;
                         console.log(numCompleted);
                         numResponding--;
+
+                        var err;
                         try {
                             request.onDone && request.onDone(data, request);
                         } catch (e) {
                             self.stats.numFailed++;
-                            throw e;
+                            err = e;
                         }
 
                         if (!self.pendingRequests.length && numResponding == 0) {
                             self._onFinishedHandler && self._onFinishedHandler();
+                        }
+
+                        if (e) {
+                            throw e;
                         }
                     })
                     .fail(() => {

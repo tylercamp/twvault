@@ -8,7 +8,22 @@ namespace TW.Vault.Model.Native
     public enum BuildingType
     {
         Barracks,
-        Stables,
-        Garage
+        Church,
+        Farm,
+        Garage,
+        Hide,
+        Iron,
+        Main,
+        Market,
+        Place,
+        Smith,
+        Snob,
+        Stable,
+        Statue,
+        Stone,
+        Storage,
+        Wall,
+        Watchtower,
+        Wood
     }
 }

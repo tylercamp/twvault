@@ -62,7 +62,7 @@
                 </tr>
             </table>
 
-            <div id="vault-admin-container"></div>
+            <div id="vault-admin-container" style="padding:1em"></div>
 
             <h4>Instructions</h4>
             <p>
@@ -72,24 +72,22 @@
 
             <hr style="margin:4em 0 2em">
 
-            <p style="font-size:12px">
-                ~ Disclaimers ~
-            </p>
-            <p style="font-size:12px">
-                <em>This tool is not endorsed or developed by InnoGames.</em>
-            </p>
-            <p style="font-size:12px">
-                <em>
-                    All data and requests to the Vault will have various information logged for security. This is limited to:
+            <button class="btn btn-confirm-yes vault-toggle-terms-btn">Disclaimers and Terms</button>
+            <div id="vault-disclaimers-and-terms" style="display:none;padding:1em">
+                <p>
+                    <em>This tool is not endorsed or developed by InnoGames.</em>
+                </p>
+                <p>
+                    <em>
+                        All data and requests to the Vault will have various information logged for security. This is limited to:
 
-                    Authentication token, IP address, player ID, tribe ID, requested endpoint, and time of transaction.
+                        Authentication token, IP address, player ID, tribe ID, requested endpoint, and time of transaction.
 
-                    Requests to this script will only be IP-logged to protect against abuse. Information collected by this script will never be shared
-                    with any third parties or any unauthorized tribes/players.
-                </em>
-            </p>
-
-            <hr style="margin: 2em 0;">
+                        Requests to this script will only be IP-logged to protect against abuse. Information collected by this script will never be shared
+                        with any third parties or any unauthorized tribes/players.
+                    </em>
+                </p>
+            </div>
 
             <p style="font-size:12px">
                 Vault server and script by: Tyler (tcamps/False Duke), Glen (vahtos/TheBossPig)
@@ -138,6 +136,9 @@
     $doc.find('body').prepend($uiContainer);
     processAdminInterface();
 
+    $uiContainer.find('.vault-toggle-terms-btn').click(() => {
+        $uiContainer.find('#vault-disclaimers-and-terms').toggle();
+    });
 
     $uiContainer.find('.vault-close-btn').click(() => {
         let isUploading = $('.upload-button').prop('disabled');
@@ -294,7 +295,6 @@
         var $adminContainer = $uiContainer.find('#vault-admin-container');
 
         $adminContainer.append(`
-            <hr>
             <h3>Admin Options</h3>
             <div>
                 Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download">
@@ -317,7 +317,6 @@
                     <textarea cols=100 rows=5></textarea>
                 </div>
             </div>
-            <hr>
         `.trim());
 
         //  Insert existing keys
@@ -365,10 +364,10 @@
                 return;
 
             lib.postApi(lib.makeApiUrl('admin/keys'), {
-                playerId: isNaN(parseInt(username)) ? null : parseInt(username),
-                playerName: isNaN(parseInt(username)) ? username : null,
-                newUserIsAdmin: false
-            })
+                    playerId: isNaN(parseInt(username)) ? null : parseInt(username),
+                    playerName: isNaN(parseInt(username)) ? username : null,
+                    newUserIsAdmin: false
+                })
                 .done((data) => {
                     if (typeof data == 'string')
                         data = JSON.parse(data);
@@ -392,7 +391,7 @@
                 <tr data-auth-key="${user.key}">
                     <td>${user.playerName}</td>
                     <td>${user.tribeName}</td>
-                    <td>${user.key}</td>
+                    <td>${user.key || '-'}</td>
                     <td><input type="button" class="get-script" value="Get script"></td>
                     <td><input type="button" class="delete-user" value="Delete"></td>
                 </tr>
@@ -541,6 +540,7 @@
         armyData.forEach((ad) => {
             let playerId = ad.playerId;
             let playerName = ad.playerName;
+            let maxNobles = ad.maxPossibleNobles;
 
             let armies = ad.armies;
 
@@ -551,7 +551,7 @@
                 numAlmostNukes: 0,
                 numDVs: 0,
                 numNobles: 0,
-                numPossibleNobles: 0
+                numPossibleNobles: maxNobles
             };
 
             let uploadAge = ad.uploadAge.split(':')[0];
@@ -617,7 +617,7 @@
         playerSummaries.forEach((s) => {
             csvString += '\n';
             csvString += [
-                s.uploadedAt, s.playerName, s.numNukes, s.numAlmostNukes, s.numDVs, s.numNukes, s.numPossibleNobles, s.needsUpload ? 'YES' : ''
+                s.uploadedAt, s.playerName, s.numNukes, s.numAlmostNukes, s.numDVs, s.numNobles, s.numPossibleNobles, s.needsUpload ? 'YES' : ''
             ].join(', ');
         });
 

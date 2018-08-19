@@ -76,11 +76,20 @@
             alert('No commands to upload!');
         else
             onDone_(false);
+
+        lib.postApi(lib.makeApiUrl('command'), {
+            isOwnCommands: true,
+            commands: []
+        });
         return;
     }
 
     requestManager.setFinishedHandler(() => {
-        lib.postApi(lib.makeApiUrl('command'), resultCommands)
+        let data = {
+            isOwnCommands: true,
+            commands: resultCommands
+        };
+        lib.postApi(lib.makeApiUrl('command'), data)
             .done(() => {
                 localStorage.setItem('vault-commands-history', JSON.stringify(oldCommands));
                 let stats = requestManager.getStats();
@@ -110,6 +119,11 @@
             alert('No new commands to upload.');
         else
             onDone_(false)
+
+        lib.postApi(lib.makeApiUrl('command'), {
+            isOwnCommands: true,
+            commands: []
+        });
     } else {
         requestManager.start();
     }
