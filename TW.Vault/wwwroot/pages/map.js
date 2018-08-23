@@ -36,7 +36,7 @@
 
         currentVillageInfo = villageInfo;
 
-        let requestDelay = 350; // So we don't overload vault by user moving mouse quickly over map
+        let requestDelay = 100; // So we don't overload vault by user moving mouse quickly over map
 
         if (cachedData[villageInfo.id]) {
             makeOutput(cachedData[villageInfo.id]);

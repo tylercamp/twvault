@@ -7,6 +7,8 @@ namespace TW.Vault.Model.Native
 {
     public static class BuildingStats
     {
+        public static readonly List<BuildingType> BuildingTypes = Enum.GetValues(typeof(BuildingType)).Cast<BuildingType>().ToList();
+
         public static Dictionary<BuildingType, float[]> RecruitmentSpeedFactors = new Dictionary<BuildingType, float[]>
         {
             { BuildingType.Barracks, new [] {

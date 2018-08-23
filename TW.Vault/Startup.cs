@@ -14,6 +14,7 @@ using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Configuration.Json;
 using TW.Vault.Security;
 using Microsoft.AspNetCore.HttpOverrides;
+using Newtonsoft.Json.Converters;
 
 namespace TW.Vault
 {
@@ -34,6 +35,7 @@ namespace TW.Vault
                 .AddJsonOptions(opt =>
                 {
                     opt.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+                    opt.SerializerSettings.Converters.Add(new StringEnumConverter(camelCaseText: false));
                 })
                 .AddMvcOptions(opt =>
                 {

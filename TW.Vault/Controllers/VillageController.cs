@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 
 using JSON = TW.Vault.Model.JSON;
 using TW.Vault.Model.Convert;
-using TW.Vault.Model.Calculations;
 using TW.Vault.Features.Simulation;
 using Newtonsoft.Json;
 using TW.Vault.Model.Native;

@@ -466,7 +466,7 @@
                 }
 
                 let $doc = $(data);
-                parseIncomingsOverviewPage($doc, (msg) => {
+                parseUploadIncomingsOverviewPage($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);

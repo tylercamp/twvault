@@ -9,7 +9,9 @@ namespace TW.Vault.Model.JSON
     {
         public long CommandId { get; set; }
         public int NumFromVillage { get; set; }
+        public int? OffensivePopulation { get; set; }
+        public int? NumCats { get; set; }
         public bool DefiniteFake { get; set; }
-        public bool PossibleFang { get; set; }
+        public TroopType? TroopType { get; set; }
     }
 }

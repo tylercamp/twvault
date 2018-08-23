@@ -8,6 +8,8 @@ namespace TW.Vault.Model.Native
 {
     public static class ArmyStats
     {
+        public static readonly List<JSON.TroopType> TroopTypes = Enum.GetValues(typeof(JSON.TroopType)).Cast<JSON.TroopType>().ToList();
+
         public static readonly Dictionary<JSON.TroopType, TimeSpan> BaseRecruitTime = new Dictionary<JSON.TroopType, TimeSpan>
         {
             { JSON.TroopType.Spear,     TimeSpan.FromSeconds(1020) },
@@ -123,6 +125,23 @@ namespace TW.Vault.Model.Native
             { JSON.TroopType.Ram, BuildingType.Garage },
             { JSON.TroopType.Catapult, BuildingType.Garage },
             { JSON.TroopType.Snob, BuildingType.Snob }
+        };
+
+        public static readonly Dictionary<JSON.TroopType, float> TravelSpeed = new Dictionary<JSON.TroopType, float>
+        {
+            { JSON.TroopType.Spear, 18 },
+            { JSON.TroopType.Sword, 22 },
+            { JSON.TroopType.Axe, 18 },
+            { JSON.TroopType.Archer, 18 },
+            { JSON.TroopType.Spy, 9 },
+            { JSON.TroopType.Light, 10 },
+            { JSON.TroopType.Marcher, 10 },
+            { JSON.TroopType.Heavy, 11 },
+            { JSON.TroopType.Ram, 30 },
+            { JSON.TroopType.Catapult, 30 },
+            { JSON.TroopType.Knight, 10 },
+            { JSON.TroopType.Snob, 35 },
+            { JSON.TroopType.Militia, 0 },
         };
 
         public static readonly Dictionary<int, float> WallDefenseBuff = new Dictionary<int, float>

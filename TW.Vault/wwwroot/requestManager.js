@@ -68,8 +68,8 @@ RequestManager.prototype.start = function () {
                             self._onFinishedHandler && self._onFinishedHandler();
                         }
 
-                        if (e) {
-                            throw e;
+                        if (err) {
+                            throw err;
                         }
                     })
                     .fail(() => {

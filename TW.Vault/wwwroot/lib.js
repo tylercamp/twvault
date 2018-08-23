@@ -197,8 +197,8 @@ var lib = (() => {
         },
 
         onFirstRun: function (callback) {
-            var hasRan = lib.getCookie('consented');
-            let approvedRunCallback = () => lib.setCookie('consented', true);
+            var hasRan = lib.getLocalStorage('consented');
+            let approvedRunCallback = () => lib.setLocalStorage('consented', true);
             if (!hasRan) {
                 callback(approvedRunCallback);
             }

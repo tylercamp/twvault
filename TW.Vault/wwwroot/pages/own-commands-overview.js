@@ -22,12 +22,36 @@
 
         requestManager.addRequest(link, (data, request) => {
 
+            if (lib.checkContainsCaptcha(data)) {
+                if (requestManager.isRunning()) {
+                    let captchaMessage = 'Tribal wars Captcha was triggered, please refresh the page and try again.';
+                    if (onProgress_)
+                        onProgress_(captchaMessage);
+
+                    if (onDone_)
+                        onDone_("captcha");
+                    else
+                        alert(captchaMessage);
+                }
+                return;
+            }
+
             let $doc = $(data);
             let $container = $doc.find('#content_value');
             let sourcePlayerId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(2) td:nth-of-type(3) a').prop('href').match(/id=(\w+)/)[1];
             let sourceVillageId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(3) td:nth-of-type(2) a').prop('href').match(/id=(\w+)/)[1];
-            let targetPlayerId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(4) td:nth-of-type(3) a').prop('href').match(/id=(\w+)/)[1];
+            var targetPlayerId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(4) td:nth-of-type(3) a').prop('href');
             let targetVillageId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(5) td:nth-of-type(2) a').prop('href').match(/id=(\w+)/)[1];
+
+            if (targetPlayerId) {
+                targetPlayerId = targetPlayerId.match(/id=(\w+)/);
+                if (targetPlayerId)
+                    targetPlayerId = targetPlayerId[1];
+                else
+                    targetPlayerId = null;
+            } else {
+                targetPlayerId = null;
+            }
 
             let hasCatapult = $container.text().contains("Catapult");
             let landsAtSelector = hasCatapult

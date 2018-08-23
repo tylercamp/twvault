@@ -89,7 +89,7 @@ namespace TW.Vault.Features.Simulation
             var result = new BuildingLevels();
 
             //  Get all valid building types for this world by name
-            foreach (var buildingType in Enum.GetValues(typeof(BuildingType)).Cast<BuildingType>().Where(t => BuildingStats.LevelOneBuildTimes[t].Ticks > 0))
+            foreach (var buildingType in BuildingStats.BuildingTypes.Where(t => BuildingStats.LevelOneBuildTimes[t].Ticks > 0))
             {
                 String buildingName = buildingType.ToString().ToLower();
 

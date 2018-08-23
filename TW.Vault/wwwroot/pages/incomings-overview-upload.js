@@ -1,4 +1,4 @@
-﻿function parseIncomingsOverviewPage($doc, onProgress_, onDone_) {
+﻿function parseUploadIncomingsOverviewPage($doc, onProgress_, onDone_) {
     $doc = $doc || $(document);
 
     let $incomingRows = $doc.find('#incomings_table tr:not(:first-of-type):not(:last-of-type)');
@@ -8,13 +8,33 @@
     if (onProgress_)
         onProgress_('Collecting incomings...');
 
+    //  In matching priority
+    let troopNames = [
+        'ram', 'catapult',
+        'spear', 'sword', 'axe', 'archer',
+        'spy', 'light', 'marcher', 'heavy',
+        'snob', 'knight'
+    ];
+
     $incomingRows.each((i, el) => {
         let $el = $(el);
 
-        var troopImgTypeMatch = $el.find('td:nth-of-type(1) span:nth-of-type(2) img').prop('src');
-        if (troopImgTypeMatch)
-            troopImgTypeMatch = troopImgTypeMatch.match(/\/(\w+)\.png/);
-        let troopType = troopImgTypeMatch ? troopImgTypeMatch[1] : null;
+        let label = $el.find('td:nth-of-type(1)').text().trim().toLowerCase();
+        let troopType = (() => {            
+            var type = null;
+
+            troopNames.forEach((name) => {
+                if (type)
+                    return;
+
+                let unitData = lib.twstats.getUnit(name);
+                let aliases = unitData.aliases;
+
+                aliases.forEach((a) => !type && label.contains(a) ? type = name : null);
+            });
+
+            return type;
+        })();
 
         var commandType = $el.find('td:nth-of-type(1) span:nth-of-type(1) img').prop('src').match(/\/(\w+)\.png/)[1];
         let commandId = $el.find('input[name^=id_]').prop('name').match(/id_(\w+)/)[1];
@@ -37,7 +57,8 @@
             landsAt: arrivalTime.toUTCString(),
             commandType: commandType,
             troopType: troopType,
-            isReturning: false
+            isReturning: false,
+            userLabel: label
         });
     });
 

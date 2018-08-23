@@ -22,8 +22,9 @@ namespace TW.Vault.Model.JSON
         public long? SourcePlayerId { get; set; }
         [Required]
         public long? TargetVillageId { get; set; }
-        [Required]
+
         public long? TargetPlayerId { get; set; }
+
         [Required]
         public DateTime? LandsAt { get; set; }
         [Required]

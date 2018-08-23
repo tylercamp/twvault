@@ -9,7 +9,7 @@ namespace TW.Vault.Scaffold
         public long SourceVillageId { get; set; }
         public long SourcePlayerId { get; set; }
         public long TargetVillageId { get; set; }
-        public long TargetPlayerId { get; set; }
+        public long? TargetPlayerId { get; set; }
         public DateTime LandsAt { get; set; }
         public DateTime FirstSeenAt { get; set; }
         public string TroopType { get; set; }
@@ -18,6 +18,7 @@ namespace TW.Vault.Scaffold
         public bool IsReturning { get; set; }
         public long? TxId { get; set; }
         public short WorldId { get; set; }
+        public string UserLabel { get; set; }
 
         public CommandArmy Army { get; set; }
         public Player SourcePlayer { get; set; }

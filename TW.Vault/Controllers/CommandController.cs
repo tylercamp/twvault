@@ -12,6 +12,8 @@ using JSON = TW.Vault.Model.JSON;
 using Microsoft.AspNetCore.Cors;
 using Newtonsoft.Json;
 using TW.Vault.Model.Validation;
+using TW.Vault.Model;
+using Native = TW.Vault.Model.Native;
 
 namespace TW.Vault.Controllers
 {
@@ -61,7 +63,64 @@ namespace TW.Vault.Controllers
             if (incoming == null)
                 return NotFound();
 
-            return Ok();
+            var numFromVillage = await (
+                    from command in context.Command.FromWorld(CurrentWorldId)
+                    where command.SourceVillageId == incoming.SourceVillageId
+                    select 1
+                ).CountAsync();
+
+            var sourceVillage = incoming.SourceVillage?.CurrentVillage;
+
+            var armyOwned = sourceVillage?.ArmyOwned;
+            var armyTraveling = sourceVillage?.ArmyTraveling;
+            var armyStationed = sourceVillage?.ArmyStationed;
+
+            //  TODO - Make this a setting
+            var maxUpdateTime = TimeSpan.FromDays(4);
+
+            if (armyOwned?.LastUpdated != null && (CurrentServerTime - armyOwned.LastUpdated.Value > maxUpdateTime))
+                armyOwned = null;
+
+            if (armyTraveling?.LastUpdated != null && (CurrentServerTime - armyTraveling.LastUpdated.Value > maxUpdateTime))
+                armyTraveling = null;
+
+            if (armyStationed?.LastUpdated != null && (CurrentServerTime - armyStationed.LastUpdated.Value > maxUpdateTime))
+                armyStationed = null;
+
+            if (armyOwned != null && armyOwned.IsEmpty())
+                armyOwned = null;
+            if (armyTraveling != null && armyTraveling.IsEmpty())
+                armyTraveling = null;
+            if (armyStationed != null && armyStationed.IsEmpty())
+                armyStationed = null;
+
+            var effectiveArmy = armyOwned ?? armyTraveling ?? armyStationed;
+
+            var tag = new JSON.IncomingTag();
+            tag.CommandId = id;
+            tag.NumFromVillage = numFromVillage;
+            tag.TroopType = TroopTypeConvert.StringToTroopType(incoming.TroopType);
+
+            if (effectiveArmy != null)
+            {
+                //  TODO - Make this a setting
+                bool isOffense = (
+                        (effectiveArmy.Axe.HasValue && effectiveArmy.Axe.Value > 500) ||
+                        (effectiveArmy.Light.HasValue && effectiveArmy.Light.Value > 250)
+                    );
+
+                if (!isOffense)
+                    tag.DefiniteFake = true;
+
+                var offensiveArmy = effectiveArmy.OfType(JSON.UnitBuild.Offensive);
+                var jsonArmy = ArmyConvert.ArmyToJson(offensiveArmy);
+                var pop = Native.ArmyStats.CalculateTotalPopulation(jsonArmy);
+
+                tag.OffensivePopulation = pop;
+                tag.NumCats = effectiveArmy.Catapult;
+            }
+
+            return Ok(tag);
         }
 
         [HttpGet("village/target/{villageId}")]
@@ -135,6 +194,20 @@ namespace TW.Vault.Controllers
 
                 var mappedScaffoldCommands = scaffoldCommands.ToDictionary(c => c.CommandId, c => c);
 
+                var villageIdsFromCommandsMissingTroopType = jsonCommands.Commands
+                    .Where(c => c.TroopType == null)
+                    .SelectMany(c => new[] { c.SourceVillageId, c.TargetVillageId })
+                    .Distinct()
+                    .ToList();
+
+                var villagesForMissingTroopTypes = await (
+                        from village in context.Village.FromWorld(CurrentWorldId)
+                        where villageIdsFromCommandsMissingTroopType.Contains(village.VillageId)
+                        select village
+                    ).ToListAsync();
+
+                var villagesById = villagesForMissingTroopTypes.ToDictionary(v => v.VillageId, v => v);
+
                 var tx = BuildTransaction();
                 context.Transaction.Add(tx);
 
@@ -161,6 +234,15 @@ namespace TW.Vault.Controllers
                                 "Troops in command exceed possible village population"
                             ));
                             continue;
+                        }
+
+                        if (jsonCommand.TroopType == null)
+                        {
+                            var travelCalculator = new Features.Simulation.TravelCalculator(2.0f, 0.5f);
+                            var timeRemaining = jsonCommand.LandsAt.Value - CurrentServerTime;
+                            var sourceVillage = villagesById[jsonCommand.SourceVillageId.Value];
+                            var targetVillage = villagesById[jsonCommand.TargetVillageId.Value];
+                            jsonCommand.TroopType = travelCalculator.EstimateTroopType(timeRemaining, sourceVillage, targetVillage);
                         }
 
                         var scaffoldCommand = mappedScaffoldCommands.GetValueOrDefault(jsonCommand.CommandId.Value);

@@ -40,7 +40,7 @@ namespace TW.Vault.Model.Convert
             result.CommandId        = command.CommandId.Value;
             result.SourcePlayerId   = command.SourcePlayerId.Value;
             result.SourceVillageId  = command.SourceVillageId.Value;
-            result.TargetPlayerId   = command.TargetPlayerId.Value;
+            result.TargetPlayerId   = command.TargetPlayerId;
             result.TargetVillageId  = command.TargetVillageId.Value;
             result.LandsAt          = command.LandsAt.Value;
             result.FirstSeenAt      = result.FirstSeenAt == DateTime.MinValue ? DateTime.UtcNow : result.FirstSeenAt;

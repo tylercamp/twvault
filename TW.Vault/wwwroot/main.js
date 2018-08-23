@@ -10,7 +10,8 @@
     /***  Pages ***/
     //# REQUIRE pages/view-report.js
     //# REQUIRE pages/all-reports.js
-    //# REQUIRE pages/incomings-overview.js
+    //# REQUIRE pages/incomings-overview-upload.js
+    //# REQUIRE pages/incomings-overview-tag.js
     //# REQUIRE pages/own-commands-overview.js
     //# REQUIRE pages/troops-overview.js
     //# REQUIRE pages/map.js
@@ -79,9 +80,10 @@ These terms can be viewed again after running the script. To cancel your agreeme
             .onPage(lib.pageTypes.ALL_REPORTS, () => {
                 parseAllReportsPage();
             })
-            //.onPage(lib.pageTypes.INCOMINGS_OVERVIEW, () => {
-            //    parseIncomingsOverviewPage();
-            //})
+            .onPage(lib.pageTypes.INCOMINGS_OVERVIEW, () => {
+                //parseUploadIncomingsOverviewPage();
+                parseTagIncomingsOverviewPage();
+            })
             //.onPage(lib.pageTypes.OWN_COMMANDS_OVERVIEW, () => {
             //    parseOwnCommandsOverviewPage();
             //})

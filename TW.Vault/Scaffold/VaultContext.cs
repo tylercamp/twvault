@@ -128,6 +128,10 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.TxId).HasColumnName("tx_id");
 
+                entity.Property(e => e.UserLabel)
+                    .HasColumnName("user_label")
+                    .HasMaxLength(128);
+
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
                 entity.HasOne(d => d.Army)
@@ -150,7 +154,6 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.TargetPlayer)
                     .WithMany(p => p.CommandTargetPlayer)
                     .HasForeignKey(d => d.TargetPlayerId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_target_player_id");
 
                 entity.HasOne(d => d.TargetVillage)
