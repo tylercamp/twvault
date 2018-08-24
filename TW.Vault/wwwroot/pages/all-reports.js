@@ -12,6 +12,11 @@
 
     let previousReports = JSON.parse(localStorage.getItem('vault-reports-history') || '[]');
 
+    let hasFilters = checkHasFilters();
+    console.log('hasFilters = ', hasFilters);
+    let pages = lib.detectMultiPages($doc);
+    console.log('pages = ', pages);
+
     let $reportLinks = $doc.find('#report_list tr:not(:first-child):not(:last-child) a:not(.rename-icon)');
     $reportLinks.each((i, el) => {
         let $el = $(el);
@@ -105,6 +110,8 @@
         if (onDone_ || onProgress_)
             return;
 
+        $('#vault-uploads-display').remove();
+
         let $uploadsContainer = $('<div id="vault-uploads-display">');
         $doc.find('#report_list').parent().prepend($uploadsContainer);
         updateUploadsDisplay();
@@ -137,6 +144,31 @@
             checked_ = true;
 
         $link.closest('tr').find('td:first-of-type input').prop('checked', checked_);
+    }
+
+    function checkHasFilters() {
+        let $filters = $doc.find('.report_filter');
+        var hasFilters = false;
+
+        let textFilter = $filters.find('input[type=text]').val();
+        if (textFilter != null && textFilter.length > 0) {
+            console.log('Text filter not empty');
+            hasFilters = true;
+        }
+
+        let $checkedBoxes = $filters.find('input[type=checkbox]:checked');
+        if ($checkedBoxes.length) {
+            console.log('Checked boxes: ', $checkedBoxes);
+            hasFilters = true;
+        }
+
+        let $checkedRadios = $filters.find('input[type=radio]:not([value=0]):checked');
+        if ($checkedRadios.length) {
+            console.log('Checked radios: ', $checkedRadios);
+            hasFilters = true;
+        }
+
+        return hasFilters;
     }
 
 };

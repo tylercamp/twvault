@@ -328,6 +328,15 @@ var lib = (() => {
             return url;
         },
 
+        absoluteTwUrl: function formatToAbsoluteTwUrl(url) {
+            if (!url.startsWith('/'))
+                url = '/' + url;
+            if (!url.startsWith(window.location.origin)) {
+                url = window.location.origin + url;
+            }
+            return url;
+        },
+
         // Make a URL relative to 'https://v.tylercamp.me/api' (or whatever the current base path is)
         makeApiUrl: function makeApiUrl(url) {
             let serverBase = 'https://v.tylercamp.me';
@@ -364,6 +373,39 @@ var lib = (() => {
 
                 callback(playerId, tribeId);
             });
+        },
+
+        //  Gets the links to all pages of the current view, ie get links for each pages of reports if there are over 1000, etc
+        detectMultiPages: function ($doc_) {
+            $doc_ = $doc_ || $(document);
+            let $navItems = $doc_.find('.paged-nav-item');
+            let links = [];
+
+            if (!$navItems.length)
+                return links;
+
+            let $container = $navItems.parent();
+            let $pageSelect = $container.find('select');
+            //  Sometimes there are so many pages that TW won't show the all of the links, and provides a <select>
+            //  element instead
+            if ($pageSelect.length) {
+                let $options = $pageSelect.find('option');
+                $options.each((i, el) => links.push($(el).prop('value')));
+            } else {
+                $navItems.each((i, el) => {
+                    let $el = $(el);
+                    if ($el.is('a'))
+                        links.push($el.prop('href'));
+
+                    $el.find('a').each((i, a) => {
+                        links.push($(a).prop('href'));
+                    });
+                });
+            }
+
+            links.forEach((l, i) => links[i] = lib.absoluteTwUrl(l));
+
+            return links;
         },
 
         checkUserHasPremium: function userHasPremium() {
@@ -588,6 +630,20 @@ var lib = (() => {
         }
 
         return result;
+    };
+
+    //  Utility additions to Array
+    Array.prototype.distinct = function distinct() {
+        var result = [];
+        this.forEach((v) => {
+            if (!result.contains(v))
+                result.push(v);
+        });
+        return result;
+    };
+
+    Array.prototype.contains = function contains(v) {
+        return this.indexOf(v) >= 0;
     };
 
     //  Set values of page types to their names
