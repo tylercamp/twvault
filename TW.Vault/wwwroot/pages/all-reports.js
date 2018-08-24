@@ -1,11 +1,10 @@
-﻿function parseAllReportsPage($doc, onProgress_, onDone_) {
-
+﻿function parseAllReports($doc, onProgress_, onDone_) {
     $doc = $doc || $(document);
 
     //# REQUIRE lib.js
     //# REQUIRE requestManager.js
 
-    lib.ensurePage(lib.pageTypes.ALL_REPORTS);
+    let pages = lib.detectMultiPages($doc).push(window.location.href).distinct();
 
     var requestManager = new RequestManager();
     requestManager.refreshDelay = 500;
@@ -14,97 +13,133 @@
 
     let hasFilters = checkHasFilters();
     console.log('hasFilters = ', hasFilters);
+
+    if (hasFilters) {
+        let removeFiltersMsg = 'You have filters set for your reports, please remove them before uploading.';
+        if (onProgress_)
+            onProgress_(removeFiltersMsg);
+        else
+            alert(removeFiltersMsg);
+
+        if (onDone_) {
+            onDone_(true);
+        }
+    }
+
+    let triggeredCaptchaMsg = `Tribal wars Captcha was triggered, please refresh the page and try again.`;
+
     let pages = lib.detectMultiPages($doc);
     console.log('pages = ', pages);
 
-    let $reportLinks = $doc.find('#report_list tr:not(:first-child):not(:last-child) a:not(.rename-icon)');
-    $reportLinks.each((i, el) => {
-        let $el = $(el);
+    let reportLinks = [];
 
-        let link = $el.prop('href');
-        let reportId = parseInt(link.match(/view=(\w+)/)[1]);
-        if (previousReports.indexOf(reportId) >= 0) {
-            toggleReport($el);
-            return;
-        }
+    onProgress_ && onProgress_('Collecting report pages...');
 
-        let $icon = $el.closest('td').find('img:first-of-type');
+    function collectReportLinks() {
+        onProgress_ && onProgress_('Collecting report links...');
 
-        var isBattleReport = false;
-        $icon.each((_, el) => {
-            let icon = $(el).attr('src');
-            if (icon.contains("/dots/") || icon.contains("attack"))
-                isBattleReport = true;
-        });
-
-        if (!isBattleReport)
-            return;
-
-
-
-        requestManager.addRequest(link, (data, request) => {
-            if (data) {
+        pages.forEach((link) => {
+            requestManager.addRequest(link, (data) => {
                 if (lib.checkContainsCaptcha(data)) {
-
                     if (requestManager.isRunning()) {
                         requestManager.stop();
-                        let statusMessage = `Tribal wars Captcha was triggered, please refresh the page and try again.`;
-                        if (onProgress_)
-                            onProgress_(statusMessage);
 
-                        if (onDone_)
-                            onDone_('captcha');
+                        if (onProgress_)
+                            onProgress_(triggeredCaptchaMsg);
                         else
-                            alert(statusMessage);
+                            alert(triggeredCaptchaMsg);
+
+                        onDone_ && onDone_('captcha');
                     }
 
                     return;
                 }
 
-                let $doc = $(data);
-                parseReportPage($doc, link, false, () => {
-                    //  onError
-                    requestManager.getStats().numFailed++;
-                    toggleReport($el, false);
-                });
-                toggleReport($el);
-            }
-
-            updateUploadsDisplay();
+                let $pageDoc = $(data);
+                let pageLinks = parseReportsOverviewPage($pageDoc);
+                reportLinks.push(...pageLinks);
+            });
         });
-    });
 
-    requestManager.setFinishedHandler(() => {
-        let stats = requestManager.getStats();
+        requestManager.setFinishedHandler(() => {
+            requestManager.stop();
+            let filteredLinks =
+                reportLinks.except((l) => previousReports.contains(l.link))
+                           .map((l) => l.link)
+                           .distinct();
 
-        let statusMessage = `Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`;
-        if (onProgress_)
-            onProgress_(statusMessage);
+            uploadReports(filteredLinks);
+        });
 
-        if (!onDone_) {
-            alert('Done!');
-            let stats = requestManager.getStats();
-            setUploadsDisplay(statusMessage);
-        } else {
-            onDone_(false);
-        }
-    });
-
-    makeUploadsDisplay();
-
-    if (!requestManager.getStats().total) {
-        if (!onDone_) {
-            setUploadsDisplay('No new reports to upload.');
-            alert('No new reports to upload!');
-        } else {
-            if (onProgress_)
-                onProgress_('Done - no new reports to upload.');
-            if (onDone_)
-                onDone_(false);
-        }
-    } else {
         requestManager.start();
     }
+
+    function uploadReports(reportLinks) {
+        reportLinks.forEach((link) => {
+            requestManager.addRequest(link, (data, request) => {
+                if (data) {
+                    if (lib.checkContainsCaptcha(data)) {
+
+                        if (requestManager.isRunning()) {
+                            requestManager.stop();
+                            
+                            if (onProgress_)
+                                onProgress_(statusMessage);
+
+                            if (onDone_)
+                                onDone_('captcha');
+                            else
+                                alert(statusMessage);
+                        }
+
+                        return;
+                    }
+
+                    let $doc = $(data);
+                    parseReportPage($doc, link, false, () => {
+                        //  onError
+                        requestManager.getStats().numFailed++;
+                        toggleReport($el, false);
+                    });
+                    toggleReport($el);
+                }
+
+                updateUploadsDisplay();
+            });
+        });
+
+        requestManager.setFinishedHandler(() => {
+            let stats = requestManager.getStats();
+
+            let statusMessage = `Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`;
+            if (onProgress_)
+                onProgress_(statusMessage);
+
+            if (!onDone_) {
+                alert('Done!');
+                let stats = requestManager.getStats();
+                setUploadsDisplay(statusMessage);
+            } else {
+                onDone_(false);
+            }
+        });
+
+        if (!requestManager.getStats().total) {
+            if (!onDone_) {
+                setUploadsDisplay('No new reports to upload.');
+                alert('No new reports to upload!');
+            } else {
+                if (onProgress_)
+                    onProgress_('Done - no new reports to upload.');
+                if (onDone_)
+                    onDone_(false);
+            }
+        } else {
+            requestManager.start();
+        }
+    }
+
+    makeUploadsDisplay();
 
     function makeUploadsDisplay() {
         if (onDone_ || onProgress_)
@@ -170,5 +205,4 @@
 
         return hasFilters;
     }
-
-};
+}

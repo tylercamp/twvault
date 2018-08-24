@@ -646,6 +646,21 @@ var lib = (() => {
         return this.indexOf(v) >= 0;
     };
 
+    Array.prototype.except = function except(arrOrFunc) {
+        let result = [];
+        let useFunc = typeof arrOrFunc == 'function';
+        this.forEach((v) => {
+            if (useFunc) {
+                if (!arrOrFunc(v))
+                    result.push(v);
+            } else {
+                if (!arrOrFunc.contains(v))
+                    result.push(v);
+            }
+        });
+        return result;
+    };
+
     //  Set values of page types to their names
     lib.objForEach(lib.pageTypes, (name) => lib.pageTypes[name] = name);
 

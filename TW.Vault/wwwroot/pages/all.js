@@ -444,7 +444,7 @@
                 }
 
                 let $doc = $(data);
-                parseAllReportsPage($doc, (msg) => {
+                parseAllReports($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);
