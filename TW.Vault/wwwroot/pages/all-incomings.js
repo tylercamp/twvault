@@ -15,6 +15,7 @@
     }
 
     let pages = lib.detectMultiPages($doc);
+    pages.push(lib.makeTwUrl(lib.pageTypes.INCOMINGS_OVERVIEW));
     console.log('Got incomings pages: ', pages);
 
     let groups = lib.detectGroups($doc);

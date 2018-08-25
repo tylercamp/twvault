@@ -6,6 +6,7 @@
 
     var requestManager = new RequestManager();
     let pages = lib.detectMultiPages($doc);
+    pages.push(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_OVERVIEW));
 
     let troops = [];
 
@@ -135,15 +136,17 @@
 
         onProgress_ && onProgress_("Uploading to vault...");
 
+        let distinctTroops = troops.distinct((a, b) => a.villageId == b.villageId);
+
         let data = {
-            troopData: troops,
+            troopData: distinctTroops,
             possibleNobles: possibleNobles
         };
 
         lib.postApi(lib.makeApiUrl('village/army/current'), data)
             .done(() => {
                 if (onProgress_)
-                    onProgress_('Finished: Uploaded troops for ' + troops.length + ' villages.');
+                    onProgress_('Finished: Uploaded troops for ' + distinctTroops.length + ' villages.');
 
                 if (!onDone_)
                     alert('Done!')

@@ -13,6 +13,7 @@
     let newCommands = [];
 
     let pages = lib.detectMultiPages($doc);
+    pages.push(lib.makeTwUrl(lib.pageTypes.OWN_COMMANDS_OVERVIEW));
 
     let collectingPagesMessage = 'Collecting command pages...';
     onProgress_ && onProgress_(collectingPagesMessage);

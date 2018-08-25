@@ -30,6 +30,7 @@
 
     onProgress_ && onProgress_('Collecting report pages...');
     let pages = lib.detectMultiPages($doc);
+    pages.push(lib.makeTwUrl(lib.pageTypes.ALL_REPORTS));
     console.log('pages = ', pages);
 
     collectReportLinks();
