@@ -44,5 +44,30 @@ namespace TW.Vault.Model.JSON
             else
                 return Native.BuildingStats.MaxLevels[buildingType];
         }
+
+        public static bool operator ==(BuildingLevels a, BuildingLevels b)
+        {
+            bool aIsNull = ReferenceEquals(a, null);
+            bool bIsNull = ReferenceEquals(b, null);
+
+            if (aIsNull != bIsNull)
+                return false;
+
+            if (aIsNull)
+                return true;
+
+            if (a.Keys.Except(b.Keys).Any() || b.Keys.Except(a.Keys).Any())
+                return false;
+
+            foreach (var building in a.Keys)
+            {
+                if (a[building] != b[building])
+                    return false;
+            }
+
+            return true;
+        }
+
+        public static bool operator !=(BuildingLevels a, BuildingLevels b) => !(a == b);
     }
 }

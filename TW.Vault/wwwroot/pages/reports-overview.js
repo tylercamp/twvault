@@ -32,6 +32,9 @@ function parseReportsOverviewPage($doc) {
                 isBattleReport = true;
         });
 
+        if ($el.text().contains("Your support from"))
+            isBattleReport = false;
+
         if (!isBattleReport)
             return;
 

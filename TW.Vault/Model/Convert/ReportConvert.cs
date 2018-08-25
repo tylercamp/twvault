@@ -19,7 +19,7 @@ namespace TW.Vault.Model.Convert
             target.Luck                  = report.Luck.Value;
             target.Loyalty               = report.Loyalty;
 
-            target.AttackerPlayerId      = report.AttackingPlayerId.Value;
+            target.AttackerPlayerId      = report.AttackingPlayerId;
             target.AttackerVillageId     = report.AttackingVillageId.Value;
 
             target.AttackerArmy          = ArmyConvert.JsonToArmy(report.AttackingArmy, target.AttackerArmy, context);

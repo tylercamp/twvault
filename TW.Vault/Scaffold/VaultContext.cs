@@ -44,7 +44,7 @@ namespace TW.Vault.Scaffold
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseNpgsql("Host=192.168.1.250; Port=22342; Database=vault; Username=twu_vault; Password=!!TWV@ult4Us??");
+                optionsBuilder.UseNpgsql("Host=192.168.1.250; Port=22342; Database=vault_dev; Username=twu_vault; Password=!!TWV@ult4Us??");
             }
         }
 
@@ -657,7 +657,6 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.AttackerPlayer)
                     .WithMany(p => p.ReportAttackerPlayer)
                     .HasForeignKey(d => d.AttackerPlayerId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_attacker_player_id");
 
                 entity.HasOne(d => d.AttackerVillage)

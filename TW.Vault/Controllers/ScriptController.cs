@@ -34,6 +34,10 @@ namespace TW.Vault.Controllers
         [HttpGet("{name}", Name = "GetCompiledObfuscatedScript")]
         public IActionResult GetCompiledObfuscated(String name)
         {
+            var allowedPublicScripts = Configuration.Security.PublicScripts;
+            if (Configuration.Security.EnableScriptFilter && !allowedPublicScripts.Contains(name))
+                return NotFound();
+
             String errorString = null, notFoundString = null;
             String scriptContents = MakeCompiled(name, (e) => errorString = e, (n) => notFoundString = n);
 
@@ -101,6 +105,16 @@ namespace TW.Vault.Controllers
         {
             if (String.IsNullOrWhiteSpace(name))
                 return null;
+
+            if (Configuration.Initialization.EnableRequiredFiles)
+            {
+                foreach (var externalFile in Configuration.Initialization.RequiredFiles)
+                {
+                    var fileName = Path.GetFileName(externalFile);
+                    if (name == fileName)
+                        return System.IO.File.ReadAllText(Path.GetFullPath(Path.Combine(environment.WebRootPath, externalFile)));
+                }
+            }
 
             String fullPath = Path.Combine(environment.WebRootPath, name);
             String absolutePath = Path.GetFullPath(fullPath);

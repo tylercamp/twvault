@@ -2,12 +2,6 @@
 
 function RequestManager() {
     this.pendingRequests = [];
-    this.stats = {
-        done: 0,
-        pending: 0,
-        total: 0,
-        numFailed: 0
-    }
     this.errorHistory = {};
     this.maxPendingRequests = 2;
     this.refreshDelay = 500;
@@ -17,6 +11,8 @@ function RequestManager() {
     this._interval = null;
     this._onFinishedHandler = null;
     this._hasErrors = false;
+
+    this.resetStats();
 }
 
 RequestManager.prototype.start = function () {
@@ -151,4 +147,13 @@ RequestManager.prototype.hasRequests = function () {
 
 RequestManager.prototype.hasErrors = function () {
     return this._hasErrors;
+};
+
+RequestManager.prototype.resetStats = function () {
+    this.stats = {
+        done: 0,
+        pending: 0,
+        total: 0,
+        numFailed: 0
+    };
 };

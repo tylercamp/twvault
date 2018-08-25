@@ -44,7 +44,7 @@ namespace TW.Vault.Features.Simulation
                     continue;
 
                 var troopTravelTime = CalculateTravelTime(troopType, startx, starty, endx, endy);
-                if (troopTravelTime < travelTime)
+                if (troopTravelTime >= travelTime)
                 {
                     if (bestTime == null || bestTime.Value < travelTime)
                     {

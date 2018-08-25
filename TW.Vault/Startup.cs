@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration.Json;
 using TW.Vault.Security;
 using Microsoft.AspNetCore.HttpOverrides;
 using Newtonsoft.Json.Converters;
+using System.IO;
 
 namespace TW.Vault
 {
@@ -66,6 +67,18 @@ namespace TW.Vault
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+
+            var initCfg = TW.Vault.Configuration.Initialization;
+            if (initCfg.EnableRequiredFiles)
+            {
+                var webRoot = env.WebRootPath;
+                foreach (var file in initCfg.RequiredFiles)
+                {
+                    String fullPath = Path.Combine(webRoot, file);
+                    if (!File.Exists(fullPath))
+                        throw new Exception($"Required external script is not available: \"{file}\" (relative to \"{webRoot}\") (absolute path \"${Path.GetFullPath(fullPath)}\")");
+                }
             }
 
             app.UseCors("AllOrigins");

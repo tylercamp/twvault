@@ -31,6 +31,16 @@ var lib = (() => {
             MAP: null
         },
 
+        messages: {
+            TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again.',
+            IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\"."
+        },
+
+        errorCodes: {
+            CAPTCHA: 'captcha',
+            NOT_ALL_GROUP: 'group'
+        },
+
         twstats: twstats,
         twcalc: makeTwCalc(twstats),
 
@@ -329,9 +339,9 @@ var lib = (() => {
         },
 
         absoluteTwUrl: function formatToAbsoluteTwUrl(url) {
-            if (!url.startsWith('/'))
-                url = '/' + url;
             if (!url.startsWith(window.location.origin)) {
+                if (!url.startsWith('/'))
+                    url = '/' + url;
                 url = window.location.origin + url;
             }
             return url;
@@ -406,6 +416,33 @@ var lib = (() => {
             links.forEach((l, i) => links[i] = lib.absoluteTwUrl(l));
 
             return links;
+        },
+
+        //  Gets the links to all groups currently visible, and whether or not current group is "all"
+        detectGroups: function ($doc_) {
+            $doc_ = $doc_ || $(document);
+            let $groupItems = $doc_.find('.group-menu-item');
+            let links = [];
+
+            if (!$groupItems.length)
+                return links;
+
+            $groupItems.each((i, el) => {
+                let $el = $(el);
+                if ($el.is('a'))
+                    links.push($el.prop('href'));
+
+                $el.find('a').each((i, a) => {
+                    links.push($(a).prop('href'));
+                });
+            });
+
+            links.forEach((l, i) => links[i] = lib.absoluteTwUrl(l));
+
+            return {
+                isAll: !links.contains((l) => l.contains("group=0")),
+                links: links
+            };
         },
 
         checkUserHasPremium: function userHasPremium() {
@@ -633,17 +670,29 @@ var lib = (() => {
     };
 
     //  Utility additions to Array
-    Array.prototype.distinct = function distinct() {
+    Array.prototype.distinct = function distinct(comparer_) {
         var result = [];
         this.forEach((v) => {
-            if (!result.contains(v))
-                result.push(v);
+            if (comparer_) {
+                var contains = false;
+                result.forEach((existing) => comparer_(existing, v) ? contains = true : null);
+                if (!contains)
+                    result.push(v);
+            } else {
+                if (!result.contains(v))
+                    result.push(v);
+            }
         });
         return result;
     };
 
-    Array.prototype.contains = function contains(v) {
-        return this.indexOf(v) >= 0;
+    Array.prototype.contains = function contains(valOrChecker) {
+        var contains = false;
+        if (!(typeof valOrChecker == 'function'))
+            contains = this.indexOf(valOrChecker) >= 0;
+        else
+            this.forEach((v) => valOrChecker(v) ? contains = true : null);
+        return contains;
     };
 
     Array.prototype.except = function except(arrOrFunc) {

@@ -3,9 +3,8 @@
 
     //# REQUIRE lib.js
     //# REQUIRE requestManager.js
-
-    let pages = lib.detectMultiPages($doc).push(window.location.href).distinct();
-
+    //# REQUIRE pages/reports-overview.js
+    
     var requestManager = new RequestManager();
     requestManager.refreshDelay = 500;
 
@@ -24,32 +23,36 @@
         if (onDone_) {
             onDone_(true);
         }
+        return;
     }
-
-    let triggeredCaptchaMsg = `Tribal wars Captcha was triggered, please refresh the page and try again.`;
-
-    let pages = lib.detectMultiPages($doc);
-    console.log('pages = ', pages);
 
     let reportLinks = [];
 
     onProgress_ && onProgress_('Collecting report pages...');
+    let pages = lib.detectMultiPages($doc);
+    console.log('pages = ', pages);
+
+    collectReportLinks();
+
 
     function collectReportLinks() {
-        onProgress_ && onProgress_('Collecting report links...');
+        let collectingReportLinksMessage = 'Collecting report links...';
+        onProgress_ && onProgress_(collectingReportLinksMessage);
 
         pages.forEach((link) => {
             requestManager.addRequest(link, (data) => {
+                onProgress_ && onProgress_(`${collectingReportLinksMessage} (page ${requestManager.getStats().done}/${pages.length})`);
+
                 if (lib.checkContainsCaptcha(data)) {
                     if (requestManager.isRunning()) {
                         requestManager.stop();
 
                         if (onProgress_)
-                            onProgress_(triggeredCaptchaMsg);
+                            onProgress_(lib.messages.TRIGGERED_CAPTCHA);
                         else
-                            alert(triggeredCaptchaMsg);
+                            alert(lib.messages.TRIGGERED_CAPTCHA);
 
-                        onDone_ && onDone_('captcha');
+                        onDone_ && onDone_(lib.errorCodes.CAPTCHA);
                     }
 
                     return;
@@ -57,16 +60,20 @@
 
                 let $pageDoc = $(data);
                 let pageLinks = parseReportsOverviewPage($pageDoc);
+                console.log('Got page links: ', pageLinks);
                 reportLinks.push(...pageLinks);
             });
         });
 
         requestManager.setFinishedHandler(() => {
             requestManager.stop();
+            console.log('Got all page links: ', reportLinks);
             let filteredLinks =
-                reportLinks.except((l) => previousReports.contains(l.link))
+                reportLinks.except((l) => previousReports.contains(l.reportId))
                            .map((l) => l.link)
                            .distinct();
+
+            console.log('Made filtered links: ', filteredLinks);
 
             uploadReports(filteredLinks);
         });
@@ -75,6 +82,8 @@
     }
 
     function uploadReports(reportLinks) {
+        requestManager.resetStats();
+
         reportLinks.forEach((link) => {
             requestManager.addRequest(link, (data, request) => {
                 if (data) {
@@ -84,24 +93,29 @@
                             requestManager.stop();
                             
                             if (onProgress_)
-                                onProgress_(statusMessage);
+                                onProgress_(lib.messages.TRIGGERED_CAPTCHA);
 
                             if (onDone_)
-                                onDone_('captcha');
+                                onDone_(lib.errorCodes.CAPTCHA);
                             else
-                                alert(statusMessage);
+                                alert(lib.messages.TRIGGERED_CAPTCHA);
                         }
 
                         return;
                     }
 
                     let $doc = $(data);
-                    parseReportPage($doc, link, false, () => {
-                        //  onError
+                    try {
+                        parseReportPage($doc, link, false, () => {
+                            //  onError
+                            requestManager.getStats().numFailed++;
+                            //toggleReport($el, false);
+                        });
+                    } catch (e) {
                         requestManager.getStats().numFailed++;
-                        toggleReport($el, false);
-                    });
-                    toggleReport($el);
+                        console.log(e);
+                    }
+                    //toggleReport($el);
                 }
 
                 updateUploadsDisplay();
@@ -130,7 +144,7 @@
                 alert('No new reports to upload!');
             } else {
                 if (onProgress_)
-                    onProgress_('Done - no new reports to upload.');
+                    onProgress_('Finished: No new reports to upload.');
                 if (onDone_)
                     onDone_(false);
             }

@@ -37,8 +37,8 @@
                         <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
                     </td>
                 </tr>
-                <tr id="vault-upload-commands">
-                    <td>Commands</td>
+                <tr id="vault-upload-troops">
+                    <td>Troops</td>
                     <td><input type="button" class="details-button" value="Details"></td>
                     <td>
                         <input type="button" class="upload-button" value="Upload">
@@ -46,8 +46,8 @@
                         <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
                     </td>
                 </tr>
-                <tr id="vault-upload-troops">
-                    <td>Troops</td>
+                <tr id="vault-upload-commands">
+                    <td>Commands</td>
                     <td><input type="button" class="details-button" value="Details"></td>
                     <td>
                         <input type="button" class="upload-button" value="Upload">
@@ -172,7 +172,7 @@
         var $statusContainer = $row.find('.status-container');
 
         //  TODO - This is messy, clean this up
-        let alertCaptcha = () => alert('Tribal wars Captcha was triggered, please refresh the page and try again.');
+        let alertCaptcha = () => alert(lib.messages.TRIGGERED_CAPTCHA);
 
         switch (uploadType) {
             default: alert(`Programmer error: no logic for upload type "${uploadType}"!`);
@@ -180,7 +180,7 @@
             case 'vault-upload-reports':
                 processUploadReports($statusContainer, (didFail) => {
                     $('.upload-button').prop('disabled', false);
-                    if (didFail && didFail == 'captcha') {
+                    if (didFail && didFail == lib.errorCodes.CAPTCHA) {
                         alertCaptcha();
                     }
                 });
@@ -189,7 +189,7 @@
             case 'vault-upload-incomings':
                 processUploadIncomings($statusContainer, (didFail) => {
                     $('.upload-button').prop('disabled', false);
-                    if (didFail && didFail == 'captcha') {
+                    if (didFail && didFail == lib.errorCodes.CAPTCHA) {
                         alertCaptcha();
                     }
                 });
@@ -198,7 +198,7 @@
             case 'vault-upload-commands':
                 processUploadCommands($statusContainer, (didFail) => {
                     $('.upload-button').prop('disabled', false);
-                    if (didFail && didFail == 'captcha') {
+                    if (didFail && didFail == lib.errorCodes.CAPTCHA) {
                         alertCaptcha();
                     }
                 });
@@ -207,7 +207,7 @@
             case 'vault-upload-troops':
                 processUploadTroops($statusContainer, (didFail) => {
                     $('.upload-button').prop('disabled', false);
-                    if (didFail && didFail == 'captcha') {
+                    if (didFail && didFail == lib.errorCodes.CAPTCHA) {
                         alertCaptcha();
                     }
                 });
@@ -223,7 +223,7 @@
                 };
                 let runIncomings = (didFail) => {
                     if (didFail) {
-                        if (didFail == 'captcha') {
+                        if (didFail == lib.errorCodes.CAPTCHA) {
                             alertCaptcha();
                         } else {
                             alert('An unexpected error occurred: ', didFail);
@@ -231,23 +231,11 @@
                         resetButtons();
                         return;
                     }
-                    processUploadIncomings($uiContainer.find('#vault-upload-incomings .status-container'), runCommands);
-                };
-                let runCommands = (didFail) => {
-                    if (didFail) {
-                        if (didFail == 'captcha') {
-                            alertCaptcha();
-                        } else {
-                            alert('An unexpected error occurred: ', didFail);
-                        }
-                        resetButtons();
-                        return;
-                    }
-                    processUploadCommands($uiContainer.find('#vault-upload-commands .status-container'), runTroops);
+                    processUploadIncomings($uiContainer.find('#vault-upload-incomings .status-container'), runTroops);
                 };
                 let runTroops = (didFail) => {
                     if (didFail) {
-                        if (didFail == 'captcha') {
+                        if (didFail == lib.errorCodes.CAPTCHA) {
                             alertCaptcha();
                         } else {
                             alert('An unexpected error occurred: ', didFail);
@@ -255,9 +243,21 @@
                         resetButtons();
                         return;
                     }
-                    processUploadTroops($uiContainer.find('#vault-upload-troops .status-container'), (didFail) => {
+                    processUploadTroops($uiContainer.find('#vault-upload-troops .status-container'), runCommands);
+                };
+                let runCommands = (didFail) => {
+                    if (didFail) {
+                        if (didFail == lib.errorCodes.CAPTCHA) {
+                            alertCaptcha();
+                        } else {
+                            alert('An unexpected error occurred: ', didFail);
+                        }
+                        resetButtons();
+                        return;
+                    }
+                    processUploadCommands($uiContainer.find('#vault-upload-commands .status-container'), (didFail) => {
                         if (didFail) {
-                            if (didFail == 'captcha') {
+                            if (didFail == lib.errorCodes.CAPTCHA) {
                                 alertCaptcha();
                             } else {
                                 alert('An unexpected error occurred: ', didFail);
@@ -440,7 +440,7 @@
         $.get(lib.makeTwUrl(lib.pageTypes.ALL_REPORTS)).done((data) => {
             try {
                 if (lib.checkContainsCaptcha(data)) {
-                    return onDone('captcha');
+                    return onDone(lib.errorCodes.CAPTCHA);
                 }
 
                 let $doc = $(data);
@@ -462,11 +462,11 @@
         $.get(lib.makeTwUrl(lib.pageTypes.INCOMINGS_OVERVIEW)).done((data) => {
             try {
                 if (lib.checkContainsCaptcha(data)) {
-                    return onDone('captcha');
+                    return onDone(lib.errorCodes.CAPTCHA);
                 }
 
                 let $doc = $(data);
-                parseUploadIncomingsOverviewPage($doc, (msg) => {
+                parseAllIncomings($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);
@@ -484,11 +484,11 @@
         $.get(lib.makeTwUrl(lib.pageTypes.OWN_COMMANDS_OVERVIEW)).done((data) => {
             try {
                 if (lib.checkContainsCaptcha(data)) {
-                    return onDone('captcha');
+                    return onDone(lib.errorCodes.CAPTCHA);
                 }
 
                 let $doc = $(data);
-                parseOwnCommandsOverviewPage($doc, (msg) => {
+                parseAllCommands($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);
@@ -506,11 +506,11 @@
         $.get(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_OVERVIEW)).done((data) => {
             try {
                 if (lib.checkContainsCaptcha(data)) {
-                    return onDone('captcha');
+                    return onDone(lib.errorCodes.CAPTCHA);
                 }
 
                 let $doc = $(data);
-                parseOwnTroopsOverviewPage($doc, (msg) => {
+                parseAllTroops($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);

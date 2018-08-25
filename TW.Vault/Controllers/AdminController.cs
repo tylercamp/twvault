@@ -127,6 +127,7 @@ namespace TW.Vault.Controllers
             newAuthUser.TransactionTime = DateTime.UtcNow;
             newAuthUser.AdminAuthToken = CurrentUser.AuthToken;
             newAuthUser.AdminPlayerId = CurrentUser.PlayerId;
+            newAuthUser.KeySource = CurrentUser.Uid;
 
             if (keyRequest.NewUserIsAdmin)
                 newAuthUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;

@@ -8,7 +8,7 @@ namespace TW.Vault.Scaffold
         public long ReportId { get; set; }
         public long AttackerVillageId { get; set; }
         public long DefenderVillageId { get; set; }
-        public long AttackerPlayerId { get; set; }
+        public long? AttackerPlayerId { get; set; }
         public long? DefenderPlayerId { get; set; }
         public DateTime OccuredAt { get; set; }
         public long AttackerArmyId { get; set; }
