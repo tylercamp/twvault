@@ -18,21 +18,9 @@ namespace TW.Vault
         {
             ThreadPool.SetMinThreads(8, 4);
 
-            var currentEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json")
-                .AddJsonFile($"appsettings.{currentEnv}.json", optional: true)
-                .AddJsonFile("hosting.json", optional: true)
+                .ApplyVaultConfiguration()
                 .Build();
-
-            var envPort = Environment.GetEnvironmentVariable("TWVAULT_PORT");
-
-            if (envPort != null)
-            {
-                int port = int.Parse(envPort);
-                config["urls"] = $"http://*:{port}";
-            }
 
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(config)
@@ -47,6 +35,5 @@ namespace TW.Vault
 
             host.Run();
         }
-           
     }
 }

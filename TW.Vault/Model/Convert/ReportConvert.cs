@@ -19,7 +19,7 @@ namespace TW.Vault.Model.Convert
             target.Luck                  = report.Luck.Value;
             target.Loyalty               = report.Loyalty;
 
-            target.AttackerPlayerId      = report.AttackingPlayerId.Value;
+            target.AttackerPlayerId      = report.AttackingPlayerId;
             target.AttackerVillageId     = report.AttackingVillageId.Value;
 
             target.AttackerArmy          = ArmyConvert.JsonToArmy(report.AttackingArmy, target.AttackerArmy, context);
@@ -32,7 +32,7 @@ namespace TW.Vault.Model.Convert
             target.DefenderLossesArmy    = ArmyConvert.JsonToArmy(report.DefendingArmyLosses, target.DefenderLossesArmy, context);
             target.DefenderTravelingArmy = ArmyConvert.JsonToArmy(report.TravelingTroops, target.DefenderTravelingArmy, context);
 
-            target.ReportBuilding        = BuildingConvert.JsonToReportBuilding(target.ReportId, report.BuildingLevels, target.ReportBuilding, context);
+            target.Building              = BuildingConvert.JsonToReportBuilding(report.BuildingLevels, target.Building, context);
 
 
 
@@ -51,8 +51,8 @@ namespace TW.Vault.Model.Convert
             if (target.DefenderTravelingArmy != null)
                 target.DefenderTravelingArmy.WorldId = target.World?.Id ?? target.WorldId;
 
-            if (target.ReportBuilding != null)
-                target.ReportBuilding.WorldId = target.World?.Id ?? target.WorldId;
+            if (target.Building != null)
+                target.Building.WorldId = target.World?.Id ?? target.WorldId;
         }
 
         public static JSON.Report ModelToJson(Scaffold.Report report)
@@ -77,7 +77,7 @@ namespace TW.Vault.Model.Convert
             result.DefendingArmyLosses  = ArmyConvert.ArmyToJson(report.DefenderLossesArmy);
             result.TravelingTroops      = ArmyConvert.ArmyToJson(report.DefenderTravelingArmy);
 
-            result.BuildingLevels       = BuildingConvert.ReportBuildingToJson(report.ReportBuilding);
+            result.BuildingLevels       = BuildingConvert.ReportBuildingToJson(report.Building);
 
             return result;
         }

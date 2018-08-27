@@ -12,6 +12,7 @@ namespace TW.Vault.Scaffold
             CommandArmy = new HashSet<CommandArmy>();
             Conquer = new HashSet<Conquer>();
             CurrentBuilding = new HashSet<CurrentBuilding>();
+            CurrentPlayer = new HashSet<CurrentPlayer>();
             CurrentVillage = new HashSet<CurrentVillage>();
             Player = new HashSet<Player>();
             Report = new HashSet<Report>();
@@ -19,6 +20,7 @@ namespace TW.Vault.Scaffold
             ReportBuilding = new HashSet<ReportBuilding>();
             Transaction = new HashSet<Transaction>();
             User = new HashSet<User>();
+            UserLog = new HashSet<UserLog>();
             Village = new HashSet<Village>();
             WorldSettings = new HashSet<WorldSettings>();
         }
@@ -32,6 +34,7 @@ namespace TW.Vault.Scaffold
         public ICollection<CommandArmy> CommandArmy { get; set; }
         public ICollection<Conquer> Conquer { get; set; }
         public ICollection<CurrentBuilding> CurrentBuilding { get; set; }
+        public ICollection<CurrentPlayer> CurrentPlayer { get; set; }
         public ICollection<CurrentVillage> CurrentVillage { get; set; }
         public ICollection<Player> Player { get; set; }
         public ICollection<Report> Report { get; set; }
@@ -39,6 +42,7 @@ namespace TW.Vault.Scaffold
         public ICollection<ReportBuilding> ReportBuilding { get; set; }
         public ICollection<Transaction> Transaction { get; set; }
         public ICollection<User> User { get; set; }
+        public ICollection<UserLog> UserLog { get; set; }
         public ICollection<Village> Village { get; set; }
         public ICollection<WorldSettings> WorldSettings { get; set; }
     }

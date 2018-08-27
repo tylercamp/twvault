@@ -14,6 +14,8 @@ using Newtonsoft.Json.Serialization;
 using Microsoft.Extensions.Configuration.Json;
 using TW.Vault.Security;
 using Microsoft.AspNetCore.HttpOverrides;
+using Newtonsoft.Json.Converters;
+using System.IO;
 
 namespace TW.Vault
 {
@@ -34,6 +36,7 @@ namespace TW.Vault
                 .AddJsonOptions(opt =>
                 {
                     opt.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+                    opt.SerializerSettings.Converters.Add(new StringEnumConverter(camelCaseText: false));
                 })
                 .AddMvcOptions(opt =>
                 {
@@ -64,6 +67,18 @@ namespace TW.Vault
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+
+            var initCfg = TW.Vault.Configuration.Initialization;
+            if (initCfg.EnableRequiredFiles)
+            {
+                var webRoot = env.WebRootPath;
+                foreach (var file in initCfg.RequiredFiles)
+                {
+                    String fullPath = Path.Combine(webRoot, file);
+                    if (!File.Exists(fullPath))
+                        throw new Exception($"Required external script is not available: \"{file}\" (relative to \"{webRoot}\") (absolute path \"${Path.GetFullPath(fullPath)}\")");
+                }
             }
 
             app.UseCors("AllOrigins");

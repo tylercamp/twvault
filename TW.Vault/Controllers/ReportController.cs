@@ -126,6 +126,16 @@ namespace TW.Vault.Controllers
                     ));
                 }
 
+                if (jsonReport.OccurredAt.Value > CurrentServerTime)
+                {
+                    context.InvalidDataRecord.Add(MakeInvalidDataRecord(
+                        JsonConvert.SerializeObject(jsonReport),
+                        "The report 'OccurredAt' is in the future"
+                    ));
+                    //  Return 200/OK to trick malicious actors
+                    return Ok();
+                }
+
                 var scaffoldReport = await Profile("Find existing report", () => (
                         from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
                         where report.ReportId == jsonReport.ReportId.Value
@@ -163,14 +173,10 @@ namespace TW.Vault.Controllers
                     scaffoldReport.Tx = tx;
                 });
 
-                try
-                {
-                    await Profile("Save changes", () => context.SaveChangesAsync());
-                }
-                catch (Exception e)
-                {
+                var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+                userUploadHistory.LastUploadedReportsAt = DateTime.UtcNow;
 
-                }
+                await Profile("Save changes", () => context.SaveChangesAsync());
                 return Ok();
             }
             else

@@ -5,7 +5,11 @@ namespace TW.Vault.Scaffold
 {
     public partial class ReportBuilding
     {
-        public long ReportId { get; set; }
+        public ReportBuilding()
+        {
+            Report = new HashSet<Report>();
+        }
+
         public short? Main { get; set; }
         public short? Stable { get; set; }
         public short? Garage { get; set; }
@@ -26,8 +30,9 @@ namespace TW.Vault.Scaffold
         public short? Barracks { get; set; }
         public short? Snob { get; set; }
         public short WorldId { get; set; }
+        public long ReportBuildingId { get; set; }
 
-        public Report Report { get; set; }
         public World World { get; set; }
+        public ICollection<Report> Report { get; set; }
     }
 }

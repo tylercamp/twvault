@@ -2,12 +2,6 @@
 
 function RequestManager() {
     this.pendingRequests = [];
-    this.stats = {
-        done: 0,
-        pending: 0,
-        total: 0,
-        numFailed: 0
-    }
     this.errorHistory = {};
     this.maxPendingRequests = 2;
     this.refreshDelay = 500;
@@ -17,6 +11,8 @@ function RequestManager() {
     this._interval = null;
     this._onFinishedHandler = null;
     this._hasErrors = false;
+
+    this.resetStats();
 }
 
 RequestManager.prototype.start = function () {
@@ -55,15 +51,21 @@ RequestManager.prototype.start = function () {
                         var numCompleted = self.stats.done + "/" + self.stats.total;
                         console.log(numCompleted);
                         numResponding--;
+
+                        var err;
                         try {
                             request.onDone && request.onDone(data, request);
                         } catch (e) {
                             self.stats.numFailed++;
-                            throw e;
+                            err = e;
                         }
 
                         if (!self.pendingRequests.length && numResponding == 0) {
                             self._onFinishedHandler && self._onFinishedHandler();
+                        }
+
+                        if (err) {
+                            throw err;
                         }
                     })
                     .fail(() => {
@@ -92,7 +94,12 @@ RequestManager.prototype.start = function () {
 
 RequestManager.prototype.stop = function () {
     this._interval && clearInterval(this._interval);
+    this._interval = null;
 };
+
+RequestManager.prototype.isRunning = function () {
+    return this._interval != null;
+}
 
 RequestManager.prototype.addRequest = function (url, callback, beforeRunCallback_) {
     if (this._urlHistory[url]) {
@@ -140,4 +147,13 @@ RequestManager.prototype.hasRequests = function () {
 
 RequestManager.prototype.hasErrors = function () {
     return this._hasErrors;
+};
+
+RequestManager.prototype.resetStats = function () {
+    this.stats = {
+        done: 0,
+        pending: 0,
+        total: 0,
+        numFailed: 0
+    };
 };

@@ -22,6 +22,7 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<Conquer> Conquer { get; set; }
         public virtual DbSet<CurrentArmy> CurrentArmy { get; set; }
         public virtual DbSet<CurrentBuilding> CurrentBuilding { get; set; }
+        public virtual DbSet<CurrentPlayer> CurrentPlayer { get; set; }
         public virtual DbSet<CurrentVillage> CurrentVillage { get; set; }
         public virtual DbSet<FailedAuthorizationRecord> FailedAuthorizationRecord { get; set; }
         public virtual DbSet<InvalidDataRecord> InvalidDataRecord { get; set; }
@@ -32,6 +33,8 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<ReportBuilding> ReportBuilding { get; set; }
         public virtual DbSet<Transaction> Transaction { get; set; }
         public virtual DbSet<User> User { get; set; }
+        public virtual DbSet<UserLog> UserLog { get; set; }
+        public virtual DbSet<UserUploadHistory> UserUploadHistory { get; set; }
         public virtual DbSet<Village> Village { get; set; }
         public virtual DbSet<World> World { get; set; }
         public virtual DbSet<WorldSettings> WorldSettings { get; set; }
@@ -41,7 +44,7 @@ namespace TW.Vault.Scaffold
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseNpgsql("Host=192.168.1.250; Port=22342; Database=vault; Username=twu_vault; Password=!!TWV@ult4Us??");
+                optionsBuilder.UseNpgsql("Host=192.168.1.250; Port=22342; Database=vault_dev; Username=twu_vault; Password=!!TWV@ult4Us??");
             }
         }
 
@@ -125,6 +128,10 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.TxId).HasColumnName("tx_id");
 
+                entity.Property(e => e.UserLabel)
+                    .HasColumnName("user_label")
+                    .HasMaxLength(128);
+
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
                 entity.HasOne(d => d.Army)
@@ -147,7 +154,6 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.TargetPlayer)
                     .WithMany(p => p.CommandTargetPlayer)
                     .HasForeignKey(d => d.TargetPlayerId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_target_player_id");
 
                 entity.HasOne(d => d.TargetVillage)
@@ -371,6 +377,27 @@ namespace TW.Vault.Scaffold
                     .HasConstraintName("fk_world_id");
             });
 
+            modelBuilder.Entity<CurrentPlayer>(entity =>
+            {
+                entity.HasKey(e => e.PlayerId);
+
+                entity.ToTable("current_player", "tw");
+
+                entity.Property(e => e.PlayerId)
+                    .HasColumnName("player_id")
+                    .ValueGeneratedNever();
+
+                entity.Property(e => e.CurrentPossibleNobles).HasColumnName("current_possible_nobles");
+
+                entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.HasOne(d => d.World)
+                    .WithMany(p => p.CurrentPlayer)
+                    .HasForeignKey(d => d.WorldId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_world_id");
+            });
+
             modelBuilder.Entity<CurrentVillage>(entity =>
             {
                 entity.HasKey(e => e.VillageId);
@@ -564,6 +591,9 @@ namespace TW.Vault.Scaffold
                     .HasName("idx_report_attacker_village_id")
                     .ForNpgsqlHasMethod("hash");
 
+                entity.HasIndex(e => e.BuildingId)
+                    .HasName("fki_fk_building_id");
+
                 entity.HasIndex(e => e.DefenderPlayerId)
                     .HasName("idx_report_defender_player_id")
                     .ForNpgsqlHasMethod("hash");
@@ -587,6 +617,8 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.AttackerPlayerId).HasColumnName("attacker_player_id");
 
                 entity.Property(e => e.AttackerVillageId).HasColumnName("attacker_village_id");
+
+                entity.Property(e => e.BuildingId).HasColumnName("building_id");
 
                 entity.Property(e => e.DefenderArmyId).HasColumnName("defender_army_id");
 
@@ -625,7 +657,6 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.AttackerPlayer)
                     .WithMany(p => p.ReportAttackerPlayer)
                     .HasForeignKey(d => d.AttackerPlayerId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_attacker_player_id");
 
                 entity.HasOne(d => d.AttackerVillage)
@@ -633,6 +664,11 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey(d => d.AttackerVillageId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_attacker_village_id");
+
+                entity.HasOne(d => d.Building)
+                    .WithMany(p => p.Report)
+                    .HasForeignKey(d => d.BuildingId)
+                    .HasConstraintName("fk_building_id");
 
                 entity.HasOne(d => d.DefenderArmy)
                     .WithMany(p => p.ReportDefenderArmy)
@@ -723,17 +759,15 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<ReportBuilding>(entity =>
             {
-                entity.HasKey(e => e.ReportId);
-
                 entity.ToTable("report_building", "tw");
 
                 entity.HasIndex(e => e.WorldId)
                     .HasName("idx_report_building_world_id")
                     .ForNpgsqlHasMethod("hash");
 
-                entity.Property(e => e.ReportId)
-                    .HasColumnName("report_id")
-                    .ValueGeneratedNever();
+                entity.Property(e => e.ReportBuildingId)
+                    .HasColumnName("report_building_id")
+                    .HasDefaultValueSql("nextval('tw.report_building_report_building_id_seq'::regclass)");
 
                 entity.Property(e => e.Barracks).HasColumnName("barracks");
 
@@ -774,12 +808,6 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.Wood).HasColumnName("wood");
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
-
-                entity.HasOne(d => d.Report)
-                    .WithOne(p => p.ReportBuilding)
-                    .HasForeignKey<ReportBuilding>(d => d.ReportId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_report_id");
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.ReportBuilding)
@@ -825,6 +853,10 @@ namespace TW.Vault.Scaffold
                     .HasColumnName("uid")
                     .HasDefaultValueSql("nextval('tw.users_uid_seq'::regclass)");
 
+                entity.Property(e => e.AdminAuthToken).HasColumnName("admin_auth_token");
+
+                entity.Property(e => e.AdminPlayerId).HasColumnName("admin_player_id");
+
                 entity.Property(e => e.AuthToken).HasColumnName("auth_token");
 
                 entity.Property(e => e.Enabled).HasColumnName("enabled");
@@ -837,12 +869,80 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.PlayerId).HasColumnName("player_id");
 
+                entity.Property(e => e.TransactionTime).HasColumnName("transaction_time");
+
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.User)
                     .HasForeignKey(d => d.WorldId)
                     .HasConstraintName("fk_world_id");
+            });
+
+            modelBuilder.Entity<UserLog>(entity =>
+            {
+                entity.ToTable("user_log", "security");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('security.user_log_id_seq'::regclass)");
+
+                entity.Property(e => e.AdminAuthToken).HasColumnName("admin_auth_token");
+
+                entity.Property(e => e.AdminPlayerId).HasColumnName("admin_player_id");
+
+                entity.Property(e => e.AuthToken).HasColumnName("auth_token");
+
+                entity.Property(e => e.Enabled).HasColumnName("enabled");
+
+                entity.Property(e => e.KeySource).HasColumnName("key_source");
+
+                entity.Property(e => e.Label).HasColumnName("label");
+
+                entity.Property(e => e.OperationType)
+                    .IsRequired()
+                    .HasColumnName("operation_type")
+                    .HasColumnType("character varying");
+
+                entity.Property(e => e.PermissionsLevel).HasColumnName("permissions_level");
+
+                entity.Property(e => e.PlayerId).HasColumnName("player_id");
+
+                entity.Property(e => e.TransactionTime).HasColumnName("transaction_time");
+
+                entity.Property(e => e.Uid).HasColumnName("uid");
+
+                entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.HasOne(d => d.World)
+                    .WithMany(p => p.UserLog)
+                    .HasForeignKey(d => d.WorldId)
+                    .HasConstraintName("fk_world_id");
+            });
+
+            modelBuilder.Entity<UserUploadHistory>(entity =>
+            {
+                entity.ToTable("user_upload_history", "security");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('security.user_upload_history_id_seq'::regclass)");
+
+                entity.Property(e => e.LastUploadedCommandsAt).HasColumnName("last_uploaded_commands_at");
+
+                entity.Property(e => e.LastUploadedIncomingsAt).HasColumnName("last_uploaded_incomings_at");
+
+                entity.Property(e => e.LastUploadedReportsAt).HasColumnName("last_uploaded_reports_at");
+
+                entity.Property(e => e.LastUploadedTroopsAt).HasColumnName("last_uploaded_troops_at");
+
+                entity.Property(e => e.Uid).HasColumnName("uid");
+
+                entity.HasOne(d => d.U)
+                    .WithMany(p => p.UserUploadHistory)
+                    .HasForeignKey(d => d.Uid)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_uid");
             });
 
             modelBuilder.Entity<Village>(entity =>
@@ -931,6 +1031,10 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.HasSequence("invalid_data_record_id_seq");
 
+            modelBuilder.HasSequence("user_log_id_seq");
+
+            modelBuilder.HasSequence("user_upload_history_id_seq");
+
             modelBuilder.HasSequence("command_army_id_seq");
 
             modelBuilder.HasSequence("failed_auth_id_seq");
@@ -938,6 +1042,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.HasSequence("performance_record_id_seq");
 
             modelBuilder.HasSequence("report_armies_army_id_seq");
+
+            modelBuilder.HasSequence("report_building_report_building_id_seq");
 
             modelBuilder.HasSequence("tx_id_seq");
 

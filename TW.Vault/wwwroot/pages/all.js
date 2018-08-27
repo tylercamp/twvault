@@ -37,8 +37,8 @@
                         <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
                     </td>
                 </tr>
-                <tr id="vault-upload-commands">
-                    <td>Commands</td>
+                <tr id="vault-upload-troops">
+                    <td>Troops</td>
                     <td><input type="button" class="details-button" value="Details"></td>
                     <td>
                         <input type="button" class="upload-button" value="Upload">
@@ -46,8 +46,8 @@
                         <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
                     </td>
                 </tr>
-                <tr id="vault-upload-troops">
-                    <td>Troops</td>
+                <tr id="vault-upload-commands">
+                    <td>Commands</td>
                     <td><input type="button" class="details-button" value="Details"></td>
                     <td>
                         <input type="button" class="upload-button" value="Upload">
@@ -62,7 +62,7 @@
                 </tr>
             </table>
 
-            <div id="vault-admin-container"></div>
+            <div id="vault-admin-container" style="padding:1em"></div>
 
             <h4>Instructions</h4>
             <p>
@@ -72,24 +72,22 @@
 
             <hr style="margin:4em 0 2em">
 
-            <p style="font-size:12px">
-                ~ Disclaimers ~
-            </p>
-            <p style="font-size:12px">
-                <em>This tool is not endorsed or developed by InnoGames.</em>
-            </p>
-            <p style="font-size:12px">
-                <em>
-                    All data and requests to the Vault will have various information logged for security. This is limited to:
+            <button class="btn btn-confirm-yes vault-toggle-terms-btn">Disclaimers and Terms</button>
+            <div id="vault-disclaimers-and-terms" style="display:none;padding:1em">
+                <p>
+                    <em>This tool is not endorsed or developed by InnoGames.</em>
+                </p>
+                <p>
+                    <em>
+                        All data and requests to the Vault will have various information logged for security. This is limited to:
 
-                    Authentication token, IP address, player ID, tribe ID, requested endpoint, and time of transaction.
+                        Authentication token, IP address, player ID, tribe ID, requested endpoint, and time of transaction.
 
-                    Requests to this script will only be IP-logged to protect against abuse. Information collected by this script will never be shared
-                    with any third parties or any unauthorized tribes/players.
-                </em>
-            </p>
-
-            <hr style="margin: 2em 0;">
+                        Requests to this script will only be IP-logged to protect against abuse. Information collected by this script will never be shared
+                        with any third parties or any unauthorized tribes/players.
+                    </em>
+                </p>
+            </div>
 
             <p style="font-size:12px">
                 Vault server and script by: Tyler (tcamps/False Duke), Glen (vahtos/TheBossPig)
@@ -138,6 +136,9 @@
     $doc.find('body').prepend($uiContainer);
     processAdminInterface();
 
+    $uiContainer.find('.vault-toggle-terms-btn').click(() => {
+        $uiContainer.find('#vault-disclaimers-and-terms').toggle();
+    });
 
     $uiContainer.find('.vault-close-btn').click(() => {
         let isUploading = $('.upload-button').prop('disabled');
@@ -170,48 +171,99 @@
 
         var $statusContainer = $row.find('.status-container');
 
+        //  TODO - This is messy, clean this up
+        let alertCaptcha = () => alert(lib.messages.TRIGGERED_CAPTCHA);
+
         switch (uploadType) {
             default: alert(`Programmer error: no logic for upload type "${uploadType}"!`);
 
             case 'vault-upload-reports':
                 processUploadReports($statusContainer, (didFail) => {
                     $('.upload-button').prop('disabled', false);
+                    if (didFail && didFail == lib.errorCodes.CAPTCHA) {
+                        alertCaptcha();
+                    }
                 });
                 break;
 
             case 'vault-upload-incomings':
                 processUploadIncomings($statusContainer, (didFail) => {
                     $('.upload-button').prop('disabled', false);
+                    if (didFail && didFail == lib.errorCodes.CAPTCHA) {
+                        alertCaptcha();
+                    }
                 });
                 break;
 
             case 'vault-upload-commands':
                 processUploadCommands($statusContainer, (didFail) => {
                     $('.upload-button').prop('disabled', false);
+                    if (didFail && didFail == lib.errorCodes.CAPTCHA) {
+                        alertCaptcha();
+                    }
                 });
                 break;
 
             case 'vault-upload-troops':
                 processUploadTroops($statusContainer, (didFail) => {
                     $('.upload-button').prop('disabled', false);
+                    if (didFail && didFail == lib.errorCodes.CAPTCHA) {
+                        alertCaptcha();
+                    }
                 });
                 break;
 
             case 'vault-upload-all':
                 $('.status-container').html('<em>Waiting...</em>');
 
+                let resetButtons = () => $('.upload-button').prop('disabled', false);
+
                 let runReports = () => {
                     processUploadReports($uiContainer.find('#vault-upload-reports .status-container'), runIncomings);
                 };
                 let runIncomings = (didFail) => {
-                    processUploadIncomings($uiContainer.find('#vault-upload-incomings .status-container'), runCommands);
-                };
-                let runCommands = (didFail) => {
-                    processUploadCommands($uiContainer.find('#vault-upload-commands .status-container'), runTroops);
+                    if (didFail) {
+                        if (didFail == lib.errorCodes.CAPTCHA) {
+                            alertCaptcha();
+                        } else {
+                            alert('An unexpected error occurred: ', didFail);
+                        }
+                        resetButtons();
+                        return;
+                    }
+                    processUploadIncomings($uiContainer.find('#vault-upload-incomings .status-container'), runTroops);
                 };
                 let runTroops = (didFail) => {
-                    processUploadTroops($uiContainer.find('#vault-upload-troops .status-container'), () => {
-                        $('.upload-button').prop('disabled', false);
+                    if (didFail) {
+                        if (didFail == lib.errorCodes.CAPTCHA) {
+                            alertCaptcha();
+                        } else {
+                            alert('An unexpected error occurred: ', didFail);
+                        }
+                        resetButtons();
+                        return;
+                    }
+                    processUploadTroops($uiContainer.find('#vault-upload-troops .status-container'), runCommands);
+                };
+                let runCommands = (didFail) => {
+                    if (didFail) {
+                        if (didFail == lib.errorCodes.CAPTCHA) {
+                            alertCaptcha();
+                        } else {
+                            alert('An unexpected error occurred: ', didFail);
+                        }
+                        resetButtons();
+                        return;
+                    }
+                    processUploadCommands($uiContainer.find('#vault-upload-commands .status-container'), (didFail) => {
+                        if (didFail) {
+                            if (didFail == lib.errorCodes.CAPTCHA) {
+                                alertCaptcha();
+                            } else {
+                                alert('An unexpected error occurred: ', didFail);
+                            }
+                        }
+                        resetButtons();
                     });
                 };
 
@@ -243,7 +295,6 @@
         var $adminContainer = $uiContainer.find('#vault-admin-container');
 
         $adminContainer.append(`
-            <hr>
             <h3>Admin Options</h3>
             <div>
                 Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download">
@@ -266,7 +317,6 @@
                     <textarea cols=100 rows=5></textarea>
                 </div>
             </div>
-            <hr>
         `.trim());
 
         //  Insert existing keys
@@ -314,10 +364,10 @@
                 return;
 
             lib.postApi(lib.makeApiUrl('admin/keys'), {
-                playerId: isNaN(parseInt(username)) ? null : parseInt(username),
-                playerName: isNaN(parseInt(username)) ? username : null,
-                newUserIsAdmin: false
-            })
+                    playerId: isNaN(parseInt(username)) ? null : parseInt(username),
+                    playerName: isNaN(parseInt(username)) ? username : null,
+                    newUserIsAdmin: false
+                })
                 .done((data) => {
                     if (typeof data == 'string')
                         data = JSON.parse(data);
@@ -341,7 +391,7 @@
                 <tr data-auth-key="${user.key}">
                     <td>${user.playerName}</td>
                     <td>${user.tribeName}</td>
-                    <td>${user.key}</td>
+                    <td>${user.key || '-'}</td>
                     <td><input type="button" class="get-script" value="Get script"></td>
                     <td><input type="button" class="delete-user" value="Delete"></td>
                 </tr>
@@ -389,8 +439,12 @@
     function processUploadReports($statusContainer, onDone) {
         $.get(lib.makeTwUrl(lib.pageTypes.ALL_REPORTS)).done((data) => {
             try {
+                if (lib.checkContainsCaptcha(data)) {
+                    return onDone(lib.errorCodes.CAPTCHA);
+                }
+
                 let $doc = $(data);
-                parseAllReportsPage($doc, (msg) => {
+                parseAllReports($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);
@@ -407,8 +461,12 @@
     function processUploadIncomings($statusContainer, onDone) {
         $.get(lib.makeTwUrl(lib.pageTypes.INCOMINGS_OVERVIEW)).done((data) => {
             try {
+                if (lib.checkContainsCaptcha(data)) {
+                    return onDone(lib.errorCodes.CAPTCHA);
+                }
+
                 let $doc = $(data);
-                parseIncomingsOverviewPage($doc, (msg) => {
+                parseAllIncomings($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);
@@ -425,8 +483,12 @@
     function processUploadCommands($statusContainer, onDone) {
         $.get(lib.makeTwUrl(lib.pageTypes.OWN_COMMANDS_OVERVIEW)).done((data) => {
             try {
+                if (lib.checkContainsCaptcha(data)) {
+                    return onDone(lib.errorCodes.CAPTCHA);
+                }
+
                 let $doc = $(data);
-                parseOwnCommandsOverviewPage($doc, (msg) => {
+                parseAllCommands($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);
@@ -443,8 +505,12 @@
     function processUploadTroops($statusContainer, onDone) {
         $.get(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_OVERVIEW)).done((data) => {
             try {
+                if (lib.checkContainsCaptcha(data)) {
+                    return onDone(lib.errorCodes.CAPTCHA);
+                }
+
                 let $doc = $(data);
-                parseOwnTroopsOverviewPage($doc, (msg) => {
+                parseAllTroops($doc, (msg) => {
                     $statusContainer.text(msg);
                 }, (didFail) => {
                     onDone(didFail);
@@ -474,6 +540,7 @@
         armyData.forEach((ad) => {
             let playerId = ad.playerId;
             let playerName = ad.playerName;
+            let maxNobles = ad.maxPossibleNobles;
 
             let armies = ad.armies;
 
@@ -484,7 +551,7 @@
                 numAlmostNukes: 0,
                 numDVs: 0,
                 numNobles: 0,
-                numPossibleNobles: 0
+                numPossibleNobles: maxNobles
             };
 
             let uploadAge = ad.uploadAge.split(':')[0];
@@ -550,7 +617,7 @@
         playerSummaries.forEach((s) => {
             csvString += '\n';
             csvString += [
-                s.uploadedAt, s.playerName, s.numNukes, s.numAlmostNukes, s.numDVs, s.numNukes, s.numPossibleNobles, s.needsUpload ? 'YES' : ''
+                s.uploadedAt, s.playerName, s.numNukes, s.numAlmostNukes, s.numDVs, s.numNobles, s.numPossibleNobles, s.needsUpload ? 'YES' : ''
             ].join(', ');
         });
 

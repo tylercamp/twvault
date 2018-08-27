@@ -102,16 +102,20 @@ namespace TW.Vault.Security
             if (discoveredUser.PlayerId != authHeaders.PlayerId.Value)
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
-                failedRequest.Reason = "Player ID did not match the ID associated with the token";
+                failedRequest.Reason = $"Player ID {authHeaders.PlayerId.Value} did not match the ID associated with the token {discoveredUser.PlayerId}";
 
                 dbContext.Add(failedRequest);
                 dbContext.SaveChanges();
+                context.Result = new StatusCodeResult(401);
+                return;
             }
 
             if (discoveredUser.PermissionsLevel < Configuration.Security.MinimumRequiredPriveleges)
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
                 failedRequest.Reason = $"User privileges '{discoveredUser.PermissionsLevel}' was less than the minimum '{Configuration.Security.MinimumRequiredPriveleges}'";
+                context.Result = new StatusCodeResult(401);
+                return;
             }
 
 

@@ -25,7 +25,7 @@ namespace TW.Vault.Scaffold
         public short? Watchtower { get; set; }
         public short? Barracks { get; set; }
         public short WorldId { get; set; }
-        public DateTime LastUpdated { get; set; }
+        public DateTime? LastUpdated { get; set; }
         public short? Snob { get; set; }
 
         public CurrentVillage Village { get; set; }

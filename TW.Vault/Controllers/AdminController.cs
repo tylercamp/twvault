@@ -41,8 +41,10 @@ namespace TW.Vault.Controllers
                     join player in context.Player on user.PlayerId equals player.PlayerId
                     join tribe in context.Ally on player.TribeId equals tribe.TribeId
                     where CurrentUser.KeySource == null || user.KeySource == CurrentUser.Uid
+                    where user.Enabled
                     where player.WorldId == CurrentWorldId
-                    select new { user = user, playerName = player.PlayerName, tribeName = tribe.TribeName }
+                    where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
+                    select new { user, playerName = player.PlayerName, tribeName = tribe.TribeName }
                 ).ToListAsync();
 
             var jsonUsers = users.Select(p => UserConvert.ModelToJson(
@@ -72,10 +74,7 @@ namespace TW.Vault.Controllers
 
                 if (possiblePlayer == null)
                 {
-                    return BadRequest(new
-                    {
-                        error = "No player could be found with the given player ID."
-                    });
+                    return BadRequest(new { error = "No player could be found with the given player ID." });
                 }
 
                 player = possiblePlayer;
@@ -92,48 +91,43 @@ namespace TW.Vault.Controllers
 
                 if (possiblePlayer == null)
                 {
-                    return BadRequest(new
-                    {
-                        error = "No user could be found with the given name."
-                    });
+                    return BadRequest(new { error = "No user could be found with the given name." });
                 }
 
                 player = possiblePlayer;
             }
             else
             {
-                return BadRequest(new
-                {
-                    error = "Either the player ID or player name must be specified."
-                });
+                return BadRequest(new { error = "Either the player ID or player name must be specified." });
             }
 
             if (!CurrentUserIsSystem && player.TribeId != CurrentTribeId)
             {
-                return BadRequest(new
-                {
-                    error = "Cannot request a key for a player that's not in your tribe."
-                });
+                return BadRequest(new { error = "Cannot request a key for a player that's not in your tribe." });
             }
 
             bool userExists = await (
                     from user in context.User
                     where user.PlayerId == player.PlayerId
+                    where user.WorldId == null || user.WorldId == CurrentWorldId
+                    where user.Enabled
                     select user
                 ).AnyAsync();
 
             if (userExists)
             {
-                return BadRequest(new
-                {
-                    error = "This user already has an auth key."
-                });
+                return BadRequest(new { error = "This user already has an auth key." });
             }
 
             var newAuthUser = new Scaffold.User();
             newAuthUser.WorldId = CurrentWorldId;
             newAuthUser.PlayerId = player.PlayerId;
             newAuthUser.AuthToken = Guid.NewGuid();
+            newAuthUser.Enabled = true;
+            newAuthUser.TransactionTime = DateTime.UtcNow;
+            newAuthUser.AdminAuthToken = CurrentUser.AuthToken;
+            newAuthUser.AdminPlayerId = CurrentUser.PlayerId;
+            newAuthUser.KeySource = CurrentUser.Uid;
 
             if (keyRequest.NewUserIsAdmin)
                 newAuthUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;
@@ -173,32 +167,94 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = "Invalid auth key." });
             }
 
-            var user = await (
+            var requestedUser = await (
                     from u in context.User
                     where u.AuthToken == authKey
                     select u
                 ).FirstOrDefaultAsync();
 
-            if (user == null)
+            if (requestedUser == null)
             {
                 return BadRequest(new { error = "No user exists with that auth key." });
             }
 
-            bool canDelete = (
-                (user.KeySource.HasValue && user.KeySource.Value != CurrentUser.Uid)
-                || CurrentUserIsSystem
-                );
+            if (requestedUser.AuthToken == CurrentUser.AuthToken)
+            {
+                return BadRequest(new { error = "You cannot delete your own key." });
+            }
 
-            if (!canDelete)
+            if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System)
             {
-                return BadRequest(new { error = "You cannot delete a user that you have not created." });
+                return BadRequest(new { error = "You cannot delete a system token." });
             }
-            else
+
+            if (requestedUser.PermissionsLevel == (short)Security.PermissionLevel.Admin)
             {
-                context.User.Remove(user);
-                await context.SaveChangesAsync();
-                return Ok();
+                if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUser.Uid)
+                {
+                    return BadRequest(new { error = "You cannot delete an admin user that you have not created." });
+                }
             }
+
+            logger.LogWarning("User {SourceKey} disabling {TargetKey}", CurrentUser.AuthToken, authKey);
+            requestedUser.Enabled = false;
+            requestedUser.AdminAuthToken = CurrentUser.AuthToken;
+            requestedUser.AdminPlayerId = CurrentUser.PlayerId;
+            requestedUser.TransactionTime = DateTime.UtcNow;
+
+            context.User.Update(requestedUser);
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+
+        [HttpPost("keys/{authKeyString}/setAdmin")]
+        public async Task<IActionResult> SetKeyAdmin(String authKeyString, [FromBody]JSON.UpdateAdminKeyRequest updateRequest)
+        {
+            if (!CurrentUserIsAdmin)
+                return Unauthorized();
+
+            //  WARNING - Copy/pasted auth check from RevokeKey!
+            Guid authKey;
+            try
+            {
+                authKey = Guid.Parse(authKeyString);
+            }
+            catch
+            {
+                return BadRequest(new { error = "Invalid auth key." });
+            }
+
+            var requestedUser = await (
+                    from u in context.User
+                    where u.AuthToken == authKey
+                    select u
+                ).FirstOrDefaultAsync();
+
+            if (requestedUser == null)
+            {
+                return BadRequest(new { error = "No user exists with that auth key." });
+            }
+
+            if (requestedUser.AuthToken == CurrentUser.AuthToken)
+            {
+                return BadRequest(new { error = "You cannot change admin status of your own key." });
+            }
+
+            if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System)
+            {
+                return BadRequest(new { error = "You cannot change admin status of a system key." });
+            }
+
+            if (requestedUser.PermissionsLevel == (short)Security.PermissionLevel.Admin)
+            {
+                if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUser.Uid)
+                {
+                    return BadRequest(new { error = "You cannot change the admin status of an admin that you have not created." });
+                }
+            }
+
+            throw new NotImplementedException();
         }
 
 
@@ -219,6 +275,13 @@ namespace TW.Vault.Controllers
                     select new { player, currentVillage }
                 ).ToListAsync();
 
+            var currentPlayers = await (
+                    from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
+                    join player in context.Player on currentPlayer.PlayerId equals player.PlayerId
+                    where player.TribeId == CurrentTribeId
+                    select currentPlayer
+                ).ToListAsync();
+
             var villagesByPlayer = tribeVillages
                                         .Select(v => v.player)
                                         .Distinct()
@@ -228,6 +291,8 @@ namespace TW.Vault.Controllers
                                                               .Select(tv => tv.currentVillage)
                                                               .ToList()
                                          );
+
+            var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
 
             var jsonData = new List<JSON.PlayerSummary>();
             foreach (var kvp in villagesByPlayer)
@@ -239,6 +304,9 @@ namespace TW.Vault.Controllers
                 playerSummary.PlayerName = WebUtility.UrlDecode(playerName);
                 playerSummary.PlayerId = kvp.Key.PlayerId;
                 playerSummary.Armies = new List<JSON.Army>();
+
+                if (maxNoblesByPlayer.ContainsKey(kvp.Key.PlayerId))
+                    playerSummary.MaxPossibleNobles = maxNoblesByPlayer[kvp.Key.PlayerId];
 
                 var oldestUpload = villages.Select(v => v.ArmyOwned.LastUpdated).Min();
                 if (oldestUpload != null)

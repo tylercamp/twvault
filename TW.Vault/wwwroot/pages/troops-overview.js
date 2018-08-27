@@ -1,11 +1,8 @@
 ﻿
-function parseOwnTroopsOverviewPage($doc, onProgress_, onDone_) {
+function parseOwnTroopsOverviewPage($doc) {
     $doc = $doc || $(document);
 
     let troopData = [];
-
-    if (onProgress_)
-        onProgress_("Collecting troop counts...");
 
     let $villageRows = $doc.find('#units_table tbody');
     $villageRows.each((i, el) => {
@@ -43,31 +40,7 @@ function parseOwnTroopsOverviewPage($doc, onProgress_, onDone_) {
         troopData.push(villageTroopData);
     });
 
-    if (onProgress_)
-        onProgress_("Uploading to vault...");
-
-    lib.postApi(lib.makeApiUrl('village/army/current'), troopData)
-        .done(() => {
-            if (onProgress_)
-                onProgress_('Finished: Uploaded troops for ' + troopData.length + ' villages.');
-
-            if (!onDone_)
-                alert('Done!')
-            else
-                onDone_(false);
-        })
-        .error(() => {
-            if (onProgress_)
-                onProgress_("An error occurred while uploading to the vault.");
-
-            if (!onDone_)
-                alert('An error occurred...')
-            else
-                onDone_(true);
-        });
-
-
-
+    return troopData;
 
     function indexToName(idx) {
         switch (idx) {

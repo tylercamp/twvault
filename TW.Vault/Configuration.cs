@@ -20,9 +20,7 @@ namespace TW.Vault
                 var now = DateTime.Now;
                 if (now - rootCachedAt >= configurationRefreshRate)
                 {
-                    var builder = new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddJsonFile("appsettings.json");
+                    var builder = new ConfigurationBuilder().ApplyVaultConfiguration();
 
                     cachedRoot = builder.Build();
                     rootCachedAt = now;
@@ -38,13 +36,16 @@ namespace TW.Vault
             {
                 SecurityConfiguration cfg = new SecurityConfiguration();
                 Instance.GetSection("Security").Bind(cfg);
+                return cfg;
+            }
+        }
 
-                var envMinAuthLevel = Environment.GetEnvironmentVariable("TW_VAULT_MIN_PRIVELEGES");
-                if (envMinAuthLevel != null)
-                {
-                    short minAuthLevel = short.Parse(envMinAuthLevel);
-                    cfg.MinimumRequiredPriveleges = minAuthLevel;
-                }
+        public static InitializationConfiguration Initialization
+        {
+            get
+            {
+                InitializationConfiguration cfg = new InitializationConfiguration();
+                Instance.GetSection("Initialization").Bind(cfg);
                 return cfg;
             }
         }
@@ -57,5 +58,14 @@ namespace TW.Vault
         public bool AllowCommandArrivalBeforeServerTime { get; set; }
 
         public short MinimumRequiredPriveleges { get; set; }
+
+        public bool EnableScriptFilter { get; set; }
+        public List<String> PublicScripts { get; set; }
+    }
+
+    public class InitializationConfiguration
+    {
+        public bool EnableRequiredFiles { get; set; }
+        public List<String> RequiredFiles { get; set; }
     }
 }

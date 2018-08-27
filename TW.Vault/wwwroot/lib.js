@@ -5,6 +5,8 @@ var lib = (() => {
     //# REQUIRE twcalc.js
 
     let twstats = getTwTroopStats();
+    let localStoragePrefix = 'vls-';
+    let cookiePrefix = 'vc-';
 
     var storedScriptHost = null;
 
@@ -25,7 +27,18 @@ var lib = (() => {
             INCOMINGS_OVERVIEW: null,
             OWN_COMMANDS_OVERVIEW: null,
             OWN_TROOPS_OVERVIEW: null,
+            BUILDINGS_OVERVIEW: null,
             MAP: null
+        },
+
+        messages: {
+            TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again.',
+            IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\"."
+        },
+
+        errorCodes: {
+            CAPTCHA: 'captcha',
+            NOT_ALL_GROUP: 'group'
         },
 
         twstats: twstats,
@@ -193,6 +206,16 @@ var lib = (() => {
             return lib;
         },
 
+        onFirstRun: function (callback) {
+            var hasRan = lib.getLocalStorage('consented');
+            let approvedRunCallback = () => lib.setLocalStorage('consented', true);
+            if (!hasRan) {
+                callback(approvedRunCallback);
+            }
+
+            return !hasRan;
+        },
+
         //  Iterates over the properties of an object similar to iterating over an array
         objForEach: function objForEach(obj, callback) {
             for (var prop in obj) {
@@ -251,9 +274,18 @@ var lib = (() => {
             });
         },
 
-        checkContainsCaptcha: function checkContainsCaptcha($doc_) {
-            $doc_ = $doc_ || $(document);
-            return !!$doc_.find('#bot_check').length;
+        checkContainsCaptcha: function checkContainsCaptcha(docOrHtml) {
+            var foundCaptcha = false;
+            if (typeof docOrHtml == 'string') {
+                foundCaptcha = !!docOrHtml.match(/data\-bot\-protect=/);
+            } else {
+                let $doc = $(docOrHtml);
+                let $body = $doc_.find('#ds_body');
+                foundCaptcha = $body.length && !!$body.data('bot-protect')
+            }
+
+            if (foundCaptcha) console.log('Found captcha!');
+            return foundCaptcha;
         },
 
         saveAsFile: function saveAsFile(filename, fileContents) {
@@ -306,6 +338,15 @@ var lib = (() => {
             return url;
         },
 
+        absoluteTwUrl: function formatToAbsoluteTwUrl(url) {
+            if (!url.startsWith(window.location.origin)) {
+                if (!url.startsWith('/'))
+                    url = '/' + url;
+                url = window.location.origin + url;
+            }
+            return url;
+        },
+
         // Make a URL relative to 'https://v.tylercamp.me/api' (or whatever the current base path is)
         makeApiUrl: function makeApiUrl(url) {
             let serverBase = 'https://v.tylercamp.me';
@@ -344,6 +385,66 @@ var lib = (() => {
             });
         },
 
+        //  Gets the links to all pages of the current view, ie get links for each pages of reports if there are over 1000, etc
+        detectMultiPages: function ($doc_) {
+            $doc_ = $doc_ || $(document);
+            let $navItems = $doc_.find('.paged-nav-item');
+            let links = [];
+
+            if (!$navItems.length)
+                return links;
+
+            let $container = $navItems.parent();
+            let $pageSelect = $container.find('select');
+            //  Sometimes there are so many pages that TW won't show the all of the links, and provides a <select>
+            //  element instead
+            if ($pageSelect.length) {
+                let $options = $pageSelect.find('option');
+                $options.each((i, el) => links.push($(el).prop('value')));
+            } else {
+                $navItems.each((i, el) => {
+                    let $el = $(el);
+                    if ($el.is('a'))
+                        links.push($el.prop('href'));
+
+                    $el.find('a').each((i, a) => {
+                        links.push($(a).prop('href'));
+                    });
+                });
+            }
+
+            links.forEach((l, i) => links[i] = lib.absoluteTwUrl(l));
+
+            return links;
+        },
+
+        //  Gets the links to all groups currently visible, and whether or not current group is "all"
+        detectGroups: function ($doc_) {
+            $doc_ = $doc_ || $(document);
+            let $groupItems = $doc_.find('.group-menu-item');
+            let links = [];
+
+            if (!$groupItems.length)
+                return links;
+
+            $groupItems.each((i, el) => {
+                let $el = $(el);
+                if ($el.is('a'))
+                    links.push($el.prop('href'));
+
+                $el.find('a').each((i, a) => {
+                    links.push($(a).prop('href'));
+                });
+            });
+
+            links.forEach((l, i) => links[i] = lib.absoluteTwUrl(l));
+
+            return {
+                isAll: !links.contains((l) => l.contains("group=0")),
+                links: links
+            };
+        },
+
         checkUserHasPremium: function userHasPremium() {
             return !!$('.menu-column-item a[href*=quickbar]').length;
         },
@@ -365,6 +466,100 @@ var lib = (() => {
 
         setScriptHost: function setScriptHost(scriptHost) {
             storedScriptHost = scriptHost;
+        },
+
+        getCookie: function getCookie(name) {
+            let finalName = `${cookiePrefix}${name}`;
+            var match = document.cookie.match(new RegExp(`${finalName}=([^\s\;]+)`));
+            let value = match ? match[1] : null;
+            if (value) {
+                try {
+                    return lib.jsonParse(value);
+                } catch {
+                    return value;
+                }
+            } else {
+                return value;
+            }
+        },
+
+        setCookie: function setCookie(name, value) {
+            if (!value) value = '';
+            if (typeof value == 'function' || typeof value == 'object') throw "Cookie value cannot be a function or object! (Don't store JSON.stringify in cookie either!)";
+            let finalName = `${cookiePrefix}${name}`;
+            document.cookie = `${finalName}=${value}`;
+        },
+
+        clearCookie: function clearCookie(name) {
+            let finalName = `${cookiePrefix}${name}`;
+            document.cookie = `${finalName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        },
+
+        setLocalStorage: function setLocalStorage(key, value) {
+            let finalKey = `${localStoragePrefix}${key}`;
+            window.localStorage.setItem(finalKey, lib.jsonStringify(value));
+        },
+
+        getLocalStorage: function getLocalStorage(key, value) {
+            let finalKey = `${localStoragePrefix}${key}`;
+            return lib.jsonParse(window.localStorage.getItem(finalKey) || 'null');
+        },
+
+        //  Stringify JSON while preserving Date formatting
+        jsonStringify: function jsonStringifyWithDates(object) {
+            if (typeof object == 'string')
+                return object;
+
+            if (object instanceof Date) {
+                return object.toUTCString();
+            }
+
+            let result = lib.clone(object);
+            lib.recursiveObjForEach(result, (prop, value, obj) => {
+                if (value instanceof Date) {
+                    obj[prop] = value.toUTCString();
+                }
+            });
+
+            return JSON.stringify(result);
+        },
+
+        //  Parse JSON while checking for date formatting
+        jsonParse: function jsonParseWithDates(json) {
+            let stringIsDate = (str) => !!str.match(/^\w+,?\s+\d+\s+\w+\s+\d+\s+\d+:\d+:\d+/);
+
+            if (stringIsDate(json))
+                return new Date(json);
+
+            let result = JSON.parse(json);
+            if (result == null)
+                return null;
+
+            lib.recursiveObjForEach(result, (prop, value, obj) => {
+                if (typeof value == 'string' && stringIsDate(value)) {
+                    obj[prop] = new Date(value);
+                }
+            });
+
+            return result;
+        },
+
+        clone: function cloneObject(object) {
+            if (typeof object != 'object')
+                return object;
+
+            let result = {};
+            for (var prop in object) {
+                if (!object.hasOwnProperty(prop)) continue;
+                if (object[prop] instanceof Date) {
+                    result[prop] = object[prop];
+                } else if (typeof object[prop] == 'object') {
+                    result[prop] = lib.clone(object[prop]);
+                } else {
+                    result[prop] = object[prop];
+                }
+            }
+            return result;
         },
 
         //  Converts an array to an object using either the "keySelector/valueSelector" parameters,
@@ -397,6 +592,23 @@ var lib = (() => {
                 result[keySelector(val, prop)] = valueSelector(val, prop);
             });
             return result;
+        },
+
+        recursiveObjForEach: function recursiveObjectForEach(object, callback, sourceObject_) {
+            if (typeof object != 'object') {
+                return object;
+            }
+
+            for (var prop in object) {
+                if (!object.hasOwnProperty(prop)) continue;
+                if (typeof object[prop] == 'function') continue;
+
+                callback.call(object, prop, object[prop], object, sourceObject_);
+
+                if (typeof object[prop] == 'object') {
+                    lib.recursiveObjForEach(object[prop], callback, sourceObject_ || object);
+                }
+            }
         },
 
         init: function init(callback) {
@@ -457,6 +669,47 @@ var lib = (() => {
         return result;
     };
 
+    //  Utility additions to Array
+    Array.prototype.distinct = function distinct(comparer_) {
+        var result = [];
+        this.forEach((v) => {
+            if (comparer_) {
+                var contains = false;
+                result.forEach((existing) => comparer_(existing, v) ? contains = true : null);
+                if (!contains)
+                    result.push(v);
+            } else {
+                if (!result.contains(v))
+                    result.push(v);
+            }
+        });
+        return result;
+    };
+
+    Array.prototype.contains = function contains(valOrChecker) {
+        var contains = false;
+        if (!(typeof valOrChecker == 'function'))
+            contains = this.indexOf(valOrChecker) >= 0;
+        else
+            this.forEach((v) => valOrChecker(v) ? contains = true : null);
+        return contains;
+    };
+
+    Array.prototype.except = function except(arrOrFunc) {
+        let result = [];
+        let useFunc = typeof arrOrFunc == 'function';
+        this.forEach((v) => {
+            if (useFunc) {
+                if (!arrOrFunc(v))
+                    result.push(v);
+            } else {
+                if (!arrOrFunc.contains(v))
+                    result.push(v);
+            }
+        });
+        return result;
+    };
+
     //  Set values of page types to their names
     lib.objForEach(lib.pageTypes, (name) => lib.pageTypes[name] = name);
 
@@ -470,21 +723,24 @@ var lib = (() => {
     pageValidators[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=commands");
     pageValidators[lib.pageTypes.MAP] = () => href.contains("screen=map");
     pageValidators[lib.pageTypes.OWN_TROOPS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=units");
+    pageValidators[lib.pageTypes.BUILDINGS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=buildings");
 
     pageValidators[lib.pageTypes.UNKNOWN] = () => lib.getCurrentPage() == lib.pageTypes.UNKNOWN;
 
     //  URLs for each given page type
     let pageUrls = {};
     pageUrls[lib.pageTypes.VIEW_REPORT] = null; // there's no generic "view report" page, it's specific to each report
-    pageUrls[lib.pageTypes.ALL_REPORTS] = 'screen=report&mode=all';
+    pageUrls[lib.pageTypes.ALL_REPORTS] = 'screen=report&mode=all&group_id=-1';
     pageUrls[lib.pageTypes.INCOMINGS_OVERVIEW] = 'screen=overview_villages&mode=incomings&type=all&subtype=all&group=0&page=-1&subtype=all';
     pageUrls[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = 'screen=overview_villages&mode=commands&type=all&group=0&page=-1&&type=all';
     pageUrls[lib.pageTypes.MAP] = 'screen=map';
     pageUrls[lib.pageTypes.OWN_TROOPS_OVERVIEW] = 'screen=overview_villages&mode=units&group=0&page=-1&type=complete';
+    pageUrls[lib.pageTypes.BUILDINGS_OVERVIEW] = 'screen=overview_villages&mode=buildings&group=0&page=-1';
 
     //  Make sure all page types have validators
     lib.objForEach(lib.pageTypes, (type) => !pageValidators[type] ? console.warn('No pageValidator set for pageType: ', type) : null);
 
+    window._vlib = lib;
     return lib;
 
 })();

@@ -9,17 +9,10 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     if (typeof showNotice_ == 'undefined')
         showNotice_ = true; // Show "complete/error" notice by default
 
-    if (lib.checkContainsCaptcha($doc)) {
-        if (showNotice_) {
-            alert('Captcha has been triggered, refresh the page.');
-        }
-        onError_('captcha');
-        return;
-    }
-
     var $attackInfo = $doc.find('#attack_info_att')
     var $defenseInfo = $doc.find('#attack_info_def')
     var defendingPlayer = $defenseInfo.find('a[href*=info_player]');
+    var attackingPlayer = $attackInfo.find('a[href*=info_player]');
 
     var reportInfo = {};
     reportInfo.reportId = parseInt(href.match(/view=(\d+)/)[1]);
@@ -43,7 +36,8 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     reportInfo.occurredAt = lib.parseTimeString(occurredAt).toUTCString();
 
     //  Get attacker player
-    reportInfo.attackingPlayerId = parseInt($attackInfo.find('a[href*=info_player]').prop('href').match(/id=(\w+)/)[1])
+    if (attackingPlayer.length)
+        reportInfo.attackingPlayerId = parseInt(attackingPlayer.prop('href').match(/id=(\w+)/)[1]);
 
     //  Get attacker village
     reportInfo.attackingVillageId = parseInt($attackInfo.find('a[href*=info_village]').prop('href').match(/id=(\w+)/)[1])
@@ -56,7 +50,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
 
 
     if (defendingPlayer.length)
-        reportInfo.defendingPlayerId = parseInt(defendingPlayer.prop('href').match(/id=(\w+)/)[1])
+        reportInfo.defendingPlayerId = parseInt(defendingPlayer.prop('href').match(/id=(\w+)/)[1]);
 
     //  Get defender village
     reportInfo.defendingVillageId = parseInt($defenseInfo.find('a[href*=info_village]').prop('href').match(/id=(\w+)/)[1])

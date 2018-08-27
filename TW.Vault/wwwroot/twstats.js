@@ -13,6 +13,11 @@
             return result;
         },
 
+        getUnitCommonName: function getUnitCommonName(canonicalName) {
+            var unit = troopStats.getUnit(canonicalName);
+            return unit ? unit.name : null;
+        },
+
         unitClasses: [
             { name: "Infantry" },
             { name: "Cavalry" },

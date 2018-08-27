@@ -36,7 +36,7 @@
 
         currentVillageInfo = villageInfo;
 
-        let requestDelay = 350; // So we don't overload vault by user moving mouse quickly over map
+        let requestDelay = 100; // So we don't overload vault by user moving mouse quickly over map
 
         if (cachedData[villageInfo.id]) {
             makeOutput(cachedData[villageInfo.id]);
@@ -75,12 +75,11 @@
                             return;
 
                         if (xhr.status == 423) {
-                            alert("You haven't uploaded report data in a while, you can't use the map script until you upload some more reports.");
-                        } else {
+                            alert("You haven't uploaded report data in a while, you can't use the map script until you upload some more reports. Go to a different page and run this script again.");
+                            canUse = false;
+                        } else if (xhr.status != 401) {
                             alert("An error occurred...");
                         }
-
-                        canUse = false;
                     });
             }, requestDelay);
         }
@@ -147,6 +146,17 @@
                             <td>Recently lost</td>
                             <td>${data.recentlyLostArmySeenAt ? lib.formateDateTime(data.recentlyLostArmySeenAt) : ''}</td>
                             ${makeTroopTds(data.recentlyLostArmy || {})}
+                        </tr>
+                        `}
+                        ${ !data.possibleRecruitedOffensiveArmy || !data.possibleRecruitedDefensiveArmy ? '' : `
+                        <tr>
+                            <td rowspan="2">Possibly recruited</td>
+                            <td></td>
+                            ${makeTroopTds(data.possibleRecruitedOffensiveArmy || {})}
+                        </tr>
+                        <tr>
+                            <td></td>
+                            ${makeTroopTds(data.possibleRecruitedDefensiveArmy || {})}
                         </tr>
                         `}
                         ${ !data.nukesRequired ? '' : `
