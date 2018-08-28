@@ -22,8 +22,7 @@ namespace TW.Vault.Controllers
         public AllyController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
         }
-
-        // GET: api/Ally
+        
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -36,8 +35,7 @@ namespace TW.Vault.Controllers
         {
             return Ok(await context.Ally.FromWorld(CurrentWorldId).CountAsync());
         }
-
-        // GET: api/Ally/5
+        
         [HttpGet("{id}", Name = "GetAlly")]
         public async Task<IActionResult> Get(int id)
         {

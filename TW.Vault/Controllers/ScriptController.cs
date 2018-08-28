@@ -28,8 +28,7 @@ namespace TW.Vault.Controllers
         {
             this.environment = environment;
         }
-
-        // GET: scriptName.js
+        
         [HttpGet("{name}", Name = "GetCompiledObfuscatedScript")]
         public IActionResult GetCompiledObfuscated(String name)
         {

@@ -25,8 +25,7 @@ namespace TW.Vault.Controllers
         public VillageController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
         }
-
-        // GET: api/Villages
+        
         [HttpGet(Name = "GetVillages")]
         public async Task<IActionResult> Get()
         {
@@ -39,8 +38,7 @@ namespace TW.Vault.Controllers
         {
             return Ok(await context.Village.FromWorld(CurrentWorldId).CountAsync());
         }
-
-        // GET: api/Villages/5
+        
         [HttpGet("{id}", Name = "GetVillage")]
         public Task<IActionResult> Get(int id)
         {

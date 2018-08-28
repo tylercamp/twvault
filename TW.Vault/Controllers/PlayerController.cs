@@ -21,8 +21,7 @@ namespace TW.Vault.Controllers
         public PlayerController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
         }
-
-        // GET: api/Player
+        
         [HttpGet(Name = "GetPlayers")]
         public async Task<IActionResult> Get()
         {
@@ -35,8 +34,7 @@ namespace TW.Vault.Controllers
         {
             return Ok(await context.Player.FromWorld(CurrentWorldId).CountAsync());
         }
-
-        // GET: api/Player/5
+        
         [HttpGet("{id}", Name = "GetPlayer")]
         public Task<IActionResult> Get(int id)
         {

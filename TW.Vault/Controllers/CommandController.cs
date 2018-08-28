@@ -26,17 +26,7 @@ namespace TW.Vault.Controllers
         public CommandController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
         }
-
-        // GET: api/Command
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            var commands = await Paginated(context.Command.IncludeCommandData()).FromWorld(CurrentWorldId).ToListAsync();
-            var jsonCommands = commands.Select(CommandConvert.ModelToJson);
-            return Ok(jsonCommands);
-        }
-
-        // GET: api/Command/5
+        
         [HttpGet("{id}", Name = "Get")]
         public Task<IActionResult> Get(long id)
         {
@@ -175,7 +165,6 @@ namespace TW.Vault.Controllers
             return Ok(jsonCommands);
         }
         
-        // POST: api/Command
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]JSON.ManyCommands jsonCommands)
         {

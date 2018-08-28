@@ -24,29 +24,12 @@ namespace TW.Vault.Controllers
         {
         }
 
-
-        // GET: api/Reports
-        [HttpGet(Name = "GetReports")]
-        public async Task<IActionResult> Get()
-        {
-            var reports = await Paginated(context.Report)
-                    .IncludeReportData()
-                    .FromWorld(CurrentWorldId)
-                    .OrderByDescending(r => r.OccuredAt)
-                    .ToListAsync();
-
-            var jsonReports = reports.Select(ReportConvert.ModelToJson);
-
-            return Ok(jsonReports);
-        }
-
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
             return Ok(await context.Report.FromWorld(CurrentWorldId).CountAsync());
         }
-
-        // GET: api/Reports/5
+        
         [HttpGet("{reportId}", Name = "GetReport")]
         public Task<IActionResult> Get(long reportId)
         {
@@ -129,7 +112,6 @@ namespace TW.Vault.Controllers
             return Ok(existingReports.ToArray());
         }
         
-        // POST: api/Reports
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]JSON.Report jsonReport)
         {
