@@ -28,10 +28,10 @@
                }
            },
            "env": {
-               "ASPNETCORE_ENVIRONMENT": "Development"
-           },
-           "sourceFileMap": {
-               "/Views": "${workspaceRoot}/Views"
+               "ASPNETCORE_ENVIRONMENT": "Development",
+               "ConnectionStrings:Vault": "Server=v.tylercamp.me; Port=22342; Database=vault_dev; User Id=twu_vault; Password=!!TWV@ult4Us??",
+               "Security:MinimumRequiredPriveleges": "3",
+               "Serilog:WriteTo:2:Args:configure:0:Args:pathFormat": "../DevLogs/log-{Date}.log"
            }
        },
         {
