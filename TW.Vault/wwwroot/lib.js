@@ -33,12 +33,14 @@ var lib = (() => {
 
         messages: {
             TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again.',
-            IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\"."
+            IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\".",
+            FILTER_APPLIED: 'You have filters set for your reports, please remove them before uploading.'
         },
 
         errorCodes: {
             CAPTCHA: 'captcha',
-            NOT_ALL_GROUP: 'group'
+            NOT_ALL_GROUP: 'group',
+            FILTER_APPLIED: 'filter'
         },
 
         twstats: twstats,
@@ -230,7 +232,7 @@ var lib = (() => {
             //  TODO
         },
 
-        getApi: function getApi(url) {
+        getApi: function getApi(url, data_) {
             return $.ajax(url, {
                 method: 'GET',
                 beforeSend: (xhr) => {
@@ -500,9 +502,29 @@ var lib = (() => {
             window.localStorage.setItem(finalKey, lib.jsonStringify(value));
         },
 
-        getLocalStorage: function getLocalStorage(key, value) {
+        getLocalStorage: function getLocalStorage(key, defaultValue_) {
             let finalKey = `${localStoragePrefix}${key}`;
-            return lib.jsonParse(window.localStorage.getItem(finalKey) || 'null');
+            return lib.jsonParse(window.localStorage.getItem(finalKey) || defaultValue_ || 'null');
+        },
+
+        getLocalStorageSize: function getLocalStorageSize() {
+            var totalSize = 0;
+            var vaultSize = 0;
+            var keySizes = {};
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                totalSize += localStorage.getItem(key).length;
+                if (key.startsWith(localStoragePrefix)) {
+                    vaultSize += localStorage.getItem(key).length;
+                }
+                keySizes[key] = Math.roundTo(localStorage.getItem(key).length / 1024, 2);
+            }
+
+            return {
+                totalKb: Math.roundTo(totalSize / 1024, 2),
+                vaultKb: Math.roundTo(vaultSize / 1024, 2),
+                perKeyKb: keySizes
+            };
         },
 
         //  Stringify JSON while preserving Date formatting
@@ -548,15 +570,26 @@ var lib = (() => {
             if (typeof object != 'object')
                 return object;
 
-            let result = {};
-            for (var prop in object) {
-                if (!object.hasOwnProperty(prop)) continue;
-                if (object[prop] instanceof Date) {
-                    result[prop] = object[prop];
-                } else if (typeof object[prop] == 'object') {
-                    result[prop] = lib.clone(object[prop]);
-                } else {
-                    result[prop] = object[prop];
+            var result;
+            if (object instanceof Array) {
+                result = [];
+                object.forEach((v, i) => {
+                    if (typeof v == 'object')
+                        result.push(lib.clone(v));
+                    else
+                        result.push(v);
+                });
+            } else {
+                result = {};
+                for (var prop in object) {
+                    if (!object.hasOwnProperty(prop)) continue;
+                    if (object[prop] instanceof Date) {
+                        result[prop] = object[prop];
+                    } else if (typeof object[prop] == 'object') {
+                        result[prop] = lib.clone(object[prop]);
+                    } else {
+                        result[prop] = object[prop];
+                    }
                 }
             }
             return result;
@@ -599,14 +632,24 @@ var lib = (() => {
                 return object;
             }
 
-            for (var prop in object) {
-                if (!object.hasOwnProperty(prop)) continue;
-                if (typeof object[prop] == 'function') continue;
+            if (object instanceof Array) {
+                object.forEach((v, i) => {
+                    callback.call(object, i, v, object, sourceObject_);
 
-                callback.call(object, prop, object[prop], object, sourceObject_);
+                    if (typeof v == 'object') {
+                        lib.recursiveObjForEach(v, callback, sourceObject_ || object);
+                    }
+                });
+            } else {
+                for (var prop in object) {
+                    if (!object.hasOwnProperty(prop)) continue;
+                    if (typeof object[prop] == 'function') continue;
 
-                if (typeof object[prop] == 'object') {
-                    lib.recursiveObjForEach(object[prop], callback, sourceObject_ || object);
+                    callback.call(object, prop, object[prop], object, sourceObject_);
+
+                    if (typeof object[prop] == 'object') {
+                        lib.recursiveObjForEach(object[prop], callback, sourceObject_ || object);
+                    }
                 }
             }
         },
@@ -708,6 +751,12 @@ var lib = (() => {
             }
         });
         return result;
+    };
+
+    //  Utility additions to Math
+    Math.roundTo = function roundTo(val, precision) {
+        var divisor = Math.pow(10, precision);
+        return Math.round(val * divisor) / divisor;
     };
 
     //  Set values of page types to their names

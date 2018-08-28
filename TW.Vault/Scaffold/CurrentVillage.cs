@@ -13,10 +13,14 @@ namespace TW.Vault.Scaffold
         public long? ArmyRecentLossesId { get; set; }
         public short? Loyalty { get; set; }
         public DateTime? LoyaltyLastUpdated { get; set; }
+        public long? ArmyAtHomeId { get; set; }
+        public long? ArmySupportingId { get; set; }
 
+        public CurrentArmy ArmyAtHome { get; set; }
         public CurrentArmy ArmyOwned { get; set; }
         public CurrentArmy ArmyRecentLosses { get; set; }
         public CurrentArmy ArmyStationed { get; set; }
+        public CurrentArmy ArmySupporting { get; set; }
         public CurrentArmy ArmyTraveling { get; set; }
         public Village Village { get; set; }
         public World World { get; set; }

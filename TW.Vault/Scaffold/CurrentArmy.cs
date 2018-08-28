@@ -7,9 +7,11 @@ namespace TW.Vault.Scaffold
     {
         public CurrentArmy()
         {
+            CurrentVillageArmyAtHome = new HashSet<CurrentVillage>();
             CurrentVillageArmyOwned = new HashSet<CurrentVillage>();
             CurrentVillageArmyRecentLosses = new HashSet<CurrentVillage>();
             CurrentVillageArmyStationed = new HashSet<CurrentVillage>();
+            CurrentVillageArmySupporting = new HashSet<CurrentVillage>();
             CurrentVillageArmyTraveling = new HashSet<CurrentVillage>();
         }
 
@@ -30,9 +32,11 @@ namespace TW.Vault.Scaffold
         public short WorldId { get; set; }
         public DateTime? LastUpdated { get; set; }
 
+        public ICollection<CurrentVillage> CurrentVillageArmyAtHome { get; set; }
         public ICollection<CurrentVillage> CurrentVillageArmyOwned { get; set; }
         public ICollection<CurrentVillage> CurrentVillageArmyRecentLosses { get; set; }
         public ICollection<CurrentVillage> CurrentVillageArmyStationed { get; set; }
+        public ICollection<CurrentVillage> CurrentVillageArmySupporting { get; set; }
         public ICollection<CurrentVillage> CurrentVillageArmyTraveling { get; set; }
     }
 }

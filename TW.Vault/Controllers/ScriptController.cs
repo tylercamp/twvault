@@ -22,8 +22,7 @@ namespace TW.Vault.Controllers
     {
         IHostingEnvironment environment;
 
-        //  TODO - Start caching this shit
-        private static CachingMap<String> CachedObfuscatedScripts = new CachingMap<string> { MaxCacheAge = TimeSpan.FromMinutes(1) };
+        private const String ScriptsBasePath = "";
 
         public ScriptController(IHostingEnvironment environment, VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
@@ -87,7 +86,7 @@ namespace TW.Vault.Controllers
             if (notFoundString != null)
                 return NotFound();
 
-            return Content(scriptContents, "application/json");
+            return Content(scriptContents, "application/javascript");
         }
         
         // GET: raw/scriptName.js
@@ -98,7 +97,7 @@ namespace TW.Vault.Controllers
             if (contents == null)
                 return NotFound();
             else
-                return Content(contents);
+                return Content(contents, "application/javascript");
         }
         
         private String GetFileContents(String name)
@@ -116,11 +115,13 @@ namespace TW.Vault.Controllers
                 }
             }
 
-            String fullPath = Path.Combine(environment.WebRootPath, name);
+            String rootPath = Path.Combine(environment.WebRootPath, ScriptsBasePath);
+
+            String fullPath = Path.Combine(rootPath, name);
             String absolutePath = Path.GetFullPath(fullPath);
 
             //  Prevent directory traversal
-            if (!absolutePath.StartsWith(environment.WebRootPath))
+            if (!absolutePath.StartsWith(rootPath))
                 return null;
 
             if (System.IO.File.Exists(fullPath))

@@ -69,5 +69,15 @@ namespace TW.Vault.Model.JSON
         }
 
         public static bool operator !=(BuildingLevels a, BuildingLevels b) => !(a == b);
+
+        public override bool Equals(object obj)
+        {
+            if (obj is BuildingLevels)
+                return this == (obj as BuildingLevels);
+            else
+                return false;
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
     }
 }

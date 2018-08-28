@@ -72,5 +72,15 @@ namespace TW.Vault.Model.JSON
         }
 
         public static bool operator !=(Report a, Report b) => !(a == b);
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Report)
+                return this == (obj as Report);
+            else
+                return false;
+        }
+
+        public override int GetHashCode() => base.GetHashCode();
     }
 }

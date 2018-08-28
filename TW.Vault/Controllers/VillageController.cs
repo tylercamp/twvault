@@ -65,7 +65,7 @@ namespace TW.Vault.Controllers
         }
 
         [HttpGet("{villageId}/army", Name = "GetKnownArmy")]
-        public async Task<IActionResult> GetVillageArmy(long villageId)
+        public async Task<IActionResult> GetVillageArmy(long villageId, int? morale)
         {
             var village = await Profile("Find village", () => context.Village.Where(v => v.VillageId == villageId && v.WorldId == CurrentWorld.Id).FirstOrDefaultAsync());
             if (village == null)
@@ -173,7 +173,7 @@ namespace TW.Vault.Controllers
                     if (currentVillage.CurrentBuilding != null)
                         wallLevel += new ConstructionCalculator().CalculateLevelsInTimeSpan(BuildingType.Wall, hqLevel, wallLevel, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated.Value);
 
-                    jsonData.NukesRequired = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, 100);
+                    jsonData.NukesRequired = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, morale ?? 100);
                 }
 
                 if (jsonData.OwnedArmy != null && jsonData.OwnedArmySeenAt == null)
@@ -287,6 +287,8 @@ namespace TW.Vault.Controllers
                     currentVillage.ArmyOwned = ArmyConvert.JsonToArmy(fullArmy, currentVillage.ArmyOwned, context);
                     currentVillage.ArmyStationed = ArmyConvert.JsonToArmy(armySetJson.Stationed, currentVillage.ArmyStationed, context);
                     currentVillage.ArmyTraveling = ArmyConvert.JsonToArmy(armySetJson.Traveling, currentVillage.ArmyTraveling, context);
+                    currentVillage.ArmyAtHome = ArmyConvert.JsonToArmy(armySetJson.AtHome, currentVillage.ArmyAtHome, context);
+                    currentVillage.ArmySupporting = ArmyConvert.JsonToArmy(armySetJson.Supporting, currentVillage.ArmySupporting, context);
 
                     currentVillage.ArmyOwned.LastUpdated = DateTime.UtcNow;
                     currentVillage.ArmyStationed.LastUpdated = DateTime.UtcNow;

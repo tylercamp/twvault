@@ -217,6 +217,9 @@
                 $('.status-container').html('<em>Waiting...</em>');
 
                 let resetButtons = () => $('.upload-button').prop('disabled', false);
+                let resetStatusContainers = () => {
+                    $('.status-container').filter((i, el) => $(el).text().toLowerCase().contains("waiting")).empty();
+                };
 
                 let runReports = () => {
                     processUploadReports($uiContainer.find('#vault-upload-reports .status-container'), runIncomings);
@@ -225,10 +228,11 @@
                     if (didFail) {
                         if (didFail == lib.errorCodes.CAPTCHA) {
                             alertCaptcha();
-                        } else {
-                            alert('An unexpected error occurred: ', didFail);
+                        } else if (didFail != lib.errorCodes.FILTER_APPLIED) {
+                            alert('An unexpected error occurred: ' + didFail);
                         }
                         resetButtons();
+                        resetStatusContainers();
                         return;
                     }
                     processUploadIncomings($uiContainer.find('#vault-upload-incomings .status-container'), runTroops);
@@ -237,10 +241,11 @@
                     if (didFail) {
                         if (didFail == lib.errorCodes.CAPTCHA) {
                             alertCaptcha();
-                        } else {
-                            alert('An unexpected error occurred: ', didFail);
+                        } else if (!lib.errorCodes[didFail]) {
+                            alert('An unexpected error occurred: ' + didFail);
                         }
                         resetButtons();
+                        resetStatusContainers();
                         return;
                     }
                     processUploadTroops($uiContainer.find('#vault-upload-troops .status-container'), runCommands);
@@ -249,21 +254,23 @@
                     if (didFail) {
                         if (didFail == lib.errorCodes.CAPTCHA) {
                             alertCaptcha();
-                        } else {
-                            alert('An unexpected error occurred: ', didFail);
+                        } else if (!lib.errorCodes[didFail]) {
+                            alert('An unexpected error occurred: ' + didFail);
                         }
                         resetButtons();
+                        resetStatusContainers();
                         return;
                     }
                     processUploadCommands($uiContainer.find('#vault-upload-commands .status-container'), (didFail) => {
                         if (didFail) {
                             if (didFail == lib.errorCodes.CAPTCHA) {
                                 alertCaptcha();
-                            } else {
+                            } else if (!lib.errorCodes[didFail]) {
                                 alert('An unexpected error occurred: ', didFail);
                             }
                         }
                         resetButtons();
+                        resetStatusContainers();
                     });
                 };
 
@@ -344,7 +351,7 @@
                         data = JSON.parse(data);
 
                     try {
-
+                        window.open('', '_blank');
                         let csvText = makeArmySummaryCsv(data);
                         let filename = `army-summary.csv`;
 
@@ -597,31 +604,24 @@
 
         console.log('Made player summaries: ', playerSummaries);
 
-        var csvString = '';
-        csvString += [
-            '', '', 'Total nukes', 'Total 3/4 nukes', 'Total DVs', 'Total Nobles', 'Total Possible Nobles'
-        ].join(', ');
 
-        csvString += '\n';
 
-        csvString += [
-            '', '', totalNukes, totalAlmostNukes, totalDVs, totalNobles, totalPossibleNobles
-        ].join(', ');
+        var csvBuilder = new CsvBuilder();
 
-        csvString += '\n\n';
+        csvBuilder.addRow('', '', 'Total nukes', 'Total 3/4 nukes', 'Total DVs', 'Total Nobles', 'Total Possible Nobles');
+        csvBuilder.addRow('', '',  totalNukes,    totalAlmostNukes,  totalDVs,    totalNobles,    totalPossibleNobles);
 
-        csvString += [
-            'Time', 'Player', 'Nukes', '3/4 Nukes', 'DVs', 'Nobles', 'Possible nobles', 'Needs upload?'
-        ].join(', ');
+        csvBuilder.addBlank(2);
+
+        csvBuilder.addRow('Time', 'Player', 'Nukes', '3/4 Nukes', 'DVs', 'Nobles', 'Possible nobles', 'Needs upload?');
  
         playerSummaries.forEach((s) => {
-            csvString += '\n';
-            csvString += [
+            csvBuilder.addRow(
                 s.uploadedAt, s.playerName, s.numNukes, s.numAlmostNukes, s.numDVs, s.numNobles, s.numPossibleNobles, s.needsUpload ? 'YES' : ''
-            ].join(', ');
+            );
         });
 
-        return csvString;
+        return csvBuilder.makeCsvString();
     }
 
 }

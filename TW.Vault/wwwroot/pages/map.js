@@ -11,7 +11,7 @@
     //  Hook into 'TWMap.displayForVillage', which is invoked whenever the village info popup is made
     //  by TW
 
-    var currentVillageInfo = null;
+    var currentVillageId = null;
     let $popup = $doc.find('#map_popup');
 
     $doc.find('#continent_id').parent().append('<span> - Using Vault</span>');
@@ -28,62 +28,70 @@
             return;
 
         let villageInfo = e;
-        let screenx = a;
-        let screeny = t;
+        let villageId = villageInfo.id;
 
+        currentVillageId = villageId;
+        if (cachedData[villageId]) {
+            makeOutput(cachedData[villageId]);
+        }
+    };
+
+    let originalReceivedInfo = TWMap.popup.receivedPopupInformationForSingleVillage;
+    TWMap.popup.receivedPopupInformationForSingleVillage = function (e) {
+        console.log('Intercepted receivedPopupInformation');
+        originalReceivedInfo.call(TWMap.popup, e);
+
+        let villageInfo = e;
         if (!villageInfo || !villageInfo.id)
             return;
 
-        currentVillageInfo = villageInfo;
-
-        let requestDelay = 100; // So we don't overload vault by user moving mouse quickly over map
+        currentVillageId = villageInfo.id;
+        let villageId = villageInfo.id;
+        let morale = Math.round(villageInfo.morale * 100);
 
         if (cachedData[villageInfo.id]) {
-            makeOutput(cachedData[villageInfo.id]);
+            makeOutput(cachedData[villageId]);
         } else {
-            setTimeout(() => {
-                if (currentVillageInfo != villageInfo) {
-                    console.log('User changed target village, canceling request');
-                    return;
-                }
-
-                if (requestedVillageIds.indexOf(villageInfo.id) >= 0) {
-                    return;
-                }
-
-                requestedVillageIds.push(villageInfo.id);
-                lib.getApi(lib.makeApiUrl(`village/${villageInfo.id}/army`))
-                    .done((data) => {
-                        console.log('Got village data: ', data);
-
-                        data.stationedSeenAt = data.stationedSeenAt ? new Date(data.stationedSeenAt) : null;
-                        data.recentlyLostArmySeenAt = data.recentlyLostArmySeenAt ? new Date(data.recentlyLostArmySeenAt) : null;
-                        data.travelingSeenAt = data.travelingSeenAt ? new Date(data.travelingSeenAt) : null;
-                        data.lastBuildingsSeenAt = data.lastBuildingsSeenAt ? new Date(data.lastBuildingsSeenAt) : null;
-                        data.lastLoyaltySeenAt = data.lastLoyaltySeenAt ? new Date(data.lastLoyaltySeenAt) : null;
-
-                        cachedData[villageInfo.id] = data;
-
-                        if (villageInfo != currentVillageInfo) {
-                            return;
-                        }
-
-                        makeOutput(data);
-                    })
-                    .error((xhr, b, c) => {
-                        if (!canUse)
-                            return;
-
-                        if (xhr.status == 423) {
-                            alert("You haven't uploaded report data in a while, you can't use the map script until you upload some more reports. Go to a different page and run this script again.");
-                            canUse = false;
-                        } else if (xhr.status != 401) {
-                            alert("An error occurred...");
-                        }
-                    });
-            }, requestDelay);
+            if (requestedVillageIds.indexOf(villageId) >= 0) {
+                return;
+            }
+            loadVillageTroopData(villageId, morale);
         }
     };
+
+    function loadVillageTroopData(villageId, morale) {
+        requestedVillageIds.push(villageId);
+        lib.getApi(lib.makeApiUrl(`village/${villageId}/army?morale=${morale}`))
+            .done((data) => {
+                console.log('Got village data: ', data);
+
+                data.stationedSeenAt = data.stationedSeenAt ? new Date(data.stationedSeenAt) : null;
+                data.recentlyLostArmySeenAt = data.recentlyLostArmySeenAt ? new Date(data.recentlyLostArmySeenAt) : null;
+                data.travelingSeenAt = data.travelingSeenAt ? new Date(data.travelingSeenAt) : null;
+                data.lastBuildingsSeenAt = data.lastBuildingsSeenAt ? new Date(data.lastBuildingsSeenAt) : null;
+                data.lastLoyaltySeenAt = data.lastLoyaltySeenAt ? new Date(data.lastLoyaltySeenAt) : null;
+
+                cachedData[villageId] = data;
+
+                //  User changed village while the data was loading
+                if (villageId != currentVillageId) {
+                    return;
+                }
+
+                makeOutput(data);
+            })
+            .error((xhr, b, c) => {
+                if (!canUse)
+                    return;
+
+                if (xhr.status == 423) {
+                    alert("You haven't uploaded report data in a while, you can't use the map script until you upload some more reports. Go to a different page and run this script again.");
+                    canUse = false;
+                } else if (xhr.status != 401) {
+                    alert("An error occurred...");
+                }
+            });
+    }
 
     console.log('Added map hook');
 
@@ -161,7 +169,7 @@
                         `}
                         ${ !data.nukesRequired ? '' : `
                         <tr>
-                            <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear, ignoring morale</td>
+                            <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear</td>
                         </tr>
                         `}
                     </table>

@@ -3,8 +3,6 @@ function parseReportsOverviewPage($doc) {
 
     $doc = $doc || $(document);
 
-    //# REQUIRE lib.js
-
     lib.ensurePage(lib.pageTypes.ALL_REPORTS);
 
     var requestManager = new RequestManager();

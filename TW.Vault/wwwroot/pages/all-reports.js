@@ -8,20 +8,19 @@
     var requestManager = new RequestManager();
     requestManager.refreshDelay = 500;
 
-    let previousReports = JSON.parse(localStorage.getItem('vault-reports-history') || '[]');
+    let previousReports = lib.getLocalStorage('reports-history', '[]');
 
     let hasFilters = checkHasFilters();
     console.log('hasFilters = ', hasFilters);
 
     if (hasFilters) {
-        let removeFiltersMsg = 'You have filters set for your reports, please remove them before uploading.';
         if (onProgress_)
-            onProgress_(removeFiltersMsg);
+            onProgress_(lib.messages.FILTER_APPLIED);
         else
-            alert(removeFiltersMsg);
+            alert(lib.messages.FILTER_APPLIED);
 
         if (onDone_) {
-            onDone_(true);
+            onDone_(lib.errorCodes.FILTER_APPLIED);
         }
         return;
     }
@@ -69,17 +68,47 @@
         requestManager.setFinishedHandler(() => {
             requestManager.stop();
             console.log('Got all page links: ', reportLinks);
-            let filteredLinks =
-                reportLinks.except((l) => previousReports.contains(l.reportId))
-                           .map((l) => l.link)
-                           .distinct();
+            let filteredReports = reportLinks.except((l) => previousReports.contains(l.reportId));
 
-            console.log('Made filtered links: ', filteredLinks);
+            onProgress_ && onProgress_('Checking for reports already uploaded...');
+            getExistingReports(filteredReports.map(r => r.reportId), (existing) => {
+                console.log('Got existing reports: ', existing);
 
-            uploadReports(filteredLinks);
+                previousReports.push(...existing);
+                let withoutMissingReports = previousReports.except((r) => !reportLinks.contains((l) => l.reportId == r));
+                console.log('Updated reports cache without missing reports: ', withoutMissingReports);
+                lib.setLocalStorage('reports-history', withoutMissingReports);
+
+                let filteredLinks =
+                    reportLinks.except((l) => previousReports.contains(l.reportId))
+                        .map((l) => l.link)
+                        .distinct();
+
+                console.log('Made filtered links: ', filteredLinks);
+
+                uploadReports(filteredLinks);
+            });
         });
 
         requestManager.start();
+    }
+
+    function getExistingReports(reportIds, onDone) {
+        lib.postApi(lib.makeApiUrl('report/check-existing-reports'), reportIds)
+            .done((data) => {
+                if (typeof data == 'string')
+                    data = JSON.parse(data);
+                if (data.length) {
+                    onProgress_ && onProgress_('Found ' + data.length + ' previously uploaded reports, skipping these...');
+                    setTimeout(() => onDone(data), 2000);
+                } else {
+                    onDone(data);
+                }
+            })
+            .error(() => {
+                onProgress_ && onProgress_('An error occurred while checking for existing reports, continuing...');
+                setTimeout(() => onDone([]), 2000);
+            });
     }
 
     function uploadReports(reportLinks) {

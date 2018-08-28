@@ -53,6 +53,8 @@ namespace TW.Vault
                 .Include(v => v.ArmyRecentLosses)
                 .Include(v => v.ArmyStationed)
                 .Include(v => v.ArmyTraveling)
+                .Include(v => v.ArmyAtHome)
+                .Include(v => v.ArmySupporting)
                 .Include(v => v.CurrentBuilding);
 
 

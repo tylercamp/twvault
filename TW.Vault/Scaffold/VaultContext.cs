@@ -412,11 +412,15 @@ namespace TW.Vault.Scaffold
                     .HasColumnName("village_id")
                     .ValueGeneratedNever();
 
+                entity.Property(e => e.ArmyAtHomeId).HasColumnName("army_at_home_id");
+
                 entity.Property(e => e.ArmyOwnedId).HasColumnName("army_owned_id");
 
                 entity.Property(e => e.ArmyRecentLossesId).HasColumnName("army_recent_losses_id");
 
                 entity.Property(e => e.ArmyStationedId).HasColumnName("army_stationed_id");
+
+                entity.Property(e => e.ArmySupportingId).HasColumnName("army_supporting_id");
 
                 entity.Property(e => e.ArmyTravelingId).HasColumnName("army_traveling_id");
 
@@ -425,6 +429,11 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.LoyaltyLastUpdated).HasColumnName("loyalty_last_updated");
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.HasOne(d => d.ArmyAtHome)
+                    .WithMany(p => p.CurrentVillageArmyAtHome)
+                    .HasForeignKey(d => d.ArmyAtHomeId)
+                    .HasConstraintName("fk_army_at_home_id");
 
                 entity.HasOne(d => d.ArmyOwned)
                     .WithMany(p => p.CurrentVillageArmyOwned)
@@ -443,6 +452,11 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey(d => d.ArmyStationedId)
                     .OnDelete(DeleteBehavior.SetNull)
                     .HasConstraintName("fk_stationed_army");
+
+                entity.HasOne(d => d.ArmySupporting)
+                    .WithMany(p => p.CurrentVillageArmySupporting)
+                    .HasForeignKey(d => d.ArmySupportingId)
+                    .HasConstraintName("fk_army_supporting_id");
 
                 entity.HasOne(d => d.ArmyTraveling)
                     .WithMany(p => p.CurrentVillageArmyTraveling)

@@ -100,6 +100,34 @@ namespace TW.Vault.Controllers
             var jsonReports = reports.Select(ReportConvert.ModelToJson);
             return Ok(jsonReports);
         }
+
+        [HttpPost("check-existing-reports")]
+        public async Task<IActionResult> GetExistingReports([FromBody]List<long> reportIds)
+        {
+            List<long> existingReports = new List<long>();
+
+            const int maxBatchSize = 1000;
+            var numBatches = (int)(Math.Ceiling(reportIds.Count / (float)maxBatchSize));
+            for (int i = 0; i < numBatches; i++)
+            {
+                int currentBatchSize;
+                if ((i + 1) * maxBatchSize > reportIds.Count)
+                    currentBatchSize = reportIds.Count - i * maxBatchSize;
+                else
+                    currentBatchSize = maxBatchSize;
+
+                var currentBatch = reportIds.Skip(i * maxBatchSize).Take(currentBatchSize).ToList();
+                var existingBatchReports = await (
+                        from report in context.Report.FromWorld(CurrentWorldId)
+                        where currentBatch.Contains(report.ReportId)
+                        select report.ReportId
+                    ).ToListAsync();
+
+                existingReports.AddRange(existingBatchReports);
+            }
+
+            return Ok(existingReports.ToArray());
+        }
         
         // POST: api/Reports
         [HttpPost]

@@ -268,8 +268,7 @@ namespace TW.Vault.Controllers
             var tribeVillages = await (
                     from player in context.Player.FromWorld(CurrentWorldId)
                     join village in context.Village on player.PlayerId equals village.PlayerId
-                    join currentVillage in context.CurrentVillage
-                                                  .Include(v => v.ArmyOwned)
+                    join currentVillage in context.CurrentVillage.IncludeCurrentVillageData()
                                         on village.VillageId equals currentVillage.VillageId
                     where player.TribeId == CurrentTribeId
                     select new { player, currentVillage }
@@ -303,7 +302,6 @@ namespace TW.Vault.Controllers
                 var playerSummary = new JSON.PlayerSummary();
                 playerSummary.PlayerName = WebUtility.UrlDecode(playerName);
                 playerSummary.PlayerId = kvp.Key.PlayerId;
-                playerSummary.Armies = new List<JSON.Army>();
 
                 if (maxNoblesByPlayer.ContainsKey(kvp.Key.PlayerId))
                     playerSummary.MaxPossibleNobles = maxNoblesByPlayer[kvp.Key.PlayerId];
@@ -321,7 +319,15 @@ namespace TW.Vault.Controllers
                 }
 
                 foreach (var village in villages)
-                    playerSummary.Armies.Add(ArmyConvert.ArmyToJson(village.ArmyOwned));
+                {
+                    playerSummary.ArmyAtHome += ArmyConvert.ArmyToJson(village.ArmyAtHome);
+                    playerSummary.ArmyOwned += ArmyConvert.ArmyToJson(village.ArmyOwned);
+                    playerSummary.ArmySupportingOthers += ArmyConvert.ArmyToJson(village.ArmySupporting);
+                    playerSummary.ArmyTraveling += ArmyConvert.ArmyToJson(village.ArmyTraveling);
+
+                    var armySupportingSelf = ArmyConvert.ArmyToJson(village.ArmyStationed) - ArmyConvert.ArmyToJson(village.ArmyAtHome);
+                    playerSummary.ArmySupportingSelf += armySupportingSelf;
+                }
 
                 jsonData.Add(playerSummary);
             }

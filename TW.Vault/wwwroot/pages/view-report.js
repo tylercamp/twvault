@@ -1,8 +1,6 @@
 ﻿
 function parseReportPage($doc, href_, showNotice_, onError_) {
-
-    //# REQUIRE lib.js
-
+    
     lib.ensurePage(lib.pageTypes.VIEW_REPORT);
     $doc = $doc || $(document);
     let href = href_ || window.location.href;
@@ -108,9 +106,9 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
 
     lib.postApi(reportsEndpoint, reportInfo)
         .done(() => {
-            var reportsHistory = JSON.parse(localStorage.getItem('vault-reports-history') || '[]');
+            var reportsHistory = lib.getLocalStorage('reports-history', '[]');
             reportsHistory.push(reportInfo.reportId);
-            localStorage.setItem('vault-reports-history', JSON.stringify(reportsHistory));
+            lib.setLocalStorage('reports-history', reportsHistory);
 
             if (showNotice_)
                 alert('Uploaded the report!');

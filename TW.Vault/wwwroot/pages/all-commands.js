@@ -6,8 +6,8 @@
     $doc = $doc || $(document);
 
     var requestManager = new RequestManager();
-    
-    var oldCommands = JSON.parse(localStorage.getItem('vault-commands-history') || '[]');
+
+    var oldCommands = lib.getLocalStorage('commands-history', '[]');
     let commandLinks = [];
     let newCommandData = [];
     let newCommands = [];
@@ -112,7 +112,7 @@
             lib.postApi(lib.makeApiUrl('command'), data)
                 .done(() => {
                     oldCommands.push(...newCommands.map((c) => c.commandId));
-                    localStorage.setItem('vault-commands-history', JSON.stringify(oldCommands));
+                    lib.setLocalStorage('commands-history', oldCommands);
                     let stats = requestManager.getStats();
 
 
