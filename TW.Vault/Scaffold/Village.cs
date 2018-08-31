@@ -9,6 +9,8 @@ namespace TW.Vault.Scaffold
         {
             CommandSourceVillage = new HashSet<Command>();
             CommandTargetVillage = new HashSet<Command>();
+            CurrentVillageSupportSourceVillage = new HashSet<CurrentVillageSupport>();
+            CurrentVillageSupportTargetVillage = new HashSet<CurrentVillageSupport>();
             ReportAttackerVillage = new HashSet<Report>();
             ReportDefenderVillage = new HashSet<Report>();
         }
@@ -27,6 +29,8 @@ namespace TW.Vault.Scaffold
         public CurrentVillage CurrentVillage { get; set; }
         public ICollection<Command> CommandSourceVillage { get; set; }
         public ICollection<Command> CommandTargetVillage { get; set; }
+        public ICollection<CurrentVillageSupport> CurrentVillageSupportSourceVillage { get; set; }
+        public ICollection<CurrentVillageSupport> CurrentVillageSupportTargetVillage { get; set; }
         public ICollection<Report> ReportAttackerVillage { get; set; }
         public ICollection<Report> ReportDefenderVillage { get; set; }
     }

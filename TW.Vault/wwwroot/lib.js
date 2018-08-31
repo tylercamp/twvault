@@ -15,6 +15,11 @@ var lib = (() => {
     var authTribeId = null;
     var wasPageHandled = false;
 
+    //  TODO - Pull this from server
+    let worldSettings = {
+        archersEnabled: false
+    };
+
     let lib = {
 
         //  The set of known page types recognized by this script
@@ -27,6 +32,7 @@ var lib = (() => {
             INCOMINGS_OVERVIEW: null,
             OWN_COMMANDS_OVERVIEW: null,
             OWN_TROOPS_OVERVIEW: null,
+            OWN_TROOPS_SUPPORTING_OVERVIEW: null,
             BUILDINGS_OVERVIEW: null,
             MAP: null
         },
@@ -451,6 +457,20 @@ var lib = (() => {
             return !!$('.menu-column-item a[href*=quickbar]').length;
         },
 
+        troopsArrayToObject: function troopsArrayToNamedObject(array) {
+            let result = {};
+            let archerIndex = 3, mountedArcherIndex = 6;
+            for (var i = 0, ai = 0; ai < array.length && i < lib.twstats.unitTypes.length; i++ , ai++) {
+                if ((i == archerIndex || i == mountedArcherIndex) && !worldSettings.archersEnabled) {
+                    --ai;
+                    continue;
+                }
+
+                result[lib.twstats.unitTypes[i].canonicalName] = array[ai];
+            }
+            return result;
+        },
+
         //  Gets the URL that the script was requested from
         getScriptHost: function getScriptHost() {
             if (storedScriptHost)
@@ -772,6 +792,7 @@ var lib = (() => {
     pageValidators[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=commands");
     pageValidators[lib.pageTypes.MAP] = () => href.contains("screen=map");
     pageValidators[lib.pageTypes.OWN_TROOPS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=units");
+    pageValidators[lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=units") && href.contains("type=away_detail");
     pageValidators[lib.pageTypes.BUILDINGS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=buildings");
 
     pageValidators[lib.pageTypes.UNKNOWN] = () => lib.getCurrentPage() == lib.pageTypes.UNKNOWN;
@@ -781,9 +802,10 @@ var lib = (() => {
     pageUrls[lib.pageTypes.VIEW_REPORT] = null; // there's no generic "view report" page, it's specific to each report
     pageUrls[lib.pageTypes.ALL_REPORTS] = 'screen=report&mode=all&group_id=-1';
     pageUrls[lib.pageTypes.INCOMINGS_OVERVIEW] = 'screen=overview_villages&mode=incomings&type=all&subtype=all&group=0&page=-1&subtype=all';
-    pageUrls[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = 'screen=overview_villages&mode=commands&type=all&group=0&page=-1&&type=all';
+    pageUrls[lib.pageTypes.OWN_COMMANDS_OVERVIEW] = 'screen=overview_villages&mode=commands&type=all&group=0&page=-1';
     pageUrls[lib.pageTypes.MAP] = 'screen=map';
     pageUrls[lib.pageTypes.OWN_TROOPS_OVERVIEW] = 'screen=overview_villages&mode=units&group=0&page=-1&type=complete';
+    pageUrls[lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW] = 'screen=overview_villages&mode=units&type=away_detail&group=0&page=-1';
     pageUrls[lib.pageTypes.BUILDINGS_OVERVIEW] = 'screen=overview_villages&mode=buildings&group=0&page=-1';
 
     //  Make sure all page types have validators

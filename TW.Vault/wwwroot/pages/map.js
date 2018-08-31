@@ -65,6 +65,8 @@
             .done((data) => {
                 console.log('Got village data: ', data);
 
+                data.morale = morale;
+
                 data.stationedSeenAt = data.stationedSeenAt ? new Date(data.stationedSeenAt) : null;
                 data.recentlyLostArmySeenAt = data.recentlyLostArmySeenAt ? new Date(data.recentlyLostArmySeenAt) : null;
                 data.travelingSeenAt = data.travelingSeenAt ? new Date(data.travelingSeenAt) : null;
@@ -169,7 +171,7 @@
                         `}
                         ${ !data.nukesRequired ? '' : `
                         <tr>
-                            <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear</td>
+                            <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear at ${data.morale}% morale</td>
                         </tr>
                         `}
                     </table>

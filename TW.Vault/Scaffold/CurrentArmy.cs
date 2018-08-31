@@ -13,6 +13,7 @@ namespace TW.Vault.Scaffold
             CurrentVillageArmyStationed = new HashSet<CurrentVillage>();
             CurrentVillageArmySupporting = new HashSet<CurrentVillage>();
             CurrentVillageArmyTraveling = new HashSet<CurrentVillage>();
+            CurrentVillageSupport = new HashSet<CurrentVillageSupport>();
         }
 
         public long ArmyId { get; set; }
@@ -38,5 +39,6 @@ namespace TW.Vault.Scaffold
         public ICollection<CurrentVillage> CurrentVillageArmyStationed { get; set; }
         public ICollection<CurrentVillage> CurrentVillageArmySupporting { get; set; }
         public ICollection<CurrentVillage> CurrentVillageArmyTraveling { get; set; }
+        public ICollection<CurrentVillageSupport> CurrentVillageSupport { get; set; }
     }
 }

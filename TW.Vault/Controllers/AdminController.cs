@@ -62,6 +62,9 @@ namespace TW.Vault.Controllers
             if (!CurrentUserIsAdmin)
                 return Unauthorized();
 
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             Scaffold.Player player;
             if (keyRequest.PlayerId.HasValue)
             {
@@ -213,6 +216,9 @@ namespace TW.Vault.Controllers
         {
             if (!CurrentUserIsAdmin)
                 return Unauthorized();
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             //  WARNING - Copy/pasted auth check from RevokeKey!
             Guid authKey;

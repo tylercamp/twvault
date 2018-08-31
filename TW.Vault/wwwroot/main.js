@@ -16,6 +16,7 @@
     //# REQUIRE pages/all-commands.js
     //# REQUIRE pages/incomings-overview-tag.js
     //# REQUIRE pages/own-commands-overview.js
+    //# REQUIRE pages/troops-support-overview.js
     //# REQUIRE pages/map.js
 
     //# REQUIRE pages/all.js
@@ -78,6 +79,9 @@ These terms can be viewed again after running the script. To cancel your agreeme
             })
             .onPage(lib.pageTypes.VIEW_REPORT, () => {
                 parseReportPage();
+            })
+            .onPage(lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW, () => {
+                parseTroopsSupportOverviewPage();
             })
             //.onPage(lib.pageTypes.INCOMINGS_OVERVIEW, () => {
             //    parseAllIncomings();

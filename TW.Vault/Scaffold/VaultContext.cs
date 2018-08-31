@@ -24,6 +24,7 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<CurrentBuilding> CurrentBuilding { get; set; }
         public virtual DbSet<CurrentPlayer> CurrentPlayer { get; set; }
         public virtual DbSet<CurrentVillage> CurrentVillage { get; set; }
+        public virtual DbSet<CurrentVillageSupport> CurrentVillageSupport { get; set; }
         public virtual DbSet<FailedAuthorizationRecord> FailedAuthorizationRecord { get; set; }
         public virtual DbSet<InvalidDataRecord> InvalidDataRecord { get; set; }
         public virtual DbSet<PerformanceRecord> PerformanceRecord { get; set; }
@@ -472,6 +473,49 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.CurrentVillage)
+                    .HasForeignKey(d => d.WorldId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_world_id");
+            });
+
+            modelBuilder.Entity<CurrentVillageSupport>(entity =>
+            {
+                entity.ToTable("current_village_support", "tw");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('tw.current_village_support_id_seq'::regclass)");
+
+                entity.Property(e => e.LastUpdatedAt).HasColumnName("last_updated_at");
+
+                entity.Property(e => e.SourceVillageId).HasColumnName("source_village_id");
+
+                entity.Property(e => e.SupportingArmyId).HasColumnName("supporting_army_id");
+
+                entity.Property(e => e.TargetVillageId).HasColumnName("target_village_id");
+
+                entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.HasOne(d => d.SourceVillage)
+                    .WithMany(p => p.CurrentVillageSupportSourceVillage)
+                    .HasForeignKey(d => d.SourceVillageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_source_village_id");
+
+                entity.HasOne(d => d.SupportingArmy)
+                    .WithMany(p => p.CurrentVillageSupport)
+                    .HasForeignKey(d => d.SupportingArmyId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_supporting_army_id");
+
+                entity.HasOne(d => d.TargetVillage)
+                    .WithMany(p => p.CurrentVillageSupportTargetVillage)
+                    .HasForeignKey(d => d.TargetVillageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_target_village_id");
+
+                entity.HasOne(d => d.World)
+                    .WithMany(p => p.CurrentVillageSupport)
                     .HasForeignKey(d => d.WorldId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_world_id");
@@ -1050,6 +1094,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.HasSequence("user_upload_history_id_seq");
 
             modelBuilder.HasSequence("command_army_id_seq");
+
+            modelBuilder.HasSequence("current_village_support_id_seq");
 
             modelBuilder.HasSequence("failed_auth_id_seq");
 

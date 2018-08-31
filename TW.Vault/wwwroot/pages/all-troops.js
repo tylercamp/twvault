@@ -1,6 +1,7 @@
 ﻿function parseAllTroops($doc, onProgress_, onDone_) {
 
     //# REQUIRE pages/troops-overview.js
+    //## REQUIRE pages/troops-support-overview.js
 
     $doc = $doc || $(document);
 
@@ -9,6 +10,7 @@
     pages.push(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_OVERVIEW));
 
     let troops = [];
+    let supportData = [];
 
     let gettingPagesMessage = 'Getting village troop pages...';
     onProgress_ && onProgress_(gettingPagesMessage);
@@ -55,7 +57,10 @@
             } else {
                 onProgress_ && onProgress_('Getting possible nobles...');
                 getPossibleNobles(villageId, (cnt) => {
-                    uploadToVault(cnt);
+                    onProgress_ && onProgress_('Getting support...');
+                    collectSupportData(() => {
+                        uploadToVault(cnt);
+                    });
                 });
             }
 
@@ -64,6 +69,38 @@
     });
 
     requestManager.start();
+
+    function collectSupportData(onDone) {
+        $.get(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW))
+            .done((data) => {
+                onProgress_ && onProgress_('Collecting supported villages and DVs...');
+                let $supportDoc = $(data);
+                let supportPages = lib.detectMultiPages($supportDoc);
+                let $supportPages = [];
+
+                requestManager.resetStats();
+                supportPages.forEach((link) => {
+                    requestManager.addRequest(link, (data) => {
+                        $supportPages.push($(data));
+                    });
+                });
+
+                if (requestManager.getStats().total) {
+                    requestManager.setFinishedHandler(parseAndFinish);
+                    requestManager.start();
+                } else {
+                    parseAndFinish();
+                }
+
+                function parseAndFinish() {
+                    $supportPages.forEach(($page, i) => {
+                        console.log('Parsing page ' + i);
+                        supportData.push(...parseTroopsSupportOverviewPage($page))
+                    });
+                    onDone();
+                }
+            });
+    }
 
     function findVillaWithAcademy(onDone) {
         $.get(lib.makeTwUrl(lib.pageTypes.BUILDINGS_OVERVIEW))
@@ -134,7 +171,7 @@
 
     function uploadToVault(possibleNobles) {
 
-        onProgress_ && onProgress_("Uploading to vault...");
+        onProgress_ && onProgress_("Uploading troops to vault...");
 
         let distinctTroops = troops.distinct((a, b) => a.villageId == b.villageId);
 
@@ -143,24 +180,43 @@
             possibleNobles: possibleNobles
         };
 
-        lib.postApi(lib.makeApiUrl('village/army/current'), data)
-            .done(() => {
-                if (onProgress_)
-                    onProgress_('Finished: Uploaded troops for ' + distinctTroops.length + ' villages.');
+        let onError = () => {
+            if (onProgress_)
+                onProgress_("An error occurred while uploading to the vault.");
 
-                if (!onDone_)
-                    alert('Done!')
-                else
-                    onDone_(false);
-            })
-            .error(() => {
-                if (onProgress_)
-                    onProgress_("An error occurred while uploading to the vault.");
+            if (!onDone_)
+                alert('An error occurred...')
+            else
+                onDone_(true);
+        };
 
-                if (!onDone_)
-                    alert('An error occurred...')
-                else
-                    onDone_(true);
+        uploadArmy(() => {
+            if (onProgress_)
+                onProgress_('Finished: Uploaded troops for ' + distinctTroops.length + ' villages.');
+
+            if (!onDone_)
+                alert('Done!')
+            else
+                onDone_(false);
+        });
+
+        function uploadArmy(onDone) {
+            console.log('Uploading army data: ', data);
+            lib.postApi(lib.makeApiUrl('village/army/current'), data)
+                .error(onError)
+                .done(() => {
+                    onProgress_ && onProgress_('Uploading support to vault...');
+                    uploadSupport(onDone);
+                });
+        }
+
+        function uploadSupport(onDone) {
+            console.log('Uploading support data: ', supportData);
+            lib.queryCurrentPlayerInfo((playerId) => {
+                lib.postApi(lib.makeApiUrl(`player/${playerId}/support`), supportData)
+                    .error(onError)
+                    .done(onDone);
             });
+        }
     }
 }

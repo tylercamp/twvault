@@ -14,6 +14,7 @@ namespace TW.Vault.Scaffold
             CurrentBuilding = new HashSet<CurrentBuilding>();
             CurrentPlayer = new HashSet<CurrentPlayer>();
             CurrentVillage = new HashSet<CurrentVillage>();
+            CurrentVillageSupport = new HashSet<CurrentVillageSupport>();
             Player = new HashSet<Player>();
             Report = new HashSet<Report>();
             ReportArmy = new HashSet<ReportArmy>();
@@ -36,6 +37,7 @@ namespace TW.Vault.Scaffold
         public ICollection<CurrentBuilding> CurrentBuilding { get; set; }
         public ICollection<CurrentPlayer> CurrentPlayer { get; set; }
         public ICollection<CurrentVillage> CurrentVillage { get; set; }
+        public ICollection<CurrentVillageSupport> CurrentVillageSupport { get; set; }
         public ICollection<Player> Player { get; set; }
         public ICollection<Report> Report { get; set; }
         public ICollection<ReportArmy> ReportArmy { get; set; }
