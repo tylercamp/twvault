@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TW.Vault.Model.Convert;
 
 namespace TW.Vault.Model
 {
@@ -53,6 +54,18 @@ namespace TW.Vault.Model
                     result.Spy = army.Spy;
                     result.Knight = army.Knight;
                     break;
+            }
+            return result;
+        }
+
+        public static JSON.Army OfType(this JSON.Army army, JSON.UnitBuild build)
+        {
+            var result = new JSON.Army();
+            foreach (var typeString in army.Keys)
+            {
+                var type = typeString.ToTroopType();
+                if (Native.ArmyStats.UnitBuild[type] == build)
+                    result.Add(typeString, army[typeString]);
             }
             return result;
         }

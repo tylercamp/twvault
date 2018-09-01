@@ -70,6 +70,8 @@
                 data.stationedSeenAt = data.stationedSeenAt ? new Date(data.stationedSeenAt) : null;
                 data.recentlyLostArmySeenAt = data.recentlyLostArmySeenAt ? new Date(data.recentlyLostArmySeenAt) : null;
                 data.travelingSeenAt = data.travelingSeenAt ? new Date(data.travelingSeenAt) : null;
+                data.ownedArmySeenAt = data.ownedArmySeenAt ? new Date(data.ownedArmySeenAt) : null;
+
                 data.lastBuildingsSeenAt = data.lastBuildingsSeenAt ? new Date(data.lastBuildingsSeenAt) : null;
                 data.lastLoyaltySeenAt = data.lastLoyaltySeenAt ? new Date(data.lastLoyaltySeenAt) : null;
 
@@ -156,6 +158,13 @@
                             <td>Recently lost</td>
                             <td>${data.recentlyLostArmySeenAt ? lib.formateDateTime(data.recentlyLostArmySeenAt) : ''}</td>
                             ${makeTroopTds(data.recentlyLostArmy || {})}
+                        </tr>
+                        `}
+                        ${ !data.ownedArmy ? '' : `
+                        <tr>
+                            <td>Confirmed known</td>
+                            <td>${data.ownedArmySeenAt ? lib.formateDateTime(data.ownedArmySeenAt) : ''}</td>
+                            ${makeTroopTds(data.ownedArmy || {})}
                         </tr>
                         `}
                         ${ !data.possibleRecruitedOffensiveArmy || !data.possibleRecruitedDefensiveArmy ? '' : `

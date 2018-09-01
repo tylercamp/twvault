@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using JSON = TW.Vault.Model.JSON;
+using Native = TW.Vault.Model.Native;
 using TW.Vault.Model.Convert;
 using TW.Vault.Model.Validation;
 using Newtonsoft.Json;
@@ -182,6 +183,51 @@ namespace TW.Vault.Controllers
 
                     scaffoldReport.Tx = tx;
                 });
+
+                if (jsonReport.AttackingArmy != jsonReport.AttackingArmyLosses)
+                {
+                    await Profile("Update command troop type", async () =>
+                    {
+                        var command = await Model.UtilQuery.FindCommandForReport(scaffoldReport, context);
+                        if (command != null)
+                        {
+                            JSON.TroopType? slowestType = null;
+                            float slowestSpeed = -1;
+                            foreach (var troopType in jsonReport.AttackingArmy.Keys.Select(k => k.ToTroopType()))
+                            {
+                                var travelSpeed = Native.ArmyStats.TravelSpeed[troopType];
+                                if (slowestType == null)
+                                {
+                                    slowestType = troopType;
+                                    slowestSpeed = travelSpeed;
+                                }
+                                else if (travelSpeed > slowestSpeed)
+                                {
+                                    slowestType = troopType;
+                                    slowestSpeed = travelSpeed;
+                                }
+                            }
+
+                            var attackingVillage = await context.Village
+                                                                .FromWorld(CurrentWorldId)
+                                                                .Where(v => v.VillageId == jsonReport.AttackingVillageId)
+                                                                .FirstOrDefaultAsync();
+
+                            var defendingVillage = await context.Village
+                                                                .FromWorld(CurrentWorldId)
+                                                                .Where(v => v.VillageId == jsonReport.DefendingVillageId)
+                                                                .FirstOrDefaultAsync();
+
+                            var travelCalculator = new Features.Simulation.TravelCalculator(2.0f, 0.5f);
+                            var travelTime = travelCalculator.CalculateTravelTime(slowestType.Value, attackingVillage, defendingVillage);
+
+                            command.Army = ArmyConvert.JsonToArmy(jsonReport.AttackingArmy - jsonReport.AttackingArmyLosses, command.Army, context);
+                            command.TroopType = slowestType.Value.ToTroopString();
+                            command.LandsAt = scaffoldReport.OccuredAt + travelTime;
+                            command.IsReturning = true;
+                        }
+                    });
+                }
 
                 var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
                 userUploadHistory.LastUploadedReportsAt = DateTime.UtcNow;
