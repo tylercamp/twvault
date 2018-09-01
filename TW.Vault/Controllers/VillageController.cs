@@ -72,6 +72,7 @@ namespace TW.Vault.Controllers
             bool canRead = false;
             if (!village.PlayerId.HasValue)
             {
+                //  Allowed to read for barbarian villages
                 canRead = true;
             }
             else
@@ -79,6 +80,11 @@ namespace TW.Vault.Controllers
                 var owningPlayer = await Profile("Get owning player", () => context.Player.Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
                 if (!owningPlayer.TribeId.HasValue || owningPlayer.TribeId.Value != CurrentTribeId || CurrentUserIsAdmin)
                 {
+                    //  Allowed to read if:
+                    //
+                    // - the player has no tribe
+                    // - or the village tribe is different from the player's tribe
+                    // - or the current user is an admin
                     canRead = true;
                 }
             }
@@ -101,6 +107,7 @@ namespace TW.Vault.Controllers
                 return StatusCode(423); // Status code "Locked"
             }
 
+            //  Start getting village data
             var currentVillage = await Profile("Get current village", () => (
                     from cv in context.CurrentVillage
                                       .FromWorld(CurrentWorldId)
@@ -115,6 +122,8 @@ namespace TW.Vault.Controllers
             );
             
             var jsonData = new JSON.VillageData();
+
+            //  Return empty data if no data is available for the village
             if (currentVillage == null)
                 return Ok(jsonData);
 
@@ -174,6 +183,7 @@ namespace TW.Vault.Controllers
                     jsonData.NukesRequired = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, morale ?? 100);
                 }
 
+                //  Might have CurrentArmy entries but they're just empty/null - not based on any report data
                 if (jsonData.OwnedArmy != null && jsonData.OwnedArmySeenAt == null)
                     jsonData.OwnedArmy = null;
 
@@ -281,7 +291,7 @@ namespace TW.Vault.Controllers
                         ));
                     }
 
-                    var fullArmy = armySetJson.Stationed + armySetJson.Traveling + armySetJson.Supporting;
+                    var fullArmy = armySetJson.AtHome + armySetJson.Traveling + armySetJson.Supporting;
                     currentVillage.ArmyOwned = ArmyConvert.JsonToArmy(fullArmy, currentVillage.ArmyOwned, context);
                     currentVillage.ArmyStationed = ArmyConvert.JsonToArmy(armySetJson.Stationed, currentVillage.ArmyStationed, context);
                     currentVillage.ArmyTraveling = ArmyConvert.JsonToArmy(armySetJson.Traveling, currentVillage.ArmyTraveling, context);
@@ -291,6 +301,8 @@ namespace TW.Vault.Controllers
                     currentVillage.ArmyOwned.LastUpdated = DateTime.UtcNow;
                     currentVillage.ArmyStationed.LastUpdated = DateTime.UtcNow;
                     currentVillage.ArmyTraveling.LastUpdated = DateTime.UtcNow;
+                    currentVillage.ArmyAtHome.LastUpdated = DateTime.UtcNow;
+                    currentVillage.ArmySupporting.LastUpdated = DateTime.UtcNow;
                 }
             });
 
