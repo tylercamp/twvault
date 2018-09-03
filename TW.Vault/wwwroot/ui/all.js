@@ -1,6 +1,6 @@
 ﻿function parseAllPages($doc) {
 
-    //# REQUIRE pages/admin.js
+    //# REQUIRE ui/admin.js
 
     $doc = $doc || $(document);
 

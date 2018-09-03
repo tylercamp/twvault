@@ -222,6 +222,7 @@ namespace TW.Vault.Controllers
                             var travelTime = travelCalculator.CalculateTravelTime(slowestType.Value, attackingVillage, defendingVillage);
 
                             command.Army = ArmyConvert.JsonToArmy(jsonReport.AttackingArmy - jsonReport.AttackingArmyLosses, command.Army, context);
+                            command.Army.WorldId = CurrentWorldId;
                             command.TroopType = slowestType.Value.ToTroopString();
                             command.LandsAt = scaffoldReport.OccuredAt + travelTime;
                             command.IsReturning = true;

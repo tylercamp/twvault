@@ -36,83 +36,6 @@ namespace TW.Vault.Controllers
             );
         }
 
-        [HttpGet("{id}/tags", Name = "GetIncomingTags")]
-        public async Task<IActionResult> GetIncomingTags(long id)
-        {
-            var incoming = await (
-                    from command in context.Command.FromWorld(CurrentWorldId)
-                                                   .Include(c => c.SourceVillage)
-                                                   .Include(c => c.SourceVillage.CurrentVillage)
-                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyOwned)
-                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyStationed)
-                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyTraveling)
-                    where command.CommandId == id
-                    select command
-                ).FirstOrDefaultAsync();
-
-            if (incoming == null)
-                return NotFound();
-
-            var numFromVillage = await (
-                    from command in context.Command.FromWorld(CurrentWorldId)
-                    where command.SourceVillageId == incoming.SourceVillageId
-                    select 1
-                ).CountAsync();
-
-            var sourceVillage = incoming.SourceVillage?.CurrentVillage;
-
-            var armyOwned = sourceVillage?.ArmyOwned;
-            var armyTraveling = sourceVillage?.ArmyTraveling;
-            var armyStationed = sourceVillage?.ArmyStationed;
-
-            //  TODO - Make this a setting
-            var maxUpdateTime = TimeSpan.FromDays(4);
-
-            if (armyOwned?.LastUpdated != null && (CurrentServerTime - armyOwned.LastUpdated.Value > maxUpdateTime))
-                armyOwned = null;
-
-            if (armyTraveling?.LastUpdated != null && (CurrentServerTime - armyTraveling.LastUpdated.Value > maxUpdateTime))
-                armyTraveling = null;
-
-            if (armyStationed?.LastUpdated != null && (CurrentServerTime - armyStationed.LastUpdated.Value > maxUpdateTime))
-                armyStationed = null;
-
-            if (armyOwned != null && armyOwned.IsEmpty())
-                armyOwned = null;
-            if (armyTraveling != null && armyTraveling.IsEmpty())
-                armyTraveling = null;
-            if (armyStationed != null && armyStationed.IsEmpty())
-                armyStationed = null;
-
-            var effectiveArmy = armyOwned ?? armyTraveling ?? armyStationed;
-
-            var tag = new JSON.IncomingTag();
-            tag.CommandId = id;
-            tag.NumFromVillage = numFromVillage;
-            tag.TroopType = TroopTypeConvert.StringToTroopType(incoming.TroopType);
-
-            if (effectiveArmy != null)
-            {
-                //  TODO - Make this a setting
-                bool isOffense = (
-                        (effectiveArmy.Axe.HasValue && effectiveArmy.Axe.Value > 500) ||
-                        (effectiveArmy.Light.HasValue && effectiveArmy.Light.Value > 250)
-                    );
-
-                if (!isOffense)
-                    tag.DefiniteFake = true;
-
-                var offensiveArmy = effectiveArmy.OfType(JSON.UnitBuild.Offensive);
-                var jsonArmy = ArmyConvert.ArmyToJson(offensiveArmy);
-                var pop = Native.ArmyStats.CalculateTotalPopulation(jsonArmy);
-
-                tag.OffensivePopulation = pop;
-                tag.NumCats = effectiveArmy.Catapult;
-            }
-
-            return Ok(tag);
-        }
-
         [HttpGet("village/target/{villageId}")]
         public async Task<IActionResult> GetByTargetVillage(long villageId)
         {
@@ -164,6 +87,19 @@ namespace TW.Vault.Controllers
             var jsonCommands = commands.Select(CommandConvert.ModelToJson);
             return Ok(jsonCommands);
         }
+
+        [HttpPost("check-existing-commands")]
+        public async Task<IActionResult> GetExistingCommands([FromBody]List<long> commandIds)
+        {
+            var existingIds = await (
+                    from command in context.Command.FromWorld(CurrentWorldId)
+                    where command.ArmyId != null
+                    where commandIds.Contains(command.CommandId)
+                    select command.CommandId
+                ).ToListAsync();
+
+            return Ok(existingIds);
+        }
         
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]JSON.ManyCommands jsonCommands)
@@ -195,7 +131,19 @@ namespace TW.Vault.Controllers
                         select village
                     ).ToListAsync();
 
-                var villagesById = villagesForMissingTroopTypes.ToDictionary(v => v.VillageId, v => v);
+                var allVillageIds = jsonCommands.Commands
+                                                .Select(c => c.SourceVillageId)
+                                                .Concat(jsonCommands.Commands.Select(c => c.TargetVillageId))
+                                                .Select(id => id.Value)
+                                                .Distinct();
+
+                var allVillages = await (
+                        from village in context.Village.FromWorld(CurrentWorldId)
+                        where allVillageIds.Contains(village.VillageId)
+                        select village
+                    ).ToListAsync();
+
+                var villagesById = allVillages.ToDictionary(v => v.VillageId, v => v);
 
                 var tx = BuildTransaction();
                 context.Transaction.Add(tx);
@@ -225,16 +173,33 @@ namespace TW.Vault.Controllers
                             continue;
                         }
 
+
+                        var travelCalculator = new Features.Simulation.TravelCalculator(2.0f, 0.5f);
+                        var timeRemaining = jsonCommand.LandsAt.Value - CurrentServerTime;
+                        var sourceVillage = villagesById[jsonCommand.SourceVillageId.Value];
+                        var targetVillage = villagesById[jsonCommand.TargetVillageId.Value];
+                        var estimatedType = travelCalculator.EstimateTroopType(timeRemaining, sourceVillage, targetVillage);
+
                         if (jsonCommand.TroopType == null)
                         {
-                            var travelCalculator = new Features.Simulation.TravelCalculator(2.0f, 0.5f);
-                            var timeRemaining = jsonCommand.LandsAt.Value - CurrentServerTime;
-                            var sourceVillage = villagesById[jsonCommand.SourceVillageId.Value];
-                            var targetVillage = villagesById[jsonCommand.TargetVillageId.Value];
-                            jsonCommand.TroopType = travelCalculator.EstimateTroopType(timeRemaining, sourceVillage, targetVillage);
+                            jsonCommand.TroopType = estimatedType;
+                        }
+                        else
+                        {
+                            var estimatedTravelSpeed = Native.ArmyStats.TravelSpeed[estimatedType];
+                            var reportedTravelSpeed = Native.ArmyStats.TravelSpeed[jsonCommand.TroopType.Value];
+
+                            //  ie if command is tagged as "spy" but travel speed is effective for
+                            //  rams
+                            if (estimatedTravelSpeed > reportedTravelSpeed)
+                                jsonCommand.TroopType = estimatedType;
                         }
 
                         var scaffoldCommand = mappedScaffoldCommands.GetValueOrDefault(jsonCommand.CommandId.Value);
+                        //  Don't process/update commands that are already "complete" (have proper army data attached to them)
+                        if (scaffoldCommand?.Army != null)
+                            continue;
+
                         if (scaffoldCommand == null)
                         {
                             scaffoldCommand = new Scaffold.Command();
@@ -275,6 +240,126 @@ namespace TW.Vault.Controllers
             {
                 return BadRequest(ModelState);
             }
+        }
+
+        [HttpPost("tags", Name = "GetIncomingTags")]
+        public async Task<IActionResult> GetIncomingTags([FromBody]List<long> incomingsIds)
+        {
+            var incomings = await (
+                    from command in context.Command.FromWorld(CurrentWorldId)
+                                                   .Include(c => c.SourceVillage)
+                                                   .Include(c => c.SourceVillage.CurrentVillage)
+                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyOwned)
+                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyStationed)
+                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyTraveling)
+                    where incomingsIds.Contains(command.CommandId)
+                    select command
+                ).ToListAsync();
+
+            if (incomings == null)
+                return NotFound();
+
+            var commandSourceVillageIds = incomings.Select(inc => inc.SourceVillageId).ToList();
+
+            var countsByVillage = commandSourceVillageIds.Distinct().ToDictionary(
+                vid => vid,
+                vid => commandSourceVillageIds.Count(sv => sv == vid)
+            );
+
+            var commandsReturningByVillageId = await Profile("Get returning commands for all source villages", async () =>
+            {
+                var commandsReturning = await (
+                    from command in context.Command
+                                            .FromWorld(CurrentWorldId)
+                                            .Include(c => c.Army)
+                    where commandSourceVillageIds.Contains(command.SourceVillageId)
+                    where command.IsReturning
+                    where command.LandsAt < CurrentServerTime
+                    select command
+                ).ToListAsync();
+
+                return commandSourceVillageIds.ToDictionary(
+                    vid => vid,
+                    vid => commandsReturning.Where(cmd => cmd.SourceVillageId == vid).ToList()
+                );
+            });
+
+            Dictionary<long, JSON.IncomingTag> resultTags = new Dictionary<long, JSON.IncomingTag>();
+            Profile("Make incomings tags", () =>
+            {
+                foreach (var incoming in incomings)
+                {
+                    var sourceCurrentVillage = incoming.SourceVillage?.CurrentVillage;
+                    var sourceVillageId = incoming.SourceVillageId;
+                    var commandsReturning = commandsReturningByVillageId.GetValueOrDefault(sourceVillageId);
+
+                    var armyOwned = sourceCurrentVillage?.ArmyOwned;
+                    var armyTraveling = sourceCurrentVillage?.ArmyTraveling;
+                    var armyStationed = sourceCurrentVillage?.ArmyStationed;
+
+                    //  TODO - Make this a setting
+                    var maxUpdateTime = TimeSpan.FromDays(4);
+
+                    if (armyOwned?.LastUpdated != null && (CurrentServerTime - armyOwned.LastUpdated.Value > maxUpdateTime))
+                        armyOwned = null;
+
+                    if (armyTraveling?.LastUpdated != null && (CurrentServerTime - armyTraveling.LastUpdated.Value > maxUpdateTime))
+                        armyTraveling = null;
+
+                    if (armyStationed?.LastUpdated != null && (CurrentServerTime - armyStationed.LastUpdated.Value > maxUpdateTime))
+                        armyStationed = null;
+
+                    if (armyOwned != null && armyOwned.IsEmpty())
+                        armyOwned = null;
+                    if (armyTraveling != null && armyTraveling.IsEmpty())
+                        armyTraveling = null;
+                    if (armyStationed != null && armyStationed.IsEmpty())
+                        armyStationed = null;
+
+                    var troopsReturning = new JSON.Army();
+                    if (commandsReturning != null)
+                    {
+                        foreach (var command in commandsReturning)
+                            troopsReturning += ArmyConvert.ArmyToJson(command.Army);
+                    }
+
+                    var effectiveArmy = armyOwned ?? armyTraveling ?? armyStationed;
+
+                    var tag = new JSON.IncomingTag();
+                    tag.CommandId = incoming.CommandId;
+                    tag.NumFromVillage = countsByVillage.GetValueOrDefault(sourceVillageId);
+                    tag.TroopType = TroopTypeConvert.StringToTroopType(incoming.TroopType);
+
+                    if (effectiveArmy != null)
+                    {
+                        //  TODO - Make this a setting
+                        bool isOffense = (
+                                (effectiveArmy.Axe.HasValue && effectiveArmy.Axe.Value > 500) ||
+                                (effectiveArmy.Light.HasValue && effectiveArmy.Light.Value > 250)
+                            );
+
+                        if (!isOffense)
+                            tag.DefiniteFake = true;
+
+                        var offensiveArmy = effectiveArmy.OfType(JSON.UnitBuild.Offensive);
+                        var jsonArmy = ArmyConvert.ArmyToJson(offensiveArmy);
+                        var pop = Native.ArmyStats.CalculateTotalPopulation(jsonArmy);
+
+                        var returningOffensiveArmy = troopsReturning.OfType(JSON.UnitBuild.Offensive);
+                        var returningPop = Native.ArmyStats.CalculateTotalPopulation(returningOffensiveArmy);
+
+                        tag.OffensivePopulation = pop - returningPop;
+                        if (pop - returningPop < 1000)
+                            tag.DefiniteFake = true;
+
+                        tag.NumCats = effectiveArmy.Catapult;
+                    }
+
+                    resultTags.Add(sourceVillageId, tag);
+                }
+            });
+
+            return Ok(resultTags);
         }
     }
 }

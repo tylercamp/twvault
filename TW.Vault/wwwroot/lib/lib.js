@@ -1,8 +1,8 @@
 ﻿
 var lib = (() => {
 
-    //# REQUIRE twstats.js
-    //# REQUIRE twcalc.js
+    //# REQUIRE lib/twstats.js
+    //# REQUIRE lib/twcalc.js
 
     let twstats = getTwTroopStats();
     let localStoragePrefix = 'vls-';

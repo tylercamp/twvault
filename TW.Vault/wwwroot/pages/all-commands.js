@@ -69,74 +69,96 @@
 
         requestManager.resetStats();
 
-        let fetchingCommandsMessage = 'Collecting commands...';
-        onProgress_ && onProgress_(fetchingCommandsMessage);
+        onProgress_ && onProgress_('Checking for previously-uploaded commands...');
+        checkExistingCommands(newCommands.map(_ => _.commandId), (existingCommands) => {
 
-        newCommands.forEach((cmd) => {
-            let commandId = cmd.commandId;
-            let link = cmd.link;
+            oldCommands.push(...existingCommands);
 
-            requestManager.addRequest(link, (data) => {
-                if (lib.checkContainsCaptcha(data)) {
-                    if (requestManager.isRunning()) {
-                        onProgress_ && onProgress_(lib.messages.TRIGGERED_CAPTCHA);
+            let fetchingCommandsMessage = 'Uploading commands...';
+            onProgress_ && onProgress_(fetchingCommandsMessage);
 
-                        if (onDone_)
-                            onDone_(lib.errorCodes.CAPTCHA);
-                        else
-                            alert(lib.messages.TRIGGERED_CAPTCHA);
+            newCommands.forEach((cmd) => {
+                let commandId = cmd.commandId;
+                let link = cmd.link;
 
-                        requestManager.stop();
+                if (oldCommands.contains(commandId))
+                    return;
+
+                requestManager.addRequest(link, (data) => {
+                    if (lib.checkContainsCaptcha(data)) {
+                        if (requestManager.isRunning()) {
+                            onProgress_ && onProgress_(lib.messages.TRIGGERED_CAPTCHA);
+
+                            if (onDone_)
+                                onDone_(lib.errorCodes.CAPTCHA);
+                            else
+                                alert(lib.messages.TRIGGERED_CAPTCHA);
+
+                            requestManager.stop();
+                        }
+
+                        return;
                     }
 
-                    return;
-                }
+                    let command = parseOwnCommand(commandId, cmd.commandType, cmd.isReturning, $(data));
 
-                onProgress_ && onProgress_(`${fetchingCommandsMessage} (${requestManager.getStats().done}/${newCommands.length} done, ${requestManager.getStats().numFailed} failed)`);
+                    let notifyOnDone = () => onProgress_ && onProgress_(`${fetchingCommandsMessage} (${requestManager.getStats().done}/${requestManager.getStats().total} done, ${requestManager.getStats().numFailed} failed)`);
 
-                let command = parseOwnCommand(commandId, cmd.commandType, cmd.isReturning, $(data));
-                newCommandData.push(command);
-            });
-        });
+                    let commandData = {
+                        isOwnCommands: true,
+                        commands: [command]
+                    };
 
-        requestManager.start();
+                    lib.postApi(lib.makeApiUrl('command'), commandData)
+                        .done(() => {
+                            oldCommands.push(command.commandId);
+                            lib.setLocalStorage('commands-history', oldCommands);
+                            notifyOnDone();
 
-        requestManager.setFinishedHandler(() => {
+                        })
+                        .fail((req, status, err) => {
+                            requestManager.getStats().numFailed++;
+                            notifyOnDone();
 
-            onProgress_ && onProgress_('Uploading to vault...');
-
-            let data = {
-                isOwnCommands: true,
-                commands: newCommandData
-            };
-            lib.postApi(lib.makeApiUrl('command'), data)
-                .done(() => {
-                    oldCommands.push(...newCommands.map((c) => c.commandId));
-                    lib.setLocalStorage('commands-history', oldCommands);
-                    let stats = requestManager.getStats();
-
-
-                    onProgress_ && onProgress_(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`);
-
-                    if (!onDone_)
-                        alert('Done!');
-                    else
-                        onDone_(false);
-                })
-                .fail((req, status, err) => {
-                    onProgress_ && onProgress_('Failed to upload to vault.');
-                    if (!onDone_)
-                        alert('An error occurred...');
-                    else
-                        onDone_(true);
-
-                    console.error(req, status, err);
+                            console.error(req, status, err);
+                        });
                 });
+            });
+
+            requestManager.start();
+
+            requestManager.setFinishedHandler(() => {
+                let stats = requestManager.getStats();
+                onProgress_ && onProgress_(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`);
+
+                if (!onDone_)
+                    alert('Done!');
+                else
+                    onDone_(false);
+            });
+
         });
     });
 
     requestManager.start();
 
 
+
+
+    function checkExistingCommands(commandIds, onDone) {
+        lib.postApi(lib.makeApiUrl('command/check-existing-commands'), commandIds)
+            .error(() => {
+                onProgress_ && onProgress_('Failed to check for old commands, uploading all...');
+                setTimeout(onDone, 2000);
+            })
+            .done((existingCommandIds) => {
+                if (existingCommandIds.length) {
+                    onProgress_ && onProgress_('Found ' + existingCommandIds.length + ' old commands, skipping these...');
+                    setTimeout(() => onDone(existingCommandIds), 2000);
+                } else {
+                    onDone(existingCommandIds);
+                }
+            });
+    }
     
 }

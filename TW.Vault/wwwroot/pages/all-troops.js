@@ -1,7 +1,7 @@
 ﻿function parseAllTroops($doc, onProgress_, onDone_) {
 
     //# REQUIRE pages/troops-overview.js
-    //## REQUIRE pages/troops-support-overview.js
+    //# REQUIRE pages/troops-support-overview.js
 
     $doc = $doc || $(document);
 
