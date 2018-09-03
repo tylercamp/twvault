@@ -2,29 +2,35 @@
 
 function makeAdminInterface($adminContainer) {
     $adminContainer.append(`
-            <h3>Admin Options</h3>
-            <div>
-                Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download">
-            </div>
-            <div id="keys-container">
-                <h4>Keys</h4>
-                <table id="keys-table" style="width:100%">
-                    <tr>
-                        <th>User name</th>
-                        <th>Current tribe</th>
-                        <th>Auth key</th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </table>
-                <input type="button" id="new-key-button" value="Make new key">
+            <button class="btn btn-confirm-yes vault-toggle-admin-btn">Admin Options</button>
+            <div id="admin-inner-container" style="display:none">
+                <div>
+                    Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download">
+                </div>
+                <div id="keys-container">
+                    <h4>Keys</h4>
+                    <table id="keys-table" style="width:100%">
+                        <tr>
+                            <th>User name</th>
+                            <th>Current tribe</th>
+                            <th>Auth key</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </table>
+                    <input type="button" id="new-key-button" value="Make new key">
 
-                <div id="key-script-container" style="display:none">
-                    <h5 style="margin-top:2em">New Vault Script</h5>
-                    <textarea cols=100 rows=5></textarea>
+                    <div id="key-script-container" style="display:none">
+                        <h5 style="margin-top:2em">New Vault Script</h5>
+                        <textarea cols=100 rows=5></textarea>
+                    </div>
                 </div>
             </div>
         `.trim());
+
+    $adminContainer.find('.vault-toggle-admin-btn').click(() => {
+        $adminContainer.find('#admin-inner-container').toggle();
+    });
 
     //  Insert existing keys
     lib.getApi(lib.makeApiUrl('admin/keys'))

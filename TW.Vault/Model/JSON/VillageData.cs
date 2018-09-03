@@ -30,5 +30,11 @@ namespace TW.Vault.Model.JSON
         public Army PossibleRecruitedOffensiveArmy { get; set; }
 
         public int? NukesRequired { get; set; }
+
+        public List<long> Fakes { get; set; }
+        public Dictionary<long, int> DVs { get; set; }
+        public List<long> Nukes { get; set; }
+        public List<long> Players { get; set; }
+
     }
 }

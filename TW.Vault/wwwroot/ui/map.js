@@ -50,6 +50,8 @@
         currentVillageId = villageInfo.id;
         let villageId = villageInfo.id;
         let morale = Math.round(villageInfo.morale * 100);
+        if (isNaN(morale))
+            morale = 100;
 
         if (cachedData[villageInfo.id]) {
             makeOutput(cachedData[villageId]);
@@ -108,23 +110,46 @@
 
         //  Limit "own commands" to max 2
         let $commandRows = $('.command-row');
+        let twCommandData = [];
 
         //  Remove all except non-small attacks
-        if ($commandRows.length > 2) {
-            for (var i = 0; i < $commandRows.length && $commandRows.length > 2; i++) {
-                let $images = $($commandRows[i]).find('img');
-                let isSmall = false;
-                $images.each((i, el) => {
-                    let $el = $(el);
-                    if ($el.prop('src').contains("attack_small"))
-                        isSmall = true;
-                });
+        for (var i = 0; i < $commandRows.length; i++) {
+            let $row = $($commandRows[i]);
+            let $images = $row.find('img');
+            let isSmall = false;
+            let isSupport = true;
+            let isOwn = false;
+            let isReturning = false;
+            $images.each((i, el) => {
+                let $el = $(el);
+                if ($el.prop('src').contains('attack_'))
+                    isOwn = true;
 
-                if (isSmall) {
-                    $($commandRows[i]).remove();
-                    $commandRows = $('.command-row');
-                    --i;
-                }
+                if ($el.prop('src').contains("attack_small"))
+                    isSmall = true;
+
+                if ($el.prop('src').contains('attack'))
+                    isSupport = false;
+
+                if ($el.prop('src').contains('return'))
+                    isReturning = true;
+            });
+
+            //  Collect command data for later
+            let commandId = parseInt($row.find('.command_hover_details').data('command-id'));
+            let commandData = {
+                isSmall: isSmall,
+                isSupport: isSupport,
+                isOwn: isOwn,
+                isReturning: isReturning
+            };
+
+            twCommandData.push(commandData);
+
+            if (isSmall && $commandRows.length > 2) {
+                $($commandRows[i]).remove();
+                $commandRows = $('.command-row');
+                --i;
             }
         }
 
@@ -133,12 +158,51 @@
         $('#info_last_attack_intel').closest('tr').remove();
 
         $('#info_content').css('width', '100%');
-        
+
         let $villageInfoContainer = $('<div id="vault_info" style="background-color:#e5d7b2;">');
         $villageInfoContainer.appendTo($popup);
 
+        //  Update data with what's been loaded by TW (in case someone forgot to upload commands)
+        let hasRecord = (id) => data.fakes.contains(id) || data.dVs[id] || data.nukes.contains(id);
+
+        let numFakes = data.fakes.length;
+        let numNukes = data.nukes.length;
+        let numPlayers = data.players.length;
+
+        let numDVs = 0;
+        lib.objForEach(data.Dvs, (commandId, pop) => {
+            numDVs += pop / 20000;
+        });
+        numDVs = Math.roundTo(numDVs, 1);
+
+        twCommandData.forEach((cmd) => {
+            if (!cmd.isOwn || hasRecord(cmd.commandId) || cmd.isReturning)
+                return;
+
+            if (!cmd.isSupport) {
+                if (cmd.isSmall)
+                    numFakes++;
+                else
+                    numNukes++;
+            }
+        });
+
         //  NOTE - This assumes no archers!
         $villageInfoContainer.html(`
+                    <table class='vis' style="width:100%">
+                        <tr>
+                            <th># Fakes</th>
+                            <th># Nukes</th>
+                            <th># DVs</th>
+                            <th># Players Sending</th>
+                        </tr>
+                        <tr>
+                            <td>${numFakes}</td>
+                            <td>${numNukes}</td>
+                            <td>${numDVs}</td>
+                            <td>${numPlayers}</td>
+                        </tr>
+                    </table>
                     ${ !data.stationedArmy && !data.travelingArmy && !data.recentlyLostArmy ? '<div style="text-align:center;padding:0.5em;">No army data available.</div>' : `
                     <table class='vis' style="width:100%">
                         <tr style="background-color:#c1a264 !important">

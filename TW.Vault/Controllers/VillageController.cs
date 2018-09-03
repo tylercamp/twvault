@@ -13,6 +13,7 @@ using TW.Vault.Model.Convert;
 using TW.Vault.Features.Simulation;
 using Newtonsoft.Json;
 using TW.Vault.Model.Native;
+using TW.Vault.Model;
 
 namespace TW.Vault.Controllers
 {
@@ -120,6 +121,17 @@ namespace TW.Vault.Controllers
                     select cv
                 ).FirstOrDefaultAsync()
             );
+
+            var commandsToVillage = await Profile("Get commands to village", () => (
+                    from command in context.Command
+                                           .FromWorld(CurrentWorldId)
+                                           .Include(c => c.Army)
+                    where command.TargetVillageId == villageId
+                    where !command.IsReturning
+                    where command.LandsAt > CurrentServerTime
+                    select command
+                ).ToListAsync()
+            );
             
             var jsonData = new JSON.VillageData();
 
@@ -213,6 +225,38 @@ namespace TW.Vault.Controllers
                         jsonData.PossibleRecruitedOffensiveArmy = calculator.CalculatePossibleOffenseRecruitment(timeSinceSeen);
                         jsonData.PossibleRecruitedDefensiveArmy = calculator.CalculatePossibleDefenseRecruitment(timeSinceSeen);
                     }
+                }
+
+                //  Add command summaries
+                jsonData.DVs = new Dictionary<long, int>();
+                jsonData.Fakes = new List<long>();
+                jsonData.Nukes = new List<long>();
+
+                jsonData.Players = commandsToVillage.Select(c => c.SourcePlayerId).Distinct().ToList();
+
+                foreach (var command in commandsToVillage.Where(c => c.Army != null))
+                {
+                    var army = ArmyConvert.ArmyToJson(command.Army);
+                    var offensivePop = ArmyStats.CalculateTotalPopulation(army.OfType(JSON.UnitBuild.Offensive));
+                    var defensivePop = ArmyStats.CalculateTotalPopulation(army.OfType(JSON.UnitBuild.Defensive));
+
+                    bool isFake = false;
+                    bool isNuke = false;
+                    if (!army.Values.Any(cnt => cnt > 1))
+                    {
+                        isFake = true;
+                    }
+                    else if (command.IsAttack && offensivePop > 10000)
+                    {
+                        isNuke = true;
+                    }
+
+                    if (isFake)
+                        jsonData.Fakes.Add(command.CommandId);
+                    else if (isNuke)
+                        jsonData.Nukes.Add(command.CommandId);
+                    else if (defensivePop > 3000 && !command.IsAttack)
+                        jsonData.DVs.Add(command.CommandId, defensivePop);
                 }
             });
 
