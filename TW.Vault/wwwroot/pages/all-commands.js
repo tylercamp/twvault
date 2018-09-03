@@ -102,7 +102,7 @@
 
                     let command = parseOwnCommand(commandId, cmd.commandType, cmd.isReturning, $(data));
 
-                    let notifyOnDone = () => onProgress_ && onProgress_(`${fetchingCommandsMessage} (${requestManager.getStats().done}/${requestManager.getStats().total} done, ${requestManager.getStats().numFailed} failed)`);
+                    let notifyOnDone = () => requestManager.pendingRequests.length && onProgress_ && onProgress_(`${fetchingCommandsMessage} (${requestManager.getStats().done}/${requestManager.getStats().total} done, ${requestManager.getStats().numFailed} failed)`);
 
                     let commandData = {
                         isOwnCommands: true,

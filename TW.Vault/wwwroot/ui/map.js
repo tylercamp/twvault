@@ -19,6 +19,7 @@
     var cachedData = {};
     let requestedVillageIds = [];
 
+    //  First call that actually shows the popup - Update the popup if we've already downloaded village data
     let originalDisplayForVillage = TWMap.popup.displayForVillage;
     TWMap.popup.displayForVillage = function (e, a, t) {
         console.log('intercepted displayForVillage');
@@ -36,6 +37,7 @@
         }
     };
 
+    // Call made after popup is shown and TW has downloaded data for the village (ie incoming attacks, morale, etc)
     let originalReceivedInfo = TWMap.popup.receivedPopupInformationForSingleVillage;
     TWMap.popup.receivedPopupInformationForSingleVillage = function (e) {
         console.log('Intercepted receivedPopupInformation');
@@ -106,9 +108,23 @@
 
         //  Limit "own commands" to max 2
         let $commandRows = $('.command-row');
+
+        //  Remove all except non-small attacks
         if ($commandRows.length > 2) {
-            for (var i = 2; i < $commandRows.length; i++) {
-                $($commandRows[i]).remove();
+            for (var i = 0; i < $commandRows.length && $commandRows.length > 2; i++) {
+                let $images = $($commandRows[i]).find('img');
+                let isSmall = false;
+                $images.each((i, el) => {
+                    let $el = $(el);
+                    if ($el.prop('src').contains("attack_small"))
+                        isSmall = true;
+                });
+
+                if (isSmall) {
+                    $($commandRows[i]).remove();
+                    $commandRows = $('.command-row');
+                    --i;
+                }
             }
         }
 
