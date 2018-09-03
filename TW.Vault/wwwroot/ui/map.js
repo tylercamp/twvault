@@ -18,6 +18,9 @@
 
     var cachedData = {};
     let requestedVillageIds = [];
+    let settings = loadSettings();
+
+    createSettingsUI();
 
     //  First call that actually shows the popup - Update the popup if we've already downloaded village data
     let originalDisplayForVillage = TWMap.popup.displayForVillage;
@@ -146,7 +149,7 @@
 
             twCommandData.push(commandData);
 
-            if (isSmall && $commandRows.length > 2) {
+            if ((isSmall || isSupport) && $commandRows.length > 2) {
                 $($commandRows[i]).remove();
                 $commandRows = $('.command-row');
                 --i;
@@ -189,21 +192,23 @@
 
         //  NOTE - This assumes no archers!
         $villageInfoContainer.html(`
-                    <table class='vis' style="width:100%">
-                        <tr>
-                            <th># Fakes</th>
-                            <th># Nukes</th>
-                            <th># DVs</th>
-                            <th># Players Sending</th>
-                        </tr>
-                        <tr>
-                            <td>${numFakes}</td>
-                            <td>${numNukes}</td>
-                            <td>${numDVs}</td>
-                            <td>${numPlayers}</td>
-                        </tr>
-                    </table>
-                    ${ !data.stationedArmy && !data.travelingArmy && !data.recentlyLostArmy ? '<div style="text-align:center;padding:0.5em;">No army data available.</div>' : `
+                    ${ !settings.showCommands ? '' : `
+                        <table class='vis' style="width:100%">
+                            <tr>
+                                <th># Fakes</th>
+                                <th># Nukes</th>
+                                <th># DVs</th>
+                                <th># Players Sending</th>
+                            </tr>
+                            <tr>
+                                <td>${numFakes}</td>
+                                <td>${numNukes}</td>
+                                <td>${numDVs}</td>
+                                <td>${numPlayers}</td>
+                            </tr>
+                        </table>
+                    `}
+                    ${ !data.stationedArmy && !data.travelingArmy && !data.recentlyLostArmy && !data.ownedArmy ? '<div style="text-align:center;padding:0.5em;">No army data available.</div>' : `
                     <table class='vis' style="width:100%">
                         <tr style="background-color:#c1a264 !important">
                             <th>Vault</th>
@@ -242,58 +247,62 @@
                         `}
                         ${ !data.ownedArmy ? '' : `
                         <tr>
-                            <td>Confirmed known</td>
+                            <td>Owned</td>
                             <td>${data.ownedArmySeenAt ? lib.formateDateTime(data.ownedArmySeenAt) : ''}</td>
                             ${makeTroopTds(data.ownedArmy || {})}
                         </tr>
                         `}
-                        ${ !data.possibleRecruitedOffensiveArmy || !data.possibleRecruitedDefensiveArmy ? '' : `
-                        <tr>
-                            <td rowspan="2">Possibly recruited</td>
-                            <td></td>
-                            ${makeTroopTds(data.possibleRecruitedOffensiveArmy || {})}
-                        </tr>
-                        <tr>
-                            <td></td>
-                            ${makeTroopTds(data.possibleRecruitedDefensiveArmy || {})}
-                        </tr>
+                        ${ !settings.showPossiblyRecruited ? '' : `
+                            ${ !data.possibleRecruitedOffensiveArmy || !data.possibleRecruitedDefensiveArmy ? '' : `
+                            <tr>
+                                <td rowspan="2">Possibly recruited</td>
+                                <td></td>
+                                ${makeTroopTds(data.possibleRecruitedOffensiveArmy || {})}
+                            </tr>
+                            <tr>
+                                <td></td>
+                                ${makeTroopTds(data.possibleRecruitedDefensiveArmy || {})}
+                            </tr>
+                            `}
                         `}
-                        ${ !data.nukesRequired ? '' : `
+                        ${ !data.nukesRequired || !data.showNukes ? '' : `
                         <tr>
                             <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear at ${data.morale}% morale</td>
                         </tr>
                         `}
                     </table>
                     `}
-                    ${ typeof data.lastBuildings == 'undefined' || data.lastBuildings == null ? '<div style="text-align:center;padding:0.5em;">No building data available.</div>' : `
-                    <table class='vis' style="width:100%">
-                        <tr style="background-color:#c1a264 !important">
-                            <th>Vault</th>
-                            <th>Seen at</th>
-                            <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/snob.png" title="Academy" alt="" class="bmain_list_img"></th>
-                            <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/smith.png" title="Smithy" alt="" class="bmain_list_img"></th>
-                            <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/farm.png" title="Farm" alt="" class="bmain_list_img"></th>
-                            <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/wall.png" title="Wall" alt="" class="bmain_list_img"></th>
-                        </tr>
-                        <tr>
-                            <td>Latest levels</td>
-                            <td>${data.lastBuildingsSeenAt ? lib.formateDateTime(data.lastBuildingsSeenAt) : ''}</td>
-                            <td>${data.lastBuildings ? data.lastBuildings['snob'] || '-' : '' }</td>
-                            <td>${data.lastBuildings ? data.lastBuildings['smith'] || '-' : '' }</td>
-                            <td>${data.lastBuildings ? data.lastBuildings['farm'] || '-' : '' }</td>
-                            <td>${data.lastBuildings ? data.lastBuildings['wall'] || '-' : '' }</td>
-                        </tr>
-                        <tr>
-                            <td>Possible levels</td>
-                            <td></td>
-                            <td>${data.possibleBuildings ? data.possibleBuildings['snob'] || '-' : ''}</td>
-                            <td>${data.possibleBuildings ? data.possibleBuildings['smith'] || '-' : ''}</td>
-                            <td>${data.possibleBuildings ? data.possibleBuildings['farm'] || '-' : ''}</td>
-                            <td>${data.possibleBuildings ? data.possibleBuildings['wall'] || '-' : '' }</td>
-                        </tr>
-                    </table>
+                    ${ !settings.showBuildings ? '' : `
+                        ${ typeof data.lastBuildings == 'undefined' || data.lastBuildings == null ? '<div style="text-align:center;padding:0.5em;">No building data available.</div>' : `
+                        <table class='vis' style="width:100%">
+                            <tr style="background-color:#c1a264 !important">
+                                <th>Vault</th>
+                                <th>Seen at</th>
+                                <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/snob.png" title="Academy" alt="" class="bmain_list_img"></th>
+                                <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/smith.png" title="Smithy" alt="" class="bmain_list_img"></th>
+                                <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/farm.png" title="Farm" alt="" class="bmain_list_img"></th>
+                                <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/wall.png" title="Wall" alt="" class="bmain_list_img"></th>
+                            </tr>
+                            <tr>
+                                <td>Latest levels</td>
+                                <td>${data.lastBuildingsSeenAt ? lib.formateDateTime(data.lastBuildingsSeenAt) : ''}</td>
+                                <td>${data.lastBuildings ? data.lastBuildings['snob'] || '-' : '' }</td>
+                                <td>${data.lastBuildings ? data.lastBuildings['smith'] || '-' : '' }</td>
+                                <td>${data.lastBuildings ? data.lastBuildings['farm'] || '-' : '' }</td>
+                                <td>${data.lastBuildings ? data.lastBuildings['wall'] || '-' : '' }</td>
+                            </tr>
+                            <tr>
+                                <td>Possible levels</td>
+                                <td></td>
+                                <td>${data.possibleBuildings ? data.possibleBuildings['snob'] || '-' : ''}</td>
+                                <td>${data.possibleBuildings ? data.possibleBuildings['smith'] || '-' : ''}</td>
+                                <td>${data.possibleBuildings ? data.possibleBuildings['farm'] || '-' : ''}</td>
+                                <td>${data.possibleBuildings ? data.possibleBuildings['wall'] || '-' : '' }</td>
+                            </tr>
+                        </table>
+                        `}
                     `}
-                    ${ typeof data.lastLoyalty == 'undefined' || data.lastLoyalty == null ? '' : `
+                    ${ typeof data.lastLoyalty == 'undefined' || data.lastLoyalty == null || !settings.showLoyalty ? '' : `
                     <table class='vis' style="width:100%">
                         <tr style="background-color:#c1a264 !important">
                             <th>Vault</th>
@@ -331,5 +340,74 @@
         var parts = [];
         counts.forEach((cnt) => parts.push(`<td>${cnt || cnt == 0 ? cnt : ''}</td>`));
         return parts.join(' ');
+    }
+
+    function createSettingsUI() {
+        let $container = $(`
+            <div>
+                <h4>Vault Overlay Settings</h4>
+                <p>
+                    <input type="checkbox" id="vault-show-commands" ${settings.showCommands ? 'checked' : ''}>
+                    <label for="vault-show-commands">Commands</label>
+
+                    <input type="checkbox" id="vault-show-recruits" ${settings.showPossiblyRecruited ? 'checked' : ''}>
+                    <label for="vault-show-recruits">Possible recruits</label>
+
+                    <input type="checkbox" id="vault-show-buildings" ${settings.showBuildings ? 'checked' : ''}>
+                    <label for="vault-show-buildings">Buildings</label>
+
+                    <input type="checkbox" id="vault-show-nukes" ${settings.showNukes ? 'checked' : ''}>
+                    <label for="vault-show-nukes">Nukes required</label>
+
+                    <input type="checkbox" id="vault-show-loyalty" ${settings.showLoyalty ? 'checked' : ''}>
+                    <label for="vault-show-loyalty">Loyalty</label>
+                </p>
+            </div>
+        `.trim());
+
+        $container.find('label').css({
+            'margin-right': '1.5em'
+        });
+
+        $('#content_value > h2').after($container);
+
+        $container.find('#vault-show-commands').change(() => {
+            settings.showCommands = this.checked;
+            saveSettings(settings);
+        });
+
+        $container.find('#vault-show-recruits').change(() => {
+            settings.showPossiblyRecruited = this.checked;
+            saveSettings(settings);
+        });
+
+        $container.find('#vault-show-buildings').change(() => {
+            settings.showBuildings = this.checked;
+            saveSettings(settings);
+        });
+
+        $container.find('#vault-show-nukes').change(() => {
+            settings.showNukes = this.checked;
+            saveSettings(settings);
+        });
+
+        $container.find('#vault-show-loyalty').change(() => {
+            settings.showLoyalty = this.checked;
+            saveSettings(settings);
+        });
+    }
+
+    function loadSettings() {
+        return lib.getLocalStorage('map-settings', 'null') || {
+            showCommands: true,
+            showPossiblyRecruited: true,
+            showBuildings: true,
+            showNukes: true,
+            showLoyalty: true
+        };
+    }
+
+    function saveSettings(settings) {
+        lib.setLocalStorage('map-settings', settings);
     }
 }
