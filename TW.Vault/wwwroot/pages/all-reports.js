@@ -5,7 +5,6 @@
     //# REQUIRE pages/view-report.js
     
     var requestManager = new RequestManager();
-    requestManager.refreshDelay = 500;
 
     let previousReports = lib.getLocalStorage('reports-history', '[]');
 
