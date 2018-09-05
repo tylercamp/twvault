@@ -11,7 +11,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     var $defenseInfo = $doc.find('#attack_info_def')
     var defendingPlayer = $defenseInfo.find('a[href*=info_player]');
     var attackingPlayer = $attackInfo.find('a[href*=info_player]');
-
+    var building_to_canonical_name = {"Headquarters":"main", "Barracks":"barracks", "Stable":"stable", "Workshop":"garage", "Academy":"snob", "Smithy":"smith", "Rally Point":"place", "Statue":"statue", "Market":"market", "Timber camp":"wood", "Clay pit":"stone", "Iron mine":"iron", "Farm":"farm", "Warehouse":"storage", "Hiding place":"hide", "Wall":"wall", "Watchtower":"watchtower", "Church":"church", "First church":"first_church"}; //not sure about Watchtower and Church entries
     var reportInfo = {};
     reportInfo.reportId = parseInt(href.match(/view=(\d+)/)[1]);
 
@@ -92,14 +92,25 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     reportInfo.defendingArmy = troopListToDictionary(reportInfo.defendingArmy);
     reportInfo.defendingArmyLosses = troopListToDictionary(reportInfo.defendingArmyLosses);
 
-    //reportInfo.travelingTroops = troopListToDictionary(reportInfo.travelingTroops);
+    // TODO reportInfo.travelingTroops = troopListToDictionary(reportInfo.travelingTroops);
 
     reportInfo.buildingLevels = buildingsListToDictionary(reportInfo.buildingLevels);
 
 
 
-    //  TODO - ram/cat damage
-    reportInfo.damagedBuildingLevels = null;
+    //  ram/cat damage
+    if (reportInfo.buildingLevels == null) {
+        if (attack_results = document.getElementById('attack_results').innerText) {
+            reportInfo.buildingLevels = {};
+            building_names = attack_results.match(/The (.*) has/g);
+            building_levels = attack_results.match(/to level (.*)/g);
+
+            for (i=0; i < building_names.length; i++) {
+                reportInfo.buildingLevels[building_to_canonical_name[building_names[i].split(" ")[1]]] = parseInt(building_levels[i].split(" ")[2]);
+            }
+        }
+    }
+    
 
     let reportsEndpoint = lib.makeApiUrl('/report');
     console.log('Made reportInfo: ', reportInfo);

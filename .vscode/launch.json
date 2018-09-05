@@ -15,7 +15,7 @@
            "stopAtEntry": false,
            "launchBrowser": {
                "enabled": true,
-               "args": "https://v.tylercamp.me/dev2/script/main.js",
+               "args": "https://v.tylercamp.me/dev-glen/script/main.js",
                "windows": {
                    "command": "cmd.exe",
                    "args": "/C start ${auto-detect-url}"
