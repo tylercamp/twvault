@@ -25,6 +25,10 @@ namespace TW.Vault.Controllers
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
         }
 
+
+        //  Query helpers
+
+        //  Returns a "page" of ie 100 elements (max) depending on `?page=` in the request URL
         protected IQueryable<T> Paginated<T>(IQueryable<T> set) where T : class
         {
             int page = 0;
@@ -41,6 +45,7 @@ namespace TW.Vault.Controllers
             return set.Skip(PageSize * page).Take(PageSize);
         }
         
+        //  Searches the given table (DbSet) with the given query (enhancer) and converts it to some time via 'selector'
         protected async Task<IActionResult> SelectOr404<T>(Func<DbSet<T>, IQueryable<T>> enhancer, Func<T, object> selector) where T : class
         {
             var query = enhancer(context.Set<T>());
@@ -56,6 +61,11 @@ namespace TW.Vault.Controllers
                 return Ok(selector(entity));
         }
 
+
+
+        //  Security helpers
+
+        //  "User" assigned in RequireAuthAttribute, when the request is first made
         protected User CurrentUser => HttpContext.Items["User"] as User;
 
         protected bool CurrentUserIsAdmin => CurrentUser.PermissionsLevel >= (short)PermissionLevel.Admin;
@@ -69,7 +79,7 @@ namespace TW.Vault.Controllers
             WorldId = CurrentWorld.Id
         };
 
-        protected Scaffold.InvalidDataRecord MakeInvalidDataRecord(String data, String reason) => new InvalidDataRecord
+        protected InvalidDataRecord MakeInvalidDataRecord(String data, String reason) => new InvalidDataRecord
         {
             UserId = CurrentUser.Uid,
             DataString = data,
@@ -77,8 +87,12 @@ namespace TW.Vault.Controllers
             Endpoint = $"{Request.Method}:{Request.Path.Value}"
         };
 
+
+        //  Helpers for TW-related stuff
+
         protected String CurrentWorldName => RouteData.Values["worldName"] as String;
 
+        //  Don't want to query the database for World Name -> World ID every time, those values won't change
         private static ConcurrentDictionary<String, short> CachedWorldIds = new ConcurrentDictionary<string, short>();
         protected short CurrentWorldId => CachedWorldIds.GetOrAdd(CurrentWorldName, (k) => CurrentWorld.Id);
 
@@ -111,6 +125,10 @@ namespace TW.Vault.Controllers
 
         //  TODO - This should change per requested server
         protected DateTime CurrentServerTime => DateTime.UtcNow + TimeSpan.FromHours(1);
+
+
+
+        //  Performance profiling helpers
 
         private String FormatProfileLabel(String label)
         {

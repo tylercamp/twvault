@@ -1,6 +1,6 @@
 ﻿let twtypes = (() => {
 
-    //# REQUIRE lib.js
+    //# REQUIRE lib/lib.js
 
     var troopCanonicalToReadableMap = {
         'spear': 'Spear',

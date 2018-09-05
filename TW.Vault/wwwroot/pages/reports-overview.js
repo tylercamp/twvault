@@ -6,7 +6,6 @@ function parseReportsOverviewPage($doc) {
     lib.ensurePage(lib.pageTypes.ALL_REPORTS);
 
     var requestManager = new RequestManager();
-    requestManager.refreshDelay = 500;
     
     let hasFilters = checkHasFilters();
     console.log('hasFilters = ', hasFilters);

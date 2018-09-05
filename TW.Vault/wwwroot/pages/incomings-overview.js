@@ -7,10 +7,18 @@
 
     //  In matching priority
     let troopNames = [
-        'ram', 'catapult',
-        'spear', 'sword', 'axe', 'archer',
-        'spy', 'light', 'marcher', 'heavy',
-        'snob', 'knight'
+        { name: 'ram', aliases: ['rams'] },
+        { name: 'catapult', aliases: ['catapults', 'cat.'] },
+        { name: 'spear', aliases: [] },
+        { name: 'sword', aliases: [] },
+        { name: 'axe', aliases: [] },
+        { name: 'archer', aliases: [] },
+        { name: 'spy', aliases: ['scout'] },
+        { name: 'light', aliases: [] },
+        { name: 'marcher', aliases: ['mount archer'] },
+        { name: 'heavy', aliases: [] },
+        { name: 'snob', aliases: ['noble', 'nobleman'] },
+        { name: 'knight', aliases: ['paladin', 'pally'] }
     ];
 
     $incomingRows.each((i, el) => {
@@ -20,14 +28,18 @@
         let troopType = (() => {            
             var type = null;
 
-            troopNames.forEach((name) => {
-                if (type)
-                    return;
+            troopNames.forEach((obj) => {
+                let canonicalName = obj.name;
+                let aliases = obj.aliases;
 
-                let unitData = lib.twstats.getUnit(name);
-                let aliases = unitData.aliases;
+                [canonicalName, ...aliases].forEach((name) => {
+                    if (type)
+                        return;
 
-                aliases.forEach((a) => !type && label.contains(a) ? type = name : null);
+                    if (label.contains(name)) {
+                        type = canonicalName;
+                    }
+                });
             });
 
             return type;

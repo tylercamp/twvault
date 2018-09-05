@@ -13,6 +13,7 @@ using TW.Vault.Model.Convert;
 using TW.Vault.Features.Simulation;
 using Newtonsoft.Json;
 using TW.Vault.Model.Native;
+using TW.Vault.Model;
 
 namespace TW.Vault.Controllers
 {
@@ -72,6 +73,7 @@ namespace TW.Vault.Controllers
             bool canRead = false;
             if (!village.PlayerId.HasValue)
             {
+                //  Allowed to read for barbarian villages
                 canRead = true;
             }
             else
@@ -79,6 +81,11 @@ namespace TW.Vault.Controllers
                 var owningPlayer = await Profile("Get owning player", () => context.Player.Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
                 if (!owningPlayer.TribeId.HasValue || owningPlayer.TribeId.Value != CurrentTribeId || CurrentUserIsAdmin)
                 {
+                    //  Allowed to read if:
+                    //
+                    // - the player has no tribe
+                    // - or the village tribe is different from the player's tribe
+                    // - or the current user is an admin
                     canRead = true;
                 }
             }
@@ -101,6 +108,7 @@ namespace TW.Vault.Controllers
                 return StatusCode(423); // Status code "Locked"
             }
 
+            //  Start getting village data
             var currentVillage = await Profile("Get current village", () => (
                     from cv in context.CurrentVillage
                                       .FromWorld(CurrentWorldId)
@@ -113,8 +121,21 @@ namespace TW.Vault.Controllers
                     select cv
                 ).FirstOrDefaultAsync()
             );
+
+            var commandsToVillage = await Profile("Get commands to village", () => (
+                    from command in context.Command
+                                           .FromWorld(CurrentWorldId)
+                                           .Include(c => c.Army)
+                    where command.TargetVillageId == villageId
+                    where !command.IsReturning
+                    where command.LandsAt > CurrentServerTime
+                    select command
+                ).ToListAsync()
+            );
             
             var jsonData = new JSON.VillageData();
+
+            //  Return empty data if no data is available for the village
             if (currentVillage == null)
                 return Ok(jsonData);
 
@@ -174,6 +195,7 @@ namespace TW.Vault.Controllers
                     jsonData.NukesRequired = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, morale ?? 100);
                 }
 
+                //  Might have CurrentArmy entries but they're just empty/null - not based on any report data
                 if (jsonData.OwnedArmy != null && jsonData.OwnedArmySeenAt == null)
                     jsonData.OwnedArmy = null;
 
@@ -203,6 +225,38 @@ namespace TW.Vault.Controllers
                         jsonData.PossibleRecruitedOffensiveArmy = calculator.CalculatePossibleOffenseRecruitment(timeSinceSeen);
                         jsonData.PossibleRecruitedDefensiveArmy = calculator.CalculatePossibleDefenseRecruitment(timeSinceSeen);
                     }
+                }
+
+                //  Add command summaries
+                jsonData.DVs = new Dictionary<long, int>();
+                jsonData.Fakes = new List<long>();
+                jsonData.Nukes = new List<long>();
+
+                jsonData.Players = commandsToVillage.Select(c => c.SourcePlayerId).Distinct().ToList();
+
+                foreach (var command in commandsToVillage.Where(c => c.Army != null))
+                {
+                    var army = ArmyConvert.ArmyToJson(command.Army);
+                    var offensivePop = ArmyStats.CalculateTotalPopulation(army.OfType(JSON.UnitBuild.Offensive));
+                    var defensivePop = ArmyStats.CalculateTotalPopulation(army.OfType(JSON.UnitBuild.Defensive));
+
+                    bool isFake = false;
+                    bool isNuke = false;
+                    if (!army.Values.Any(cnt => cnt > 1))
+                    {
+                        isFake = true;
+                    }
+                    else if (command.IsAttack && offensivePop > 10000)
+                    {
+                        isNuke = true;
+                    }
+
+                    if (isFake)
+                        jsonData.Fakes.Add(command.CommandId);
+                    else if (isNuke)
+                        jsonData.Nukes.Add(command.CommandId);
+                    else if (defensivePop > 3000 && !command.IsAttack)
+                        jsonData.DVs.Add(command.CommandId, defensivePop);
                 }
             });
 
@@ -281,7 +335,7 @@ namespace TW.Vault.Controllers
                         ));
                     }
 
-                    var fullArmy = armySetJson.Stationed + armySetJson.Traveling + armySetJson.Supporting;
+                    var fullArmy = armySetJson.AtHome + armySetJson.Traveling + armySetJson.Supporting;
                     currentVillage.ArmyOwned = ArmyConvert.JsonToArmy(fullArmy, currentVillage.ArmyOwned, context);
                     currentVillage.ArmyStationed = ArmyConvert.JsonToArmy(armySetJson.Stationed, currentVillage.ArmyStationed, context);
                     currentVillage.ArmyTraveling = ArmyConvert.JsonToArmy(armySetJson.Traveling, currentVillage.ArmyTraveling, context);
@@ -291,6 +345,8 @@ namespace TW.Vault.Controllers
                     currentVillage.ArmyOwned.LastUpdated = DateTime.UtcNow;
                     currentVillage.ArmyStationed.LastUpdated = DateTime.UtcNow;
                     currentVillage.ArmyTraveling.LastUpdated = DateTime.UtcNow;
+                    currentVillage.ArmyAtHome.LastUpdated = DateTime.UtcNow;
+                    currentVillage.ArmySupporting.LastUpdated = DateTime.UtcNow;
                 }
             });
 

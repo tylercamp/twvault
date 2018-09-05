@@ -3,14 +3,15 @@
 function RequestManager() {
     this.pendingRequests = [];
     this.errorHistory = {};
-    this.maxPendingRequests = 2;
-    this.refreshDelay = 500;
+    this.maxRequestsPerSecond = 5;
+    this.refreshDelay = 100;
 
     this._urlHistory = {};
 
     this._interval = null;
     this._onFinishedHandler = null;
     this._hasErrors = false;
+    this._requestTimes = [];
 
     this.resetStats();
 }
@@ -24,7 +25,15 @@ RequestManager.prototype.start = function () {
     var numResponding = 0;
 
     this._interval = setInterval(() => {
-        while (numResponding < self.maxPendingRequests && self.pendingRequests.length > 0) {
+        var now = new Date();
+        for (var i = 0; i < self._requestTimes.length; i++) {
+            if (now.valueOf() - self._requestTimes[i].valueOf() >= 1000) {
+                self._requestTimes.splice(i, 1);
+                --i;
+            }
+        }
+
+        if (self._requestTimes.length < self.maxRequestsPerSecond && self.pendingRequests.length > 0) {
             (() => {
                 var request = self.pendingRequests[0];
                 self.pendingRequests.splice(0, 1);
@@ -41,6 +50,8 @@ RequestManager.prototype.start = function () {
                     self.stats.done++;
                     return;
                 }
+
+                self._requestTimes.push(new Date());
 
                 console.log('Getting ', request);
                 numResponding++;

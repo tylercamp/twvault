@@ -267,19 +267,23 @@ namespace TW.Vault.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> GetTroopsSummary()
         {
-            //  TODO
             if (!CurrentUserIsAdmin)
                 return Unauthorized();
 
+            //  This is a mess because of different classes for Player, CurrentPlayer, etc
+
+            //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
             var tribeVillages = await (
                     from player in context.Player.FromWorld(CurrentWorldId)
-                    join village in context.Village on player.PlayerId equals village.PlayerId
+                    join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
                     join currentVillage in context.CurrentVillage.IncludeCurrentVillageData()
                                         on village.VillageId equals currentVillage.VillageId
                     where player.TribeId == CurrentTribeId
                     select new { player, currentVillage }
                 ).ToListAsync();
 
+            //  Get all CurrentPlayer data for the user's tribe (separate from global 'Player' table
+            //      so we can also output stats for players that haven't uploaded anything yet)
             var currentPlayers = await (
                     from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
                     join player in context.Player on currentPlayer.PlayerId equals player.PlayerId
@@ -287,6 +291,7 @@ namespace TW.Vault.Controllers
                     select currentPlayer
                 ).ToListAsync();
 
+            //  Collect villages grouped by owner
             var villagesByPlayer = tribeVillages
                                         .Select(v => v.player)
                                         .Distinct()
@@ -297,22 +302,49 @@ namespace TW.Vault.Controllers
                                                               .ToList()
                                          );
 
+            //  Get all support data for the tribe
+            var tribeVillageIds = tribeVillages.Select(v => v.currentVillage.VillageId).ToList();
+
+            var villagesSupport = await (
+                    from support in context.CurrentVillageSupport
+                                           .FromWorld(CurrentWorldId)
+                                           .Include(s => s.SupportingArmy)
+                    where tribeVillageIds.Contains(support.SourceVillageId)
+                    select support
+                ).ToListAsync();
+
+
+            //  Get support data by player Id
+            var playersById = tribeVillages.Select(tv => tv.player).Distinct().ToDictionary(p => p.PlayerId, p => p);
+
+            var villagesSupportByPlayerId = currentPlayers.ToDictionary(
+                p => p.PlayerId,
+                p => villagesSupport.Where(
+                    s => villagesByPlayer[playersById[p.PlayerId]].Any(
+                        v => v.VillageId == s.SourceVillageId
+                    )
+                )
+            );
+
             var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
 
             var jsonData = new List<JSON.PlayerSummary>();
             foreach (var kvp in villagesByPlayer)
             {
-                String playerName = kvp.Key.PlayerName;
-                var villages = kvp.Value;
+                var player = kvp.Key;
+                String playerName = player.PlayerName;
+                var playerVillages = kvp.Value;
 
                 var playerSummary = new JSON.PlayerSummary();
                 playerSummary.PlayerName = WebUtility.UrlDecode(playerName);
-                playerSummary.PlayerId = kvp.Key.PlayerId;
+                playerSummary.PlayerId = player.PlayerId;
+                playerSummary.ArmiesOwned = new List<JSON.Army>();
+                playerSummary.ArmiesTraveling = new List<JSON.Army>();
 
-                if (maxNoblesByPlayer.ContainsKey(kvp.Key.PlayerId))
-                    playerSummary.MaxPossibleNobles = maxNoblesByPlayer[kvp.Key.PlayerId];
+                if (maxNoblesByPlayer.ContainsKey(player.PlayerId))
+                    playerSummary.MaxPossibleNobles = maxNoblesByPlayer[player.PlayerId];
 
-                var oldestUpload = villages.Select(v => v.ArmyOwned.LastUpdated).Min();
+                var oldestUpload = playerVillages.Select(v => v.ArmyOwned.LastUpdated).Min();
                 if (oldestUpload != null)
                 {
                     playerSummary.UploadedAt = oldestUpload.Value;
@@ -324,15 +356,29 @@ namespace TW.Vault.Controllers
                     playerSummary.UploadAge = DateTime.UtcNow - playerSummary.UploadedAt;
                 }
 
-                foreach (var village in villages)
+                //  General army data
+                foreach (var village in playerVillages)
                 {
-                    playerSummary.ArmyAtHome += ArmyConvert.ArmyToJson(village.ArmyAtHome);
-                    playerSummary.ArmyOwned += ArmyConvert.ArmyToJson(village.ArmyOwned);
-                    playerSummary.ArmySupportingOthers += ArmyConvert.ArmyToJson(village.ArmySupporting);
-                    playerSummary.ArmyTraveling += ArmyConvert.ArmyToJson(village.ArmyTraveling);
+                    var armyTraveling = ArmyConvert.ArmyToJson(village.ArmyTraveling);
 
-                    var armySupportingSelf = ArmyConvert.ArmyToJson(village.ArmyStationed) - ArmyConvert.ArmyToJson(village.ArmyAtHome);
-                    playerSummary.ArmySupportingSelf += armySupportingSelf;
+                    playerSummary.ArmiesOwned.Add(ArmyConvert.ArmyToJson(village.ArmyOwned));
+                    playerSummary.ArmiesTraveling.Add(armyTraveling);
+
+                    playerSummary.ArmyAtHome += ArmyConvert.ArmyToJson(village.ArmyAtHome);
+                    playerSummary.ArmyTraveling += armyTraveling;
+                }
+
+                //  Support data
+                var playerSupport = villagesSupportByPlayerId.GetValueOrDefault(player.PlayerId);
+                if (playerSupport != null)
+                {
+                    //  Support where the target is one of the players' own villages
+                    foreach (var support in playerSupport.Where(s => playerVillages.Any(v => v.VillageId == s.TargetVillageId)))
+                        playerSummary.ArmySupportingSelf += ArmyConvert.ArmyToJson(support.SupportingArmy);
+
+                    //  Support where the target isn't any of the players' own villages
+                    foreach (var support in playerSupport.Where(s => playerVillages.All(v => v.VillageId != s.TargetVillageId)))
+                        playerSummary.ArmySupportingOthers += ArmyConvert.ArmyToJson(support.SupportingArmy);
                 }
 
                 jsonData.Add(playerSummary);

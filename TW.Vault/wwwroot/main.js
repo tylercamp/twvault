@@ -2,24 +2,22 @@
 
     /*** Libraries ***/
 
-    //# REQUIRE lib.js
-    //# REQUIRE twtypes.js
-    //# REQUIRE requestManager.js
-    //# REQUIRE csvBuilder.js
+    //# REQUIRE lib/lib.js
+    //# REQUIRE lib/twtypes.js
+    //# REQUIRE lib/requestManager.js
+    //# REQUIRE lib/csvBuilder.js
 
 
-    /***  Pages ***/
-    //# REQUIRE pages/view-report.js
+    /***  Page Parsing ***/
     //# REQUIRE pages/all-reports.js
     //# REQUIRE pages/all-incomings.js
     //# REQUIRE pages/all-troops.js
     //# REQUIRE pages/all-commands.js
-    //# REQUIRE pages/incomings-overview-tag.js
-    //# REQUIRE pages/own-commands-overview.js
-    //# REQUIRE pages/troops-support-overview.js
-    //# REQUIRE pages/map.js
 
-    //# REQUIRE pages/all.js
+    /*** UI ***/
+    //# REQUIRE ui/map.js
+    //# REQUIRE ui/all.js
+    //# REQUIRE ui/tag-incomings.js
 
     //  Store current script host for dependent scripts that rely on it
     lib.setScriptHost(lib.getScriptHost());
@@ -77,23 +75,9 @@ These terms can be viewed again after running the script. To cancel your agreeme
             .onPage(lib.pageTypes.MAP, () => {
                 parseMapPage();
             })
-            .onPage(lib.pageTypes.VIEW_REPORT, () => {
-                parseReportPage();
+            .onPage(lib.pageTypes.INCOMINGS_OVERVIEW, () => {
+                tagOnIncomingsOverviewPage();
             })
-            .onPage(lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW, () => {
-                parseTroopsSupportOverviewPage();
-            })
-            //.onPage(lib.pageTypes.INCOMINGS_OVERVIEW, () => {
-            //    parseAllIncomings();
-            //    //parseUploadIncomingsOverviewPage();
-            //    //parseTagIncomingsOverviewPage();
-            //})
-            //.onPage(lib.pageTypes.OWN_COMMANDS_OVERVIEW, () => {
-            //    parseOwnCommandsOverviewPage();
-            //})
-            //.onPage(lib.pageTypes.OWN_TROOPS_OVERVIEW, () => {
-            //    parseOwnTroopsOverviewPage();
-            //})
             .onPageNotHandled(() => {
                 parseAllPages();
             })

@@ -1,12 +1,10 @@
 ﻿function parseAllReports($doc, onProgress_, onDone_) {
     $doc = $doc || $(document);
 
-    //# REQUIRE lib.js
-    //# REQUIRE requestManager.js
     //# REQUIRE pages/reports-overview.js
+    //# REQUIRE pages/view-report.js
     
     var requestManager = new RequestManager();
-    requestManager.refreshDelay = 500;
 
     let previousReports = lib.getLocalStorage('reports-history', '[]');
 

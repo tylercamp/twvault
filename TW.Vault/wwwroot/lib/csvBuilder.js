@@ -14,7 +14,7 @@ CsvBuilder.prototype.addBlank = function addBlank(numLines_) {
 
 CsvBuilder.prototype.makeCsvString = function makeCsvString() {
     var numColumns = 0;
-    this.rows.forEach((r) => numColumns = Math.max(numColumns, row.length));
+    this.rows.forEach((r) => numColumns = Math.max(numColumns, r.length));
 
     var csvRows = [];
     this.rows.forEach((row) => {
