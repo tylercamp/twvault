@@ -100,10 +100,11 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
 
     //  ram/cat damage
     if (reportInfo.buildingLevels == null) {
-        if (attack_results = document.getElementById('attack_results').innerText) {
+        var attack_results = null;
+        if (attack_results = $doc.find('#attack_results').text()) {
             reportInfo.buildingLevels = {};
-            building_names = attack_results.match(/The (.*) has/g);
-            building_levels = attack_results.match(/to level (.*)/g);
+            var building_names = attack_results.match(/The (.*) has/g);
+            var building_levels = attack_results.match(/to level (.*)/g);
 
             for (i=0; i < building_names.length; i++) {
                 reportInfo.buildingLevels[building_to_canonical_name[building_names[i].split(" ")[1]]] = parseInt(building_levels[i].split(" ")[2]);

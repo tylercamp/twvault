@@ -13,6 +13,7 @@
     //# REQUIRE pages/all-incomings.js
     //# REQUIRE pages/all-troops.js
     //# REQUIRE pages/all-commands.js
+    //# REQUIRE pages/view-report.js
 
     /*** UI ***/
     //# REQUIRE ui/map.js
@@ -75,6 +76,15 @@ These terms can be viewed again after running the script. To cancel your agreeme
             .onPage(lib.pageTypes.MAP, () => {
                 parseMapPage();
             })
+            // .onPage(lib.pageTypes.VIEW_REPORT, () => {
+            //     let $doc = $(document);
+            //     let href =  window.location.href;
+            //     parseReportPage($doc, href, true, () => {
+            //         //  onError
+            //         console.log("Report upload FAILED.")
+            //         //toggleReport($el, false);
+            //     });
+            // })
             .onPage(lib.pageTypes.INCOMINGS_OVERVIEW, () => {
                 tagOnIncomingsOverviewPage();
             })
