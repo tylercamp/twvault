@@ -398,7 +398,7 @@
     }
 
     function loadSettings() {
-        return lib.getLocalStorage('map-settings', 'null') || {
+        return lib.getLocalStorage('map-settings') || {
             showCommands: true,
             showPossiblyRecruited: true,
             showBuildings: true,

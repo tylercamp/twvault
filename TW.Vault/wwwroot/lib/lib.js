@@ -537,7 +537,17 @@ var lib = (() => {
 
         getLocalStorage: function getLocalStorage(key, defaultValue_) {
             let finalKey = `${localStoragePrefix}${key}`;
-            return lib.jsonParse(window.localStorage.getItem(finalKey) || defaultValue_ || 'null');
+            let stored = window.localStorage.getItem(finalKey);
+            if (stored == null) {
+                if (typeof defaultValue_ == 'undefined') {
+                    return null;
+                } else {
+                    lib.setLocalStorage(key, defaultValue_);
+                    return defaultValue_;
+                }
+            } else {
+                return lib.jsonParse(stored);
+            }
         },
 
         getLocalStorageSize: function getLocalStorageSize() {

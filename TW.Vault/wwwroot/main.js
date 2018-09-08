@@ -4,6 +4,7 @@
 
     //# REQUIRE lib/lib.js
     //# REQUIRE lib/twtypes.js
+    //# REQUIRE lib/rateLimiter.js
     //# REQUIRE lib/requestManager.js
     //# REQUIRE lib/csvBuilder.js
 

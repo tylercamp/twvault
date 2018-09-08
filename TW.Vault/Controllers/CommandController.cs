@@ -353,7 +353,7 @@ namespace TW.Vault.Controllers
                         tag.NumCats = effectiveArmy.Catapult;
                     }
 
-                    resultTags.Add(sourceVillageId, tag);
+                    resultTags.Add(incoming.CommandId, tag);
                 }
             });
 

@@ -48,7 +48,9 @@ namespace TW.Vault.Model.Convert
             result.IsReturning      = command.IsReturning.Value;
 
             result.Army             = ArmyConvert.JsonToArmy(command.Troops, result.Army, context);
-            result.TroopType        = TroopTypeConvert.TroopTypeToString(command.TroopType);
+
+            if (result.TroopType == null)
+                result.TroopType    = TroopTypeConvert.TroopTypeToString(command.TroopType);
 
             if (result.Army != null) result.Army.WorldId = existingCommand.World?.Id ?? existingCommand.WorldId;
 

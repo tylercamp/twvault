@@ -6,7 +6,7 @@
     
     var requestManager = new RequestManager();
 
-    let previousReports = lib.getLocalStorage('reports-history', '[]');
+    let previousReports = lib.getLocalStorage('reports-history', []);
 
     let hasFilters = checkHasFilters();
     console.log('hasFilters = ', hasFilters);

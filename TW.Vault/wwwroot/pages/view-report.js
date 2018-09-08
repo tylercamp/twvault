@@ -14,6 +14,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     var building_to_canonical_name = {"Headquarters":"main", "Barracks":"barracks", "Stable":"stable", "Workshop":"garage", "Academy":"snob", "Smithy":"smith", "Rally Point":"place", "Statue":"statue", "Market":"market", "Timber camp":"wood", "Clay pit":"stone", "Iron mine":"iron", "Farm":"farm", "Warehouse":"storage", "Hiding place":"hide", "Wall":"wall", "Watchtower":"watchtower", "Church":"church", "First church":"first_church"}; //not sure about Watchtower and Church entries
     var reportInfo = {};
     reportInfo.reportId = parseInt(href.match(/view=(\d+)/)[1]);
+    console.log('Processing report ' + reportInfo.reportId);
 
     if (!$attackInfo.length) {
         if (showNotice_) {
@@ -118,7 +119,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
 
     lib.postApi(reportsEndpoint, reportInfo)
         .done(() => {
-            var reportsHistory = lib.getLocalStorage('reports-history', '[]');
+            var reportsHistory = lib.getLocalStorage('reports-history', []);
             reportsHistory.push(reportInfo.reportId);
             lib.setLocalStorage('reports-history', reportsHistory);
 
