@@ -109,20 +109,21 @@ namespace TW.Vault.Controllers
             }
 
             //  Start getting village data
-            var currentVillage = await Profile("Get current village", () => (
+
+            var (currentVillage, commandsToVillage) = await ManyTasks.Run(
+                Profile("Get current village", () => (
                     from cv in context.CurrentVillage
-                                      .FromWorld(CurrentWorldId)
-                                      .Include(v => v.ArmyOwned)
-                                      .Include(v => v.ArmyStationed)
-                                      .Include(v => v.ArmyTraveling)
-                                      .Include(v => v.ArmyRecentLosses)
-                                      .Include(v => v.CurrentBuilding)
+                                        .FromWorld(CurrentWorldId)
+                                        .Include(v => v.ArmyOwned)
+                                        .Include(v => v.ArmyStationed)
+                                        .Include(v => v.ArmyTraveling)
+                                        .Include(v => v.ArmyRecentLosses)
+                                        .Include(v => v.CurrentBuilding)
                     where cv.VillageId == villageId
                     select cv
-                ).FirstOrDefaultAsync()
-            );
+                ).FirstOrDefaultAsync()),
 
-            var commandsToVillage = await Profile("Get commands to village", () => (
+                Profile("Get commands to village", () => (
                     from command in context.Command
                                            .FromWorld(CurrentWorldId)
                                            .Include(c => c.Army)
@@ -130,8 +131,9 @@ namespace TW.Vault.Controllers
                     where !command.IsReturning
                     where command.LandsAt > CurrentServerTime
                     select command
-                ).ToListAsync()
+                ).ToListAsync())
             );
+            
             
             var jsonData = new JSON.VillageData();
 
@@ -274,12 +276,21 @@ namespace TW.Vault.Controllers
 
             var villageIds = currentArmySetJson.TroopData.Select(a => a.VillageId.Value).ToList();
 
-            var scaffoldCurrentVillages = await Profile("Get existing scaffold current villages", () => (
+            var (scaffoldCurrentVillages, villagesWithPlayerIds) = await ManyTasks.Run(
+                Profile("Get existing scaffold current villages", () => (
                     from cv in context.CurrentVillage.FromWorld(CurrentWorldId).IncludeCurrentVillageData()
                     where villageIds.Contains(cv.VillageId)
                     select cv
-                ).ToListAsync()
+                ).ToListAsync())
+                ,
+                Profile("Get village player IDs", () => (
+                    from v in context.Village.FromWorld(CurrentWorldId)
+                    where villageIds.Contains(v.VillageId)
+                    select new { v.PlayerId, v.VillageId }
+                ).ToListAsync())
             );
+
+            var villageIdsByPlayerId = villagesWithPlayerIds.ToDictionary(v => v.VillageId, v => v.PlayerId);
 
             var mappedScaffoldVillages = villageIds.ToDictionary(id => id, id => scaffoldCurrentVillages.SingleOrDefault(cv => cv.VillageId == id));
             var missingScaffoldVillageIds = mappedScaffoldVillages.Where(kvp => kvp.Value == null).Select(kvp => kvp.Key).ToList();
@@ -292,13 +303,6 @@ namespace TW.Vault.Controllers
                         select v
                     ).ToListAsync()
                 );
-
-            var villagePlayerIds = (await Profile("Get village player IDs", () => (
-                    from v in context.Village.FromWorld(CurrentWorldId)
-                    where villageIds.Contains(v.VillageId)
-                    select new { v.PlayerId, v.VillageId }
-                ).ToListAsync()
-            )).ToDictionary(v => v.VillageId, v => v.PlayerId);
 
             var mappedMissingVillageData = missingVillageData.ToDictionary(vd => vd.VillageId, vd => vd);
 
@@ -324,7 +328,7 @@ namespace TW.Vault.Controllers
                 foreach (var armySetJson in currentArmySetJson.TroopData)
                 {
                     var currentVillage = mappedScaffoldVillages[armySetJson.VillageId.Value];
-                    var villagePlayerId = villagePlayerIds[currentVillage.VillageId];
+                    var villagePlayerId = villageIdsByPlayerId[currentVillage.VillageId];
 
                     if (!Configuration.Security.AllowUploadArmyForNonOwner
                             && villagePlayerId != CurrentUser.PlayerId)

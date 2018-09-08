@@ -109,15 +109,11 @@ namespace TW.Vault.Controllers
                 var mappedCommands = jsonCommands.Commands.ToDictionary(c => c.CommandId, c => c);
                 var commandIds = jsonCommands.Commands.Select(c => c.CommandId).ToList();
 
-
-                var scaffoldCommands = await Profile("Get existing scaffold commands", () => (
-                        from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
-                        where commandIds.Contains(command.CommandId)
-                        select command
-                    ).ToListAsync()
-                );
-
-                var mappedScaffoldCommands = scaffoldCommands.ToDictionary(c => c.CommandId, c => c);
+                var allVillageIds = jsonCommands.Commands
+                                .Select(c => c.SourceVillageId)
+                                .Concat(jsonCommands.Commands.Select(c => c.TargetVillageId))
+                                .Select(id => id.Value)
+                                .Distinct();
 
                 var villageIdsFromCommandsMissingTroopType = jsonCommands.Commands
                     .Where(c => c.TroopType == null)
@@ -125,24 +121,26 @@ namespace TW.Vault.Controllers
                     .Distinct()
                     .ToList();
 
-                var villagesForMissingTroopTypes = await (
-                        from village in context.Village.FromWorld(CurrentWorldId)
-                        where villageIdsFromCommandsMissingTroopType.Contains(village.VillageId)
-                        select village
-                    ).ToListAsync();
+                var (scaffoldCommands, villageIdsFromCommandsMissingTroopTypes, allVillages) = await ManyTasks.RunToList(
+                    from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
+                    where commandIds.Contains(command.CommandId)
+                    select command
+                    
+                    ,
 
-                var allVillageIds = jsonCommands.Commands
-                                                .Select(c => c.SourceVillageId)
-                                                .Concat(jsonCommands.Commands.Select(c => c.TargetVillageId))
-                                                .Select(id => id.Value)
-                                                .Distinct();
+                    from village in context.Village.FromWorld(CurrentWorldId)
+                    where villageIdsFromCommandsMissingTroopType.Contains(village.VillageId)
+                    select village
 
-                var allVillages = await (
-                        from village in context.Village.FromWorld(CurrentWorldId)
-                        where allVillageIds.Contains(village.VillageId)
-                        select village
-                    ).ToListAsync();
+                    ,
 
+                    from village in context.Village.FromWorld(CurrentWorldId)
+                    where allVillageIds.Contains(village.VillageId)
+                    select village
+                );
+                
+
+                var mappedScaffoldCommands = scaffoldCommands.ToDictionary(c => c.CommandId, c => c);
                 var villagesById = allVillages.ToDictionary(v => v.VillageId, v => v);
 
                 var tx = BuildTransaction();

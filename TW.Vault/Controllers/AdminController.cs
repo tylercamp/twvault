@@ -272,24 +272,24 @@ namespace TW.Vault.Controllers
 
             //  This is a mess because of different classes for Player, CurrentPlayer, etc
 
-            //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
-            var tribeVillages = await (
-                    from player in context.Player.FromWorld(CurrentWorldId)
-                    join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
-                    join currentVillage in context.CurrentVillage.IncludeCurrentVillageData()
-                                        on village.VillageId equals currentVillage.VillageId
-                    where player.TribeId == CurrentTribeId
-                    select new { player, currentVillage }
-                ).ToListAsync();
+            var (tribeVillages, currentPlayers) = await ManyTasks.RunToList(
+                //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
+                from player in context.Player.FromWorld(CurrentWorldId)
+                join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
+                join currentVillage in context.CurrentVillage.IncludeCurrentVillageData()
+                                    on village.VillageId equals currentVillage.VillageId
+                where player.TribeId == CurrentTribeId
+                select new { player, currentVillage }
 
-            //  Get all CurrentPlayer data for the user's tribe (separate from global 'Player' table
-            //      so we can also output stats for players that haven't uploaded anything yet)
-            var currentPlayers = await (
-                    from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
-                    join player in context.Player on currentPlayer.PlayerId equals player.PlayerId
-                    where player.TribeId == CurrentTribeId
-                    select currentPlayer
-                ).ToListAsync();
+                ,
+
+                //  Get all CurrentPlayer data for the user's tribe (separate from global 'Player' table
+                //      so we can also output stats for players that haven't uploaded anything yet)
+                from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
+                join player in context.Player on currentPlayer.PlayerId equals player.PlayerId
+                where player.TribeId == CurrentTribeId
+                select currentPlayer
+            );
 
             //  Collect villages grouped by owner
             var villagesByPlayer = tribeVillages
