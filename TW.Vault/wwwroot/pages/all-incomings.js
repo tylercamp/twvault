@@ -73,6 +73,7 @@
     }
 
     requestManager.setFinishedHandler(() => {
+        requestManager.stop();
         onProgress_ && onProgress_('Uploading incomings...');
 
         lib.queryCurrentPlayerInfo((playerId) => {

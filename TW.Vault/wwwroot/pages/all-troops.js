@@ -42,6 +42,7 @@
     });
 
     requestManager.setFinishedHandler(() => {
+        requestManager.stop();
 
         onProgress_ && onProgress_('Finding village with academy...');
 
@@ -93,6 +94,7 @@
                 }
 
                 function parseAndFinish() {
+                    requestManager.stop();
                     $supportPages.forEach(($page, i) => {
                         console.log('Parsing page ' + i);
                         supportData.push(...parseTroopsSupportOverviewPage($page))
