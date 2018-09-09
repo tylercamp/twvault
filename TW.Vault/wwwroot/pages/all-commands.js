@@ -7,7 +7,7 @@
 
     var requestManager = new RequestManager();
 
-    var oldCommands = lib.getLocalStorage('commands-history', '[]');
+    var oldCommands = lib.getLocalStorage('commands-history', []);
     let commandLinks = [];
     let newCommandData = [];
     let newCommands = [];

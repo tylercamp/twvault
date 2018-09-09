@@ -53,18 +53,23 @@ var lib = (() => {
         twcalc: makeTwCalc(twstats),
 
         //  Gets the current server date and time from the page
-        getServerDateTime: function getServerDateTime() {
+        getServerDateTime: function getServerDateTime($doc_) {
+            $doc_ = $doc_ || $(document);
             var $serverDate = $('#serverDate');
             var $serverTime = $('#serverTime');
-            throw "Not yet implemented";
+
+            let fullString = `${$serverTime.text().trim()} ${$serverDate.text().trim()}`;
+            return lib.parseTimeString(fullString);
         },
 
         //  Parses a variety of TW date/time formats to JS Date or into splits it into its parts
         //  returns Date if separated_ false or undefined
         //  returns { date: [day, month, year], time: [hour, minute, second, millisecond] } if separated_ is true
-        parseTimeString: function parseTimeString(timeString, separated_) {
+        parseTimeString: function parseTimeString(timeString, separated_, $doc_) {
             if (typeof separated_ == 'undefined')
                 separated_ = false;
+
+            $doc_ = $doc_ || $(document);
 
             var monthStrings = [
                 'jan', 'feb', 'mar', 'apr', 'may', 'jun',
@@ -73,66 +78,70 @@ var lib = (() => {
 
             var result;
 
+            let dateSeparators = ['/', '.'];
+            let timeSeparators = [':', '.'];
+            let dateSeparatorsStr = dateSeparators.map((s) => `\\${s}`).join('');
+            let timeSeparatorsStr = timeSeparators.map((s) => `\\${s}`).join('');
+            let dateRegex = `(\\d+[${dateSeparatorsStr}]\\d+(?:[${dateSeparatorsStr}]\\d+)?)\\.?`;
+            let timeRegex = `(\\d+[${timeSeparatorsStr}]\\d+(?:[${timeSeparatorsStr}]\\d+)?(?:[${timeSeparatorsStr}]\\d+)?)`;
+
+            var serverDate = $doc_.find('#serverDate').text().split('/');
+
             var match;
-            if (match = timeString.match(/(\d+:\d+:\d+:\d+)\s+(\d+\/\d+\/\d+)/)) {
+            if (match = timeString.match(new RegExp(`${timeRegex} ${dateRegex}`))) {
                 //  Hour:Minute:Second:Ms Day/Month/Year
                 result = {
-                    time: match[1].split(':'),
-                    date: match[2].split('/')
+                    time: match[1].splitMany(timeSeparators),
+                    date: match[2].splitMany(dateSeparators)
                 };
 
-            } else if (match = timeString.match(/(\d+\/\d+\/\d+)\s+(\d+:\d+:\d+:\d+)/)) {
+            } else if (match = timeString.match(new RegExp(`${dateRegex} ${timeRegex}`))) {
                 //  Day/Month/Year Hour:Minute:Second:Ms
                 result = {
-                    date: match[1].split('/'),
-                    time: match[2].split(':')
+                    date: match[1].splitMany(dateSeparators),
+                    time: match[2].splitMany(timeSeparators)
                 };
 
-            } else if (match = timeString.match(new RegExp(`((?:${monthStrings.join('|')}))\\s+(\\d+),\\s+(\\d+)\\s+(\\d+:\\d+:\\d+:\\d+)`, 'i'))) {
+            } else if (match = timeString.match(new RegExp(`((?:${monthStrings.join('|')}))\\.?\\s+(\\d+),\\s+(?:(\\d+)\\s+)?${timeRegex}`, 'i'))) {
                 //  (Mon.) Day, Year Hour:Minute:Second:Ms
                 var monthName = match[1];
                 var day = match[2];
-                var year = match[3];
+                var year = match[3] || serverDate[2];
                 var month = (monthStrings.indexOf(monthName.toLowerCase()) + 1).toString();
 
                 result = {
                     date: [day, month, year],
-                    time: match[4].split(':')
+                    time: match[4].splitMany(timeSeparators)
                 };
 
-            } else if (match = timeString.match(/today at\s+(\d+:\d+:\d+:\d+)/)) {
+            } else if (match = timeString.match(new RegExp(`today at\\s+(${timeRegex})`))) {
                 // today at (Hours:Minute:Second:Ms)
-                var serverDate = $('#serverDate').text().split('/');
                 result = {
                     date: serverDate,
-                    time: match[1].split(':')
+                    time: match[1].splitMany(timeSeparators)
                 }
 
-            } else if (match = timeString.match(/tomorrow at\s+(\d+:\d+:\d+:\d+)/)) {
+            } else if (match = timeString.match(new RegExp(`tomorrow at\\s+(${timeRegex})`))) {
                 // tomorrow at (Hours:Minute:Second:Ms)
-                var serverDate = $('#serverDate').text().split('/');
-
                 result = {
                     date: [
                         (parseInt(serverDate[0]) + 1).toString(),
                         (parseInt(serverDate[1])).toString(),
                         serverDate[2]
                     ],
-                    time: match[1].split(':')
+                    time: match[1].splitMany(timeSeparators)
                 };
 
+                //  TODO - Update this one
             } else if (match = timeString.match(/on (\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)\s+at\s+(\d+:\d+:\d+:\d+)/)) {
                 // on (Day/Month/Year) at (Hours:Minute:Second:Ms)
                 result = {
-                    date: match[1].contains('/') ? match[1].split('/') : match[1].split('.'),
-                    time: match[2].split(':')
+                    date: match[1].splitMany(dateSeparators),
+                    time: match[2].splitMany(timeSeparators)
                 };
-
-                if (result.date.length < 2) {
-                    result.date.push(null);
-                }
+                
                 if (!result.date[2]) {
-                    result.date[2] = $('#serverDate').text().split('/')[2];
+                    result.date[2] = serverDate[2];
                 }
 
             } else {
@@ -145,6 +154,10 @@ var lib = (() => {
 
             result.date.forEach((val, i) => result.date[i] = parseInt(val));
             result.time.forEach((val, i) => result.time[i] = parseInt(val));
+
+            result.date[2] = result.date[2] || parseInt(serverDate[2]);
+            result.time[2] = result.time[2] || 0;
+            result.time[3] = result.time[3] || 0;
 
             if (separated_) {
                 return result;
@@ -333,7 +346,7 @@ var lib = (() => {
 
             url = '/game.php?' + url;
 
-            var t = query[t];
+            var t = query['t'];
             if (t) {
                 t = t.match(/t=(\w+)/)[1];
                 if (url.contains("?")) {
@@ -524,7 +537,17 @@ var lib = (() => {
 
         getLocalStorage: function getLocalStorage(key, defaultValue_) {
             let finalKey = `${localStoragePrefix}${key}`;
-            return lib.jsonParse(window.localStorage.getItem(finalKey) || defaultValue_ || 'null');
+            let stored = window.localStorage.getItem(finalKey);
+            if (stored == null) {
+                if (typeof defaultValue_ == 'undefined') {
+                    return null;
+                } else {
+                    lib.setLocalStorage(key, defaultValue_);
+                    return defaultValue_;
+                }
+            } else {
+                return lib.jsonParse(stored);
+            }
         },
 
         getLocalStorageSize: function getLocalStorageSize() {
@@ -689,6 +712,30 @@ var lib = (() => {
         return this.indexOf(str) >= 0;
     };
 
+    String.prototype.splitMany = function splitMany() {
+        var splitTokens = [];
+        for (var i = 0; i < arguments.length; i++) {
+            if (typeof arguments[i] == 'string')
+                splitTokens.push(arguments[i]);
+            else if (arguments[i] instanceof Array)
+                splitTokens.push(...arguments[i]);
+        }
+
+        let result = [];
+        let workingStr = '';
+        for (var i = 0; i < this.length; i++) {
+            if (splitTokens.contains(this[i])) {
+                result.push(workingStr);
+                workingStr = '';
+            } else {
+                workingStr += this[i];
+            }
+        }
+        result.push(workingStr);
+        return result;
+    };
+
+    //  Allow syntax "a,b.c".split('.', ',') -> ['a', 'b', 'c']
     let stringOriginalTrim = String.prototype.trim;
     String.prototype.trim = function trimAll() {
         var result = stringOriginalTrim.apply(this);

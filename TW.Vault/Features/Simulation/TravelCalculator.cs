@@ -36,6 +36,9 @@ namespace TW.Vault.Features.Simulation
 
         public JSON.TroopType EstimateTroopType(TimeSpan travelTime, int startx, int starty, int endx, int endy)
         {
+            //  TODO - Pull this from world settings
+            bool archersEnabled = false;
+
             JSON.TroopType? type = null;
             TimeSpan? bestTime = null;
             foreach (var troopType in Native.ArmyStats.TroopTypes)
@@ -43,13 +46,16 @@ namespace TW.Vault.Features.Simulation
                 if (Native.ArmyStats.TravelSpeed[troopType] <= 0)
                     continue;
 
+                if (!archersEnabled && (troopType == JSON.TroopType.Archer || troopType == JSON.TroopType.Marcher))
+                    continue;
+
                 var troopTravelTime = CalculateTravelTime(troopType, startx, starty, endx, endy);
                 if (troopTravelTime >= travelTime)
                 {
-                    if (bestTime == null || bestTime.Value < travelTime)
+                    if (bestTime == null || bestTime.Value > troopTravelTime || bestTime.Value == troopTravelTime)
                     {
                         type = troopType;
-                        bestTime = travelTime;
+                        bestTime = troopTravelTime;
                     }
                 }
             }

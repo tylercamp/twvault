@@ -1,4 +1,5 @@
 ﻿
+//  TODO - Remove duplicate logic by using RateLimiter internally
 
 function RequestManager() {
     this.pendingRequests = [];
@@ -126,21 +127,6 @@ RequestManager.prototype.addRequest = function (url, callback, beforeRunCallback
         onDone: callback,
         numErrors: 0,
         beforeRun: beforeRunCallback_
-    });
-};
-
-RequestManager.prototype.addManyRequests = function (urls, urlCallback, allCallback, beforeUrlCallback_) {
-    var numCompleted = 0;
-    function track(data, request) {
-        urlCallback && urlCallback(data, request);
-        if (++numCompleted == urls.length) {
-            allCallback && allCallback();
-        }
-    }
-
-    var self = this;
-    urls.forEach((url) => {
-        self.addRequest(url, track, beforeUrlCallback_);
     });
 };
 

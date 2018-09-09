@@ -166,11 +166,11 @@
         $villageInfoContainer.appendTo($popup);
 
         //  Update data with what's been loaded by TW (in case someone forgot to upload commands)
-        let hasRecord = (id) => data.fakes.contains(id) || data.dVs[id] || data.nukes.contains(id);
+        let hasRecord = (id) => (data.fakes && data.fakes.contains(id)) || (data.dVs && data.dVs[id]) || (data.nukes && data.nukes.contains(id));
 
-        let numFakes = data.fakes.length;
-        let numNukes = data.nukes.length;
-        let numPlayers = data.players.length;
+        let numFakes = data.fakes ? data.fakes.length : 0;
+        let numNukes = data.nukes ? data.nukes.length : 0;
+        let numPlayers = data.players ? data.players.length : 0;
 
         let numDVs = 0;
         lib.objForEach(data.Dvs, (commandId, pop) => {
@@ -398,7 +398,7 @@
     }
 
     function loadSettings() {
-        return lib.getLocalStorage('map-settings', 'null') || {
+        return lib.getLocalStorage('map-settings') || {
             showCommands: true,
             showPossiblyRecruited: true,
             showBuildings: true,
