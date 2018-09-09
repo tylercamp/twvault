@@ -86,6 +86,8 @@ RateLimiter.prototype.hasTasks = function () {
 };
 
 RateLimiter.prototype.resetStats = function () {
+    this.pendingTasks = [];
+    this._taskTimes = [];
     this.stats = {
         done: 0,
         pending: 0,

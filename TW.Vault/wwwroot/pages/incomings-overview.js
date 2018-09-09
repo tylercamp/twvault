@@ -14,9 +14,9 @@
         { name: 'axe', aliases: [] },
         { name: 'archer', aliases: [] },
         { name: 'spy', aliases: ['scout'] },
-        { name: 'light', aliases: [] },
+        { name: 'light', aliases: [ 'lcav'] },
         { name: 'marcher', aliases: ['mount archer'] },
-        { name: 'heavy', aliases: [] },
+        { name: 'heavy', aliases: [ 'hcav' ] },
         { name: 'snob', aliases: ['noble', 'nobleman'] },
         { name: 'knight', aliases: ['paladin', 'pally'] }
     ];

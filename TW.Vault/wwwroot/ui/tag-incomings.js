@@ -1,6 +1,9 @@
 ﻿function tagOnIncomingsOverviewPage($doc) {
     $doc = $doc || $(document);
 
+    //  Prevent auto-reload when incomings land (it erases the UI and messes with tagging)
+    window.partialReload = function () {}
+
     let defaultFormat = `
         %troopName% %tagType% Pop: %popPerc%% Cats: %numCats% Com:1/%numComs%
     `.trim();
@@ -122,8 +125,10 @@
                         Ignore incomings without data
                     </label>
                 <p>
-                    <button id="v-preview">Preview</button>
-                    <span class="v-sep"></span>
+                    <input type="checkbox" id="v-preview">
+                    <label for="v-preview">Preview</label>
+                </p>
+                <p>
                     <button id="v-tag-all">Tag All</button>
                     <span class="v-sep"></span>
                     <button id="v-tag-selected">Tag Selected</button>
@@ -201,26 +206,47 @@
             });
         });
 
-        $container.find('#v-preview').click((e) => {
-            e.originalEvent.preventDefault();
+        let oldLabels = null;
+        $container.find('#v-preview').change(() => {
+            if ($('#v-preview').is(':checked')) {
+                toggleUploadButtons(false);
+                $('#v-cancel').prop('disabled', true);
+                $('#v-preview').prop('disabled', false);
 
-            let selectedIncomings = getSelectedIncomingIds();
-            if (!selectedIncomings.length)
-                selectedIncomings = incomings.map((i) => i.id);
-            console.log('Selected: ', selectedIncomings);
+                oldLabels = {};
 
-            foreachCommand((cmd) => {
-                if (settings.ignoreMissingData && !incomingTags[cmd.id])
-                    return;
+                let selectedIncomings = getSelectedIncomingIds();
+                if (!selectedIncomings.length)
+                    selectedIncomings = incomings.map((i) => i.id);
+                console.log('Selected: ', selectedIncomings);
 
-                if (!selectedIncomings.contains(cmd.id))
-                    return;
+                foreachCommand((cmd) => {
+                    if (settings.ignoreMissingData && !incomingTags[cmd.id])
+                        return;
 
-                let $label = cmd.$row.find('.quickedit-label');
-                let newLabel = makeLabel(incomingTags[cmd.id]);
-                if (newLabel)
-                    $label.text(newLabel);
-            });
+                    if (!selectedIncomings.contains(cmd.id))
+                        return;
+
+                    let $label = cmd.$row.find('.quickedit-label');
+                    let originalLabel = $label.text().trim();
+
+                    oldLabels[cmd.id] = originalLabel;
+
+                    let newLabel = makeLabel(incomingTags[cmd.id]);
+                    if (newLabel)
+                        $label.text(newLabel);
+                });
+            } else {
+                toggleUploadButtons(true);
+
+                foreachCommand((cmd) => {
+                    if (oldLabels[cmd.id]) {
+                        cmd.$row.find('.quickedit-label').text(oldLabels[cmd.id]);
+                    }
+                });
+
+                oldLabels = null;
+            }
         });
 
         $container.find('#v-tag-all').click((e) => {
@@ -241,27 +267,61 @@
             let selectedIds = getSelectedIncomingIds();
             if (!selectedIds.length)
                 selectedIds = incomings.map((i) => i.id);
+
+            rateLimiter.resetStats();
+            selectedIds.forEach((id) => {
+
+                let cmd = incomings.find((i) => i.id == id);
+                let $label = cmd.$row.find('.quickedit-label');
+                let newLabel = originalLabels[id].label;
+
+                if (newLabel == $label.text().trim())
+                    return;
+
+                rateLimiter.addTask(() => {
+                    renameIncoming(id, newLabel, () => {
+                        if (rateLimiter.isRunning()) {
+                            alert(lib.messages.TRIGGERED_CAPTCHA);
+                            rateLimiter.stop();
+                            updateTagStatus(lib.messages.TRIGGERED_CAPTCHA);
+                            toggleUploadButtons(true);
+                        }
+                    }).success(() => {
+                        $label.text(newLabel);
+                        updateTagStatus();
+                    });
+                });
+                
+            });
+
+            rateLimiter.setFinishedHandler(() => {
+                updateTagStatus();
+                toggleUploadButtons(true);
+            });
+
+            if (rateLimiter.getStats().total > 0) {
+                rateLimiter.start();
+            } else {
+                toggleUploadButtons(true);
+                updateTagStatus("Either no incomings or all tags are current");
+            }
         });
 
         $container.find('#v-cancel').click((e) => {
             e.originalEvent.preventDefault();
             rateLimiter.stop();
-            $('#v-cancel').prop('disabled', true);
+            toggleUploadButtons(true);
             updateTagStatus("Tagging canceled");
         });
     }
 
     function beginTagging(commandIds) {
-        let $cancelButton = $('#v-cancel');
-        $cancelButton.prop('disabled', false);
+        toggleUploadButtons(false);
 
         console.log('Starting tagging for: ', commandIds);
         rateLimiter.resetStats();
         commandIds.forEach((id) => {
             if (settings.ignoreMissingData && !incomingTags[id])
-                return;
-
-            if (!commandIds.contains(id))
                 return;
 
             let cmd = incomings.find((i) => i.id == id);
@@ -277,25 +337,24 @@
                         alert(lib.messages.TRIGGERED_CAPTCHA);
                         rateLimiter.stop();
                         updateTagStatus(lib.messages.TRIGGERED_CAPTCHA);
-                        $cancelButton.prop('disabled', true);
+                        toggleUploadButtons(true);
                     }
-                })
-                    .success(() => {
-                        $label.text(newLabel);
-                        updateTagStatus();
-                    });
+                }).success(() => {
+                    $label.text(newLabel);
+                    updateTagStatus();
+                });
             });
         });
 
         rateLimiter.setFinishedHandler(() => {
             updateTagStatus();
-            $cancelButton.prop('disabled', true);
+            toggleUploadButtons(true);
         });
 
         if (rateLimiter.getStats().total > 0) {
             rateLimiter.start();
         } else {
-            $cancelButton.prop('disabled', true);
+            toggleUploadButtons(true);
             updateTagStatus("Either no incomings or all tags are current");
         }
     }
@@ -405,6 +464,29 @@
                 }
             }
         });
+    }
+
+    function toggleUploadButtons(enabled) {
+        let inputIds = [
+            '#v-upload-incomings',
+            '#v-tag-format',
+            '#v-reset-format',
+            '#v-autoset-fakes',
+            '#v-max-fake-pop',
+            '#v-ignore-missing',
+            '#v-preview',
+            '#v-tag-all',
+            '#v-tag-selected',
+            '#v-revert-tagging'
+        ];
+
+        if (enabled) {
+            inputIds.forEach((id) => $(id).prop('disabled', false));
+            $('#v-cancel').prop('disabled', true);
+        } else {
+            inputIds.forEach((id) => $(id).prop('disabled', true));
+            $('#v-cancel').prop('disabled', false);
+        }
     }
 
     function saveSettings() {
