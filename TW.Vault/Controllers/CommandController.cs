@@ -257,7 +257,7 @@ namespace TW.Vault.Controllers
             if (incomings == null)
                 return NotFound();
 
-            var commandSourceVillageIds = incomings.Select(inc => inc.SourceVillageId).ToList();
+            var commandSourceVillageIds = incomings.Select(inc => inc.SourceVillageId).Distinct().ToList();
 
             var countsByVillage = commandSourceVillageIds.Distinct().ToDictionary(
                 vid => vid,

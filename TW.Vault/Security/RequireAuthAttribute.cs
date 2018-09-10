@@ -32,7 +32,16 @@ namespace TW.Vault.Security
             if (!authHeaders.IsValid)
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
-                failedRequest.Reason = "Invalid authentication headers";
+                failedRequest.Reason = "Invalid authentication headers: ";
+                var exactReasons = new List<String>();
+                if (authHeaders.AuthToken == null)
+                    exactReasons.Add("AuthToken missing or invalid");
+                if (authHeaders.PlayerId == null)
+                    exactReasons.Add("PlayerId missing or invalid");
+                if (authHeaders.TribeId == null)
+                    exactReasons.Add("TribeId missing or invalid");
+
+                failedRequest.Reason += String.Join(", ", exactReasons);
 
                 dbContext.Add(failedRequest);
                 dbContext.SaveChanges();
@@ -102,7 +111,7 @@ namespace TW.Vault.Security
             if (discoveredUser.PlayerId != authHeaders.PlayerId.Value)
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
-                failedRequest.Reason = $"Player ID {authHeaders.PlayerId.Value} did not match the ID associated with the token {discoveredUser.PlayerId}";
+                failedRequest.Reason = $"Player ID {authHeaders.PlayerId.Value} did not match the player ID associated with for token, got PID {discoveredUser.PlayerId}";
 
                 dbContext.Add(failedRequest);
                 dbContext.SaveChanges();
