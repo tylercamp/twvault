@@ -372,27 +372,37 @@
         $('#content_value > h2').after($container);
 
         $container.find('#vault-show-commands').change(() => {
-            settings.showCommands = this.checked;
+            checkbox = $container.find('#vault-show-commands');
+            console.log('settings.showCommands = ' + checkbox.prop('checked'));
+            settings.showCommands = checkbox.prop('checked');
             saveSettings(settings);
         });
 
         $container.find('#vault-show-recruits').change(() => {
-            settings.showPossiblyRecruited = this.checked;
+            checkbox = $container.find('#vault-show-recruits');
+            console.log('settings.showRecruits = ' + checkbox.prop('checked'));
+            settings.showPossiblyRecruited = checkbox.prop('checked');
             saveSettings(settings);
         });
 
         $container.find('#vault-show-buildings').change(() => {
-            settings.showBuildings = this.checked;
+            checkbox = $container.find('#vault-show-buildings');
+            console.log('settings.showBuildings = ' + checkbox.prop('checked'));
+            settings.showBuildings = checkbox.prop('checked');
             saveSettings(settings);
         });
 
         $container.find('#vault-show-nukes').change(() => {
-            settings.showNukes = this.checked;
+            checkbox = $container.find('#vault-show-nukes');
+            console.log('settings.showNukes = ' + checkbox.prop('checked'));
+            settings.showNukes = checkbox.prop('checked');
             saveSettings(settings);
         });
 
         $container.find('#vault-show-loyalty').change(() => {
-            settings.showLoyalty = this.checked;
+            checkbox = $container.find('#vault-show-loyalty');
+            console.log('settings.showLoyalty = ' + checkbox.prop('checked'));
+            settings.showLoyalty = checkbox.prop('checked');
             saveSettings(settings);
         });
     }
