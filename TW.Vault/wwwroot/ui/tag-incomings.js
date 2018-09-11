@@ -328,6 +328,9 @@
             let $label = cmd.$row.find('.quickedit-label');
             let newLabel = makeLabel(incomingTags[id]);
 
+            if (!newLabel)
+                return;
+
             if (newLabel == $label.text().trim())
                 return;
 
