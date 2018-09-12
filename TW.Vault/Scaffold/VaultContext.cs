@@ -115,6 +115,8 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.LandsAt).HasColumnName("lands_at");
 
+                entity.Property(e => e.ReturnsAt).HasColumnName("returns_at");
+
                 entity.Property(e => e.SourcePlayerId).HasColumnName("source_player_id");
 
                 entity.Property(e => e.SourceVillageId).HasColumnName("source_village_id");
@@ -540,7 +542,7 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.Reason)
                     .IsRequired()
                     .HasColumnName("reason")
-                    .HasMaxLength(100);
+                    .HasMaxLength(256);
 
                 entity.Property(e => e.RequestedEndpoint)
                     .IsRequired()

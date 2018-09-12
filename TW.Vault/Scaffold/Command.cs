@@ -19,6 +19,7 @@ namespace TW.Vault.Scaffold
         public long? TxId { get; set; }
         public short WorldId { get; set; }
         public string UserLabel { get; set; }
+        public DateTime? ReturnsAt { get; set; }
 
         public CommandArmy Army { get; set; }
         public Player SourcePlayer { get; set; }
