@@ -37,6 +37,15 @@
         currentVillageId = villageId;
         if (cachedData[villageId]) {
             makeOutput(cachedData[villageId]);
+        } else if (TWMap.popup._cache[villageId]) {
+            let twCached = TWMap.popup._cache[villageId];
+            if (requestedVillageIds.indexOf(villageId) >= 0) {
+                return;
+            }
+            let morale = Math.round((twCached.morale || twCached.mood) * 100);
+            if (isNaN(morale))
+                morale = 100;
+            loadVillageTroopData(villageId, morale);
         }
     };
 
@@ -52,7 +61,8 @@
 
         currentVillageId = villageInfo.id;
         let villageId = villageInfo.id;
-        let morale = Math.round(villageInfo.morale * 100);
+        //  Why is "mood" a thing (alternate name for "morale")
+        let morale = Math.round((villageInfo.morale || villageInfo.mood) * 100);
         if (isNaN(morale))
             morale = 100;
 
