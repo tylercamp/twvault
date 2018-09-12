@@ -347,19 +347,19 @@
             <div>
                 <h4>Vault Overlay Settings</h4>
                 <p>
-                    <input type="$checkbox" id="vault-show-commands" ${settings.showCommands ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-commands" ${settings.showCommands ? 'checked' : ''}>
                     <label for="vault-show-commands">Commands</label>
 
-                    <input type="$checkbox" id="vault-show-recruits" ${settings.showPossiblyRecruited ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-recruits" ${settings.showPossiblyRecruited ? 'checked' : ''}>
                     <label for="vault-show-recruits">Possible recruits</label>
 
-                    <input type="$checkbox" id="vault-show-buildings" ${settings.showBuildings ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-buildings" ${settings.showBuildings ? 'checked' : ''}>
                     <label for="vault-show-buildings">Buildings</label>
 
-                    <input type="$checkbox" id="vault-show-nukes" ${settings.showNukes ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-nukes" ${settings.showNukes ? 'checked' : ''}>
                     <label for="vault-show-nukes">Nukes required</label>
 
-                    <input type="$checkbox" id="vault-show-loyalty" ${settings.showLoyalty ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-loyalty" ${settings.showLoyalty ? 'checked' : ''}>
                     <label for="vault-show-loyalty">Loyalty</label>
                 </p>
             </div>
@@ -372,35 +372,35 @@
         $('#content_value > h2').after($container);
 
         $container.find('#vault-show-commands').change(() => {
-            $checkbox = $container.find('#vault-show-commands');
+            let $checkbox = $container.find('#vault-show-commands');
             console.log('settings.showCommands = ' + $checkbox.prop('checked'));
             settings.showCommands = $checkbox.prop('checked');
             saveSettings(settings);
         });
 
         $container.find('#vault-show-recruits').change(() => {
-            $checkbox = $container.find('#vault-show-recruits');
+            let $checkbox = $container.find('#vault-show-recruits');
             console.log('settings.showRecruits = ' + $checkbox.prop('checked'));
             settings.showPossiblyRecruited = $checkbox.prop('checked');
             saveSettings(settings);
         });
 
         $container.find('#vault-show-buildings').change(() => {
-            $checkbox = $container.find('#vault-show-buildings');
+            let $checkbox = $container.find('#vault-show-buildings');
             console.log('settings.showBuildings = ' + $checkbox.prop('checked'));
             settings.showBuildings = $checkbox.prop('checked');
             saveSettings(settings);
         });
 
         $container.find('#vault-show-nukes').change(() => {
-            $checkbox = $container.find('#vault-show-nukes');
+            let $checkbox = $container.find('#vault-show-nukes');
             console.log('settings.showNukes = ' + $checkbox.prop('checked'));
             settings.showNukes = $checkbox.prop('checked');
             saveSettings(settings);
         });
 
         $container.find('#vault-show-loyalty').change(() => {
-            $checkbox = $container.find('#vault-show-loyalty');
+            let $checkbox = $container.find('#vault-show-loyalty');
             console.log('settings.showLoyalty = ' + $checkbox.prop('checked'));
             settings.showLoyalty = $checkbox.prop('checked');
             saveSettings(settings);
