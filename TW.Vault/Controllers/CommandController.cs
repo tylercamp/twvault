@@ -257,6 +257,18 @@ namespace TW.Vault.Controllers
             if (incomings == null)
                 return NotFound();
 
+            //  Don't do any tagging for villages owned by players registered with the vault (so players in other tribes
+            //  also using the vault can't infer villa builds)
+            var vaultOwnedVillages = await (
+                    from user in context.User
+                    join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                    join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
+                    where user.Enabled
+                    select village.VillageId
+                ).ToListAsync();
+
+            //  NOTE - We pull data for all villas requested but only return data for villas not in vaultOwnedVillages,
+            //  should stop querying that other data at some point
             var commandSourceVillageIds = incomings.Select(inc => inc.SourceVillageId).Distinct().ToList();
 
             var countsByVillage = commandSourceVillageIds.Distinct().ToDictionary(
@@ -287,8 +299,11 @@ namespace TW.Vault.Controllers
             {
                 foreach (var incoming in incomings)
                 {
-                    var sourceCurrentVillage = incoming.SourceVillage?.CurrentVillage;
                     var sourceVillageId = incoming.SourceVillageId;
+                    if (vaultOwnedVillages.Contains(sourceVillageId))
+                        continue;
+
+                    var sourceCurrentVillage = incoming.SourceVillage?.CurrentVillage;
                     var commandsReturning = commandsReturningByVillageId.GetValueOrDefault(sourceVillageId);
 
                     var armyOwned = sourceCurrentVillage?.ArmyOwned;
