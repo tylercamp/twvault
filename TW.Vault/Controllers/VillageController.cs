@@ -173,7 +173,7 @@ namespace TW.Vault.Controllers
 
             //  Start getting village data
 
-            var (currentVillage, commandsToVillage) = await ManyTasks.Run(
+            var (currentVillage, commandsToVillage, latestConquerTimestamp) = await ManyTasks.Run(
                 Profile("Get current village", () => (
                     from cv in context.CurrentVillage
                                         .FromWorld(CurrentWorldId)
@@ -194,7 +194,14 @@ namespace TW.Vault.Controllers
                     where !command.IsReturning
                     where command.LandsAt > CurrentServerTime
                     select command
-                ).ToListAsync())
+                ).ToListAsync()),
+
+                Profile("Get latest conquer", () => (
+                    from conquer in context.Conquer.FromWorld(CurrentWorldId)
+                    where conquer.VillageId == villageId
+                    orderby conquer.UnixTimestamp descending
+                    select conquer.UnixTimestamp
+                ).FirstOrDefaultAsync())
             );
             
             
@@ -274,21 +281,46 @@ namespace TW.Vault.Controllers
                     jsonData.RecentlyLostArmy = null;
 
 
+                var armyCalculator = new RecruitmentCalculator(2, jsonData.LastBuildings);
+                DateTime? localArmyLastSeenAt = null;
+                int? availableArmyPopulation = null;
 
-                //  Add recruitment estimations
                 if (jsonData.StationedArmy != null)
                 {
-                    var timeSinceSeen = CurrentServerTime - jsonData.StationedSeenAt.Value;
+                    localArmyLastSeenAt = jsonData.StationedSeenAt.Value;
+                    var existingPop = ArmyStats.CalculateTotalPopulation(jsonData.StationedArmy);
+                    availableArmyPopulation = Math.Max(0, armyCalculator.MaxPopulation - existingPop);
+                }
+
+                if (latestConquerTimestamp != null)
+                {
+                    var timeOffset = DateTimeOffset.FromUnixTimeMilliseconds(latestConquerTimestamp.Value);
+                    var conquerTime = timeOffset.UtcDateTime;
+
+                    bool useConquer = false;
+                    if (localArmyLastSeenAt == null)
+                        useConquer = true;
+                    else
+                        useConquer = conquerTime > localArmyLastSeenAt.Value;
+
+                    if (useConquer)
+                    {
+                        localArmyLastSeenAt = conquerTime;
+                        availableArmyPopulation = armyCalculator.MaxPopulation;
+                    }
+                }
+
+                //  Add recruitment estimations
+                if (localArmyLastSeenAt != null)
+                {
+                    var timeSinceSeen = CurrentServerTime - localArmyLastSeenAt.Value;
+                    armyCalculator.MaxPopulation = availableArmyPopulation.Value;
 
                     //  No point in estimating troops if there's been 2 weeks since we saw stationed troops
                     if (timeSinceSeen.TotalDays < 14)
                     {
-                        var calculator = new RecruitmentCalculator(2, jsonData.LastBuildings);
-                        var existingPop = ArmyStats.CalculateTotalPopulation(jsonData.StationedArmy);
-                        var availablePop = Math.Max(0, calculator.MaxPopulation - existingPop);
-
-                        jsonData.PossibleRecruitedOffensiveArmy = calculator.CalculatePossibleOffenseRecruitment(timeSinceSeen);
-                        jsonData.PossibleRecruitedDefensiveArmy = calculator.CalculatePossibleDefenseRecruitment(timeSinceSeen);
+                        jsonData.PossibleRecruitedOffensiveArmy = armyCalculator.CalculatePossibleOffenseRecruitment(timeSinceSeen);
+                        jsonData.PossibleRecruitedDefensiveArmy = armyCalculator.CalculatePossibleDefenseRecruitment(timeSinceSeen);
                     }
                 }
 
