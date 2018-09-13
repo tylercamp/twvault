@@ -34,7 +34,12 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetVaultKeys()
         {
             if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
                 return Unauthorized();
+            }
 
             var users = await (
                     from user in context.User
@@ -44,8 +49,11 @@ namespace TW.Vault.Controllers
                     where user.Enabled
                     where player.WorldId == CurrentWorldId
                     where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
-                    select new { user, playerName = player.PlayerName, tribeName = tribe.TribeName }
+                    select new { user, playerName = player.PlayerName, tribeName = tribe.TribeName, tribeId = tribe.TribeId }
                 ).ToListAsync();
+
+            if (Configuration.Security.RestrictAccessWithinTribes && !CurrentUserIsSystem)
+                users = users.Where(u => u.tribeId == CurrentTribeId).ToList();
 
             var jsonUsers = users.Select(p => UserConvert.ModelToJson(
                 p.user,
@@ -60,7 +68,12 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> MakeVaultKey([FromBody]JSON.VaultKeyRequest keyRequest)
         {
             if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
                 return Unauthorized();
+            }
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -104,7 +117,7 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = "Either the player ID or player name must be specified." });
             }
 
-            if (!CurrentUserIsSystem && player.TribeId != CurrentTribeId)
+            if (!CurrentUserIsSystem && player.TribeId != CurrentTribeId && Configuration.Security.RestrictAccessWithinTribes)
             {
                 return BadRequest(new { error = "Cannot request a key for a player that's not in your tribe." });
             }
@@ -158,7 +171,12 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> RevokeKey(String authKeyString)
         {
             if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
                 return Unauthorized();
+            }
 
             Guid authKey;
             try
@@ -215,7 +233,12 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> SetKeyAdmin(String authKeyString, [FromBody]JSON.UpdateAdminKeyRequest updateRequest)
         {
             if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
                 return Unauthorized();
+            }
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -268,17 +291,22 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetTroopsSummary()
         {
             if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
                 return Unauthorized();
+            }
 
             //  This is a mess because of different classes for Player, CurrentPlayer, etc
 
-            var (tribeVillages, currentPlayers) = await ManyTasks.RunToList(
+            var (tribeVillages, currentPlayers, uploadHistory) = await ManyTasks.RunToList(
                 //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
                 from player in context.Player.FromWorld(CurrentWorldId)
                 join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
                 join currentVillage in context.CurrentVillage.IncludeCurrentVillageData()
                                     on village.VillageId equals currentVillage.VillageId
-                where player.TribeId == CurrentTribeId
+                where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 select new { player, currentVillage }
 
                 ,
@@ -287,8 +315,17 @@ namespace TW.Vault.Controllers
                 //      so we can also output stats for players that haven't uploaded anything yet)
                 from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
                 join player in context.Player on currentPlayer.PlayerId equals player.PlayerId
-                where player.TribeId == CurrentTribeId
+                where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 select currentPlayer
+                
+                ,
+
+                //  Get user upload history
+                from history in context.UserUploadHistory
+                join user in context.User on history.Uid equals user.Uid
+                join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
+                select new { playerId = player.PlayerId, history }
             );
 
             //  Collect villages grouped by owner
@@ -301,6 +338,16 @@ namespace TW.Vault.Controllers
                                                               .Select(tv => tv.currentVillage)
                                                               .ToList()
                                          );
+
+            var uploadHistoryByPlayer = uploadHistory
+                                        .Select(h => h.playerId)
+                                        .Distinct()
+                                        .ToDictionary(
+                                            p => p,
+                                            p => uploadHistory.Where(h => h.playerId == p)
+                                                              .Select(h => h.history)
+                                                              .FirstOrDefault()
+                                        );
 
             //  Get all support data for the tribe
             var tribeVillageIds = tribeVillages.Select(v => v.currentVillage.VillageId).ToList();
@@ -344,17 +391,12 @@ namespace TW.Vault.Controllers
                 if (maxNoblesByPlayer.ContainsKey(player.PlayerId))
                     playerSummary.MaxPossibleNobles = maxNoblesByPlayer[player.PlayerId];
 
-                var oldestUpload = playerVillages.Select(v => v.ArmyOwned.LastUpdated).Min();
-                if (oldestUpload != null)
-                {
-                    playerSummary.UploadedAt = oldestUpload.Value;
-                    playerSummary.UploadAge = DateTime.UtcNow - oldestUpload.Value;
-                }
-                else
-                {
-                    playerSummary.UploadedAt = new DateTime();
-                    playerSummary.UploadAge = DateTime.UtcNow - playerSummary.UploadedAt;
-                }
+                var playerHistory = uploadHistoryByPlayer.GetValueOrDefault(player.PlayerId);
+                playerSummary.UploadedAt = playerHistory?.LastUploadedTroopsAt ?? new DateTime();
+                playerSummary.UploadAge = DateTime.UtcNow - playerSummary.UploadedAt;
+                playerSummary.UploadedReportsAt = playerHistory?.LastUploadedReportsAt ?? new DateTime();
+                playerSummary.UploadedIncomingsAt = playerHistory?.LastUploadedIncomingsAt ?? new DateTime();
+                playerSummary.UploadedCommandsAt = playerHistory?.LastUploadedCommandsAt ?? new DateTime();
 
                 //  General army data
                 foreach (var village in playerVillages)
@@ -390,6 +432,14 @@ namespace TW.Vault.Controllers
         [HttpGet("op-plan")]
         public async Task<IActionResult> GenerateOpPlan()
         {
+            if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
+                return Unauthorized();
+            }
+
             //  TODO
             return NotFound();
         }

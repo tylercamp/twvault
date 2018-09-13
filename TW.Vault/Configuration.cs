@@ -49,6 +49,18 @@ namespace TW.Vault
                 return cfg;
             }
         }
+
+        public static BehaviorConfiguration Behavior
+        {
+            get
+            {
+                BehaviorConfiguration cfg = new BehaviorConfiguration();
+                cfg.Map = new MapBehaviorConfiguration();
+                Instance.GetSection("Behavior").Bind(cfg);
+                Instance.GetSection("Behavior:Map").Bind(cfg.Map);
+                return cfg;
+            }
+        }
     }
 
     public class SecurityConfiguration
@@ -56,11 +68,25 @@ namespace TW.Vault
         public bool AllowUploadArmyForNonOwner { get; set; }
         public bool ReportIgnoreExpectedPopulationBounds { get; set; }
         public bool AllowCommandArrivalBeforeServerTime { get; set; }
+        public bool RestrictAccessWithinTribes { get; set; }
 
         public short MinimumRequiredPriveleges { get; set; }
 
         public bool EnableScriptFilter { get; set; }
         public List<String> PublicScripts { get; set; }
+    }
+
+    public class BehaviorConfiguration
+    {
+        public MapBehaviorConfiguration Map { get; set; }
+    }
+
+    public class MapBehaviorConfiguration
+    {
+        public int MaxDaysSinceReportUpload { get; set; } = 1;
+        public int MaxDaysSinceTroopUpload { get; set; } = 3;
+        public int MaxDaysSinceCommandUpload { get; set; } = 3;
+        public int MaxDaysSinceIncomingsUpload { get; set; } = 3;
     }
 
     public class InitializationConfiguration

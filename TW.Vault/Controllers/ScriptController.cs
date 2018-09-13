@@ -61,6 +61,9 @@ namespace TW.Vault.Controllers
             catch
             {
                 //  Hide endpoint
+                var authRecord = MakeFailedAuthRecord("Invalid auth token " + authToken);
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
                 return NotFound();
             }
 
@@ -70,8 +73,20 @@ namespace TW.Vault.Controllers
                     select u
                 ).FirstOrDefaultAsync();
 
+            if (user == null)
+            {
+                var authRecord = MakeFailedAuthRecord("User does not exist with auth token " + authToken);
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
+                return NotFound();
+            }
+
             if (user.PermissionsLevel < (short)PermissionLevel.System)
             {
+                var authRecord = MakeFailedAuthRecord("User is not System with auth token " + authToken);
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
+
                 //  Hide the endpoint
                 return NotFound();
             }

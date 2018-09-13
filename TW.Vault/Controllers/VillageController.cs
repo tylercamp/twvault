@@ -70,6 +70,13 @@ namespace TW.Vault.Controllers
             if (village == null)
                 return NotFound();
 
+            var registeredTribeIds = await (
+                    from user in context.User
+                    join player in context.Player on user.PlayerId equals player.PlayerId
+                    where player.TribeId != null
+                    select player.TribeId.Value
+                ).ToListAsync();
+
             bool canRead = false;
             if (!village.PlayerId.HasValue)
             {
@@ -79,7 +86,16 @@ namespace TW.Vault.Controllers
             else
             {
                 var owningPlayer = await Profile("Get owning player", () => context.Player.Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
-                if (!owningPlayer.TribeId.HasValue || owningPlayer.TribeId.Value != CurrentTribeId || CurrentUserIsAdmin)
+                bool canReadFromTribe = true;
+                if (owningPlayer.TribeId != null)
+                {
+                    if (Configuration.Security.RestrictAccessWithinTribes)
+                        canReadFromTribe = owningPlayer.TribeId.Value != CurrentTribeId;
+                    else
+                        canReadFromTribe = registeredTribeIds.Contains(owningPlayer.TribeId.Value);
+                }
+
+                if (!owningPlayer.TribeId.HasValue || canReadFromTribe || CurrentUserIsAdmin)
                 {
                     //  Allowed to read if:
                     //
@@ -103,9 +119,56 @@ namespace TW.Vault.Controllers
                 ).FirstOrDefaultAsync()
             );
 
-            if (latestReportTransaction == null || (DateTime.UtcNow - latestReportTransaction.OccurredAt) > TimeSpan.FromHours(24))
+            var uploadHistory = await Profile("Get user upload history", () => (
+                    from history in context.UserUploadHistory
+                    join user in context.User on history.Uid equals user.Uid
+                    join player in context.Player on user.PlayerId equals player.PlayerId
+                    select history
+                ).FirstOrDefaultAsync()
+            );
+
+            List<String> GetNeedsUpdateReasons(Scaffold.UserUploadHistory history)
             {
-                return StatusCode(423); // Status code "Locked"
+                var now = DateTime.UtcNow;
+
+                if (uploadHistory == null)
+                {
+                    return new List<string> { "all" };
+                }
+
+                List<String> reasons = new List<String>();
+                if (uploadHistory.LastUploadedCommandsAt == null ||
+                    (now - history.LastUploadedCommandsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceCommandUpload)))
+                {
+                    reasons.Add("commands");
+                }
+
+                if (uploadHistory.LastUploadedIncomingsAt == null ||
+                    (now - history.LastUploadedIncomingsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceIncomingsUpload)))
+                {
+                    reasons.Add("incomings");
+                }
+
+                if (uploadHistory.LastUploadedReportsAt == null ||
+                    (now - history.LastUploadedReportsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceReportUpload)))
+                {
+                    reasons.Add("reports");
+                }
+
+                if (uploadHistory.LastUploadedTroopsAt == null ||
+                    (now - history.LastUploadedTroopsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceTroopUpload)))
+                {
+                    reasons.Add("troops");
+                }
+
+                return reasons;
+            }
+
+            List<String> needsUpdateReasons = GetNeedsUpdateReasons(uploadHistory);
+
+            if (needsUpdateReasons != null)
+            {
+                return StatusCode(423, needsUpdateReasons); // Status code "Locked"
             }
 
             //  Start getting village data

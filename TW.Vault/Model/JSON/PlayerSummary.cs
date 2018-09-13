@@ -12,6 +12,9 @@ namespace TW.Vault.Model.JSON
         public int? MaxPossibleNobles { get; set; }
         public TimeSpan UploadAge { get; set; }
         public DateTime UploadedAt { get; set; }
+        public DateTime UploadedIncomingsAt { get; set; }
+        public DateTime UploadedCommandsAt { get; set; }
+        public DateTime UploadedReportsAt { get; set; }
 
         public List<Army> ArmiesOwned { get; set; }
         public List<Army> ArmiesTraveling { get; set; }

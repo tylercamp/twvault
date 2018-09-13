@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using TW.Vault.Features;
 using TW.Vault.Scaffold;
@@ -68,6 +69,8 @@ namespace TW.Vault.Controllers
         //  "User" assigned in RequireAuthAttribute, when the request is first made
         protected User CurrentUser => HttpContext.Items["User"] as User;
 
+        protected IPAddress UserIP => Request.HttpContext.Connection.RemoteIpAddress;
+
         protected bool CurrentUserIsAdmin => CurrentUser.PermissionsLevel >= (short)PermissionLevel.Admin;
         protected bool CurrentUserIsSystem => CurrentUser.PermissionsLevel >= (short)PermissionLevel.System;
 
@@ -85,6 +88,17 @@ namespace TW.Vault.Controllers
             DataString = data,
             Reason = reason,
             Endpoint = $"{Request.Method}:{Request.Path.Value}"
+        };
+
+        protected FailedAuthorizationRecord MakeFailedAuthRecord(String reason) => new FailedAuthorizationRecord
+        {
+            Ip = UserIP,
+            OccurredAt = DateTime.UtcNow,
+            PlayerId = CurrentUser.PlayerId,
+            RequestedEndpoint = Request.Path.ToString(),
+            TribeId = CurrentTribeId,
+            WorldId = CurrentWorldId,
+            Reason = reason
         };
 
 
