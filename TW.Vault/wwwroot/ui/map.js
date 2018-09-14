@@ -19,6 +19,7 @@
     var cachedData = {};
     let requestedVillageIds = [];
     let settings = loadSettings();
+    let lockedDataReasons = null;
 
     createSettingsUI();
 
@@ -27,6 +28,11 @@
     TWMap.popup.displayForVillage = function (e, a, t) {
         console.log('intercepted displayForVillage');
         originalDisplayForVillage.call(TWMap.popup, e, a, t);
+
+        if (lockedDataReasons) {
+            makeFuckYouContainer();
+            return;
+        }
 
         if (!canUse)
             return;
@@ -54,6 +60,11 @@
     TWMap.popup.receivedPopupInformationForSingleVillage = function (e) {
         console.log('Intercepted receivedPopupInformation');
         originalReceivedInfo.call(TWMap.popup, e);
+
+        if (lockedDataReasons) {
+            makeFuckYouContainer();
+            return;
+        }
 
         let villageInfo = e;
         if (!villageInfo || !villageInfo.id)
@@ -106,7 +117,18 @@
                     return;
 
                 if (xhr.status == 423) {
-                    alert("You haven't uploaded report data in a while, you can't use the map script until you upload some more reports. Go to a different page and run this script again.");
+                    let reasons = null;
+                    try {
+                        reasons = JSON.parse(xhr.responseText);
+                        lockedDataReasons = reasons;
+                    } catch (_) { }
+
+                    let alertMessage = "You haven't uploaded data in a while, you can't use the map script until you upload some more reports. Go to a different page and run this script again."
+                    if (reasons) {
+                        alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
+                    }
+
+                    alert(alertMessage);
                     canUse = false;
                 } else if (xhr.status != 401) {
                     alert("An error occurred...");
@@ -116,10 +138,18 @@
 
     console.log('Added map hook');
 
+    function makeOutputContainer() {
+        let $villageInfoContainer = $('<div id="vault_info" style="background-color:#e5d7b2;">');
+        $villageInfoContainer.appendTo($popup);
+        return $villageInfoContainer;
+    }
+
     function makeOutput(data) {
         if ($('#vault_info').length) {
             return;
         }
+
+        let $villageInfoContainer = makeOutputContainer();
 
         //  Limit "own commands" to max 2
         let $commandRows = $('.command-row');
@@ -171,9 +201,6 @@
         $('#info_last_attack_intel').closest('tr').remove();
 
         $('#info_content').css('width', '100%');
-
-        let $villageInfoContainer = $('<div id="vault_info" style="background-color:#e5d7b2;">');
-        $villageInfoContainer.appendTo($popup);
 
         //  Update data with what's been loaded by TW (in case someone forgot to upload commands)
         let hasRecord = (id) => (data.fakes && data.fakes.contains(id)) || (data.dVs && data.dVs[id]) || (data.nukes && data.nukes.contains(id));
@@ -332,6 +359,35 @@
                     </table>
                     `}
                 `.trim());
+    }
+
+    function makeFuckYouContainer() {
+        if ($('#vault_info').length)
+            return;
+
+        $('#info_content').css('width', '100%');
+
+        let $villageInfoContainer = makeOutputContainer();
+
+        let fuckYouMessage = '';
+        for (var i = 0; i < lockedDataReasons.length; i++) {
+            if (fuckYouMessage.length && i != lockedDataReasons.length - 1) {
+                fuckYouMessage += ', ';
+            }
+            if (i > 0 && i == lockedDataReasons.length - 1) {
+                fuckYouMessage += ' and ';
+            }
+            fuckYouMessage += lockedDataReasons[i];
+        }
+
+        $villageInfoContainer.html(`
+            <h3 style="padding:1em; text-align:center;margin:0">
+                Upload your damn ${fuckYouMessage}!!
+                <br>
+                <br>
+                (then refresh this page)
+            </h3>
+        `);
     }
 
     function makeTroopTds(troops) {

@@ -63,6 +63,7 @@ namespace TW.Vault.Controllers
                 return NotFound();
         }
 
+        //  I pity whoever tries to follow this whole function without guidance...
         [HttpGet("{villageId}/army", Name = "GetKnownArmy")]
         public async Task<IActionResult> GetVillageArmy(long villageId, int? morale)
         {
@@ -119,43 +120,34 @@ namespace TW.Vault.Controllers
                 ).FirstOrDefaultAsync()
             );
 
-            var uploadHistory = await Profile("Get user upload history", () => (
-                    from history in context.UserUploadHistory
-                    join user in context.User on history.Uid equals user.Uid
-                    join player in context.Player on user.PlayerId equals player.PlayerId
-                    select history
-                ).FirstOrDefaultAsync()
+            var uploadHistory = await Profile("Get user upload history", () =>
+                context.UserUploadHistory.Where(h => h.Uid == CurrentUser.Uid).FirstOrDefaultAsync()
             );
 
             List<String> GetNeedsUpdateReasons(Scaffold.UserUploadHistory history)
             {
                 var now = DateTime.UtcNow;
 
-                if (uploadHistory == null)
-                {
-                    return new List<string> { "all" };
-                }
-
                 List<String> reasons = new List<String>();
-                if (uploadHistory.LastUploadedCommandsAt == null ||
+                if (uploadHistory?.LastUploadedCommandsAt == null ||
                     (now - history.LastUploadedCommandsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceCommandUpload)))
                 {
                     reasons.Add("commands");
                 }
 
-                if (uploadHistory.LastUploadedIncomingsAt == null ||
+                if (uploadHistory?.LastUploadedIncomingsAt == null ||
                     (now - history.LastUploadedIncomingsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceIncomingsUpload)))
                 {
                     reasons.Add("incomings");
                 }
 
-                if (uploadHistory.LastUploadedReportsAt == null ||
+                if (uploadHistory?.LastUploadedReportsAt == null ||
                     (now - history.LastUploadedReportsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceReportUpload)))
                 {
                     reasons.Add("reports");
                 }
 
-                if (uploadHistory.LastUploadedTroopsAt == null ||
+                if (uploadHistory?.LastUploadedTroopsAt == null ||
                     (now - history.LastUploadedTroopsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceTroopUpload)))
                 {
                     reasons.Add("troops");
@@ -166,7 +158,7 @@ namespace TW.Vault.Controllers
 
             List<String> needsUpdateReasons = GetNeedsUpdateReasons(uploadHistory);
 
-            if (needsUpdateReasons != null)
+            if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
                 return StatusCode(423, needsUpdateReasons); // Status code "Locked"
             }
