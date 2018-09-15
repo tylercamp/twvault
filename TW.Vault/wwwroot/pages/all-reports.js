@@ -167,6 +167,8 @@
         });
 
         if (!requestManager.getStats().total) {
+            lib.postApi(lib.makeApiUrl('report/finished-report-uploads'));
+
             if (!onDone_) {
                 setUploadsDisplay('No new reports to upload.');
                 alert('No new reports to upload!');

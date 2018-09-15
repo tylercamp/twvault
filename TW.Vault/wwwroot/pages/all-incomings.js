@@ -61,6 +61,7 @@
     });
 
     if (!requestManager.getStats().total) {
+        lib.postApi(lib.makeApiUrl('command/finished-incoming-uploads'));
         onProgress_ && onProgress_('No incomings to upload.');
         if (onDone_)
             onDone_(false);

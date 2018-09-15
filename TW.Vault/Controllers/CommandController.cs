@@ -100,6 +100,24 @@ namespace TW.Vault.Controllers
 
             return Ok(existingIds);
         }
+
+        [HttpPost("finished-command-uploads")]
+        public async Task<IActionResult> SetUserFinishedCommandUploads()
+        {
+            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+            history.LastUploadedCommandsAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("finished-incoming-uploads")]
+        public async Task<IActionResult> SetUserFinishedIncomingUploads()
+        {
+            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+            history.LastUploadedIncomingsAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+            return Ok();
+        }
         
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]JSON.ManyCommands jsonCommands)

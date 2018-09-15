@@ -57,6 +57,7 @@
         console.log('Collected new commands: ', newCommands);
 
         if (!newCommands.length) {
+            lib.postApi(lib.makeApiUrl('command/finished-command-uploads'));
             onProgress_ && onProgress_('Finished: No new commands to upload.');
 
             if (onDone_)

@@ -112,7 +112,16 @@ namespace TW.Vault.Controllers
 
             return Ok(existingReports.ToArray());
         }
-        
+
+        [HttpPost("finished-report-uploads")]
+        public async Task<IActionResult> SetUserFinishedReportUploads()
+        {
+            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+            history.LastUploadedReportsAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]JSON.Report jsonReport)
         {
