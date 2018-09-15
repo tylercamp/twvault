@@ -460,7 +460,7 @@
             success: (data) => {
                 if (data && typeof data == 'string') try {
                     data = JSON.parse(data);
-                } catch { }
+                } catch (_) { }
 
                 if (data && !data.response && data.bot_protect) {
                     onCaptcha_ && onCaptcha_();

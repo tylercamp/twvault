@@ -510,7 +510,7 @@ var lib = (() => {
             if (value) {
                 try {
                     return lib.jsonParse(value);
-                } catch {
+                } catch (_) {
                     return value;
                 }
             } else {
