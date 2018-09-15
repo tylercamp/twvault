@@ -123,7 +123,7 @@
                         lockedDataReasons = reasons;
                     } catch (_) { }
 
-                    let alertMessage = "You haven't uploaded data in a while, you can't use the map script until you upload some more reports. Go to a different page and run this script again."
+                    let alertMessage = "You haven't uploaded data in a while, you can't use the map script until you do. Go to a different page and run this script again."
                     if (reasons) {
                         alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
                     }

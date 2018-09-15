@@ -257,6 +257,19 @@ namespace TW.Vault.Controllers
             if (incomings == null)
                 return NotFound();
 
+            var uploadHistory = await Profile("Get user upload history", () =>
+                context.UserUploadHistory.Where(h => h.Uid == CurrentUser.Uid).FirstOrDefaultAsync()
+            );
+
+            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromTaggingRestrictions(uploadHistory);
+            List<String> needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
+
+            if (needsUpdateReasons != null && needsUpdateReasons.Any())
+            {
+                return StatusCode(423, needsUpdateReasons); // Status code "Locked"
+            }
+
+
             //  Don't do any tagging for villages owned by players registered with the vault (so players in other tribes
             //  also using the vault can't infer villa builds)
             var vaultOwnedVillages = await (

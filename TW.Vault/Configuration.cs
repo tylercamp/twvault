@@ -79,9 +79,18 @@ namespace TW.Vault
     public class BehaviorConfiguration
     {
         public MapBehaviorConfiguration Map { get; set; }
+        public TaggingBehaviorConfiguration Tagging { get; set; }
     }
 
     public class MapBehaviorConfiguration
+    {
+        public int MaxDaysSinceReportUpload { get; set; } = 1;
+        public int MaxDaysSinceTroopUpload { get; set; } = 3;
+        public int MaxDaysSinceCommandUpload { get; set; } = 3;
+        public int MaxDaysSinceIncomingsUpload { get; set; } = 3;
+    }
+
+    public class TaggingBehaviorConfiguration
     {
         public int MaxDaysSinceReportUpload { get; set; } = 1;
         public int MaxDaysSinceTroopUpload { get; set; } = 3;

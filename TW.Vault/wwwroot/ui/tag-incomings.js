@@ -58,13 +58,28 @@
 
     function getVaultTags(onDone_) {
         lib.postApi(lib.makeApiUrl('command/tags'), incomings.map((i) => i.id))
-            .error(() => {
-                alert('An error occurred...');
-            })
             .done((tags) => {
                 console.log('Got tags: ', tags);
                 incomingTags = tags;
                 onDone_ && onDone_();
+            })
+            .error((xhr, b, c) => {
+                if (xhr.status == 423) {
+                    let reasons = null;
+                    try {
+                        reasons = JSON.parse(xhr.responseText);
+                    } catch (_) { }
+
+                    let alertMessage = "You haven't uploaded data in a while, you can't use tagging until you do."
+                    if (reasons) {
+                        alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
+                    }
+
+                    alert(alertMessage);
+                    parseAllPages();
+                } else if (xhr.status != 401) {
+                    alert("An error occurred...");
+                }
             });
     }
 

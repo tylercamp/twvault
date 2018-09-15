@@ -14,6 +14,7 @@ using TW.Vault.Features.Simulation;
 using Newtonsoft.Json;
 using TW.Vault.Model.Native;
 using TW.Vault.Model;
+using TW.Vault.Model.Validation;
 
 namespace TW.Vault.Controllers
 {
@@ -124,39 +125,8 @@ namespace TW.Vault.Controllers
                 context.UserUploadHistory.Where(h => h.Uid == CurrentUser.Uid).FirstOrDefaultAsync()
             );
 
-            List<String> GetNeedsUpdateReasons(Scaffold.UserUploadHistory history)
-            {
-                var now = DateTime.UtcNow;
-
-                List<String> reasons = new List<String>();
-                if (uploadHistory?.LastUploadedCommandsAt == null ||
-                    (now - history.LastUploadedCommandsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceCommandUpload)))
-                {
-                    reasons.Add("commands");
-                }
-
-                if (uploadHistory?.LastUploadedIncomingsAt == null ||
-                    (now - history.LastUploadedIncomingsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceIncomingsUpload)))
-                {
-                    reasons.Add("incomings");
-                }
-
-                if (uploadHistory?.LastUploadedReportsAt == null ||
-                    (now - history.LastUploadedReportsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceReportUpload)))
-                {
-                    reasons.Add("reports");
-                }
-
-                if (uploadHistory?.LastUploadedTroopsAt == null ||
-                    (now - history.LastUploadedTroopsAt.Value > TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceTroopUpload)))
-                {
-                    reasons.Add("troops");
-                }
-
-                return reasons;
-            }
-
-            List<String> needsUpdateReasons = GetNeedsUpdateReasons(uploadHistory);
+            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
+            List<String> needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
