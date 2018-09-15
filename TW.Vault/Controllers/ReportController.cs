@@ -189,44 +189,75 @@ namespace TW.Vault.Controllers
                     await Profile("Update command troop type", async () =>
                     {
                         var command = await Model.UtilQuery.FindCommandForReport(scaffoldReport, context);
-                        if (command != null)
+                        if (command == null)
                         {
-                            JSON.TroopType? slowestType = null;
-                            float slowestSpeed = -1;
-                            foreach (var troopType in jsonReport.AttackingArmy.Keys.Select(k => k.ToTroopType()))
-                            {
-                                var travelSpeed = Native.ArmyStats.TravelSpeed[troopType];
-                                if (slowestType == null)
-                                {
-                                    slowestType = troopType;
-                                    slowestSpeed = travelSpeed;
-                                }
-                                else if (travelSpeed > slowestSpeed)
-                                {
-                                    slowestType = troopType;
-                                    slowestSpeed = travelSpeed;
-                                }
-                            }
+                            //  WARNING - This will auto-generate a command with a random ID,
+                            //      if a new TW command is uploaded with the given ID any backtime
+                            //      calculations for this old command will get screwy
+                            await context.SaveChangesAsync();
 
-                            var attackingVillage = await context.Village
-                                                                .FromWorld(CurrentWorldId)
-                                                                .Where(v => v.VillageId == jsonReport.AttackingVillageId)
-                                                                .FirstOrDefaultAsync();
-
-                            var defendingVillage = await context.Village
-                                                                .FromWorld(CurrentWorldId)
-                                                                .Where(v => v.VillageId == jsonReport.DefendingVillageId)
-                                                                .FirstOrDefaultAsync();
-
-                            var travelCalculator = new Features.Simulation.TravelCalculator(2.0f, 0.5f);
-                            var travelTime = travelCalculator.CalculateTravelTime(slowestType.Value, attackingVillage, defendingVillage);
-
-                            command.Army = ArmyConvert.JsonToArmy(jsonReport.AttackingArmy - jsonReport.AttackingArmyLosses, command.Army, context);
-                            command.Army.WorldId = CurrentWorldId;
-                            command.TroopType = slowestType.Value.ToTroopString();
-                            command.LandsAt = scaffoldReport.OccuredAt + travelTime;
+                            command = new Scaffold.Command();
+                            command.Tx = tx;
+                            command.WorldId = CurrentWorldId;
                             command.IsReturning = true;
+                            command.FirstSeenAt = DateTime.UtcNow;
+                            command.IsAttack = true;
+                            command.SourcePlayerId = jsonReport.AttackingPlayerId.Value;
+                            command.TargetPlayerId = jsonReport.DefendingPlayerId.Value;
+                            command.SourceVillageId = jsonReport.AttackingVillageId.Value;
+                            command.TargetVillageId = jsonReport.DefendingVillageId.Value;
+                            command.LandsAt = jsonReport.OccurredAt.Value;
+
+                            bool madeCommand = false;
+                            //  Need to auto-generate a random command ID
+                            while (!madeCommand)
+                            {
+                                try
+                                {
+                                    command.CommandId = Random.NextLong;
+                                    context.Add(command);
+                                    await context.SaveChangesAsync();
+                                    madeCommand = true;
+                                }
+                                catch (Exception e) { }
+                            }
                         }
+
+                        JSON.TroopType? slowestType = null;
+                        float slowestSpeed = -1;
+                        foreach (var troopType in jsonReport.AttackingArmy.Keys.Select(k => k.ToTroopType()))
+                        {
+                            var travelSpeed = Native.ArmyStats.TravelSpeed[troopType];
+                            if (slowestType == null)
+                            {
+                                slowestType = troopType;
+                                slowestSpeed = travelSpeed;
+                            }
+                            else if (travelSpeed > slowestSpeed)
+                            {
+                                slowestType = troopType;
+                                slowestSpeed = travelSpeed;
+                            }
+                        }
+
+                        var attackingVillage = await context.Village
+                                                            .FromWorld(CurrentWorldId)
+                                                            .Where(v => v.VillageId == jsonReport.AttackingVillageId)
+                                                            .FirstOrDefaultAsync();
+
+                        var defendingVillage = await context.Village
+                                                            .FromWorld(CurrentWorldId)
+                                                            .Where(v => v.VillageId == jsonReport.DefendingVillageId)
+                                                            .FirstOrDefaultAsync();
+
+                        var travelCalculator = new Features.Simulation.TravelCalculator(2.0f, 0.5f);
+                        var travelTime = travelCalculator.CalculateTravelTime(slowestType.Value, attackingVillage, defendingVillage);
+
+                        command.Army = ArmyConvert.JsonToArmy(jsonReport.AttackingArmy - jsonReport.AttackingArmyLosses, command.Army, context);
+                        command.Army.WorldId = CurrentWorldId;
+                        command.TroopType = slowestType.Value.ToTroopString();
+                        command.LandsAt = scaffoldReport.OccuredAt + travelTime;
+                        command.IsReturning = true;
                     });
                 }
 

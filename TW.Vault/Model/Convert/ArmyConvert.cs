@@ -9,8 +9,6 @@ namespace TW.Vault.Model.Convert
 {
     public static class ArmyConvert
     {
-        private static Random ArmyRandom = new Random();
-
         private static short ToShort(this int value)
         {
             return (short)value;
