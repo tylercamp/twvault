@@ -3,6 +3,7 @@ var lib = (() => {
 
     //# REQUIRE lib/twstats.js
     //# REQUIRE lib/twcalc.js
+    //# REQUIRE lib/versioning.js
 
     let twstats = getTwTroopStats();
     let localStoragePrefix = 'vls-';
@@ -38,7 +39,7 @@ var lib = (() => {
         },
 
         messages: {
-            TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again.',
+            TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again. Any uploads will continue where they left off.',
             IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\".",
             FILTER_APPLIED: 'You have filters set for your reports, please remove them before uploading.'
         },
@@ -51,6 +52,7 @@ var lib = (() => {
 
         twstats: twstats,
         twcalc: makeTwCalc(twstats),
+        versioning: makeVersioningSetup(),
 
         //  Gets the current server date and time from the page
         getServerDateTime: function getServerDateTime($doc_) {

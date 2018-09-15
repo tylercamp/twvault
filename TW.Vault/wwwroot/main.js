@@ -68,6 +68,11 @@ These terms can be viewed again after running the script. To cancel your agreeme
             return;
         }
 
+        if (lib.versioning.checkNeedsUpdate()) {
+            alert('The vault was recently updated, you will need to re-upload some data.');
+            lib.versioning.updateForLatestVersion();
+        }
+
         lib
             //.onPage(lib.pageTypes.UNKNOWN, () => {
             //    var supportedPages = lib.objectToArray(lib.pageTypes, (v) => v != lib.pageTypes.UNKNOWN ? v.replace(/\_/g, ' ').toLowerCase() : undefined);
