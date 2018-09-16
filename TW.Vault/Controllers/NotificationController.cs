@@ -103,6 +103,8 @@ namespace TW.Vault.Controllers
                     select phoneNumber
                 ).FirstOrDefaultAsync();
 
+            var isNewNumber = scaffoldPhoneNumber == null;
+
             if (scaffoldPhoneNumber != null)
             {
                 scaffoldPhoneNumber.Label = phoneNumberRequest.Label;
@@ -113,13 +115,23 @@ namespace TW.Vault.Controllers
                 newNumber.Uid = CurrentUser.Uid;
                 newNumber.PhoneNumber = formattedNumber;
                 newNumber.Label = phoneNumberRequest.Label;
+                newNumber.Enabled = true;
                 context.Add(newNumber);
 
-                var newSettings = new Scaffold.NotificationUserSettings();
-                newSettings.Uid = CurrentUser.Uid;
+                scaffoldPhoneNumber = newNumber;
 
-                context.Add(newSettings);
+                var hasSettings = await context.NotificationUserSettings.Where(s => s.Uid == CurrentUser.Uid).AnyAsync();
+                if (!hasSettings)
+                {
+                    var newSettings = new Scaffold.NotificationUserSettings();
+                    newSettings.Uid = CurrentUser.Uid;
+                    newSettings.Tx = BuildTransaction();
+
+                    context.Add(newSettings);
+                }
             }
+
+            isNewNumber = isNewNumber || !scaffoldPhoneNumber.Enabled;
 
             scaffoldPhoneNumber.Enabled = true;
             scaffoldPhoneNumber.Tx = BuildTransaction(scaffoldPhoneNumber.Tx);
@@ -127,12 +139,15 @@ namespace TW.Vault.Controllers
 
             await context.SaveChangesAsync();
 
-            if (scaffoldPhoneNumber == null)
+            if (isNewNumber)
             {
                 SMS.Send(formattedNumber, "This phone number has been registered with the Vault. Text UNSUBSCRIBE to stop receiving messages.");
             }
 
-            return Ok();
+            if (isNewNumber)
+                return NoContent();
+            else
+                return Ok();
         }
 
         [HttpDelete("phone-numbers/{id}")]

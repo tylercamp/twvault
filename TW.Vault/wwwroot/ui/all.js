@@ -96,7 +96,7 @@
                                 <label style="display:inline-block;width:3em;text-align:right" for="new-number">#</label>
                                 <input type="text" id="new-number" placeholder="+1 202-555-0109">
                                 <br>
-                                <label style="display:inline-block;width:3em;text-align:right" for="new-number-label">Label</label>
+                                <label style="display:inline-block;width:3em;text-align:right" for="new-number-label">Name</label>
                                 <input type="text" id="new-number-label" placeholder="(Optional)">
                                 <br>
                                 <button id="add-phone-number">Add</button>
@@ -428,7 +428,46 @@
     });
 
     $uiContainer.find('#add-phone-number').click(() => {
+        let $phoneNumber = $uiContainer.find('#new-number');
+        let $label = $uiContainer.find('#new-number-label');
 
+        let phoneNumber = $phoneNumber.val();
+        let label = $label.val();
+
+        let trimmedNumber = phoneNumber.replace(/[^\d]/g, '');
+        if (trimmedNumber.length != 11) {
+            alert('Invalid phone number - must include country code and area code.\n\nie +1 202-555-0109');
+            return;
+        }
+
+        if (label.length > 128) {
+            alert(`Phone name is too long - must be less than 128 characters. (Currently ${label.length})`);
+            return;
+        }
+
+        let data = {
+            phoneNumber: phoneNumber,
+            label: label
+        };
+
+        $phoneNumber.prop('disabled', true);
+        $label.prop('disabled', true);
+
+        lib.postApi(lib.makeApiUrl('notification/phone-numbers'), data)
+            .done(() => {
+                $phoneNumber.val('');
+                $phoneNumber.prop('disabled', false);
+
+                $label.val('');
+                $label.prop('disabled', false);
+
+                updatePhoneNumbers();
+            })
+            .error(() => {
+                $phoneNumber.prop('disabled', false);
+                $label.prop('disabled', false);
+                alert('An error occurred.');
+            });
     });
 
     $uiContainer.find('#save-notification-settings-btn').click(() => {
@@ -437,9 +476,51 @@
 
     $uiContainer.find('#notification-time-formats').click((e) => {
         e.originalEvent.preventDefault();
+        alert(`Supported time formats: Basically everything under the sun. Copy/paste whatever you see.`);
     });
 
     $uiContainer.find('#add-notification').click(() => {
 
     });
+
+
+
+
+    updatePhoneNumbers();
+
+    function updatePhoneNumbers() {
+        lib.getApi(lib.makeApiUrl('notification/phone-numbers'))
+            .done((phoneNumbers) => {
+                let $phoneNumbersTable = $uiContainer.find('#vault-notifications-phone-numbers table');
+                $phoneNumbersTable.find('tr:not(:first-of-type)').remove();
+
+                phoneNumbers.forEach((number) => {
+                    let $row = $(`
+                        <tr data-id="${number.id}">
+                            <td>${number.number}</td>
+                            <td>${number.label}</td>
+                            <td><input type="submit" value="Delete"></td>
+                        </tr>
+                    `.trim());
+                    $phoneNumbersTable.append($row);
+                    $row.find('input').click((ev) => {
+                        ev.originalEvent.preventDefault();
+                        if (!confirm(`Are you sure you want to remove the number ${number.number}?`)) {
+                            return;
+                        }
+
+                        lib.deleteApi(lib.makeApiUrl('notification/phone-numbers/' + number.id))
+                            .done(() => {
+                                updatePhoneNumbers();
+                            })
+                            .error(() => {
+                                alert('An error occurred.');
+                            });
+                    });
+                });
+            })
+            .error(() => {
+                alert('An error occurred while getting your phone numbers.');
+            });
+    }
 }
