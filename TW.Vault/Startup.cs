@@ -7,15 +7,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using TW.Vault.Scaffold;
-using Newtonsoft.Json.Serialization;
-using Microsoft.Extensions.Configuration.Json;
 using TW.Vault.Security;
 using Microsoft.AspNetCore.HttpOverrides;
 using Newtonsoft.Json.Converters;
 using System.IO;
+using Hosting = Microsoft.Extensions.Hosting;
 
 namespace TW.Vault
 {
@@ -55,7 +52,8 @@ namespace TW.Vault
             });
 
             services
-                .AddScoped<RequireAuthAttribute>();
+                .AddScoped<RequireAuthAttribute>()
+                .AddSingleton<Hosting.IHostedService, Features.Notifications.RemindersService>();
 
             String connectionString = Configuration.GetConnectionString("Vault");
             services.AddDbContext<VaultContext>(options => options.UseNpgsql(connectionString));

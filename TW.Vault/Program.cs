@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Twilio;
 
 namespace TW.Vault
 {
@@ -21,6 +22,11 @@ namespace TW.Vault
             var config = new ConfigurationBuilder()
                 .ApplyVaultConfiguration()
                 .Build();
+
+            TwilioClient.Init(
+                Configuration.Behavior.Notifications.TwilioClientKey,
+                Configuration.Behavior.Notifications.TwilioClientSecret
+            );
 
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(config)

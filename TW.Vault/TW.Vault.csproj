@@ -6,6 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Logs\**" />
+    <Content Remove="Logs\**" />
+    <EmbeddedResource Remove="Logs\**" />
+    <None Remove="Logs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Properties\PublishProfiles\Ubuntu.pubxml" />
     <None Remove="Properties\PublishProfiles\Windows.pubxml" />
   </ItemGroup>
@@ -38,6 +45,8 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="1.0.1" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
+    <PackageReference Include="Twilio" Version="5.16.4" />
+    <PackageReference Include="Twilio.AspNet.Core" Version="5.9.7" />
   </ItemGroup>
 
   <ItemGroup>

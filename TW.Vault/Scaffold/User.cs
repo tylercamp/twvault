@@ -8,6 +8,8 @@ namespace TW.Vault.Scaffold
         public User()
         {
             InvalidDataRecord = new HashSet<InvalidDataRecord>();
+            NotificationPhoneNumber = new HashSet<NotificationPhoneNumber>();
+            NotificationRequest = new HashSet<NotificationRequest>();
             UserUploadHistory = new HashSet<UserUploadHistory>();
         }
 
@@ -24,7 +26,10 @@ namespace TW.Vault.Scaffold
         public long? AdminPlayerId { get; set; }
 
         public World World { get; set; }
+        public NotificationUserSettings NotificationUserSettings { get; set; }
         public ICollection<InvalidDataRecord> InvalidDataRecord { get; set; }
+        public ICollection<NotificationPhoneNumber> NotificationPhoneNumber { get; set; }
+        public ICollection<NotificationRequest> NotificationRequest { get; set; }
         public ICollection<UserUploadHistory> UserUploadHistory { get; set; }
     }
 }
