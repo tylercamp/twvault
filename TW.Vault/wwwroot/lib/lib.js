@@ -509,7 +509,7 @@ var lib = (() => {
             if (sourceUrl)
                 sourceUrl = sourceUrl[1];
 
-            return sourceUrl;
+            return sourceUrl || 'https://v.tylercamp.me/script/main.js';
         },
 
         setScriptHost: function setScriptHost(scriptHost) {

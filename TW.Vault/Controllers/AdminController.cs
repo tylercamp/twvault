@@ -303,9 +303,11 @@ namespace TW.Vault.Controllers
             var (tribeVillages, currentPlayers, uploadHistory) = await ManyTasks.RunToList(
                 //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
                 from player in context.Player.FromWorld(CurrentWorldId)
+                join user in context.User on player.PlayerId equals user.PlayerId
                 join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
                 join currentVillage in context.CurrentVillage.IncludeCurrentVillageData()
                                     on village.VillageId equals currentVillage.VillageId
+                where user.Enabled
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 select new { player, currentVillage }
 
