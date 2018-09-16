@@ -480,7 +480,65 @@
     });
 
     $uiContainer.find('#add-notification').click(() => {
+        let $notificationTime = $uiContainer.find('#notification-time');
+        let $message = $uiContainer.find('#notification-label');
 
+        let notificationTimeText = $notificationTime.val().trim();
+        let message = $message.val().trim();
+
+        if (!message.length) {
+            alert('A message is required!');
+            return;
+        }
+
+        if (message.length > 256) {
+            alert(`Your message can't be over 256 characters! (Currently ${message.length})`);
+            return;
+        }
+
+        let notificationTime = lib.parseTimeString(notificationTimeText);
+        if (!notificationTime) {
+            alert('Invalid notification time!');
+            return;
+        }
+
+        let serverTime = lib.getServerDateTime();
+        if (serverTime.valueOf() >= notificationTime.valueOf()) {
+            alert("Your notification time must be *after* the current server time!");
+            return;
+        }
+
+        let data = {
+            eventOccursAt: notificationTime,
+            message: message
+        };
+
+        $notificationTime.prop('disabled', true);
+        $message.prop('disabled', true);
+        $uiContainer.find('#add-notification').prop('disabled', true);
+
+        lib.postApi(lib.makeApiUrl('notification/requests'), data)
+            .done(() => {
+                loadNotifications()
+                    .done(() => {
+                        $notificationTime.prop('disabled', false);
+                        $message.prop('disabled', false);
+                        $uiContainer.find('#add-notification').prop('disabled', false);
+
+                        $notificationTime.val('');
+                    })
+                    .error(() => {
+                        $notificationTime.prop('disabled', false);
+                        $message.prop('disabled', false);
+                        $uiContainer.find('#add-notification').prop('disabled', false);
+                    })
+            })
+            .error(() => {
+                $notificationTime.prop('disabled', false);
+                $message.prop('disabled', false);
+                $uiContainer.find('#add-notification').prop('disabled', false);
+                alert('An error occurred.');
+            });
     });
 
 
@@ -488,6 +546,7 @@
 
     updatePhoneNumbers();
     loadNotificationSettings();
+    loadNotifications();
 
     function updatePhoneNumbers() {
         lib.getApi(lib.makeApiUrl('notification/phone-numbers'))
@@ -564,6 +623,48 @@
                 $notificationWindow.prop('disabled', false);
                 $uiContainer.find('#save-notification-settings-btn').prop('disabled', false);
                 alert('An error occurred.');
+            });
+    }
+
+    function loadNotifications() {
+        return lib.getApi(lib.makeApiUrl('notification/requests'))
+            .done((requests) => {
+                let $notificationsTable = $uiContainer.find('#vault-notifications-display table');
+                $notificationsTable.find('tr:not(:first-of-type)').remove();
+
+                requests.forEach((request) => {
+                    request.eventOccursAt = new Date(Date.parse(request.eventOccursAt));
+
+                    let $row = $(`
+                        <tr data-id="${request.id}">
+                            <td>${lib.formateDateTime(request.eventOccursAt)}</td>
+                            <td>${request.message}</td>
+                            <td><input type="submit" value="Delete"></td>
+                        </tr>
+                    `.trim());
+
+                    $row.find('input').click((ev) => {
+                        ev.originalEvent.preventDefault();
+
+                        let confirmInfo = `"${request.message}" at ${lib.formateDateTime(request.eventOccursAt)}`;
+                        if (!confirm(`Are you sure you want to delete this notification?\n\n${confirmInfo}`)) {
+                            return;
+                        }
+
+                        lib.deleteApi(lib.makeApiUrl(`notification/requests/${request.id}`))
+                            .done(() => {
+                                loadNotifications();
+                            })
+                            .error(() => {
+                                alert('An error occurred.');
+                            });
+                    });
+
+                    $notificationsTable.append($row);
+                });
+            })
+            .error(() => {
+                alert("An error occurred while loading notification requests.");
             });
     }
 }

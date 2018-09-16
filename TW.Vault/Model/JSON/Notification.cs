@@ -12,5 +12,7 @@ namespace TW.Vault.Model.JSON
         public String Message { get; set; }
         [Required]
         public DateTime? EventOccursAt { get; set; }
+
+        public long? Id { get; set; }
     }
 }

@@ -51,7 +51,7 @@ namespace TW.Vault.Features.Notifications
 
                     var notificationsByUser = upcomingNotifications.Select(r => r.Notification.Uid).Distinct().ToDictionary(
                             uid => uid,
-                            uid => upcomingNotifications.Where(r => r.Notification.Uid == uid).ToList()
+                            uid => upcomingNotifications.Where(r => r.Notification.Uid == uid && r.Notification.Enabled).ToList()
                         );
 
                     foreach (var userNotifications in notificationsByUser)

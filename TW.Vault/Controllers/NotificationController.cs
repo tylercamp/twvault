@@ -28,7 +28,8 @@ namespace TW.Vault.Controllers
         {
             var requests = await (
                     from request in context.NotificationRequest
-                    where request.Uid == CurrentUser.Uid
+                    where request.Uid == CurrentUser.Uid && request.Enabled
+                    orderby request.EventOccursAt
                     select request
                 ).ToListAsync();
 
@@ -41,6 +42,7 @@ namespace TW.Vault.Controllers
         {
             var scaffoldRequest = NotificationConvert.JsonToModel(jsonNotification, null);
             scaffoldRequest.Enabled = true;
+            scaffoldRequest.Uid = CurrentUser.Uid;
 
             var tx = BuildTransaction();
             scaffoldRequest.Tx = tx;
@@ -50,7 +52,7 @@ namespace TW.Vault.Controllers
             return Ok();
         }
 
-        [HttpDelete("requests/{id}")]
+        [HttpDelete("requests/{requestId}")]
         public async Task<IActionResult> DeleteNotificationRequest(long requestId)
         {
             var request = await context.NotificationRequest.FirstOrDefaultAsync(r => r.Id == requestId);
@@ -66,7 +68,6 @@ namespace TW.Vault.Controllers
 
             request.Enabled = false;
             request.Tx = BuildTransaction(request.Tx);
-            context.Add(request.Tx);
             await context.SaveChangesAsync();
             return Ok();
         }

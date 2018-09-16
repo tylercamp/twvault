@@ -34,6 +34,7 @@ namespace TW.Vault.Model.Convert
 
             result.Message = request.Message;
             result.EventOccursAt = request.EventOccursAt;
+            result.Id = request.Id;
 
             return result;
         }
