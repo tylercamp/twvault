@@ -29,6 +29,8 @@ namespace TW.Vault.Features.Notifications
             logger.LogDebug("Clearing expired reminders on first run...");
             await WithVaultContext(ClearExpiredReminders);
 
+            var refreshDelayTimeSpan = TimeSpan.FromMilliseconds(refreshDelay);
+
             logger.LogDebug("Starting reminders service loop");
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -40,7 +42,7 @@ namespace TW.Vault.Features.Notifications
                             join user in context.User.Include(u => u.NotificationPhoneNumber) on notification.Uid equals user.Uid
                             join userSettings in context.NotificationUserSettings on user.Uid equals userSettings.Uid
 
-                            where notification.EventOccursAt - userSettings.NotificationHeadroom < now
+                            where notification.EventOccursAt - userSettings.NotificationHeadroom - refreshDelayTimeSpan < now
                             select new { Notification = notification, PhoneNumbers = user.NotificationPhoneNumber }
                         ).ToListAsync();
 
