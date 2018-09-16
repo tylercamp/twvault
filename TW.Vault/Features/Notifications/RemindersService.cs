@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -46,17 +47,27 @@ namespace TW.Vault.Features.Notifications
                     if (!upcomingReminders.Any())
                         return;
 
-                    foreach (var reminder in upcomingReminders)
+                    var remindersByUser = upcomingReminders.Select(r => r.Notification.Uid).Distinct().ToDictionary(
+                            uid => uid,
+                            uid => upcomingReminders.Where(r => r.Notification.Uid == uid).ToList()
+                        );
+
+                    foreach (var userReminder in remindersByUser)
                     {
-                        foreach (var phoneNumber in reminder.PhoneNumbers)
+                        var reminders = userReminder.Value;
+                        var notificationText = BuildReminderText(reminders.Select(r => r.Notification).ToList());
+                        foreach (var phoneNumber in userReminder.Value[0].PhoneNumbers.Select(pn => pn.PhoneNumber))
                         {
                             try
                             {
-                                SMS.Send(phoneNumber.PhoneNumber, reminder.Notification.Message);
+                                SMS.Send(phoneNumber, notificationText);
                             }
                             catch (Exception e)
                             {
-                                logger.LogWarning("Unable to send notification for reminder ID {0} due to exception:\n" + e, reminder.Notification.Id);
+                                logger.LogWarning(
+                                    "Unable to send notification for reminder IDs {0} due to exception:\n" + e,
+                                    String.Join(',', reminders.Select(r => r.Notification.Id))
+                                );
                             }
                         }
                     }
@@ -71,6 +82,37 @@ namespace TW.Vault.Features.Notifications
 
         //  TODO - Change this on a per-world basis
         private DateTime CurrentServerTime => DateTime.UtcNow + TimeSpan.FromHours(1);
+
+        private String BuildReminderText(List<Scaffold.NotificationRequest> requests)
+        {
+            StringBuilder reminderMessage = new StringBuilder();
+            if (requests.Count == 1)
+            {
+                reminderMessage.Append(requests[0].Message);
+            }
+            else
+            {
+                var maxNotifications = Configuration.Behavior.Notifications.MaxNotificationsPerMessage;
+                for (int i = 0; i < requests.Count && i < maxNotifications; i++)
+                {
+                    reminderMessage.Append($"{i+1}. ");
+                    reminderMessage.Append(requests[i].Message);
+
+                    if (i < requests.Count - 1)
+                    {
+                        reminderMessage.AppendLine();
+                        reminderMessage.AppendLine();
+                    }
+                }
+
+                if (requests.Count > maxNotifications)
+                {
+                    reminderMessage.Append($"({requests.Count - maxNotifications} more not shown)");
+                }
+            }
+
+            return reminderMessage.ToString();
+        }
 
         private async Task WithVaultContext(Func<Scaffold.VaultContext, Task> action)
         {

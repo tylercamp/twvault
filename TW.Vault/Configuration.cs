@@ -108,6 +108,7 @@ namespace TW.Vault
         public String TwilioClientSecret { get; set; }
 
         public int NotificationCheckInterval { get; set; } = 1000;
+        public int MaxNotificationsPerMessage { get; set; } = 3;
     }
 
     public class InitializationConfiguration
