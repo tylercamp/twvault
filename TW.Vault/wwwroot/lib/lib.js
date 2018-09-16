@@ -116,14 +116,14 @@ var lib = (() => {
                     time: match[4].splitMany(timeSeparators)
                 };
 
-            } else if (match = timeString.match(new RegExp(`today at\\s+(${timeRegex})`))) {
+            } else if (match = timeString.match(new RegExp(`today at\\s+${timeRegex}`))) {
                 // today at (Hours:Minute:Second:Ms)
                 result = {
                     date: serverDate,
                     time: match[1].splitMany(timeSeparators)
                 }
 
-            } else if (match = timeString.match(new RegExp(`tomorrow at\\s+(${timeRegex})`))) {
+            } else if (match = timeString.match(new RegExp(`tomorrow at\\s+${timeRegex}`))) {
                 // tomorrow at (Hours:Minute:Second:Ms)
                 result = {
                     date: [
@@ -131,6 +131,13 @@ var lib = (() => {
                         (parseInt(serverDate[1])).toString(),
                         serverDate[2]
                     ],
+                    time: match[1].splitMany(timeSeparators)
+                };
+
+            } else if (match = timeString.match(new RegExp(`${timeRegex} on ${dateRegex}`))) {
+                // (Hours:Minutes:Seconds:Ms) on (Day/Month/Year)
+                result = {
+                    date: match[2].splitMany(dateSeparators),
                     time: match[1].splitMany(timeSeparators)
                 };
 
@@ -152,6 +159,10 @@ var lib = (() => {
 
             if (result == null) {
                 return null;
+            }
+
+            if (result.date[2] && result.date[2].length == 2) {
+                result.date[2] = '20' + result.date[2];
             }
 
             result.date.forEach((val, i) => result.date[i] = parseInt(val));

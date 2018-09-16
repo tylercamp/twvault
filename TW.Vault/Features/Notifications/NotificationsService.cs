@@ -87,10 +87,35 @@ namespace TW.Vault.Features.Notifications
 
         private String BuildNotificationText(List<Scaffold.NotificationRequest> requests)
         {
+            var now = CurrentServerTime;
+
+            String FormatNotificationMessage(Scaffold.NotificationRequest request)
+            {
+                String ToStringMin2Numbers(object value)
+                {
+                    var str = value.ToString();
+                    while (str.Length < 2)
+                        str = '0' + str;
+                    return str;
+                }
+
+                var time = request.EventOccursAt;
+                var hour = ToStringMin2Numbers(time.Hour);
+                var minute = ToStringMin2Numbers(time.Minute);
+                var second = ToStringMin2Numbers(time.Second);
+                var day = ToStringMin2Numbers(time.Day);
+                var month = ToStringMin2Numbers(time.Month);
+
+                var remainingMinutes = (time - now).TotalMinutes.ToString("0.#");
+
+                String formattedTime = $"At {hour}:{minute}:{second} on {day}/{month}/{time.Year} (in {remainingMinutes} minutes)";
+                return $"{formattedTime}: {request.Message}";
+            }
+
             StringBuilder notificationMessage = new StringBuilder();
             if (requests.Count == 1)
             {
-                notificationMessage.Append(requests[0].Message);
+                notificationMessage.Append(FormatNotificationMessage(requests[0]));
             }
             else
             {
@@ -98,7 +123,7 @@ namespace TW.Vault.Features.Notifications
                 for (int i = 0; i < requests.Count && i < maxNotifications; i++)
                 {
                     notificationMessage.Append($"{i+1}. ");
-                    notificationMessage.Append(requests[i].Message);
+                    notificationMessage.Append(FormatNotificationMessage(requests[i]));
 
                     if (i < requests.Count - 1)
                     {
