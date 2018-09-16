@@ -183,7 +183,7 @@ namespace TW.Vault.Controllers
             return Ok();
         }
 
-        [HttpGet]
+        [HttpGet("settings")]
         public async Task<IActionResult> GetSettings()
         {
             var settings = await context.NotificationUserSettings.FirstOrDefaultAsync(s => s.Uid == CurrentUser.Uid);
@@ -191,6 +191,7 @@ namespace TW.Vault.Controllers
             {
                 settings = new Scaffold.NotificationUserSettings();
                 settings.Uid = CurrentUser.Uid;
+                settings.Tx = BuildTransaction();
                 context.Add(settings);
                 await context.SaveChangesAsync();
             }

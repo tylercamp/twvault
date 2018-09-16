@@ -471,7 +471,7 @@
     });
 
     $uiContainer.find('#save-notification-settings-btn').click(() => {
-
+        saveNotificationSettings();
     });
 
     $uiContainer.find('#notification-time-formats').click((e) => {
@@ -487,6 +487,7 @@
 
 
     updatePhoneNumbers();
+    loadNotificationSettings();
 
     function updatePhoneNumbers() {
         lib.getApi(lib.makeApiUrl('notification/phone-numbers'))
@@ -521,6 +522,48 @@
             })
             .error(() => {
                 alert('An error occurred while getting your phone numbers.');
+            });
+    }
+
+    function loadNotificationSettings() {
+        lib.getApi(lib.makeApiUrl('notification/settings'))
+            .done((data) => {
+                $uiContainer.find('#notify-window-minutes').val(data.sendNotificationBeforeMinutes);
+            })
+            .error(() => {
+                alert('An error occurred.');
+            });
+    }
+
+    function saveNotificationSettings() {
+        let $notificationWindow = $uiContainer.find('#notify-window-minutes');
+        let notificationWindow = $notificationWindow.val().trim();
+        if (!notificationWindow.length) {
+            alert("Empty settings value!");
+            return;
+        }
+
+        if (notificationWindow.match(/[^\d]/)) {
+            alert("Invalid settings value!");
+            return;
+        }
+
+        let data = {
+            sendNotificationBeforeMinutes: parseInt(notificationWindow)
+        };
+
+        $notificationWindow.prop('disabled', true);
+        $uiContainer.find('#save-notification-settings-btn').prop('disabled', true);
+
+        lib.postApi(lib.makeApiUrl('notification/settings'), data)
+            .done(() => {
+                $notificationWindow.prop('disabled', false);
+                $uiContainer.find('#save-notification-settings-btn').prop('disabled', false);
+            })
+            .error(() => {
+                $notificationWindow.prop('disabled', false);
+                $uiContainer.find('#save-notification-settings-btn').prop('disabled', false);
+                alert('An error occurred.');
             });
     }
 }
