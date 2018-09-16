@@ -77,7 +77,7 @@ namespace TW.Vault.Controllers
                     join player in context.Player on user.PlayerId equals player.PlayerId
                     where player.TribeId != null
                     select player.TribeId.Value
-                ).ToListAsync();
+                ).Distinct().ToListAsync();
 
             bool canRead = false;
             if (!village.PlayerId.HasValue)
@@ -94,7 +94,7 @@ namespace TW.Vault.Controllers
                     if (Configuration.Security.RestrictAccessWithinTribes)
                         canReadFromTribe = owningPlayer.TribeId.Value != CurrentTribeId;
                     else
-                        canReadFromTribe = registeredTribeIds.Contains(owningPlayer.TribeId.Value);
+                        canReadFromTribe = !registeredTribeIds.Contains(owningPlayer.TribeId.Value);
                 }
 
                 if (!owningPlayer.TribeId.HasValue || canReadFromTribe || CurrentUserIsAdmin)

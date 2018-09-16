@@ -548,7 +548,11 @@ var lib = (() => {
                     return defaultValue_;
                 }
             } else {
-                return lib.jsonParse(stored);
+                try {
+                    return lib.jsonParse(stored);
+                } catch (_) {
+                    return stored;
+                }
             }
         },
 

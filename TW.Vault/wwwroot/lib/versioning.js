@@ -24,6 +24,8 @@
             cacheKeys.forEach((entry) => {
                 lib.setLocalStorage(entry.key, entry.updater());
             });
+
+            lib.setLocalStorage(lastVersionKey, currentVersion);
         }
     };
 }

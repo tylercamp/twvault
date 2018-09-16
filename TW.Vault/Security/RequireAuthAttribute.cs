@@ -123,6 +123,9 @@ namespace TW.Vault.Security
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
                 failedRequest.Reason = $"User privileges '{discoveredUser.PermissionsLevel}' was less than the minimum '{Configuration.Security.MinimumRequiredPriveleges}'";
+
+                dbContext.Add(failedRequest);
+                dbContext.SaveChanges();
                 context.Result = new StatusCodeResult(401);
                 return;
             }
