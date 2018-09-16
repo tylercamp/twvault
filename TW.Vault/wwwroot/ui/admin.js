@@ -1,9 +1,8 @@
 ﻿
 
-function makeAdminInterface($adminContainer) {
+function makeAdminInterface($uiContainer, $adminContainer) {
     $adminContainer.append(`
-            <button class="btn btn-confirm-yes vault-toggle-admin-btn">Admin Options</button>
-            <div id="admin-inner-container" style="display:none">
+            <div id="admin-inner-container">
                 <div>
                     Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download">
                 </div>
@@ -28,9 +27,7 @@ function makeAdminInterface($adminContainer) {
             </div>
         `.trim());
 
-    $adminContainer.find('.vault-toggle-admin-btn').click(() => {
-        $adminContainer.find('#admin-inner-container').toggle();
-    });
+    $uiContainer.find('.vault-toggle-admin-btn').prop('style', '');
 
     //  Insert existing keys
     lib.getApi(lib.makeApiUrl('admin/keys'))

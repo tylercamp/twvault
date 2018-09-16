@@ -604,7 +604,14 @@ namespace TW.Vault.Scaffold
                     .HasColumnName("phone_number")
                     .HasMaxLength(20);
 
+                entity.Property(e => e.TxId).HasColumnName("tx_id");
+
                 entity.Property(e => e.Uid).HasColumnName("uid");
+
+                entity.HasOne(d => d.Tx)
+                    .WithMany(p => p.NotificationPhoneNumber)
+                    .HasForeignKey(d => d.TxId)
+                    .HasConstraintName("fk_tx_id");
 
                 entity.HasOne(d => d.U)
                     .WithMany(p => p.NotificationPhoneNumber)
@@ -621,6 +628,8 @@ namespace TW.Vault.Scaffold
                     .HasColumnName("id")
                     .HasDefaultValueSql("nextval('feature.notification_request_id_seq'::regclass)");
 
+                entity.Property(e => e.Enabled).HasColumnName("enabled");
+
                 entity.Property(e => e.EventOccursAt).HasColumnName("event_occurs_at");
 
                 entity.Property(e => e.Message)
@@ -628,7 +637,14 @@ namespace TW.Vault.Scaffold
                     .HasColumnName("message")
                     .HasMaxLength(256);
 
+                entity.Property(e => e.TxId).HasColumnName("tx_id");
+
                 entity.Property(e => e.Uid).HasColumnName("uid");
+
+                entity.HasOne(d => d.Tx)
+                    .WithMany(p => p.NotificationRequest)
+                    .HasForeignKey(d => d.TxId)
+                    .HasConstraintName("fk_tx_id");
 
                 entity.HasOne(d => d.U)
                     .WithMany(p => p.NotificationRequest)
@@ -650,6 +666,14 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.NotificationHeadroom)
                     .HasColumnName("notification_headroom")
                     .HasDefaultValueSql("make_interval(0, 0, 0, 0, 0, 3)");
+
+                entity.Property(e => e.TxId).HasColumnName("tx_id");
+
+                entity.HasOne(d => d.Tx)
+                    .WithMany(p => p.NotificationUserSettings)
+                    .HasForeignKey(d => d.TxId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_tx_id");
 
                 entity.HasOne(d => d.U)
                     .WithOne(p => p.NotificationUserSettings)
@@ -967,6 +991,8 @@ namespace TW.Vault.Scaffold
                     .HasColumnName("ip");
 
                 entity.Property(e => e.OccurredAt).HasColumnName("occurred_at");
+
+                entity.Property(e => e.PreviousTxId).HasColumnName("previous_tx_id");
 
                 entity.Property(e => e.Uid).HasColumnName("uid");
 

@@ -40,7 +40,33 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> AddOrUpdateNotificationRequest([FromBody]JSON.Notification jsonNotification)
         {
             var scaffoldRequest = NotificationConvert.JsonToModel(jsonNotification, null);
+            scaffoldRequest.Enabled = true;
+
+            var tx = BuildTransaction();
+            scaffoldRequest.Tx = tx;
+            context.Add(tx);
             context.Add(scaffoldRequest);
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpDelete("requests/{id}")]
+        public async Task<IActionResult> DeleteNotificationRequest(long requestId)
+        {
+            var request = await context.NotificationRequest.FirstOrDefaultAsync(r => r.Id == requestId);
+            if (request == null)
+                return NotFound();
+
+            if (request.Uid != CurrentUser.Uid)
+            {
+                context.Add(MakeFailedAuthRecord("User did not own the notification request"));
+                await context.SaveChangesAsync();
+                return Unauthorized();
+            }
+
+            request.Enabled = false;
+            request.Tx = BuildTransaction(request.Tx);
+            context.Add(request.Tx);
             await context.SaveChangesAsync();
             return Ok();
         }
@@ -70,16 +96,16 @@ namespace TW.Vault.Controllers
                 return BadRequest("Invalid phone number");
             }
 
-            var existingPhoneNumber = await (
+            var scaffoldPhoneNumber = await (
                     from phoneNumber in context.NotificationPhoneNumber
                     where phoneNumber.Uid == CurrentUser.Uid
                     where phoneNumber.PhoneNumber == formattedNumber
                     select phoneNumber
                 ).FirstOrDefaultAsync();
 
-            if (existingPhoneNumber != null)
+            if (scaffoldPhoneNumber != null)
             {
-                existingPhoneNumber.Label = phoneNumberRequest.Label;
+                scaffoldPhoneNumber.Label = phoneNumberRequest.Label;
             }
             else
             {
@@ -95,14 +121,49 @@ namespace TW.Vault.Controllers
                 context.Add(newSettings);
             }
 
-            existingPhoneNumber.Enabled = true;
+            scaffoldPhoneNumber.Enabled = true;
+            scaffoldPhoneNumber.Tx = BuildTransaction(scaffoldPhoneNumber.Tx);
+            context.Add(scaffoldPhoneNumber.Tx);
 
             await context.SaveChangesAsync();
 
-            if (existingPhoneNumber == null)
+            if (scaffoldPhoneNumber == null)
             {
                 SMS.Send(formattedNumber, "This phone number has been registered with the Vault. Text UNSUBSCRIBE to stop receiving messages.");
             }
+
+            return Ok();
+        }
+
+        [HttpDelete("phone-numbers/{id}")]
+        public async Task<IActionResult> DeletePhoneNumber(int id)
+        {
+            var phoneNumber = await context.NotificationPhoneNumber.FirstOrDefaultAsync(pn => pn.Id == id);
+            if (phoneNumber == null)
+                return NotFound();
+
+            if (phoneNumber.Uid != CurrentUser.Uid)
+            {
+                context.Add(MakeFailedAuthRecord("User did not own the phone number"));
+                await context.SaveChangesAsync();
+                return Unauthorized();
+            }
+
+            var wasEnabled = phoneNumber.Enabled;
+
+            context.Remove(phoneNumber);
+            await context.SaveChangesAsync();
+
+            if (wasEnabled)
+            {
+                try
+                {
+                    SMS.Send(phoneNumber.PhoneNumber, "Your number has been removed from the Vault.");
+                }
+                catch { }
+            }
+
+            logger.LogInformation("Phone number for user {0} was deleted by IP {1}", CurrentUser.Uid, UserIP.ToString());
 
             return Ok();
         }
@@ -125,8 +186,11 @@ namespace TW.Vault.Controllers
         [HttpPost("settings")]
         public async Task<IActionResult> UpdateSettings([FromBody]JSON.NotificationSettings newSettings)
         {
-            var existingSettings = await context.NotificationUserSettings.FirstOrDefaultAsync(s => s.Uid == CurrentUser.Uid);
-            NotificationConvert.JsonToModel(newSettings, existingSettings, context);
+            var scaffoldSettings = await context.NotificationUserSettings.FirstOrDefaultAsync(s => s.Uid == CurrentUser.Uid);
+            NotificationConvert.JsonToModel(newSettings, scaffoldSettings, context);
+
+            scaffoldSettings.Tx = BuildTransaction(scaffoldSettings.Tx);
+            context.Add(scaffoldSettings.Tx);
 
             await context.SaveChangesAsync();
 

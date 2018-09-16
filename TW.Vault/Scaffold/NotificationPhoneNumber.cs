@@ -10,7 +10,9 @@ namespace TW.Vault.Scaffold
         public string PhoneNumber { get; set; }
         public string Label { get; set; }
         public bool Enabled { get; set; }
+        public long? TxId { get; set; }
 
+        public Transaction Tx { get; set; }
         public User U { get; set; }
     }
 }

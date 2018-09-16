@@ -74,12 +74,13 @@ namespace TW.Vault.Controllers
         protected bool CurrentUserIsAdmin => CurrentUser.PermissionsLevel >= (short)PermissionLevel.Admin;
         protected bool CurrentUserIsSystem => CurrentUser.PermissionsLevel >= (short)PermissionLevel.System;
 
-        protected Transaction BuildTransaction() => new Transaction
+        protected Transaction BuildTransaction(Transaction previousTransaction = null) => new Transaction
         {
             Ip = HttpContext.Connection.RemoteIpAddress,
             OccurredAt = DateTime.UtcNow,
             Uid = CurrentUser.Uid,
-            WorldId = CurrentWorld.Id
+            WorldId = CurrentWorld.Id,
+            PreviousTxId = previousTransaction?.TxId
         };
 
         protected InvalidDataRecord MakeInvalidDataRecord(String data, String reason) => new InvalidDataRecord
