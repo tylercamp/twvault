@@ -53,7 +53,7 @@ namespace TW.Vault
 
             services
                 .AddScoped<RequireAuthAttribute>()
-                .AddSingleton<Hosting.IHostedService, Features.Notifications.RemindersService>();
+                .AddSingleton<Hosting.IHostedService, Features.Notifications.NotificationsService>();
 
             String connectionString = Configuration.GetConnectionString("Vault");
             services.AddDbContext<VaultContext>(options => options.UseNpgsql(connectionString));

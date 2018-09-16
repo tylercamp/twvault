@@ -11,33 +11,33 @@ using System.Threading.Tasks;
 
 namespace TW.Vault.Features.Notifications
 {
-    public class RemindersService : BackgroundService
+    public class NotificationsService : BackgroundService
     {
         private ILogger logger;
         private IServiceScopeFactory scopeFactory;
 
         private int refreshDelay = Configuration.Behavior.Notifications.NotificationCheckInterval;
 
-        public RemindersService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory)
+        public NotificationsService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory)
         {
             this.scopeFactory = scopeFactory;
-            this.logger = loggerFactory.CreateLogger<RemindersService>();
+            this.logger = loggerFactory.CreateLogger<NotificationsService>();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            logger.LogDebug("Clearing expired reminders on first run...");
-            await WithVaultContext(ClearExpiredReminders);
+            logger.LogDebug("Clearing expired notifications on first run...");
+            await WithVaultContext(ClearExpiredNotifications);
 
             var refreshDelayTimeSpan = TimeSpan.FromMilliseconds(refreshDelay);
 
-            logger.LogDebug("Starting reminders service loop");
+            logger.LogDebug("Starting notifications service loop");
             while (!stoppingToken.IsCancellationRequested)
             {
                 await WithVaultContext(async (context) =>
                 {
                     var now = CurrentServerTime;
-                    var upcomingReminders = await (
+                    var upcomingNotifications = await (
                             from notification in context.NotificationRequest
                             join user in context.User.Include(u => u.NotificationPhoneNumber) on notification.Uid equals user.Uid
                             join userSettings in context.NotificationUserSettings on user.Uid equals userSettings.Uid
@@ -46,19 +46,19 @@ namespace TW.Vault.Features.Notifications
                             select new { Notification = notification, PhoneNumbers = user.NotificationPhoneNumber }
                         ).ToListAsync();
 
-                    if (!upcomingReminders.Any())
+                    if (!upcomingNotifications.Any())
                         return;
 
-                    var remindersByUser = upcomingReminders.Select(r => r.Notification.Uid).Distinct().ToDictionary(
+                    var notificationsByUser = upcomingNotifications.Select(r => r.Notification.Uid).Distinct().ToDictionary(
                             uid => uid,
-                            uid => upcomingReminders.Where(r => r.Notification.Uid == uid).ToList()
+                            uid => upcomingNotifications.Where(r => r.Notification.Uid == uid).ToList()
                         );
 
-                    foreach (var userReminder in remindersByUser)
+                    foreach (var userNotifications in notificationsByUser)
                     {
-                        var reminders = userReminder.Value;
-                        var notificationText = BuildReminderText(reminders.Select(r => r.Notification).ToList());
-                        foreach (var phoneNumber in userReminder.Value[0].PhoneNumbers.Select(pn => pn.PhoneNumber))
+                        var notifications = userNotifications.Value;
+                        var notificationText = BuildNotificationText(notifications.Select(r => r.Notification).ToList());
+                        foreach (var phoneNumber in userNotifications.Value[0].PhoneNumbers.Select(pn => pn.PhoneNumber))
                         {
                             try
                             {
@@ -67,14 +67,14 @@ namespace TW.Vault.Features.Notifications
                             catch (Exception e)
                             {
                                 logger.LogWarning(
-                                    "Unable to send notification for reminder IDs {0} due to exception:\n" + e,
-                                    String.Join(',', reminders.Select(r => r.Notification.Id))
+                                    "Unable to send notification for notification IDs {0} due to exception:\n" + e,
+                                    String.Join(',', notifications.Select(r => r.Notification.Id))
                                 );
                             }
                         }
                     }
 
-                    context.NotificationRequest.RemoveRange(upcomingReminders.Select(r => r.Notification));
+                    context.NotificationRequest.RemoveRange(upcomingNotifications.Select(r => r.Notification));
                     await context.SaveChangesAsync();
                 });
 
@@ -85,35 +85,35 @@ namespace TW.Vault.Features.Notifications
         //  TODO - Change this on a per-world basis
         private DateTime CurrentServerTime => DateTime.UtcNow + TimeSpan.FromHours(1);
 
-        private String BuildReminderText(List<Scaffold.NotificationRequest> requests)
+        private String BuildNotificationText(List<Scaffold.NotificationRequest> requests)
         {
-            StringBuilder reminderMessage = new StringBuilder();
+            StringBuilder notificationMessage = new StringBuilder();
             if (requests.Count == 1)
             {
-                reminderMessage.Append(requests[0].Message);
+                notificationMessage.Append(requests[0].Message);
             }
             else
             {
                 var maxNotifications = Configuration.Behavior.Notifications.MaxNotificationsPerMessage;
                 for (int i = 0; i < requests.Count && i < maxNotifications; i++)
                 {
-                    reminderMessage.Append($"{i+1}. ");
-                    reminderMessage.Append(requests[i].Message);
+                    notificationMessage.Append($"{i+1}. ");
+                    notificationMessage.Append(requests[i].Message);
 
                     if (i < requests.Count - 1)
                     {
-                        reminderMessage.AppendLine();
-                        reminderMessage.AppendLine();
+                        notificationMessage.AppendLine();
+                        notificationMessage.AppendLine();
                     }
                 }
 
                 if (requests.Count > maxNotifications)
                 {
-                    reminderMessage.Append($"({requests.Count - maxNotifications} more not shown)");
+                    notificationMessage.Append($"({requests.Count - maxNotifications} more not shown)");
                 }
             }
 
-            return reminderMessage.ToString();
+            return notificationMessage.ToString();
         }
 
         private async Task WithVaultContext(Func<Scaffold.VaultContext, Task> action)
@@ -127,16 +127,16 @@ namespace TW.Vault.Features.Notifications
             }
         }
 
-        private async Task ClearExpiredReminders(Scaffold.VaultContext context)
+        private async Task ClearExpiredNotifications(Scaffold.VaultContext context)
         {
             var now = CurrentServerTime;
-            var expiredReminders = await (
-                    from reminder in context.NotificationRequest
-                    where reminder.EventOccursAt < CurrentServerTime
-                    select reminder
+            var expiredNotifications = await (
+                    from notification in context.NotificationRequest
+                    where notification.EventOccursAt < CurrentServerTime
+                    select notification
                 ).ToListAsync();
 
-            context.RemoveRange(expiredReminders);
+            context.RemoveRange(expiredNotifications);
             await context.SaveChangesAsync();
         }
     }
