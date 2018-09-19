@@ -126,10 +126,24 @@
                 });
             });
 
+            if (!requestManager.getStats().total) {
+                lib.setLocalStorage('commands-history', oldCommands);
+                lib.postApi(lib.makeApiUrl('command/finished-command-uploads'));
+                onProgress_ && onProgress_('Finished: No new commands to upload.');
+
+                if (onDone_)
+                    onDone_();
+                else
+                    alert('No new commands to upload.');
+
+                return;
+            }
+
             requestManager.start();
 
             requestManager.setFinishedHandler(() => {
                 let stats = requestManager.getStats();
+                lib.setLocalStorage('commands-history', oldCommands);
                 onProgress_ && onProgress_(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`);
 
                 if (!onDone_)
