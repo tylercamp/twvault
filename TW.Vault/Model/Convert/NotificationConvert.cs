@@ -84,13 +84,15 @@ namespace TW.Vault.Model.Convert
             phoneNumber = NotANumberRegex.Replace(phoneNumber, String.Empty);
 
             //  ie +1 234-567-8901
-            if (phoneNumber.Length != 11)
+            if (phoneNumber.Length < 11)
                 return null;
 
-            String countryCode = phoneNumber.Substring(0, 1);
-            String areaCode = phoneNumber.Substring(1, 3);
-            String prefix = phoneNumber.Substring(4, 3);
-            String lineNumber = phoneNumber.Substring(7, 4);
+            String countryCode = phoneNumber.Substring(0, phoneNumber.Length - 10);
+            int baseIndex = countryCode.Length;
+
+            String areaCode = phoneNumber.Substring(baseIndex, 3);
+            String prefix = phoneNumber.Substring(baseIndex + 3, 3);
+            String lineNumber = phoneNumber.Substring(baseIndex + 6, 4);
 
             return $"+{countryCode} {areaCode}-{prefix}-{lineNumber}";
         }
