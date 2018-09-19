@@ -45,7 +45,7 @@ namespace TW.Vault.Controllers
                     from user in context.User
                     join player in context.Player on user.PlayerId equals player.PlayerId
                     join tribe in context.Ally on player.TribeId equals tribe.TribeId
-                    where CurrentUser.KeySource == null || user.KeySource == CurrentUser.Uid
+                    where CurrentUser.KeySource == null || user.KeySource == CurrentUser.Uid || !Configuration.Security.RestrictAccessWithinTribes
                     where user.Enabled
                     where player.WorldId == CurrentWorldId
                     where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
