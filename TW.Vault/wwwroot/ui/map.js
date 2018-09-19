@@ -302,7 +302,7 @@
                             </tr>
                             `}
                         `}
-                        ${ !data.nukesRequired || !data.showNukes ? '' : `
+                        ${ !data.nukesRequired || !settings.showNukes ? '' : `
                         <tr>
                             <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear at ${data.morale}% morale</td>
                         </tr>
