@@ -7,7 +7,8 @@
     $doc.find('#vault-ui-container').remove();
     var $uiContainer = $(`
         <div id="vault-ui-container" class="confirmation-box" style="border-width: 20px">
-        <div class="confirmation-box-content-pane" style="min-height:100%">
+        <!-- Weird margins on this since TW styling has an annoying gap -->
+        <div class="confirmation-box-content-pane" style="min-height:100%;margin-left:-1px;margin-bottom:-1px">
         <div class="confirmation-box-content" style="min-height:100%">
             <h3>Vault</h3>
             <p>
@@ -77,7 +78,7 @@
                     </table>
                 </div>
 
-                <div id="vault-notifications-container" style="padding:1em;">
+                <div id="vault-notifications-container" style="padding:1em;display:none">
                     <p>
                         The Vault can send you a text at a certain time. Use this as a reminder for launch times, etc. All
                         phone numbers added here will be texted when a notification is sent.
@@ -435,7 +436,7 @@
         let label = $label.val();
 
         let trimmedNumber = phoneNumber.replace(/[^\d]/g, '');
-        if (trimmedNumber.length != 11) {
+        if (trimmedNumber.length < 11) {
             alert('Invalid phone number - must include country code and area code.\n\nie +1 202-555-0109');
             return;
         }
