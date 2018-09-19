@@ -361,7 +361,6 @@ var lib = (() => {
 
             var t = query['t'];
             if (t) {
-                t = t.match(/t=(\w+)/)[1];
                 if (url.contains("?")) {
                     url += `&t=${t}`;
                 } else {
