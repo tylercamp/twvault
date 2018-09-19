@@ -270,10 +270,14 @@ namespace TW.Vault.Controllers
                     });
                 }
 
+                await Profile("Save changes", () => context.SaveChangesAsync());
+
+                //  Run upload history update in separate query to prevent creating multiple history
+                //  entries
                 var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
                 userUploadHistory.LastUploadedReportsAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
 
-                await Profile("Save changes", () => context.SaveChangesAsync());
                 return Ok();
             }
             else

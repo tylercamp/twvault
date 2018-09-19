@@ -414,10 +414,14 @@ namespace TW.Vault.Controllers
             var currentPlayer = await EFUtil.GetOrCreateCurrentPlayer(context, CurrentUser.PlayerId, CurrentWorldId);
             currentPlayer.CurrentPossibleNobles = currentArmySetJson.PossibleNobles;
 
+            await Profile("Save changes", () => context.SaveChangesAsync());
+
+            //  Run upload history update in separate query to prevent creating multiple history
+            //  entries
             var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
             userUploadHistory.LastUploadedTroopsAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
 
-            await Profile("Save changes", () => context.SaveChangesAsync());
             return Ok();
         }
     }
