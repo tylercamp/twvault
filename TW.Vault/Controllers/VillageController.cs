@@ -226,7 +226,9 @@ namespace TW.Vault.Controllers
                     if (currentVillage.CurrentBuilding != null)
                         wallLevel += new ConstructionCalculator().CalculateLevelsInTimeSpan(BuildingType.Wall, hqLevel, wallLevel, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated.Value);
 
-                    jsonData.NukesRequired = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, morale ?? 100);
+                    var nukeEstimation = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, morale ?? 100);
+                    jsonData.NukesRequired = nukeEstimation.NukesRequired;
+                    jsonData.LastNukeLossPercent = (int)(nukeEstimation.LastNukeLossesPercent);
                 }
 
                 //  Might have CurrentArmy entries but they're just empty/null - not based on any report data

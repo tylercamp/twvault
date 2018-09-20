@@ -240,18 +240,35 @@ namespace TW.Vault.Features.Simulation
             };
         }
 
-        public int EstimateRequiredNukes(Army defendingArmy, int wallLevel, int moralePercent)
+
+
+
+        public struct NukeEstimationResult
+        {
+            public int NukesRequired;
+            public float LastNukeLossesPercent;
+        }
+
+        public NukeEstimationResult EstimateRequiredNukes(Army defendingArmy, int wallLevel, int moralePercent)
         {
             var activeDefendingArmy = new Army(defendingArmy);
             int numNukes = 0;
+            float lastNukeLossRatio = 0;
             while (!IsArmyEmpty(activeDefendingArmy))
             {
                 var battleResult = SimulateAttack(DefaultNukeArmy, activeDefendingArmy, wallLevel, moralePercent);
                 wallLevel = battleResult.NewWallLevel;
                 activeDefendingArmy = battleResult.DefendingArmy;
                 ++numNukes;
+
+                lastNukeLossRatio = 1.0f - ArmyStats.CalculateTotalPopulation(battleResult.AttackingArmy) / (float)ArmyStats.CalculateTotalPopulation(DefaultNukeArmy);
             }
-            return numNukes;
+
+            return new NukeEstimationResult
+            {
+                NukesRequired = numNukes,
+                LastNukeLossesPercent = lastNukeLossRatio * 100
+            };
         }
     }
 }

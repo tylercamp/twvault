@@ -304,7 +304,7 @@
                         `}
                         ${ !data.nukesRequired || !settings.showNukes ? '' : `
                         <tr>
-                            <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear at ${data.morale}% morale</td>
+                            <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear at ${data.morale}% morale (last nuke has ~${data.lastNukeLossPercent}% losses)</td>
                         </tr>
                         `}
                     </table>
