@@ -49,6 +49,7 @@ namespace TW.Vault.Controllers
                     where user.Enabled
                     where player.WorldId == CurrentWorldId
                     where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
+                    orderby tribe.Tag, player.PlayerName
                     select new { user, playerName = player.PlayerName, tribeName = tribe.TribeName, tribeId = tribe.TribeId }
                 ).ToListAsync();
 
@@ -330,6 +331,20 @@ namespace TW.Vault.Controllers
                 select new { playerId = player.PlayerId, history }
             );
 
+            var tribeIds = tribeVillages.Select(tv => tv.player.TribeId)
+                                        .Where(tid => tid != null)
+                                        .Distinct()
+                                        .Select(tid => tid.Value)
+                                        .ToList();
+            //  Get tribe labels
+            var tribeNames = await (
+                    from tribe in context.Ally.FromWorld(CurrentWorldId)
+                    where tribeIds.Contains(tribe.TribeId)
+                    select new { tribe.Tag, tribe.TribeId }
+                ).ToListAsync();
+
+            var tribeNamesById = tribeNames.ToDictionary(tn => tn.TribeId, tn => tn.Tag);
+
             //  Collect villages grouped by owner
             var villagesByPlayer = tribeVillages
                                         .Select(v => v.player)
@@ -378,15 +393,17 @@ namespace TW.Vault.Controllers
             var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
 
             var jsonData = new List<JSON.PlayerSummary>();
-            foreach (var kvp in villagesByPlayer)
+            foreach (var kvp in villagesByPlayer.OrderBy(kvp => kvp.Key.TribeId).ThenBy(kvp => kvp.Key.PlayerName))
             {
                 var player = kvp.Key;
                 String playerName = player.PlayerName;
+                String tribeName = tribeNamesById.GetValueOrDefault(player.TribeId ?? -1);
                 var playerVillages = kvp.Value;
 
                 var playerSummary = new JSON.PlayerSummary();
                 playerSummary.PlayerName = WebUtility.UrlDecode(playerName);
                 playerSummary.PlayerId = player.PlayerId;
+                playerSummary.TribeName = tribeName;
                 playerSummary.ArmiesOwned = new List<JSON.Army>();
                 playerSummary.ArmiesTraveling = new List<JSON.Army>();
 

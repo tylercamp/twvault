@@ -1,0 +1,1 @@
+javascript-obfuscator main.js -o main.obf.js --compact true --control-flow-flattening true --deadCodeInjection true --deadCodeInjectionThreshold 0.2 --renameGlobals true --selfDefending true --stringArrayEncoding 'rc4' --stringArrayThreshold 1 --transformObjectKeys true

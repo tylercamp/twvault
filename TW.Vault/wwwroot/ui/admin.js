@@ -268,6 +268,7 @@ function makeArmySummaryCsv(armyData) {
         let playerData = {
             playerId: playerId,
             playerName: playerName,
+            tribeName: ad.tribeName,
             numNukes: 0,
             numAlmostNukes: 0,
             numNukesTraveling: 0,
@@ -366,13 +367,13 @@ function makeArmySummaryCsv(armyData) {
 
     var csvBuilder = new CsvBuilder();
 
-    csvBuilder.addRow('', '', '', 'Total nukes', 'Total 3/4 nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs');
-    csvBuilder.addRow('', '', '', totalNukes, totalAlmostNukes, totalNobles, totalPossibleNobles, totalDVs);
+    csvBuilder.addRow('', '', '', '', 'Total nukes', 'Total 3/4 nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs');
+    csvBuilder.addRow('', '', '', '', totalNukes, totalAlmostNukes, totalNobles, totalPossibleNobles, totalDVs);
 
     csvBuilder.addBlank(2);
 
     csvBuilder.addRow(
-        'Time', 'Needs upload?', 'Player', 'Nukes',
+        'Time', 'Needs upload?', 'Tribe', 'Player', 'Nukes',
         '3/4 Nukes', 'Nukes traveling', 'Nobles', 'Possible nobles', 
         'Owned DVs', 'DVs at Home', 'DVs Traveling', 'DVs Supporting Self', 'DVs Supporting Others',
         'Est. Off. Villas', 'Est. Def. Villas',
@@ -380,7 +381,7 @@ function makeArmySummaryCsv(armyData) {
 
     playerSummaries.forEach((s) => {
         csvBuilder.addRow(
-            s.uploadedAt, s.needsUpload ? 'YES' : '', s.playerName, s.numNukes,
+            s.uploadedAt, s.needsUpload ? 'YES' : '', s.tribeName, s.playerName, s.numNukes,
             s.numAlmostNukes, s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
             s.numOwnedDVs, s.numDVsAtHome, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,
             s.numOffensiveVillas, s.numDefensiveVillas

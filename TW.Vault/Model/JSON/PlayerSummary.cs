@@ -9,6 +9,7 @@ namespace TW.Vault.Model.JSON
     {
         public long PlayerId { get; set; }
         public String PlayerName { get; set; }
+        public String TribeName { get; set; }
         public int? MaxPossibleNobles { get; set; }
         public TimeSpan UploadAge { get; set; }
         public DateTime UploadedAt { get; set; }

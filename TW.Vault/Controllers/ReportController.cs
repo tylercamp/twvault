@@ -193,7 +193,7 @@ namespace TW.Vault.Controllers
                     scaffoldReport.Tx = tx;
                 });
 
-                if (jsonReport.AttackingArmy != jsonReport.AttackingArmyLosses)
+                if (jsonReport.AttackingArmy != jsonReport.AttackingArmyLosses && jsonReport.AttackingPlayerId != null)
                 {
                     await Profile("Update command troop type", async () =>
                     {
@@ -212,7 +212,7 @@ namespace TW.Vault.Controllers
                             command.FirstSeenAt = DateTime.UtcNow;
                             command.IsAttack = true;
                             command.SourcePlayerId = jsonReport.AttackingPlayerId.Value;
-                            command.TargetPlayerId = jsonReport.DefendingPlayerId.Value;
+                            command.TargetPlayerId = jsonReport.DefendingPlayerId;
                             command.SourceVillageId = jsonReport.AttackingVillageId.Value;
                             command.TargetVillageId = jsonReport.DefendingVillageId.Value;
                             command.LandsAt = jsonReport.OccurredAt.Value;
