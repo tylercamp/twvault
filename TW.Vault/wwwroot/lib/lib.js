@@ -80,7 +80,7 @@ var lib = (() => {
 
             var result;
 
-            let dateSeparators = ['/', '.'];
+            let dateSeparators = ['/', '.', '-'];
             let timeSeparators = [':', '.'];
             let dateSeparatorsStr = dateSeparators.map((s) => `\\${s}`).join('');
             let timeSeparatorsStr = timeSeparators.map((s) => `\\${s}`).join('');
