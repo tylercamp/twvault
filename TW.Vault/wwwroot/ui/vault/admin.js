@@ -1,33 +1,119 @@
 ﻿
 
-function makeAdminInterface($uiContainer, $adminContainer) {
-    $adminContainer.append(`
-            <div id="admin-inner-container">
-                <div>
-                    Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download">
-                </div>
-                <div id="keys-container">
-                    <h4>Keys</h4>
-                    <table id="keys-table" style="width:100%">
-                        <tr>
-                            <th>User name</th>
-                            <th>Current tribe</th>
-                            <th>Auth key</th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </table>
-                    <input type="button" id="new-key-button" value="Make new key">
+function makeAdminTab() {
 
-                    <div id="key-script-container" style="display:none">
-                        <h5 style="margin-top:2em">New Vault Script</h5>
-                        <textarea cols=100 rows=5></textarea>
-                    </div>
-                </div>
+    let usersTab = makeAdminUsersTab();
+    let statsTab = makeAdminStatsTab();
+
+    let tabs = [
+        statsTab,
+        usersTab
+    ];
+
+    let adminTab = {
+        label: 'Admin Options',
+        containerId: 'vault-admin-container',
+        btnCss: 'display:none',
+
+        init: function ($container) {
+            lib.getApi(lib.makeApiUrl('admin'))
+                .done((data) => {
+                    if (typeof data == 'string')
+                        data = JSON.parse(data);
+
+                    console.log('isAdmin = ', data.isAdmin);
+
+                    if (data.isAdmin) {
+                        $('#' + adminTab.btnId).css('display', 'inline-block');
+                        makeAdminUsersInterface($container, adminTab);
+                    }
+                });
+        },
+
+        getContent: function () {
+            return uilib.mkTabbedContainer(statsTab.containerId, tabs);
+        }
+    };
+
+    return adminTab;
+}
+
+function makeAdminUsersTab() {
+    return {
+        label: 'Manage Users',
+        containerId: 'vault-admin-users-container',
+
+        getContent: () => `
+            <h4>Keys</h4>
+            <input type="button" id="new-key-button" value="Make new key">
+
+            <div id="key-script-container" style="display:none">
+                <h5 style="margin-top:2em">New Vault Script</h5>
+                <textarea cols=100 rows=5></textarea>
             </div>
-        `.trim());
+            <table id="keys-table" style="width:100%">
+                <tr>
+                    <th>User name</th>
+                    <th>Current tribe</th>
+                    <th>Auth key</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </table>
+        `
+    };
+}
 
-    $uiContainer.find('.vault-toggle-admin-btn').prop('style', '');
+function makeAdminStatsTab() {
+    return {
+        label: 'Tribe Stats',
+        containerId: 'vault-admin-stats-container',
+
+        init: function ($container) {
+            $container.find('#download-army-stats').click(() => {
+                let $downloadButton = $container.find('#download-army-stats');
+                let originalText = $downloadButton.val();
+
+                let loading = () => { $downloadButton.val('Working...'); $downloadButton.prop('disabled', true); };
+                let loadingDone = () => { $downloadButton.val(originalText); $downloadButton.prop('disabled', false); };
+
+                loading();
+
+                lib.getApi(lib.makeApiUrl('admin/summary'))
+                    .error(() => {
+                        alert('An error occurred...');
+                        loadingDone();
+                    })
+                    .done((data) => {
+                        if (typeof data == 'string')
+                            data = JSON.parse(data);
+
+                        console.log('Got data: ', data);
+
+                        try {
+                            let csvText = makeArmySummaryCsv(data);
+                            let filename = `army-summary.csv`;
+
+                            lib.saveAsFile(filename, csvText);
+                            loadingDone();
+
+                        } catch (e) {
+                            loadingDone();
+                            alert('An error occurred...');
+                            throw e;
+                        }
+                    });
+            });
+        },
+
+        getContent: () => `
+            Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download">
+        `
+    };
+}
+
+
+function makeAdminUsersInterface($container, adminTab) {
 
     //  Insert existing keys
     lib.getApi(lib.makeApiUrl('admin/keys'))
@@ -46,28 +132,8 @@ function makeAdminInterface($uiContainer, $adminContainer) {
             }
         });
 
-    $adminContainer.find('#download-army-stats').click(() => {
-        lib.getApi(lib.makeApiUrl('admin/summary'))
-            .error(() => alert('An error occurred...'))
-            .done((data) => {
-                if (typeof data == 'string')
-                    data = JSON.parse(data);
-
-                try {
-                    let csvText = makeArmySummaryCsv(data);
-                    let filename = `army-summary.csv`;
-
-                    lib.saveAsFile(filename, csvText);
-
-                } catch (e) {
-                    alert('An error occurred...');
-                    throw e;
-                }
-            });
-    });
-
     //  Logic for making a new auth key
-    $adminContainer.find('#new-key-button').click(() => {
+    $container.find('#new-key-button').click(() => {
         var username = prompt("Enter the username or ID");
         if (!username)
             return;
@@ -114,7 +180,7 @@ function makeAdminInterface($uiContainer, $adminContainer) {
 
             let authKey = user.key;
             lib.deleteApi(lib.makeApiUrl(`admin/keys/${authKey}`))
-                .done((data) => {
+                .done(() => {
                     $newRow.remove();
                 })
                 .error((xhr) => {
@@ -127,7 +193,7 @@ function makeAdminInterface($uiContainer, $adminContainer) {
                 });
         });
 
-        $adminContainer.find('#keys-table').append($newRow);
+        $container.find('#keys-table').append($newRow);
     }
 
     function displayUserScript(user) {
@@ -143,94 +209,6 @@ function makeAdminInterface($uiContainer, $adminContainer) {
 
         $('#key-script-container h5').text(`Vault Script for: ${user.playerName}`);
     }
-}
-
-function processUploadReports($statusContainer, onDone) {
-    $.get(lib.makeTwUrl(lib.pageTypes.ALL_REPORTS)).done((data) => {
-        try {
-            if (lib.checkContainsCaptcha(data)) {
-                return onDone(lib.errorCodes.CAPTCHA);
-            }
-
-            let $doc = $(data);
-            parseAllReports($doc, (msg) => {
-                $statusContainer.text(msg);
-            }, (didFail) => {
-                onDone(didFail);
-            });
-        } catch (e) {
-            $statusContainer.text('An error occurred.');
-            console.error(e);
-
-            onDone(true);
-        }
-    });
-}
-
-function processUploadIncomings($statusContainer, onDone) {
-    $.get(lib.makeTwUrl(lib.pageTypes.INCOMINGS_OVERVIEW)).done((data) => {
-        try {
-            if (lib.checkContainsCaptcha(data)) {
-                return onDone(lib.errorCodes.CAPTCHA);
-            }
-
-            let $doc = $(data);
-            parseAllIncomings($doc, (msg) => {
-                $statusContainer.text(msg);
-            }, (didFail) => {
-                onDone(didFail);
-            });
-        } catch (e) {
-            $statusContainer.text('An error occurred.');
-            console.error(e);
-
-            onDone(true);
-        }
-    });
-}
-
-function processUploadCommands($statusContainer, onDone) {
-    $.get(lib.makeTwUrl(lib.pageTypes.OWN_COMMANDS_OVERVIEW)).done((data) => {
-        try {
-            if (lib.checkContainsCaptcha(data)) {
-                return onDone(lib.errorCodes.CAPTCHA);
-            }
-
-            let $doc = $(data);
-            parseAllCommands($doc, (msg) => {
-                $statusContainer.text(msg);
-            }, (didFail) => {
-                onDone(didFail);
-            });
-        } catch (e) {
-            $statusContainer.text('An error occurred.');
-            console.error(e);
-
-            onDone(true);
-        }
-    });
-}
-
-function processUploadTroops($statusContainer, onDone) {
-    $.get(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_OVERVIEW)).done((data) => {
-        try {
-            if (lib.checkContainsCaptcha(data)) {
-                return onDone(lib.errorCodes.CAPTCHA);
-            }
-
-            let $doc = $(data);
-            parseAllTroops($doc, (msg) => {
-                $statusContainer.text(msg);
-            }, (didFail) => {
-                onDone(didFail);
-            });
-        } catch (e) {
-            $statusContainer.text('An error occurred.');
-            console.error(e);
-
-            onDone(true);
-        }
-    });
 }
 
 function makeArmySummaryCsv(armyData) {

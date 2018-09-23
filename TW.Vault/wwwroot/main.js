@@ -18,7 +18,7 @@
 
     /*** UI ***/
     //# REQUIRE ui/map.js
-    //# REQUIRE ui/all.js
+    //# REQUIRE ui/vault.js
     //# REQUIRE ui/tag-incomings.js
 
     //  Store current script host for dependent scripts that rely on it
