@@ -24,6 +24,8 @@ namespace TW.Vault.Model.JSON
         public Army ArmySupportingOthers { get; set; }
         public Army ArmySupportingSelf { get; set; }
 
+        public Dictionary<String, int> SupportPopulationByTargetTribe { get; set; }
+
         public int NumAttackCommands { get; set; }
         public int NumSupportCommands { get; set; }
         public int NumIncomings { get; set; }

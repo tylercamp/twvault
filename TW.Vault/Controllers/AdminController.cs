@@ -291,6 +291,8 @@ namespace TW.Vault.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> GetTroopsSummary()
         {
+            //  Dear jesus this is such a mess
+
             if (!CurrentUserIsAdmin)
             {
                 var authRecord = MakeFailedAuthRecord("User is not admin");
@@ -299,14 +301,19 @@ namespace TW.Vault.Controllers
                 return Unauthorized();
             }
 
+            DateTime start = DateTime.UtcNow;
+
             //  This is a mess because of different classes for Player, CurrentPlayer, etc
 
             var (tribeVillages, currentPlayers, uploadHistory) = await ManyTasks.RunToList(
                 //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
+                //  (This returns a lot of data and will be slow)
                 from player in context.Player.FromWorld(CurrentWorldId)
                 join user in context.User on player.PlayerId equals user.PlayerId
                 join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
-                join currentVillage in context.CurrentVillage.IncludeCurrentVillageData()
+                join currentVillage in context.CurrentVillage.Include(cv => cv.ArmyAtHome)
+                                                             .Include(cv => cv.ArmyOwned)
+                                                             .Include(cv => cv.ArmyTraveling)
                                     on village.VillageId equals currentVillage.VillageId
                 where user.Enabled
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
@@ -356,6 +363,11 @@ namespace TW.Vault.Controllers
                                                               .ToList()
                                          );
 
+            var villageIdsByPlayer = villagesByPlayer.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Select(v => v.VillageId).ToList()
+            );
+
             var uploadHistoryByPlayer = uploadHistory
                                         .Select(h => h.playerId)
                                         .Distinct()
@@ -368,7 +380,7 @@ namespace TW.Vault.Controllers
 
             //  Get all support data for the tribe
             var tribeVillageIds = tribeVillages.Select(v => v.currentVillage.VillageId).ToList();
-
+            //  'tribeVillageIds' tends to be large, so this will be a slow query
             var villagesSupport = await (
                     from support in context.CurrentVillageSupport
                                            .FromWorld(CurrentWorldId)
@@ -376,19 +388,39 @@ namespace TW.Vault.Controllers
                     where tribeVillageIds.Contains(support.SourceVillageId)
                     select support
                 ).ToListAsync();
+            
 
 
-            //  Get support data by player Id
+            //  Get support data by player Id, and sorted by target tribe ID
             var playersById = tribeVillages.Select(tv => tv.player).Distinct().ToDictionary(p => p.PlayerId, p => p);
 
-            var villagesSupportByPlayerId = currentPlayers.ToDictionary(
-                p => p.PlayerId,
-                p => villagesSupport.Where(
-                    s => villagesByPlayer[playersById[p.PlayerId]].Any(
-                        v => v.VillageId == s.SourceVillageId
-                    )
-                )
+            var tribeIdsByVillage = tribeVillages.ToDictionary(
+                v => v.currentVillage.VillageId,
+                v => v.player.TribeId ?? -1
             );
+
+            var villagesSupportByPlayerId = new Dictionary<long, List<Scaffold.CurrentVillageSupport>>();
+            var villagesSupportByPlayerIdByTargetTribeId = new Dictionary<long, Dictionary<long, List<Scaffold.CurrentVillageSupport>>>();
+
+            foreach (var player in currentPlayers)
+            {
+                var supportFromPlayer = villagesSupport.Where(
+                    s => villageIdsByPlayer[playersById[player.PlayerId]].Contains(s.SourceVillageId)
+                ).ToList();
+
+                villagesSupportByPlayerId.Add(player.PlayerId, supportFromPlayer);
+
+                var supportByTribe = tribeIds.ToDictionary(tid => tid, _ => new List<Scaffold.CurrentVillageSupport>());
+                supportByTribe.Add(-1, new List<Scaffold.CurrentVillageSupport>());
+
+                foreach (var support in supportFromPlayer)
+                {
+                    var targetTribeId = tribeIdsByVillage.GetValueOrDefault(support.TargetVillageId, -1);
+                    supportByTribe[targetTribeId].Add(support);
+                }
+
+                villagesSupportByPlayerIdByTargetTribeId.Add(player.PlayerId, supportByTribe);
+            }
 
             var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
 
@@ -440,6 +472,18 @@ namespace TW.Vault.Controllers
                     //  Support where the target isn't any of the players' own villages
                     foreach (var support in playerSupport.Where(s => playerVillages.All(v => v.VillageId != s.TargetVillageId)))
                         playerSummary.ArmySupportingOthers += ArmyConvert.ArmyToJson(support.SupportingArmy);
+
+                    playerSummary.SupportPopulationByTargetTribe = new Dictionary<string, int>();
+
+                    foreach (var (tribeId, supportToTribe) in villagesSupportByPlayerIdByTargetTribeId[player.PlayerId])
+                    {
+                        var supportedTribeName = tribeNamesById.GetValueOrDefault(tribeId, "Unknown");
+                        var totalSupportPopulation = 0;
+                        foreach (var support in supportToTribe)
+                            totalSupportPopulation += ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(support.SupportingArmy));
+
+                        playerSummary.SupportPopulationByTargetTribe.Add(supportedTribeName, totalSupportPopulation);
+                    }
                 }
 
                 jsonData.Add(playerSummary);

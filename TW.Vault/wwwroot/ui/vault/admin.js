@@ -224,6 +224,8 @@ function makeArmySummaryCsv(armyData) {
     var totalNobles = 0;
     var totalPossibleNobles = 0;
 
+    let supportedTribeNames = [];
+
     let round = (num) => Math.roundTo(num, 1);
 
     let offensiveArmyPopulation = (army) => {
@@ -258,6 +260,7 @@ function makeArmySummaryCsv(armyData) {
             numDVsTraveling: 0,
             numDVsSupportingOthers: 0,
             numDVsSupportingSelf: 0,
+            numDVsSupportingTribes: {},
 
             numDefensiveVillas: 0,
             numOffensiveVillas: 0
@@ -330,6 +333,12 @@ function makeArmySummaryCsv(armyData) {
             playerData.numDVsSupportingSelf = round(defensiveSupportingSelfPop / fullDVPop);
         }
 
+        lib.objForEach(ad.supportPopulationByTargetTribe, (tribe, pop) => {
+            playerData.numDVsSupportingTribes[tribe] = round(pop / fullDVPop);
+            if (!supportedTribeNames.contains(tribe))
+                supportedTribeNames.push(tribe);
+        });
+
         totalNukes += playerData.numNukes;
         totalAlmostNukes += playerData.numAlmostNukes;
         totalDVs += playerData.numOwnedDVs;
@@ -342,8 +351,8 @@ function makeArmySummaryCsv(armyData) {
     console.log('Made player summaries: ', playerSummaries);
 
 
-
     var csvBuilder = new CsvBuilder();
+    supportedTribeNames.sort();
 
     csvBuilder.addRow('', '', '', '', 'Total nukes', 'Total 3/4 nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs');
     csvBuilder.addRow('', '', '', '', totalNukes, totalAlmostNukes, totalNobles, totalPossibleNobles, totalDVs);
@@ -355,6 +364,8 @@ function makeArmySummaryCsv(armyData) {
         '3/4 Nukes', 'Nukes traveling', 'Nobles', 'Possible nobles', 
         'Owned DVs', 'DVs at Home', 'DVs Traveling', 'DVs Supporting Self', 'DVs Supporting Others',
         'Est. Off. Villas', 'Est. Def. Villas',
+        '',
+        ...supportedTribeNames.map((tn) => `DVs to ${tn}`)
     );
 
     playerSummaries.forEach((s) => {
@@ -362,7 +373,7 @@ function makeArmySummaryCsv(armyData) {
             s.uploadedAt, s.needsUpload ? 'YES' : '', s.tribeName, s.playerName, s.numNukes,
             s.numAlmostNukes, s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
             s.numOwnedDVs, s.numDVsAtHome, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,
-            s.numOffensiveVillas, s.numDefensiveVillas
+            s.numOffensiveVillas, s.numDefensiveVillas, '', ...supportedTribeNames.map((tn) => s.numDVsSupportingTribes[tn] || '0')
         );
     });
 
