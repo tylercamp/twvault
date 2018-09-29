@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using TW.Vault.Features;
 
@@ -150,46 +153,5 @@ namespace TW.Vault.Security
             Profiling.StoreData(dbContext).Wait();
             base.OnActionExecuted(context);
         }
-
-        //public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
-        //{
-        //    var authHeaders = AuthenticationUtil.ParseHeaders(context.HttpContext.Request.Headers);
-        //    if (!authHeaders.IsValid)
-        //    {
-        //        var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
-        //        failedRequest.Reason = "Invalid authentication headers";
-        //        await dbContext.AddAsync(failedRequest);
-        //        await dbContext.SaveChangesAsync();
-
-        //        context.Result = new StatusCodeResult(401);
-        //        return;
-        //    }
-
-        //    var authToken = authHeaders.AuthToken;
-        //    var discoveredUser = await (
-        //            from user in dbContext.User
-        //            where user.AuthToken == authToken
-        //            select user
-        //        ).FirstOrDefaultAsync();
-
-        //    if (discoveredUser == null || !discoveredUser.Enabled)
-        //    {
-        //        var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
-        //        if (discoveredUser == null)
-        //            failedRequest.Reason = "No user found with given token";
-        //        else
-        //            failedRequest.Reason = "Requested by disabled user";
-
-        //        await dbContext.AddAsync(failedRequest);
-        //        await dbContext.SaveChangesAsync();
-
-        //        context.Result = new StatusCodeResult(401);
-        //        return;
-        //    }
-
-        //    context.HttpContext.Items["User"] = discoveredUser;
-
-        //    await next();
-        //}
     }
 }

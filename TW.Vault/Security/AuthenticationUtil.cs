@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TW.Vault.Features;
 
 namespace TW.Vault.Security
 {
@@ -12,26 +13,28 @@ namespace TW.Vault.Security
         {
             var result = new AuthHeaders();
 
-            var playerIdString = headers["X-V-PID"].FirstOrDefault();
-            var tribeIdString = headers["X-V-TID"].FirstOrDefault();
-            var authTokenString = headers["X-V-TOKEN"].FirstOrDefault();
+            var combinedTokenString = headers["X-V-TOKEN"].FirstOrDefault();
+            combinedTokenString = String.IsNullOrWhiteSpace(combinedTokenString) ? null : combinedTokenString;
 
-            playerIdString = String.IsNullOrWhiteSpace(playerIdString) ? null : playerIdString;
-            tribeIdString = String.IsNullOrWhiteSpace(tribeIdString) ? null : tribeIdString;
-            authTokenString = String.IsNullOrWhiteSpace(authTokenString) ? null : authTokenString;
-
-            long playerId, tribeId;
-            if (long.TryParse(playerIdString, out playerId))
-                result.PlayerId = playerId;
-            if (long.TryParse(tribeIdString, out tribeId))
-                result.TribeId = tribeId;
-
-            if (authTokenString != null)
+            if (combinedTokenString != null)
             {
+                combinedTokenString = Encryption.Decrypt(combinedTokenString);
+                var tokenParts = combinedTokenString.Split(':');
+
+                var playerIdString = tokenParts.Length > 0 ? tokenParts[0] : null;
+                var tribeIdString = tokenParts.Length > 1 ? tokenParts[1] : null;
+                var authTokenString = tokenParts.Length > 2 ? tokenParts[2] : null;
+
+                int playerId, tribeId;
+                if (int.TryParse(playerIdString, out playerId))
+                    result.PlayerId = playerId;
+                if (int.TryParse(tribeIdString, out tribeId))
+                    result.TribeId = tribeId;
+
                 try
                 {
                     result.AuthToken = Guid.Parse(authTokenString);
-                } catch (Exception) { }
+                } catch { }
             }
 
             return result;

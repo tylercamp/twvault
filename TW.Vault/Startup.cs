@@ -86,6 +86,8 @@ namespace TW.Vault
                 ForwardedHeaders = ForwardedHeaders.All,
                 RequireHeaderSymmetry = false
             });
+
+            app.UseVaultContentDecryption();
             
             app.UseMvc();
         }

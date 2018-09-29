@@ -4,6 +4,8 @@ var lib = (() => {
     //# REQUIRE lib/twstats.js
     //# REQUIRE lib/twcalc.js
     //# REQUIRE lib/versioning.js
+    //# REQUIRE lib/lz-string.js
+    //# REQUIRE lib/encryption.js
 
     let twstats = getTwTroopStats();
     let localStoragePrefix = 'vls-';
@@ -15,10 +17,20 @@ var lib = (() => {
     var authUserId = null;
     var authTribeId = null;
     var wasPageHandled = false;
+    var utcTimeOffset = -1;
 
     //  TODO - Pull this from server
     let worldSettings = {
         archersEnabled: false
+    };
+
+    let encryption = makeEncryption();
+
+    let getCurrentUtcTime = () => Date.now() + utcTimeOffset;
+
+    let makeAuthHeader = (playerId, tribeId, authKey) => {
+        let authString = `${playerId}:${tribeId}:${authKey}`;
+        return encryption.encryptString(authString, getCurrentUtcTime());
     };
 
     let lib = {
@@ -53,6 +65,7 @@ var lib = (() => {
         twstats: twstats,
         twcalc: makeTwCalc(twstats),
         versioning: makeVersioningSetup(),
+        lzstr: makeLZStringApi(),
 
         //  Gets the current server date and time from the page
         getServerDateTime: function getServerDateTime($doc_) {
@@ -268,9 +281,7 @@ var lib = (() => {
             return $.ajax(url, {
                 method: 'GET',
                 beforeSend: (xhr) => {
-                    xhr.setRequestHeader('X-V-TOKEN', authToken);
-                    xhr.setRequestHeader('X-V-PID', authUserId);
-                    xhr.setRequestHeader('X-V-TID', authTribeId);
+                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
                 }
             });
         },
@@ -280,14 +291,16 @@ var lib = (() => {
             if (typeof object != 'string' && !!object)
                 object = JSON.stringify(object);
 
+            if (object && object.length) {
+                object = encryption.encryptString(object, getCurrentUtcTime());
+            }
+
             return $.ajax(url, {
                 data: object,
                 contentType: 'application/json',
                 type: 'POST',
                 beforeSend: (xhr) => {
-                    xhr.setRequestHeader('X-V-TOKEN', authToken);
-                    xhr.setRequestHeader('X-V-PID', authUserId);
-                    xhr.setRequestHeader('X-V-TID', authTribeId);
+                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
                 }
             });
         },
@@ -296,14 +309,16 @@ var lib = (() => {
             if (typeof object != 'string' && !!object)
                 object = JSON.stringify(object);
 
+            if (object && object.length) {
+                object = encryption.encryptString(object, getCurrentUtcTime());
+            }
+
             return $.ajax(url, {
                 data: object,
                 contentType: 'application/json',
                 type: 'DELETE',
                 beforeSend: (xhr) => {
-                    xhr.setRequestHeader('X-V-TOKEN', authToken);
-                    xhr.setRequestHeader('X-V-PID', authUserId);
-                    xhr.setRequestHeader('X-V-TID', authTribeId);
+                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
                 }
             });
         },
@@ -314,7 +329,7 @@ var lib = (() => {
                 foundCaptcha = !!docOrHtml.match(/data\-bot\-protect=/);
             } else {
                 let $doc = $(docOrHtml);
-                let $body = $doc_.find('#ds_body');
+                let $body = $doc.find('#ds_body');
                 foundCaptcha = $body.length && !!$body.data('bot-protect')
             }
 
@@ -718,7 +733,18 @@ var lib = (() => {
                 authUserId = playerId;
                 authTribeId = tribeId;
 
-                callback();
+                $.get(lib.makeApiUrl('time'))
+                    .done((data) => {
+                        let serverUtcTime = data.utcTime;
+
+                        // Round to the nearest 15 minutes
+                        utcTimeOffset = serverUtcTime - Date.now();
+
+                        let minutes15 = 15 * 60 * 1000;
+                        utcTimeOffset = minutes15 * Math.round(utcTimeOffset / minutes15);
+
+                        callback();
+                    });
             });
         }
     };

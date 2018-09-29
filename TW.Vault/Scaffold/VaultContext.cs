@@ -550,7 +550,7 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.RequestedEndpoint)
                     .IsRequired()
                     .HasColumnName("requested_endpoint")
-                    .HasMaxLength(64);
+                    .HasMaxLength(128);
 
                 entity.Property(e => e.TribeId).HasColumnName("tribe_id");
 

@@ -247,7 +247,7 @@
 
                     oldLabels[cmd.id] = originalLabel;
 
-                    let newLabel = makeLabel(incomingTags[cmd.id]);
+                    let newLabel = makeLabel(incomingTags[cmd.id] || {});
                     if (newLabel)
                         $label.text(newLabel);
                 });
