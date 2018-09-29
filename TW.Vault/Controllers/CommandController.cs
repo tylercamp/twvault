@@ -306,10 +306,12 @@ namespace TW.Vault.Controllers
             //  should stop querying that other data at some point
             var commandSourceVillageIds = incomings.Select(inc => inc.SourceVillageId).Distinct().ToList();
 
-            var countsByVillage = commandSourceVillageIds.Distinct().ToDictionary(
-                vid => vid,
-                vid => commandSourceVillageIds.Count(sv => sv == vid)
-            );
+            var countsByVillage = await (
+                    from command in context.Command.FromWorld(CurrentWorldId)
+                    where !command.IsReturning && command.LandsAt > CurrentServerTime
+                    group command by command.SourceVillageId into villageCommands
+                    select new { VillageId = villageCommands.Key, Count = villageCommands.Count() }
+                ).ToDictionaryAsync(vc => vc.VillageId, vc => vc.Count);
 
             var commandsReturningByVillageId = await Profile("Get returning commands for all source villages", async () =>
             {
@@ -319,7 +321,7 @@ namespace TW.Vault.Controllers
                                             .Include(c => c.Army)
                     where commandSourceVillageIds.Contains(command.SourceVillageId)
                     where command.IsReturning
-                    where command.LandsAt < CurrentServerTime
+                    where command.LandsAt > CurrentServerTime || command.ReturnsAt > CurrentServerTime
                     select command
                 ).ToListAsync();
 
@@ -397,7 +399,10 @@ namespace TW.Vault.Controllers
                         var returningPop = Native.ArmyStats.CalculateTotalPopulation(returningOffensiveArmy);
 
                         tag.OffensivePopulation = pop - returningPop;
-                        if (pop - returningPop < 1000)
+                        if (tag.OffensivePopulation < 0)
+                            tag.OffensivePopulation = 0;
+
+                        if (tag.OffensivePopulation < 1000)
                             tag.DefiniteFake = true;
 
                         tag.NumCats = effectiveArmy.Catapult;
