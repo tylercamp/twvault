@@ -335,6 +335,7 @@ namespace TW.Vault.Controllers
                 join user in context.User on history.Uid equals user.Uid
                 join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
+                where user.Enabled
                 select new { playerId = player.PlayerId, history }
             );
 
