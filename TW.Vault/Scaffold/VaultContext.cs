@@ -48,7 +48,7 @@ namespace TW.Vault.Scaffold
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseNpgsql("Host=192.168.1.250; Port=22342; Database=vault_dev; Username=twu_vault; Password=!!TWV@ult4Us??");
+                optionsBuilder.UseNpgsql("Host=192.168.1.250; Port=22342; Database=vault; Username=twu_vault; Password=!!TWV@ult4Us??");
             }
         }
 
@@ -591,7 +591,7 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
-                    .HasDefaultValueSql("nextval('feature.notifications_phone_number_id_seq'::regclass)");
+                    .HasDefaultValueSql("nextval('feature.notification_phone_number_id_seq'::regclass)");
 
                 entity.Property(e => e.Enabled).HasColumnName("enabled");
 
@@ -611,6 +611,7 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.Tx)
                     .WithMany(p => p.NotificationPhoneNumber)
                     .HasForeignKey(d => d.TxId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_tx_id");
 
                 entity.HasOne(d => d.U)
@@ -1168,30 +1169,65 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<WorldSettings>(entity =>
             {
-                entity.HasKey(e => e.Setting);
+                entity.HasKey(e => e.WorldId);
 
                 entity.ToTable("world_settings", "tw_provided");
 
-                entity.Property(e => e.Setting)
-                    .HasColumnName("setting")
-                    .HasColumnType("character varying")
+                entity.Property(e => e.WorldId)
+                    .HasColumnName("world_id")
                     .ValueGeneratedNever();
 
-                entity.Property(e => e.Value)
-                    .HasColumnName("value")
-                    .HasColumnType("character varying");
+                entity.Property(e => e.AccountSittingEnabled).HasColumnName("account_sitting_enabled");
 
-                entity.Property(e => e.WorldId).HasColumnName("world_id");
+                entity.Property(e => e.ArchersEnabled).HasColumnName("archers_enabled");
+
+                entity.Property(e => e.BonusVillagesEnabled).HasColumnName("bonus_villages_enabled");
+
+                entity.Property(e => e.CanDemolishBuildings).HasColumnName("can_demolish_buildings");
+
+                entity.Property(e => e.ChurchesEnabled).HasColumnName("churches_enabled");
+
+                entity.Property(e => e.FlagsEnabled).HasColumnName("flags_enabled");
+
+                entity.Property(e => e.GameSpeed).HasColumnName("game_speed");
+
+                entity.Property(e => e.LoyaltyPerHour).HasColumnName("loyalty_per_hour");
+
+                entity.Property(e => e.MaxNoblemanDistance).HasColumnName("max_nobleman_distance");
+
+                entity.Property(e => e.MilitiaEnabled).HasColumnName("militia_enabled");
+
+                entity.Property(e => e.MillisecondsEnabled).HasColumnName("milliseconds_enabled");
+
+                entity.Property(e => e.MoraleEnabled).HasColumnName("morale_enabled");
+
+                entity.Property(e => e.NightBonusEnabled).HasColumnName("night_bonus_enabled");
+
+                entity.Property(e => e.NoblemanLoyaltyMax).HasColumnName("nobleman_loyalty_max");
+
+                entity.Property(e => e.NoblemanLoyaltyMin).HasColumnName("nobleman_loyalty_min");
+
+                entity.Property(e => e.PaladinEnabled).HasColumnName("paladin_enabled");
+
+                entity.Property(e => e.PaladinItemsEnabled).HasColumnName("paladin_items_enabled");
+
+                entity.Property(e => e.PaladinSkillsEnabled).HasColumnName("paladin_skills_enabled");
+
+                entity.Property(e => e.UnitSpeed).HasColumnName("unit_speed");
+
+                entity.Property(e => e.UtcOffset).HasColumnName("utc_offset");
+
+                entity.Property(e => e.WatchtowerEnabled).HasColumnName("watchtower_enabled");
 
                 entity.HasOne(d => d.World)
-                    .WithMany(p => p.WorldSettings)
-                    .HasForeignKey(d => d.WorldId)
+                    .WithOne(p => p.WorldSettings)
+                    .HasForeignKey<WorldSettings>(d => d.WorldId)
                     .HasConstraintName("fk_world_id");
             });
 
-            modelBuilder.HasSequence("notification_request_id_seq");
+            modelBuilder.HasSequence<int>("notification_phone_number_id_seq");
 
-            modelBuilder.HasSequence<int>("notifications_phone_number_id_seq");
+            modelBuilder.HasSequence("notification_request_id_seq");
 
             modelBuilder.HasSequence("conflicting_data_record_id_seq");
 

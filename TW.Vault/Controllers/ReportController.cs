@@ -259,7 +259,7 @@ namespace TW.Vault.Controllers
                                                             .Where(v => v.VillageId == jsonReport.DefendingVillageId)
                                                             .FirstOrDefaultAsync();
 
-                        var travelCalculator = new Features.Simulation.TravelCalculator(2.0f, 0.5f);
+                        var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
                         var travelTime = travelCalculator.CalculateTravelTime(slowestType.Value, attackingVillage, defendingVillage);
 
                         command.Army = ArmyConvert.JsonToArmy(jsonReport.AttackingArmy - jsonReport.AttackingArmyLosses, command.Army, context);

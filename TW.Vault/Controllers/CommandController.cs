@@ -190,7 +190,7 @@ namespace TW.Vault.Controllers
                         }
 
 
-                        var travelCalculator = new Features.Simulation.TravelCalculator(2.0f, 0.5f);
+                        var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
                         var timeRemaining = jsonCommand.LandsAt.Value - CurrentServerTime;
                         var sourceVillage = villagesById[jsonCommand.SourceVillageId.Value];
                         var targetVillage = villagesById[jsonCommand.TargetVillageId.Value];

@@ -121,7 +121,7 @@ namespace TW.Vault.Controllers
                     if (!CachedWorldIds.ContainsKey(CurrentWorldName))
                     {
                         _currentWorld = (
-                                from world in context.World
+                                from world in context.World.Include(w => w.WorldSettings)
                                 where world.Name == CurrentWorldName
                                 select world
                             ).FirstOrDefault();
@@ -136,10 +136,11 @@ namespace TW.Vault.Controllers
             }
         }
 
-        protected long CurrentTribeId => (long)HttpContext.Items["TribeId"];
+        protected WorldSettings CurrentWorldSettings => CurrentWorld.WorldSettings;
 
-        //  TODO - This should change per requested server
-        protected DateTime CurrentServerTime => DateTime.UtcNow + TimeSpan.FromHours(1);
+        protected long CurrentTribeId => (long)HttpContext.Items["TribeId"];
+        
+        protected DateTime CurrentServerTime => DateTime.UtcNow + CurrentWorldSettings.UtcOffset;
 
 
 

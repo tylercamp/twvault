@@ -19,6 +19,12 @@ namespace TW.Vault.Features.Simulation
             this.unitSpeed = unitSpeed;
         }
 
+        public TravelCalculator(decimal worldSpeed, decimal unitSpeed)
+        {
+            this.worldSpeed = (float)worldSpeed;
+            this.unitSpeed = (float)unitSpeed;
+        }
+
         public TimeSpan CalculateTravelTime(JSON.TroopType unitType, int startx, int starty, int endx, int endy)
         {
             var distance = Math.Sqrt((endx - startx) * (endx - startx) + (endy - starty) * (endy - starty));

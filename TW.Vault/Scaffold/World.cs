@@ -23,13 +23,13 @@ namespace TW.Vault.Scaffold
             User = new HashSet<User>();
             UserLog = new HashSet<UserLog>();
             Village = new HashSet<Village>();
-            WorldSettings = new HashSet<WorldSettings>();
         }
 
         public short Id { get; set; }
         public string Name { get; set; }
         public string Hostname { get; set; }
 
+        public WorldSettings WorldSettings { get; set; }
         public ICollection<Ally> Ally { get; set; }
         public ICollection<Command> Command { get; set; }
         public ICollection<CommandArmy> CommandArmy { get; set; }
@@ -46,6 +46,5 @@ namespace TW.Vault.Scaffold
         public ICollection<User> User { get; set; }
         public ICollection<UserLog> UserLog { get; set; }
         public ICollection<Village> Village { get; set; }
-        public ICollection<WorldSettings> WorldSettings { get; set; }
     }
 }
