@@ -36,18 +36,44 @@ namespace TW.Vault.Features.Notifications
             {
                 await WithVaultContext(async (context) =>
                 {
-                    var now = CurrentServerTime;
-                    var upcomingNotifications = await (
+                    /*
+                     * Would like to do exact filtering for which notifications need
+                     * to be sent, but there's an issue with the PSQL library being used here
+                     * in DateTime comparisons:
+                     * 
+                     *    where notification.EventOccursAt - userSettings.NotificationHeadroom - refreshDelayTimeSpan < now + worldSettings.UtcOffset
+                     *    
+                     * ^ this throws:
+                     * 
+                     *    System.InvalidCastException: Can't write CLR type System.DateTime with handler type IntervalHandler
+                     * 
+                     * Instead do a broad query for notifications in the next 24 hours, then do the correct comparisons locally
+                     * 
+                     */
+
+                    var now = DateTime.UtcNow;
+                    var tomorrow = now + TimeSpan.FromDays(1);
+                    //  General check
+                    var possibleNotifications = await (
                             from notification in context.NotificationRequest
                             join user in context.User.Include(u => u.NotificationPhoneNumber) on notification.Uid equals user.Uid
                             join userSettings in context.NotificationUserSettings on user.Uid equals userSettings.Uid
+                            join userWorld in context.World on user.WorldId equals userWorld.Id
+                            join worldSettings in context.WorldSettings on userWorld.Id equals worldSettings.WorldId
 
-                            where notification.EventOccursAt - userSettings.NotificationHeadroom - refreshDelayTimeSpan < now
-                            select new { Notification = notification, PhoneNumbers = user.NotificationPhoneNumber }
+                            where notification.EventOccursAt < tomorrow
+                            select new { Notification = notification, Settings = userSettings, PhoneNumbers = user.NotificationPhoneNumber, ServerTimeOffset = worldSettings.UtcOffset }
                         ).ToListAsync();
 
-                    if (!upcomingNotifications.Any())
+                    if (!possibleNotifications.Any())
                         return;
+
+                    //  Accurate check
+                    var upcomingNotifications = (
+                        from notification in possibleNotifications
+                        where notification.Notification.EventOccursAt - notification.Settings.NotificationHeadroom - refreshDelayTimeSpan < now + notification.ServerTimeOffset
+                        select notification
+                    ).ToList();
 
                     var notificationsByUser = upcomingNotifications.Select(r => r.Notification.Uid).Distinct().ToDictionary(
                             uid => uid,
@@ -57,7 +83,8 @@ namespace TW.Vault.Features.Notifications
                     foreach (var userNotifications in notificationsByUser)
                     {
                         var notifications = userNotifications.Value;
-                        var notificationText = BuildNotificationText(notifications.Select(r => r.Notification).ToList());
+                        var timeOffset = notifications.First().ServerTimeOffset;
+                        var notificationText = BuildNotificationText(notifications.Select(r => r.Notification).ToList(), DateTime.UtcNow + timeOffset);
                         foreach (var phoneNumber in userNotifications.Value[0].PhoneNumbers.Select(pn => pn.PhoneNumber))
                         {
                             try
@@ -74,7 +101,7 @@ namespace TW.Vault.Features.Notifications
                         }
                     }
 
-                    context.NotificationRequest.RemoveRange(upcomingNotifications.Select(r => r.Notification));
+                    context.NotificationRequest.RemoveRange(possibleNotifications.Select(r => r.Notification));
                     await context.SaveChangesAsync();
                 });
 
@@ -82,13 +109,8 @@ namespace TW.Vault.Features.Notifications
             }
         }
 
-        //  TODO - Change this on a per-world basis
-        private DateTime CurrentServerTime => DateTime.UtcNow + TimeSpan.FromHours(1);
-
-        private String BuildNotificationText(List<Scaffold.NotificationRequest> requests)
+        private String BuildNotificationText(List<Scaffold.NotificationRequest> requests, DateTime serverTime)
         {
-            var now = CurrentServerTime;
-
             String FormatNotificationMessage(Scaffold.NotificationRequest request)
             {
                 String ToStringMin2Numbers(object value)
@@ -106,7 +128,7 @@ namespace TW.Vault.Features.Notifications
                 var day = ToStringMin2Numbers(time.Day);
                 var month = ToStringMin2Numbers(time.Month);
 
-                var remainingMinutes = (time - now).TotalMinutes.ToString("0.#");
+                var remainingMinutes = (time - serverTime).TotalMinutes.ToString("0.#");
 
                 String formattedTime = $"At {hour}:{minute}:{second} on {day}/{month}/{time.Year} (in {remainingMinutes} minutes)";
                 return $"{formattedTime}: {request.Message}";
@@ -154,10 +176,10 @@ namespace TW.Vault.Features.Notifications
 
         private async Task ClearExpiredNotifications(Scaffold.VaultContext context)
         {
-            var now = CurrentServerTime;
+            var yesterday = DateTime.UtcNow - TimeSpan.FromDays(1);
             var expiredNotifications = await (
                     from notification in context.NotificationRequest
-                    where notification.EventOccursAt < CurrentServerTime
+                    where notification.EventOccursAt < yesterday
                     select notification
                 ).ToListAsync();
 
