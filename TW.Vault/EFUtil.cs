@@ -120,6 +120,10 @@ namespace TW.Vault
             currentVillageSupportQuery
                 .Where(q => q.WorldId == worldId);
 
+        public static IQueryable<User> FromWorld(this IQueryable<User> userQuery, long worldId) =>
+            userQuery
+                .Where(q => q.WorldId == null || q.WorldId == worldId);
+
         #endregion
 
     }

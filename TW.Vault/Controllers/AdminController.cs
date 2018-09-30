@@ -44,22 +44,23 @@ namespace TW.Vault.Controllers
             var users = await (
                     from user in context.User
                     join player in context.Player on user.PlayerId equals player.PlayerId
-                    join tribe in context.Ally on player.TribeId equals tribe.TribeId
+                    join tribe in context.Ally on player.TribeId equals tribe.TribeId into maybeTribe
+                    from tribe in maybeTribe.DefaultIfEmpty()
                     where CurrentUser.KeySource == null || user.KeySource == CurrentUser.Uid || !Configuration.Security.RestrictAccessWithinTribes
                     where user.Enabled
                     where player.WorldId == CurrentWorldId
                     where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
                     orderby tribe.Tag, player.PlayerName
-                    select new { user, playerName = player.PlayerName, tribeName = tribe.TribeName, tribeId = tribe.TribeId }
+                    select new { user, playerName = player.PlayerName, tribe = tribe }
                 ).ToListAsync();
 
             if (Configuration.Security.RestrictAccessWithinTribes && !CurrentUserIsSystem)
-                users = users.Where(u => u.tribeId == CurrentTribeId).ToList();
+                users = users.Where(u => u.tribe?.TribeId == CurrentTribeId || u.user.AdminAuthToken == CurrentUser.AuthToken).ToList();
 
             var jsonUsers = users.Select(p => UserConvert.ModelToJson(
                 p.user,
                 WebUtility.UrlDecode(p.playerName),
-                WebUtility.UrlDecode(p.tribeName)
+                p.tribe != null ? WebUtility.UrlDecode(p.tribe.TribeName) : null
             ));
 
             return Ok(jsonUsers);
@@ -309,7 +310,7 @@ namespace TW.Vault.Controllers
                 //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
                 //  (This returns a lot of data and will be slow)
                 from player in context.Player.FromWorld(CurrentWorldId)
-                join user in context.User on player.PlayerId equals user.PlayerId
+                join user in context.User.FromWorld(CurrentWorldId) on player.PlayerId equals user.PlayerId
                 join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
                 join currentVillage in context.CurrentVillage.Include(cv => cv.ArmyAtHome)
                                                              .Include(cv => cv.ArmyOwned)
@@ -325,6 +326,8 @@ namespace TW.Vault.Controllers
                 //      so we can also output stats for players that haven't uploaded anything yet)
                 from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
                 join player in context.Player on currentPlayer.PlayerId equals player.PlayerId
+                join user in context.User.FromWorld(CurrentWorldId) on player.PlayerId equals user.PlayerId
+                where user.Enabled
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 select currentPlayer
                 
@@ -332,7 +335,7 @@ namespace TW.Vault.Controllers
 
                 //  Get user upload history
                 from history in context.UserUploadHistory
-                join user in context.User on history.Uid equals user.Uid
+                join user in context.User.FromWorld(CurrentWorldId) on history.Uid equals user.Uid
                 join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 where user.Enabled
