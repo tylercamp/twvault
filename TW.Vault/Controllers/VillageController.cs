@@ -76,6 +76,7 @@ namespace TW.Vault.Controllers
                     from user in context.User
                     join player in context.Player on user.PlayerId equals player.PlayerId
                     where player.TribeId != null
+                    where user.Enabled
                     select player.TribeId.Value
                 ).Distinct().ToListAsync();
 
