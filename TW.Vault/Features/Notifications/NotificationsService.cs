@@ -26,6 +26,12 @@ namespace TW.Vault.Features.Notifications
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            if (!Configuration.Behavior.Notifications.NotificationsEnabled)
+            {
+                logger.LogWarning("NotificationsEnabled set to false, canceling notifications service for this instance");
+                return;
+            }
+
             logger.LogDebug("Clearing expired notifications on first run...");
             await WithVaultContext(ClearExpiredNotifications);
 
@@ -61,6 +67,7 @@ namespace TW.Vault.Features.Notifications
                             join userWorld in context.World on user.WorldId equals userWorld.Id
                             join worldSettings in context.WorldSettings on userWorld.Id equals worldSettings.WorldId
 
+                            where notification.Enabled
                             where notification.EventOccursAt < tomorrow
                             select new { Notification = notification, Settings = userSettings, PhoneNumbers = user.NotificationPhoneNumber, ServerTimeOffset = worldSettings.UtcOffset }
                         ).ToListAsync();
@@ -101,7 +108,7 @@ namespace TW.Vault.Features.Notifications
                         }
                     }
 
-                    context.NotificationRequest.RemoveRange(possibleNotifications.Select(r => r.Notification));
+                    context.NotificationRequest.RemoveRange(upcomingNotifications.Select(r => r.Notification));
                     await context.SaveChangesAsync();
                 });
 

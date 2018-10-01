@@ -103,6 +103,8 @@ namespace TW.Vault
 
     public class NotificationBehaviorConfiguration
     {
+        public bool NotificationsEnabled { get; set; } = true;
+
         public String TwilioSourcePhoneNumber { get; set; }
         public String TwilioClientKey { get; set; }
         public String TwilioClientSecret { get; set; }
