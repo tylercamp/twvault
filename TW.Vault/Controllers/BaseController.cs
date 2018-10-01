@@ -128,7 +128,11 @@ namespace TW.Vault.Controllers
                     }
                     else
                     {
-                        _currentWorld = context.World.Find(CurrentWorldId);
+                        _currentWorld = (
+                                from world in context.World.Include(w => w.WorldSettings)
+                                where world.Id == CurrentWorldId
+                                select world
+                            ).FirstOrDefault();
                     }
                 }
 
