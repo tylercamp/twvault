@@ -45,15 +45,11 @@
     return {
         encryptString: function (data, currentTime) {
             let seed = getCurrentSeed(currentTime);
-            console.log('Made encryption seed: ', seed);
             
             let dataString = lib.jsonStringify(data);
             let lzString = lib.lzstr.compressToEncodedURIComponent(dataString);
             let swizzleSizes = makeSwizzleSizesFromSeed(seed);
             let swizzleParts = [];
-
-            console.log('Made lzstr: ', lzString);
-            console.log('Made swizzle sizes: ', swizzleSizes);
 
             let i = 0;
             for (var si = 0; i < lzString.length; si = (si + 1) % swizzleSizes.length) {
