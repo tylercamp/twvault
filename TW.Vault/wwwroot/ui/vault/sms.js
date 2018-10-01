@@ -83,7 +83,7 @@ function makeSmsDisplayTab() {
 
                 lib.postApi(lib.makeApiUrl('notification/requests'), data)
                     .done(() => {
-                        loadNotifications()
+                        loadNotifications($container)
                             .done(() => {
                                 $notificationTime.prop('disabled', false);
                                 $message.prop('disabled', false);
@@ -175,7 +175,7 @@ function makeSmsPhoneNumbersTab() {
                         $label.val('');
                         $label.prop('disabled', false);
 
-                        updatePhoneNumbers();
+                        updatePhoneNumbers($container);
                     })
                     .error(() => {
                         $phoneNumber.prop('disabled', false);
@@ -220,7 +220,7 @@ function makeSmsSettingsTab() {
         init: function ($container) {
             loadNotificationSettings($container);
             $container.find('#save-notification-settings-btn').click(() => {
-                saveNotificationSettings();
+                saveNotificationSettings($container);
             });
         },
 
@@ -261,7 +261,7 @@ function updatePhoneNumbers($container) {
 
                     lib.deleteApi(lib.makeApiUrl('notification/phone-numbers/' + number.id))
                         .done(() => {
-                            updatePhoneNumbers();
+                            updatePhoneNumbers($container);
                         })
                         .error(() => {
                             alert('An error occurred.');
@@ -343,7 +343,7 @@ function loadNotifications($container) {
 
                     lib.deleteApi(lib.makeApiUrl(`notification/requests/${request.id}`))
                         .done(() => {
-                            loadNotifications();
+                            loadNotifications($container);
                         })
                         .error(() => {
                             alert('An error occurred.');
