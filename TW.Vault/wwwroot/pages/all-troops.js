@@ -145,7 +145,7 @@
     }
 
     function getPossibleNobles(villaIdWithAcademy, onDone) {
-        $.get(`/game.php?village=${villaIdWithAcademy}&screen=snob`)
+        $.get(lib.makeTwUrl(`village=${villaIdWithAcademy}&screen=snob`))
             .done((data) => {
                 let docText = $(data).text();
                 let limit = docText.match(/Noblemen\s+limit:\s*(\d+)/);
