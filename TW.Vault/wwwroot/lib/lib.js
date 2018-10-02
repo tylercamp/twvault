@@ -736,13 +736,7 @@ var lib = (() => {
                 $.get(lib.makeApiUrl('time'))
                     .done((data) => {
                         let serverUtcTime = data.utcTime;
-
-                        // Round to the nearest 15 minutes
                         utcTimeOffset = serverUtcTime - Date.now();
-
-                        let minutes15 = 15 * 60 * 1000;
-                        utcTimeOffset = minutes15 * Math.round(utcTimeOffset / minutes15);
-
                         callback();
                     });
             });
