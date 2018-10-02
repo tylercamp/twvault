@@ -31,7 +31,26 @@ namespace TW.Vault.Security
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var authHeaders = AuthenticationUtil.ParseHeaders(context.HttpContext.Request.Headers);
+            var failedAuthMessage = $"Say hello to our log files, Mr. or Ms. {context.HttpContext.Connection.RemoteIpAddress.ToString()}";
+
+            AuthHeaders authHeaders = null;
+            try
+            {
+                authHeaders = AuthenticationUtil.ParseHeaders(context.HttpContext.Request.Headers);
+            }
+            catch (InvalidStringEncryptionException ex)
+            {
+                var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, null);
+                failedRequest.Reason = $"Failed to decrypt authentication headers: {ex.Message}; Received headers: {context.HttpContext.Request.Headers.ToString()}";
+                dbContext.Add(failedRequest);
+                dbContext.SaveChanges();
+
+                LogFailedRequest(failedRequest);
+
+                context.Result = new ContentResult { Content = failedAuthMessage, ContentType = "text/plain", StatusCode = 401 };
+                return;
+            }
+
             if (!authHeaders.IsValid)
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
@@ -51,7 +70,7 @@ namespace TW.Vault.Security
 
                 LogFailedRequest(failedRequest);
 
-                context.Result = new StatusCodeResult(401);
+                context.Result = new ContentResult { Content = failedAuthMessage, ContentType = "text/plain", StatusCode = 401 };
                 return;
             }
 
@@ -98,16 +117,20 @@ namespace TW.Vault.Security
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
                 if (discoveredUser == null)
+                {
                     failedRequest.Reason = $"No user found with given token: '{authToken}'";
+                    context.Result = new ContentResult { Content = failedAuthMessage, ContentType = "text/plain", StatusCode = 401 };
+                }
                 else
+                {
                     failedRequest.Reason = "Requested by disabled user";
+                    context.Result = new StatusCodeResult(401);
+                }
 
                 dbContext.Add(failedRequest);
                 dbContext.SaveChanges();
 
                 LogFailedRequest(failedRequest);
-
-                context.Result = new StatusCodeResult(401);
                 return;
             }
 
@@ -118,7 +141,7 @@ namespace TW.Vault.Security
 
                 dbContext.Add(failedRequest);
                 dbContext.SaveChanges();
-                context.Result = new StatusCodeResult(401);
+                context.Result = new ContentResult { Content = failedAuthMessage, ContentType = "text/plain", StatusCode = 401 };
                 return;
             }
 
@@ -129,7 +152,7 @@ namespace TW.Vault.Security
 
                 dbContext.Add(failedRequest);
                 dbContext.SaveChanges();
-                context.Result = new StatusCodeResult(401);
+                context.Result = new ContentResult { Content = failedAuthMessage, ContentType = "text/plain", StatusCode = 401 };
                 return;
             }
 

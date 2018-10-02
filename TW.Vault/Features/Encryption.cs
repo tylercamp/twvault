@@ -7,6 +7,11 @@ using TW.Vault.Security;
 
 namespace TW.Vault.Features
 {
+    public class InvalidStringEncryptionException : Exception
+    {
+        public override string Message => "The given text was not encrypted with any active seeds";
+    }
+
     public static class Encryption
     {
         public static String Decrypt(String text)
@@ -21,7 +26,7 @@ namespace TW.Vault.Features
             }
 
             if (result == null)
-                throw new InvalidOperationException("The given text was not encrypted with any active seeds");
+                throw new InvalidStringEncryptionException();
 
             return result;
         }
