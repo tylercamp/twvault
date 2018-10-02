@@ -192,7 +192,7 @@ namespace TW.Vault.Controllers
 
             var requestedUser = await (
                     from u in context.User
-                    where u.AuthToken == authKey
+                    where u.AuthToken == authKey && u.WorldId == CurrentWorldId
                     select u
                 ).FirstOrDefaultAsync();
 
