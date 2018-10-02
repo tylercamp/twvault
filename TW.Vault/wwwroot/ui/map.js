@@ -7,6 +7,7 @@
 
     window.ranVaultMap = true;
     var canUse = true;
+    var isUnloading = false;
 
     //  Hook into 'TWMap.displayForVillage', which is invoked whenever the village info popup is made
     //  by TW
@@ -21,6 +22,8 @@
     let settings = loadSettings();
     let lockedDataReasons = null;
 
+    $(window).unload(() => isUnloading = true);
+
     createSettingsUI();
 
     //  First call that actually shows the popup - Update the popup if we've already downloaded village data
@@ -28,6 +31,10 @@
     TWMap.popup.displayForVillage = function (e, a, t) {
         console.log('intercepted displayForVillage');
         originalDisplayForVillage.call(TWMap.popup, e, a, t);
+
+        if (isUnloading) {
+            return;
+        }
 
         if (lockedDataReasons) {
             makeFuckYouContainer();
@@ -60,6 +67,10 @@
     TWMap.popup.receivedPopupInformationForSingleVillage = function (e) {
         console.log('Intercepted receivedPopupInformation');
         originalReceivedInfo.call(TWMap.popup, e);
+
+        if (isUnloading) {
+            return;
+        }
 
         if (lockedDataReasons) {
             makeFuckYouContainer();
@@ -146,6 +157,10 @@
 
     function makeOutput(data) {
         if ($('#vault_info').length) {
+            return;
+        }
+
+        if (isUnloading) {
             return;
         }
 
