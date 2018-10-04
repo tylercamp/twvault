@@ -220,7 +220,7 @@ namespace TW.Vault.Controllers
                         {
                             scaffoldCommand = new Scaffold.Command();
                             scaffoldCommand.World = CurrentWorld;
-                            jsonCommand.ToModel(scaffoldCommand, context);
+                            jsonCommand.ToModel(CurrentWorldId, scaffoldCommand, context);
                             context.Command.Add(scaffoldCommand);
                         }
                         else
@@ -235,7 +235,7 @@ namespace TW.Vault.Controllers
                                 });
                             }
 
-                            jsonCommand.ToModel(scaffoldCommand, context);
+                            jsonCommand.ToModel(CurrentWorldId, scaffoldCommand, context);
                         }
 
                         scaffoldCommand.Tx = tx;

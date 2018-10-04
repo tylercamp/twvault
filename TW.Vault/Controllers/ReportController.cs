@@ -188,7 +188,7 @@ namespace TW.Vault.Controllers
                         }
                     }
 
-                    jsonReport.ToModel(scaffoldReport, context);
+                    jsonReport.ToModel(CurrentWorldId, scaffoldReport, context);
 
                     scaffoldReport.Tx = tx;
                 });
@@ -262,7 +262,7 @@ namespace TW.Vault.Controllers
                         var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
                         var travelTime = travelCalculator.CalculateTravelTime(slowestType.Value, attackingVillage, defendingVillage);
 
-                        command.Army = ArmyConvert.JsonToArmy(jsonReport.AttackingArmy - jsonReport.AttackingArmyLosses, command.Army, context);
+                        command.Army = ArmyConvert.JsonToArmy(jsonReport.AttackingArmy - jsonReport.AttackingArmyLosses, CurrentWorldId, command.Army, context);
                         command.Army.WorldId = CurrentWorldId;
                         command.TroopType = slowestType.Value.ToTroopString();
                         command.LandsAt = scaffoldReport.OccuredAt + travelTime;

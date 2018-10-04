@@ -8,11 +8,12 @@ namespace TW.Vault.Model.Convert
 {
     public static class ReportConvert
     {
-        public static void ToModel(this JSON.Report report, Scaffold.Report target, Scaffold.VaultContext context = null) => JsonToModel(report, target, context);
+        public static void ToModel(this JSON.Report report, short worldId, Scaffold.Report target, Scaffold.VaultContext context = null) => JsonToModel(report, worldId, target, context);
         public static JSON.Report ToJSON(this Scaffold.Report report) => ModelToJson(report);
 
-        public static void JsonToModel(JSON.Report report, Scaffold.Report target, Scaffold.VaultContext context = null)
+        public static void JsonToModel(JSON.Report report, short worldId, Scaffold.Report target, Scaffold.VaultContext context = null)
         {
+            target.WorldId               = worldId;
             target.ReportId              = report.ReportId.Value;
             target.OccuredAt             = report.OccurredAt.Value;
             target.Morale                = report.Morale.Value;
@@ -22,37 +23,17 @@ namespace TW.Vault.Model.Convert
             target.AttackerPlayerId      = report.AttackingPlayerId;
             target.AttackerVillageId     = report.AttackingVillageId.Value;
 
-            target.AttackerArmy          = ArmyConvert.JsonToArmy(report.AttackingArmy, target.AttackerArmy, context);
-            target.AttackerLossesArmy    = ArmyConvert.JsonToArmy(report.AttackingArmyLosses, target.AttackerLossesArmy, context);
+            target.AttackerArmy          = ArmyConvert.JsonToArmy(report.AttackingArmy, worldId, target.AttackerArmy, context);
+            target.AttackerLossesArmy    = ArmyConvert.JsonToArmy(report.AttackingArmyLosses, worldId, target.AttackerLossesArmy, context);
 
             target.DefenderPlayerId      = report.DefendingPlayerId;
             target.DefenderVillageId     = report.DefendingVillageId.Value;
 
-            target.DefenderArmy          = ArmyConvert.JsonToArmy(report.DefendingArmy, target.DefenderArmy, context);
-            target.DefenderLossesArmy    = ArmyConvert.JsonToArmy(report.DefendingArmyLosses, target.DefenderLossesArmy, context);
-            target.DefenderTravelingArmy = ArmyConvert.JsonToArmy(report.TravelingTroops, target.DefenderTravelingArmy, context);
+            target.DefenderArmy          = ArmyConvert.JsonToArmy(report.DefendingArmy, worldId, target.DefenderArmy, context);
+            target.DefenderLossesArmy    = ArmyConvert.JsonToArmy(report.DefendingArmyLosses, worldId, target.DefenderLossesArmy, context);
+            target.DefenderTravelingArmy = ArmyConvert.JsonToArmy(report.TravelingTroops, worldId, target.DefenderTravelingArmy, context);
 
-            target.Building              = BuildingConvert.JsonToReportBuilding(report.BuildingLevels, target.Building, context);
-
-
-
-            if (target.AttackerArmy != null)
-                target.AttackerArmy.WorldId = target.World?.Id ?? target.WorldId;
-
-            if (target.AttackerLossesArmy != null)
-                target.AttackerLossesArmy.WorldId = target.World?.Id ?? target.WorldId;
-
-            if (target.DefenderArmy != null)
-                target.DefenderArmy.WorldId = target.World?.Id ?? target.WorldId;
-
-            if (target.DefenderLossesArmy != null)
-                target.DefenderLossesArmy.WorldId = target.World?.Id ?? target.WorldId;
-
-            if (target.DefenderTravelingArmy != null)
-                target.DefenderTravelingArmy.WorldId = target.World?.Id ?? target.WorldId;
-
-            if (target.Building != null)
-                target.Building.WorldId = target.World?.Id ?? target.WorldId;
+            target.Building              = BuildingConvert.JsonToReportBuilding(report.BuildingLevels, worldId, target.Building, context);
         }
 
         public static JSON.Report ModelToJson(Scaffold.Report report)

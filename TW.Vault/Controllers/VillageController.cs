@@ -393,11 +393,12 @@ namespace TW.Vault.Controllers
                     }
 
                     var fullArmy = armySetJson.AtHome + armySetJson.Traveling + armySetJson.Supporting;
-                    currentVillage.ArmyOwned = ArmyConvert.JsonToArmy(fullArmy, currentVillage.ArmyOwned, context);
-                    currentVillage.ArmyStationed = ArmyConvert.JsonToArmy(armySetJson.Stationed, currentVillage.ArmyStationed, context);
-                    currentVillage.ArmyTraveling = ArmyConvert.JsonToArmy(armySetJson.Traveling, currentVillage.ArmyTraveling, context);
-                    currentVillage.ArmyAtHome = ArmyConvert.JsonToArmy(armySetJson.AtHome, currentVillage.ArmyAtHome, context);
-                    currentVillage.ArmySupporting = ArmyConvert.JsonToArmy(armySetJson.Supporting, currentVillage.ArmySupporting, context);
+                    currentVillage.ArmyOwned = ArmyConvert.JsonToArmy(fullArmy, CurrentWorldId, currentVillage.ArmyOwned, context);
+                    currentVillage.ArmyStationed = ArmyConvert.JsonToArmy(armySetJson.Stationed, CurrentWorldId, currentVillage.ArmyStationed, context);
+                    currentVillage.ArmyTraveling = ArmyConvert.JsonToArmy(armySetJson.Traveling, CurrentWorldId, currentVillage.ArmyTraveling, context);
+                    currentVillage.ArmyAtHome = ArmyConvert.JsonToArmy(armySetJson.AtHome, CurrentWorldId, currentVillage.ArmyAtHome, context);
+                    currentVillage.ArmySupporting = ArmyConvert.JsonToArmy(armySetJson.Supporting, CurrentWorldId, currentVillage.ArmySupporting, context);
+
 
                     currentVillage.ArmyOwned.LastUpdated = DateTime.UtcNow;
                     currentVillage.ArmyStationed.LastUpdated = DateTime.UtcNow;

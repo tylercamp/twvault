@@ -8,13 +8,13 @@ namespace TW.Vault.Model.Convert
 {
     public static class CommandConvert
     {
-        public static Scaffold.Command ToModel(this JSON.Command command, Scaffold.Command existingCommand, Scaffold.VaultContext context = null) =>
-            JsonToModel(command, existingCommand, context);
+        public static Scaffold.Command ToModel(this JSON.Command command, short worldId, Scaffold.Command existingCommand, Scaffold.VaultContext context = null) =>
+            JsonToModel(command, worldId, existingCommand, context);
 
         public static JSON.Command ToJson(this Scaffold.Command command) =>
             ModelToJson(command);
 
-        public static Scaffold.Command JsonToModel(JSON.Command command, Scaffold.Command existingCommand, Scaffold.VaultContext context = null)
+        public static Scaffold.Command JsonToModel(JSON.Command command, short worldId, Scaffold.Command existingCommand, Scaffold.VaultContext context = null)
         {
             if (command == null)
             {
@@ -33,6 +33,7 @@ namespace TW.Vault.Model.Convert
             {
                 result = new Scaffold.Command();
                 result.CommandId = command.CommandId.Value;
+                result.WorldId = worldId;
                 if (context != null)
                     context.Add(result);
             }
@@ -47,12 +48,10 @@ namespace TW.Vault.Model.Convert
             result.IsAttack         = command.CommandType == JSON.CommandType.Attack;
             result.IsReturning      = command.IsReturning.Value;
 
-            result.Army             = ArmyConvert.JsonToArmy(command.Troops, result.Army, context);
+            result.Army             = ArmyConvert.JsonToArmy(command.Troops, worldId, result.Army, context);
 
             if (result.TroopType == null)
                 result.TroopType    = TroopTypeConvert.TroopTypeToString(command.TroopType);
-
-            if (result.Army != null) result.Army.WorldId = existingCommand.World?.Id ?? existingCommand.WorldId;
 
             return result;
         }

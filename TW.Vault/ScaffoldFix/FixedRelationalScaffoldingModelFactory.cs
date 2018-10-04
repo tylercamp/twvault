@@ -20,7 +20,8 @@ namespace EntityFrameworkCore.Scaffolding.NavigationPropertyFixup
 
         protected override string GetPropertyName([NotNull] DatabaseColumn column)
         {
-            return base.GetPropertyName(column);
+            var propertyName = base.GetPropertyName(column);
+            return propertyName;
         }
 
         protected override void AddNavigationProperties([NotNull] IMutableForeignKey foreignKey)

@@ -14,7 +14,16 @@ namespace TW.Vault.Model.Convert
             return (short)value;
         }
 
-        public static T JsonToArmy<T>(JSON.Army armyCounts, T existingArmy = null, Scaffold.VaultContext context = null) where T : class, new()
+        public static Scaffold.CommandArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.CommandArmy existingArmy = null, Scaffold.VaultContext context = null) =>
+            JsonToArmy<Scaffold.CommandArmy>(armyCounts, worldId, existingArmy, context);
+
+        public static Scaffold.ReportArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.ReportArmy existingArmy = null, Scaffold.VaultContext context = null) =>
+            JsonToArmy<Scaffold.ReportArmy>(armyCounts, worldId, existingArmy, context);
+
+        public static Scaffold.CurrentArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.CurrentArmy existingArmy = null, Scaffold.VaultContext context = null) =>
+            JsonToArmy<Scaffold.CurrentArmy>(armyCounts, worldId, existingArmy, context);
+
+        private static T JsonToArmy<T>(JSON.Army armyCounts, short worldId, T existingArmy = null, Scaffold.VaultContext context = null, Action<T> keyPopulator = null) where T : class, new()
         {
             if (armyCounts == null || armyCounts.Count == 0)
             {
@@ -32,8 +41,7 @@ namespace TW.Vault.Model.Convert
             else
             {
                 result = new T();
-                if (context != null)
-                    context.Add(result);
+                keyPopulator?.Invoke(result);
             }
 
             var scaffoldArmyType = typeof(T);
@@ -49,6 +57,13 @@ namespace TW.Vault.Model.Convert
                 else
                     troopProperty.SetValue(result, troopCount);
             }
+
+            var worldIdProperty = scaffoldArmyType.GetProperty("WorldId", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            if (worldIdProperty != null)
+                worldIdProperty.SetValue(result, worldId);
+
+            if (existingArmy == null && context != null)
+                context.Add(result);
 
             return result;
         }

@@ -10,6 +10,7 @@ namespace TW.Vault.Model.Convert
     {
         public static Scaffold.CurrentVillageSupport ToModel(
                 long sourceVillageId,
+                short worldId,
                 JSON.PlayerOutwardSupport.SupportedVillage villageData,
                 Scaffold.CurrentVillageSupport existingSupport = null,
                 Scaffold.VaultContext context = null
@@ -18,6 +19,7 @@ namespace TW.Vault.Model.Convert
             if (existingSupport == null)
             {
                 existingSupport = new Scaffold.CurrentVillageSupport();
+                existingSupport.WorldId = worldId;
                 if (context != null)
                     context.CurrentVillageSupport.Add(existingSupport);
             }
@@ -26,7 +28,7 @@ namespace TW.Vault.Model.Convert
             existingSupport.TargetVillageId = villageData.Id;
 
             existingSupport.LastUpdatedAt = DateTime.UtcNow;
-            existingSupport.SupportingArmy = ArmyConvert.JsonToArmy(villageData.TroopCounts, existingSupport.SupportingArmy, context);
+            existingSupport.SupportingArmy = ArmyConvert.JsonToArmy(villageData.TroopCounts, worldId, existingSupport.SupportingArmy, context);
 
             return existingSupport;
         }

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace EntityFrameworkCore.Scaffolding.NavigationPropertyFixup
@@ -11,12 +12,18 @@ namespace EntityFrameworkCore.Scaffolding.NavigationPropertyFixup
     {
         public override string GetDependentEndCandidateNavigationPropertyName(IForeignKey foreignKey)
         {
-            return base.GetDependentEndCandidateNavigationPropertyName(foreignKey);
+            var bestName = foreignKey.Properties.FirstOrDefault(p => !p.Name.Contains("WorldId"))?.Name;
+            if (bestName != null && bestName != "Id" && bestName.EndsWith("Id"))
+                bestName = bestName.Substring(0, bestName.Length - 2);
+
+            var baseName = base.GetDependentEndCandidateNavigationPropertyName(foreignKey);
+            return bestName ?? baseName;
         }
 
         public override string GetPrincipalEndCandidateNavigationPropertyName(IForeignKey foreignKey, string dependentEndNavigationPropertyName)
         {
-            return base.GetPrincipalEndCandidateNavigationPropertyName(foreignKey, dependentEndNavigationPropertyName);
+            var baseResult = base.GetPrincipalEndCandidateNavigationPropertyName(foreignKey, dependentEndNavigationPropertyName);
+            return baseResult;
         }
     }
 }

@@ -58,7 +58,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<Ally>(entity =>
             {
-                entity.HasKey(e => e.TribeId);
+                entity.HasKey(e => new { e.WorldId, e.TribeId });
 
                 entity.ToTable("ally", "tw_provided");
 
@@ -101,14 +101,10 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("command", "tw");
 
-                entity.HasIndex(e => new { e.WorldId, e.CommandId })
-                    .HasName("idx_world_id_command_id");
+                entity.HasKey(e => new { e.WorldId, e.CommandId });
 
-                entity.HasIndex(e => e.SourceVillageId)
-                    .HasName("idx_source_village_id");
-
-                entity.HasIndex(e => e.TargetVillageId)
-                    .HasName("idx_target_village_id");
+                entity.HasIndex(e => new { e.WorldId, e.ArmyId })
+                    .HasName("fki_fk_army_id");
 
                 entity.Property(e => e.CommandId)
                     .HasColumnName("command_id")
@@ -148,31 +144,31 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(d => d.Army)
                     .WithMany(p => p.Command)
-                    .HasForeignKey(d => d.ArmyId)
-                    .HasConstraintName("fk_army_id");
+                    .HasForeignKey(d => new { d.WorldId, d.ArmyId })
+                    .HasConstraintName("fk_army");
 
                 entity.HasOne(d => d.SourcePlayer)
                     .WithMany(p => p.CommandSourcePlayer)
-                    .HasForeignKey(d => d.SourcePlayerId)
+                    .HasForeignKey(d => new { d.WorldId, d.SourcePlayerId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_source_player_id");
+                    .HasConstraintName("fk_source_player");
 
                 entity.HasOne(d => d.SourceVillage)
                     .WithMany(p => p.CommandSourceVillage)
-                    .HasForeignKey(d => d.SourceVillageId)
+                    .HasForeignKey(d => new { d.WorldId, d.SourceVillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_source_village_id");
+                    .HasConstraintName("fk_source_village");
 
                 entity.HasOne(d => d.TargetPlayer)
                     .WithMany(p => p.CommandTargetPlayer)
-                    .HasForeignKey(d => d.TargetPlayerId)
-                    .HasConstraintName("fk_target_player_id");
+                    .HasForeignKey(d => new { d.WorldId, d.TargetPlayerId })
+                    .HasConstraintName("fk_target_player");
 
                 entity.HasOne(d => d.TargetVillage)
                     .WithMany(p => p.CommandTargetVillage)
-                    .HasForeignKey(d => d.TargetVillageId)
+                    .HasForeignKey(d => new { d.WorldId, d.TargetVillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_target_village_id");
+                    .HasConstraintName("fk_target_village");
 
                 entity.HasOne(d => d.Tx)
                     .WithMany(p => p.Command)
@@ -188,10 +184,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CommandArmy>(entity =>
             {
-                entity.HasKey(e => e.ArmyId);
-                entity
-                    .HasIndex(e => new { e.WorldId, e.ArmyId })
-                    .HasName("idx_world_id_army_id");
+                entity.HasKey(e => new { e.WorldId, e.ArmyId });
 
                 entity.ToTable("command_army", "tw");
 
@@ -262,7 +255,6 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<Conquer>(entity =>
             {
                 entity.HasKey(e => e.VaultId);
-                entity.HasIndex(e => new { e.WorldId, e.VillageId });
 
                 entity.ToTable("conquer", "tw_provided");
 
@@ -289,7 +281,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentArmy>(entity =>
             {
-                entity.HasKey(e => e.ArmyId);
+                entity.HasKey(e => new { e.WorldId, e.ArmyId });
 
                 entity.ToTable("current_army", "tw");
 
@@ -330,7 +322,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentBuilding>(entity =>
             {
-                entity.HasKey(e => e.VillageId);
+                entity.HasKey(e => new { e.WorldId, e.VillageId });
 
                 entity.ToTable("current_building", "tw");
 
@@ -382,7 +374,7 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(d => d.Village)
                     .WithOne(p => p.CurrentBuilding)
-                    .HasForeignKey<CurrentBuilding>(d => d.VillageId)
+                    .HasForeignKey<CurrentBuilding>(d => new { d.WorldId, d.VillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("buildings_villages_fk");
 
@@ -395,7 +387,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentPlayer>(entity =>
             {
-                entity.HasKey(e => e.PlayerId);
+                entity.HasKey(e => new { e.WorldId, e.PlayerId });
 
                 entity.ToTable("current_player", "tw");
 
@@ -416,12 +408,12 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentVillage>(entity =>
             {
-                entity.HasKey(e => e.VillageId);
+                entity.HasKey(e => new { e.WorldId, e.VillageId });
 
                 entity.ToTable("current_village", "tw");
 
-                entity.HasIndex(e => new { e.WorldId, e.VillageId })
-                    .HasName("idx_current_village_world_id_village_id")
+                entity.HasIndex(e => e.WorldId)
+                    .HasName("idx_current_village_world_id")
                     .ForNpgsqlHasMethod("hash");
 
                 entity.Property(e => e.VillageId)
@@ -448,43 +440,43 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(d => d.ArmyAtHome)
                     .WithMany(p => p.CurrentVillageArmyAtHome)
-                    .HasForeignKey(d => d.ArmyAtHomeId)
-                    .HasConstraintName("fk_army_at_home_id");
+                    .HasForeignKey(d => new { d.WorldId, d.ArmyAtHomeId })
+                    .HasConstraintName("fk_army_at_home");
 
                 entity.HasOne(d => d.ArmyOwned)
                     .WithMany(p => p.CurrentVillageArmyOwned)
-                    .HasForeignKey(d => d.ArmyOwnedId)
+                    .HasForeignKey(d => new { d.WorldId, d.ArmyOwnedId })
                     .OnDelete(DeleteBehavior.SetNull)
                     .HasConstraintName("fk_owned_army");
 
                 entity.HasOne(d => d.ArmyRecentLosses)
                     .WithMany(p => p.CurrentVillageArmyRecentLosses)
-                    .HasForeignKey(d => d.ArmyRecentLossesId)
+                    .HasForeignKey(d => new { d.WorldId, d.ArmyRecentLossesId })
                     .OnDelete(DeleteBehavior.SetNull)
                     .HasConstraintName("current_village_current_army_fk");
 
                 entity.HasOne(d => d.ArmyStationed)
                     .WithMany(p => p.CurrentVillageArmyStationed)
-                    .HasForeignKey(d => d.ArmyStationedId)
+                    .HasForeignKey(d => new { d.WorldId, d.ArmyStationedId })
                     .OnDelete(DeleteBehavior.SetNull)
                     .HasConstraintName("fk_stationed_army");
 
                 entity.HasOne(d => d.ArmySupporting)
                     .WithMany(p => p.CurrentVillageArmySupporting)
-                    .HasForeignKey(d => d.ArmySupportingId)
-                    .HasConstraintName("fk_army_supporting_id");
+                    .HasForeignKey(d => new { d.WorldId, d.ArmySupportingId })
+                    .HasConstraintName("fk_army_supporting");
 
                 entity.HasOne(d => d.ArmyTraveling)
                     .WithMany(p => p.CurrentVillageArmyTraveling)
-                    .HasForeignKey(d => d.ArmyTravelingId)
+                    .HasForeignKey(d => new { d.WorldId, d.ArmyTravelingId })
                     .OnDelete(DeleteBehavior.SetNull)
                     .HasConstraintName("fk_traveling_army");
 
                 entity.HasOne(d => d.Village)
                     .WithOne(p => p.CurrentVillage)
-                    .HasForeignKey<CurrentVillage>(d => d.VillageId)
+                    .HasForeignKey<CurrentVillage>(d => new { d.WorldId, d.VillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_village_id");
+                    .HasConstraintName("fk_village");
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.CurrentVillage)
@@ -496,6 +488,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<CurrentVillageSupport>(entity =>
             {
                 entity.ToTable("current_village_support", "tw");
+
+                entity.HasKey(e => new { e.WorldId, e.Id });
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
@@ -513,21 +507,21 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(d => d.SourceVillage)
                     .WithMany(p => p.CurrentVillageSupportSourceVillage)
-                    .HasForeignKey(d => d.SourceVillageId)
+                    .HasForeignKey(d => new { d.WorldId, d.SourceVillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_source_village_id");
+                    .HasConstraintName("fk_source_village");
 
                 entity.HasOne(d => d.SupportingArmy)
                     .WithMany(p => p.CurrentVillageSupport)
-                    .HasForeignKey(d => d.SupportingArmyId)
+                    .HasForeignKey(d => new { d.WorldId, d.SupportingArmyId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_supporting_army_id");
+                    .HasConstraintName("fk_supporting_army");
 
                 entity.HasOne(d => d.TargetVillage)
                     .WithMany(p => p.CurrentVillageSupportTargetVillage)
-                    .HasForeignKey(d => d.TargetVillageId)
+                    .HasForeignKey(d => new { d.WorldId, d.TargetVillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_target_village_id");
+                    .HasConstraintName("fk_target_village");
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.CurrentVillageSupport)
@@ -539,6 +533,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<FailedAuthorizationRecord>(entity =>
             {
                 entity.ToTable("failed_authorization_record", "security");
+
+                entity.HasKey(e => e.Id);
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
@@ -571,6 +567,8 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("invalid_data_record", "security");
 
+                entity.HasKey(e => e.Id);
+
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
                     .HasDefaultValueSql("nextval('security.invalid_data_record_id_seq'::regclass)");
@@ -598,6 +596,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<NotificationPhoneNumber>(entity =>
             {
                 entity.ToTable("notification_phone_number", "feature");
+
+                entity.HasKey(e => e.Id);
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
@@ -634,6 +634,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<NotificationRequest>(entity =>
             {
                 entity.ToTable("notification_request", "feature");
+
+                entity.HasKey(e => e.Id);
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
@@ -697,6 +699,8 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("performance_record", "tw");
 
+                entity.HasKey(e => e.Id);
+
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
                     .HasDefaultValueSql("nextval('tw.performance_record_id_seq'::regclass)");
@@ -720,6 +724,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<Player>(entity =>
             {
                 entity.ToTable("player", "tw_provided");
+
+                entity.HasKey(e => new { e.WorldId, e.PlayerId });
 
                 entity.HasIndex(e => e.WorldId)
                     .HasName("idx_player_world_id")
@@ -753,6 +759,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<Report>(entity =>
             {
                 entity.ToTable("report", "tw");
+
+                entity.HasKey(e => new { e.WorldId, e.ReportId });
 
                 entity.HasIndex(e => e.AttackerPlayerId)
                     .HasName("idx_report_attacker_player_id")
@@ -815,57 +823,57 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(d => d.AttackerArmy)
                     .WithMany(p => p.ReportAttackerArmy)
-                    .HasForeignKey(d => d.AttackerArmyId)
+                    .HasForeignKey(d => new { d.WorldId, d.AttackerArmyId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_attacker_army_id");
+                    .HasConstraintName("fk_attacker_army");
 
                 entity.HasOne(d => d.AttackerLossesArmy)
                     .WithMany(p => p.ReportAttackerLossesArmy)
-                    .HasForeignKey(d => d.AttackerLossesArmyId)
+                    .HasForeignKey(d => new { d.WorldId, d.AttackerLossesArmyId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_attacker_army_losses_id");
+                    .HasConstraintName("fk_attacker_army_losses");
 
                 entity.HasOne(d => d.AttackerPlayer)
                     .WithMany(p => p.ReportAttackerPlayer)
-                    .HasForeignKey(d => d.AttackerPlayerId)
-                    .HasConstraintName("fk_attacker_player_id");
+                    .HasForeignKey(d => new { d.WorldId, d.AttackerPlayerId })
+                    .HasConstraintName("fk_attacker_player");
 
                 entity.HasOne(d => d.AttackerVillage)
                     .WithMany(p => p.ReportAttackerVillage)
-                    .HasForeignKey(d => d.AttackerVillageId)
+                    .HasForeignKey(d => new { d.WorldId, d.AttackerVillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_attacker_village_id");
+                    .HasConstraintName("fk_attacker_village");
 
                 entity.HasOne(d => d.Building)
                     .WithMany(p => p.Report)
-                    .HasForeignKey(d => d.BuildingId)
-                    .HasConstraintName("fk_building_id");
+                    .HasForeignKey(d => new { d.WorldId, d.BuildingId })
+                    .HasConstraintName("fk_building");
 
                 entity.HasOne(d => d.DefenderArmy)
                     .WithMany(p => p.ReportDefenderArmy)
-                    .HasForeignKey(d => d.DefenderArmyId)
-                    .HasConstraintName("fk_defender_army_id");
+                    .HasForeignKey(d => new { d.WorldId, d.DefenderArmyId })
+                    .HasConstraintName("fk_defender_army");
 
                 entity.HasOne(d => d.DefenderLossesArmy)
                     .WithMany(p => p.ReportDefenderLossesArmy)
-                    .HasForeignKey(d => d.DefenderLossesArmyId)
-                    .HasConstraintName("fk_defender_army_losses_id");
+                    .HasForeignKey(d => new { d.WorldId, d.DefenderLossesArmyId })
+                    .HasConstraintName("fk_defender_army_losses");
 
                 entity.HasOne(d => d.DefenderPlayer)
                     .WithMany(p => p.ReportDefenderPlayer)
-                    .HasForeignKey(d => d.DefenderPlayerId)
-                    .HasConstraintName("fk_defender_player_id");
+                    .HasForeignKey(d => new { d.WorldId, d.DefenderPlayerId })
+                    .HasConstraintName("fk_defender_player");
 
                 entity.HasOne(d => d.DefenderTravelingArmy)
                     .WithMany(p => p.ReportDefenderTravelingArmy)
-                    .HasForeignKey(d => d.DefenderTravelingArmyId)
-                    .HasConstraintName("fk_defender_traveling_army_id");
+                    .HasForeignKey(d => new { d.WorldId, d.DefenderTravelingArmyId })
+                    .HasConstraintName("fk_defender_traveling_army");
 
                 entity.HasOne(d => d.DefenderVillage)
                     .WithMany(p => p.ReportDefenderVillage)
-                    .HasForeignKey(d => d.DefenderVillageId)
+                    .HasForeignKey(d => new { d.WorldId, d.DefenderVillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_defender_village_id");
+                    .HasConstraintName("fk_defender_village");
 
                 entity.HasOne(d => d.Tx)
                     .WithMany(p => p.Report)
@@ -881,7 +889,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<ReportArmy>(entity =>
             {
-                entity.HasKey(e => e.ArmyId);
+                entity.HasKey(e => new { e.WorldId, e.ArmyId });
 
                 entity.ToTable("report_army", "tw");
 
@@ -931,6 +939,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<ReportBuilding>(entity =>
             {
                 entity.ToTable("report_building", "tw");
+
+                entity.HasKey(e => new { e.WorldId, e.ReportBuildingId });
 
                 entity.HasIndex(e => e.WorldId)
                     .HasName("idx_report_building_world_id")
@@ -1122,6 +1132,8 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("village", "tw_provided");
 
+                entity.HasKey(e => new { e.WorldId, e.VillageId });
+
                 entity.HasIndex(e => e.WorldId)
                     .HasName("idx_village_world_id")
                     .ForNpgsqlHasMethod("hash");
@@ -1148,7 +1160,7 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(d => d.Player)
                     .WithMany(p => p.Village)
-                    .HasForeignKey(d => d.PlayerId)
+                    .HasForeignKey(d => new { d.WorldId, d.PlayerId })
                     .HasConstraintName("fk_player_id");
 
                 entity.HasOne(d => d.World)

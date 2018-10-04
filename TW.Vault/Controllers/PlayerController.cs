@@ -101,7 +101,7 @@ namespace TW.Vault.Controllers
                 var sourceVillageId = jsonData.SourceId;
                 var support = jsonData.Support;
                 var scaffoldRecord = existingOutwardSupport.SingleOrDefault(e => e.SourceVillageId == sourceVillageId && e.TargetVillageId == support.Id);
-                scaffoldRecord = OutwardSupportConvert.ToModel(sourceVillageId, support, scaffoldRecord, context);
+                scaffoldRecord = OutwardSupportConvert.ToModel(sourceVillageId, CurrentWorldId, support, scaffoldRecord, context);
                 scaffoldRecord.WorldId = CurrentWorldId;
             }
 

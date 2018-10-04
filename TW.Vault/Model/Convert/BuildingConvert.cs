@@ -12,8 +12,8 @@ namespace TW.Vault.Model.Convert
         public static JSON.BuildingLevels ToJSON(this Scaffold.ReportBuilding reportBuildings)
             => ReportBuildingToJson(reportBuildings);
 
-        public static Scaffold.ReportBuilding ToModel(this JSON.BuildingLevels jsonBuildings, Scaffold.ReportBuilding existingBuildings = null, Scaffold.VaultContext context = null)
-            => JsonToReportBuilding(jsonBuildings, existingBuildings, context);
+        public static Scaffold.ReportBuilding ToModel(this JSON.BuildingLevels jsonBuildings, short worldId, Scaffold.ReportBuilding existingBuildings = null, Scaffold.VaultContext context = null)
+            => JsonToReportBuilding(jsonBuildings, worldId, existingBuildings, context);
 
         public static JSON.BuildingLevels ReportBuildingToJson(Scaffold.ReportBuilding reportBuildings)
         {
@@ -73,7 +73,7 @@ namespace TW.Vault.Model.Convert
             return result;
         }
 
-        public static Scaffold.ReportBuilding JsonToReportBuilding(JSON.BuildingLevels buildingLevels, Scaffold.ReportBuilding existingBuildings = null, Scaffold.VaultContext context = null)
+        public static Scaffold.ReportBuilding JsonToReportBuilding(JSON.BuildingLevels buildingLevels, short worldId, Scaffold.ReportBuilding existingBuildings = null, Scaffold.VaultContext context = null)
         {
             if (buildingLevels == null || buildingLevels.Count == 0)
             {
@@ -91,8 +91,8 @@ namespace TW.Vault.Model.Convert
             else
             {
                 result = new Scaffold.ReportBuilding();
-                if (context != null)
-                    context.Add(result);
+                result.WorldId = worldId;
+                context.Add(result);
             }
 
             result.Barracks   = GetOrNull(buildingLevels, "barracks");
@@ -113,7 +113,6 @@ namespace TW.Vault.Model.Convert
             result.Wall       = GetOrNull(buildingLevels, "wall");
             result.Watchtower = GetOrNull(buildingLevels, "watchtower");
             result.Wood       = GetOrNull(buildingLevels, "wood");
-
 
             // ?
             //result.FirstChurch = GetOrNull(buildingLevels, "First church");
