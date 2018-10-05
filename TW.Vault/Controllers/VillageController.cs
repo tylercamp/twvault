@@ -68,48 +68,7 @@ namespace TW.Vault.Controllers
         [HttpGet("{villageId}/army", Name = "GetKnownArmy")]
         public async Task<IActionResult> GetVillageArmy(long villageId, int? morale)
         {
-            var village = await Profile("Find village", () => context.Village.Where(v => v.VillageId == villageId && v.WorldId == CurrentWorld.Id).FirstOrDefaultAsync());
-            if (village == null)
-                return NotFound();
-
-            var registeredTribeIds = await (
-                    from user in context.User
-                    join player in context.Player on user.PlayerId equals player.PlayerId
-                    where player.TribeId != null
-                    where user.Enabled
-                    select player.TribeId.Value
-                ).Distinct().ToListAsync();
-
-            bool canRead = false;
-            if (!village.PlayerId.HasValue)
-            {
-                //  Allowed to read for barbarian villages
-                canRead = true;
-            }
-            else
-            {
-                var owningPlayer = await Profile("Get owning player", () => context.Player.FromWorld(CurrentWorldId).Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
-                bool canReadFromTribe = true;
-                if (owningPlayer.TribeId != null)
-                {
-                    if (Configuration.Security.RestrictAccessWithinTribes)
-                        canReadFromTribe = owningPlayer.TribeId.Value != CurrentTribeId;
-                    else
-                        canReadFromTribe = !registeredTribeIds.Contains(owningPlayer.TribeId.Value);
-                }
-
-                if (!owningPlayer.TribeId.HasValue || canReadFromTribe || CurrentUserIsAdmin)
-                {
-                    //  Allowed to read if:
-                    //
-                    // - the player has no tribe
-                    // - or the village tribe is different from the player's tribe
-                    // - or the current user is an admin
-                    canRead = true;
-                }
-            }
-
-            if (!canRead)
+            if (!await CanReadVillage(villageId))
                 return StatusCode(401);
 
             var uploadHistory = await Profile("Get user upload history", () =>
@@ -420,6 +379,133 @@ namespace TW.Vault.Controllers
             await context.SaveChangesAsync();
 
             return Ok();
+        }
+
+        [HttpGet("{villageId}/commands")]
+        public async Task<IActionResult> GetCommandsRegardingVillage(long villageId)
+        {
+            if (!await CanReadVillage(villageId))
+                return StatusCode(401);
+
+            var commandsFromVillage = await Profile("Get commands from village", () => (
+                    from command in context.Command
+                                           .FromWorld(CurrentWorldId)
+                                           .Include(c => c.Army)
+                    where command.SourceVillageId == villageId
+                    where command.ReturnsAt > CurrentServerTime
+                    select command
+                ).ToListAsync());
+
+            var commandsToVillage = !CurrentUserIsAdmin
+                ? new List<Scaffold.Command>()
+                : await Profile("Get commands to village", () => (
+                    from command in context.Command
+                                           .FromWorld(CurrentWorldId)
+                                           .Include(c => c.Army)
+                    where command.TargetVillageId == villageId
+                    where command.ReturnsAt > CurrentServerTime
+                    select command
+                ).ToListAsync());
+
+            var otherVillageIds = commandsFromVillage.Select(c => c.TargetVillageId).Concat(commandsToVillage.Select(c => c.SourceVillageId)).Distinct();
+            var otherVillages = await Profile("Get other villages", () => (
+                    from village in context.Village.FromWorld(CurrentWorldId)
+                    where otherVillageIds.Contains(village.VillageId)
+                    select village
+                ).ToListAsync());
+
+            var otherVillagesById = otherVillages.ToDictionary(v => v.VillageId, v => v);
+
+            var result = new JSON.VillageCommandSet();
+
+            if (commandsToVillage != null && commandsToVillage.Count > 0)
+            {
+                foreach (var command in commandsToVillage)
+                {
+                    var commandData = new JSON.VillageCommand();
+                    commandData.LandsAt = command.LandsAt;
+                    commandData.ReturnsAt = command.ReturnsAt.Value;
+                    commandData.Army = ArmyConvert.ArmyToJson(command.Army);
+                    commandData.IsReturning = command.IsReturning;
+
+                    var otherVillage = otherVillagesById[command.SourceVillageId];
+                    commandData.OtherVillageName = otherVillage.VillageName;
+                    commandData.OtherVillageCoords = $"{otherVillage.X}|{otherVillage.Y}";
+
+                    result.CommandsToVillage.Add(commandData);
+                }
+            }
+
+            if (commandsFromVillage != null && commandsFromVillage.Count > 0)
+            {
+                foreach (var command in commandsFromVillage)
+                {
+                    var commandData = new JSON.VillageCommand();
+                    commandData.LandsAt = command.LandsAt;
+                    commandData.ReturnsAt = command.ReturnsAt.Value;
+                    commandData.Army = ArmyConvert.ArmyToJson(command.Army);
+                    commandData.IsReturning = command.IsReturning;
+
+                    var otherVillage = otherVillagesById[command.TargetVillageId];
+                    commandData.OtherVillageName = otherVillage.VillageName;
+                    commandData.OtherVillageCoords = $"{otherVillage.X}|{otherVillage.Y}";
+
+                    result.CommandsFromVillage.Add(commandData);
+                }
+            }
+
+            return Ok(result);
+        }
+
+
+
+
+
+
+        private async Task<bool> CanReadVillage(long villageId, Scaffold.Village queriedVillage = null)
+        {
+            var village = queriedVillage ?? await Profile("Find village", () => context.Village.Where(v => v.VillageId == villageId && v.WorldId == CurrentWorld.Id).FirstOrDefaultAsync());
+            if (village == null)
+                return false;
+
+            var registeredTribeIds = await Profile("Get registered tribe IDs", () => (
+                    from user in context.User.FromWorld(CurrentWorldId)
+                    join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                    where player.TribeId != null
+                    where user.Enabled
+                    select player.TribeId.Value
+                ).Distinct().ToListAsync());
+
+            bool canRead = false;
+            if (!village.PlayerId.HasValue)
+            {
+                //  Allowed to read for barbarian villages
+                canRead = true;
+            }
+            else
+            {
+                var owningPlayer = await Profile("Get owning player", () => context.Player.Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
+                bool canReadFromTribe = true;
+                if (owningPlayer.TribeId != null)
+                {
+                    if (Configuration.Security.RestrictAccessWithinTribes)
+                        canReadFromTribe = owningPlayer.TribeId.Value != CurrentTribeId;
+                    else
+                        canReadFromTribe = !registeredTribeIds.Contains(owningPlayer.TribeId.Value);
+                }
+
+                if (!owningPlayer.TribeId.HasValue || canReadFromTribe || CurrentUserIsAdmin)
+                {
+                    //  Allowed to read if:
+                    //
+                    // - the player has no tribe
+                    // - or the village tribe is different from the player's tribe
+                    // - or the current user is an admin
+                    canRead = true;
+                }
+            }
+
+            return canRead;
         }
     }
 }
