@@ -88,7 +88,7 @@ namespace TW.Vault.Controllers
             }
             else
             {
-                var owningPlayer = await Profile("Get owning player", () => context.Player.Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
+                var owningPlayer = await Profile("Get owning player", () => context.Player.FromWorld(CurrentWorldId).Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
                 bool canReadFromTribe = true;
                 if (owningPlayer.TribeId != null)
                 {
@@ -111,16 +111,6 @@ namespace TW.Vault.Controllers
 
             if (!canRead)
                 return StatusCode(401);
-
-            //  Check if player has uploaded report data recently
-            var latestReportTransaction = await Profile("Find latest report transaction", () => (
-                    from tx in context.Transaction
-                        join report in context.Report on tx.TxId equals report.TxId
-                    where tx.Uid == CurrentUser.Uid
-                    orderby tx.OccurredAt descending
-                    select tx
-                ).FirstOrDefaultAsync()
-            );
 
             var uploadHistory = await Profile("Get user upload history", () =>
                 context.UserUploadHistory.Where(h => h.Uid == CurrentUser.Uid).FirstOrDefaultAsync()
