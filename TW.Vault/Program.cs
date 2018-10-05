@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
@@ -39,7 +40,28 @@ namespace TW.Vault
                 .UseSerilog()
                 .Build();
 
+            PreloadAssemblies();
             host.Run();
+        }
+
+        private static void PreloadAssemblies()
+        {
+            var pendingAssemblies = new Queue<Assembly>();
+            var visitedAssemblies = new List<String>();
+
+            pendingAssemblies.Enqueue(Assembly.GetExecutingAssembly());
+
+            while (pendingAssemblies.Count > 0)
+            {
+                var current = pendingAssemblies.Dequeue();
+                var dependencies = current.GetReferencedAssemblies();
+
+                var newAssemblies = dependencies.Where(d => !visitedAssemblies.Contains(d.FullName)).ToList();
+                foreach (var name in newAssemblies)
+                    pendingAssemblies.Enqueue(Assembly.Load(name));
+
+                visitedAssemblies.AddRange(newAssemblies.Select(d => d.FullName));
+            }
         }
     }
 }
