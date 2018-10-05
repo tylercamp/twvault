@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TW.Vault
+namespace TW.Vault.Caching
 {
     public class CachingMap<T> where T : class
     {
@@ -18,7 +18,7 @@ namespace TW.Vault
             {
                 this.maxCacheAge = value;
                 foreach (var cacher in cachedContents.Values)
-                    cacher.MaxAge = maxCacheAge;
+                    cacher.MaxAge = value;
             }
         }
 
