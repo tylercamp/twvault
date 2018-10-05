@@ -101,8 +101,14 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("command", "tw");
 
-                entity.HasIndex(e => e.ArmyId)
-                    .HasName("fki_fk_army_id");
+                entity.HasIndex(e => new { e.WorldId, e.CommandId })
+                    .HasName("idx_world_id_command_id");
+
+                entity.HasIndex(e => e.SourceVillageId)
+                    .HasName("idx_source_village_id");
+
+                entity.HasIndex(e => e.TargetVillageId)
+                    .HasName("idx_target_village_id");
 
                 entity.Property(e => e.CommandId)
                     .HasColumnName("command_id")
@@ -183,6 +189,9 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<CommandArmy>(entity =>
             {
                 entity.HasKey(e => e.ArmyId);
+                entity
+                    .HasIndex(e => new { e.WorldId, e.ArmyId })
+                    .HasName("idx_world_id_army_id");
 
                 entity.ToTable("command_army", "tw");
 
@@ -253,6 +262,7 @@ namespace TW.Vault.Scaffold
             modelBuilder.Entity<Conquer>(entity =>
             {
                 entity.HasKey(e => e.VaultId);
+                entity.HasIndex(e => new { e.WorldId, e.VillageId });
 
                 entity.ToTable("conquer", "tw_provided");
 
@@ -410,8 +420,8 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("current_village", "tw");
 
-                entity.HasIndex(e => e.WorldId)
-                    .HasName("idx_current_village_world_id")
+                entity.HasIndex(e => new { e.WorldId, e.VillageId })
+                    .HasName("idx_current_village_world_id_village_id")
                     .ForNpgsqlHasMethod("hash");
 
                 entity.Property(e => e.VillageId)
