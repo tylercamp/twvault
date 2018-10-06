@@ -26,7 +26,7 @@ var lib = (() => {
 
     let encryption = makeEncryption();
 
-    let getCurrentUtcTime = () => Date.now() + utcTimeOffset;
+    let getCurrentUtcTime = () => Date.now() - utcTimeOffset;
 
     let makeAuthHeader = (playerId, tribeId, authKey) => {
         let authString = `${playerId}:${tribeId}:${authKey}`;
@@ -47,6 +47,7 @@ var lib = (() => {
             OWN_TROOPS_OVERVIEW: null,
             OWN_TROOPS_SUPPORTING_OVERVIEW: null,
             BUILDINGS_OVERVIEW: null,
+            VILLAGE_INFO: null,
             MAP: null
         },
 
@@ -877,6 +878,7 @@ var lib = (() => {
     pageValidators[lib.pageTypes.OWN_TROOPS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=units");
     pageValidators[lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=units") && href.contains("type=away_detail");
     pageValidators[lib.pageTypes.BUILDINGS_OVERVIEW] = () => href.contains("screen=overview_villages") && href.contains("mode=buildings");
+    pageValidators[lib.pageTypes.VILLAGE_INFO] = () => href.contains("screen=info_village");
 
     pageValidators[lib.pageTypes.UNKNOWN] = () => lib.getCurrentPage() == lib.pageTypes.UNKNOWN;
 
@@ -890,6 +892,7 @@ var lib = (() => {
     pageUrls[lib.pageTypes.OWN_TROOPS_OVERVIEW] = 'screen=overview_villages&mode=units&group=0&page=-1&type=complete';
     pageUrls[lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW] = 'screen=overview_villages&mode=units&type=away_detail&group=0&page=-1';
     pageUrls[lib.pageTypes.BUILDINGS_OVERVIEW] = 'screen=overview_villages&mode=buildings&group=0&page=-1';
+    pageUrls[lib.pageTypes.VILLAGE_INFO] = null; // there's no generic "village info" page, it's specific to each village
 
     //  Make sure all page types have validators
     lib.objForEach(lib.pageTypes, (type) => !pageValidators[type] ? console.warn('No pageValidator set for pageType: ', type) : null);

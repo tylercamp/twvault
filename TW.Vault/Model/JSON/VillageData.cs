@@ -11,11 +11,13 @@ namespace TW.Vault.Model.JSON
         public Army TravelingArmy { get; set; }
         public Army RecentlyLostArmy { get; set; }
         public Army OwnedArmy { get; set; }
+        public Army AtHomeArmy { get; set; }
 
         public DateTime? StationedSeenAt { get; set; }
         public DateTime? TravelingSeenAt { get; set; }
         public DateTime? RecentlyLostArmySeenAt { get; set; }
         public DateTime? OwnedArmySeenAt { get; set; }
+        public DateTime? AtHomeSeenAt { get; set; }
 
         public BuildingLevels LastBuildings { get; set; }
         public DateTime? LastBuildingsSeenAt { get; set; }

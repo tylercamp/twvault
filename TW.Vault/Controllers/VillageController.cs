@@ -89,6 +89,7 @@ namespace TW.Vault.Controllers
                 Profile("Get current village", () => (
                     from cv in context.CurrentVillage
                                         .FromWorld(CurrentWorldId)
+                                        .Include(v => v.ArmyAtHome)
                                         .Include(v => v.ArmyOwned)
                                         .Include(v => v.ArmyStationed)
                                         .Include(v => v.ArmyTraveling)
@@ -125,28 +126,34 @@ namespace TW.Vault.Controllers
 
             Profile("Populate JSON data", () =>
             {
-                if (currentVillage.ArmyOwned != null)
+                if (currentVillage.ArmyOwned?.LastUpdated != null)
                 {
                     jsonData.OwnedArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyOwned);
                     jsonData.OwnedArmySeenAt = currentVillage.ArmyOwned.LastUpdated;
                 }
 
-                if (currentVillage.ArmyRecentLosses != null)
+                if (currentVillage.ArmyRecentLosses?.LastUpdated != null)
                 {
                     jsonData.RecentlyLostArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyRecentLosses);
                     jsonData.RecentlyLostArmySeenAt = currentVillage.ArmyRecentLosses.LastUpdated;
                 }
 
-                if (currentVillage.ArmyStationed != null)
+                if (currentVillage.ArmyStationed?.LastUpdated != null)
                 {
                     jsonData.StationedArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyStationed);
                     jsonData.StationedSeenAt = currentVillage.ArmyStationed.LastUpdated;
                 }
 
-                if (currentVillage.ArmyTraveling != null)
+                if (currentVillage.ArmyTraveling?.LastUpdated != null)
                 {
                     jsonData.TravelingArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyTraveling);
                     jsonData.TravelingSeenAt = currentVillage.ArmyTraveling.LastUpdated;
+                }
+
+                if (currentVillage.ArmyAtHome?.LastUpdated != null)
+                {
+                    jsonData.AtHomeArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyAtHome);
+                    jsonData.AtHomeSeenAt = currentVillage.ArmyAtHome.LastUpdated;
                 }
 
                 jsonData.LastLoyalty = currentVillage.Loyalty;
@@ -161,13 +168,13 @@ namespace TW.Vault.Controllers
                 jsonData.LastBuildings = BuildingConvert.CurrentBuildingToJson(currentVillage.CurrentBuilding);
                 jsonData.LastBuildingsSeenAt = currentVillage.CurrentBuilding?.LastUpdated;
 
-                if (currentVillage.CurrentBuilding != null)
+                if (currentVillage.CurrentBuilding?.LastUpdated != null)
                 {
                     var constructionCalculator = new ConstructionCalculator();
                     jsonData.PossibleBuildings = constructionCalculator.CalculatePossibleBuildings(jsonData.LastBuildings, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated.Value);
                 }
 
-                if (currentVillage.ArmyStationed != null)
+                if (currentVillage.ArmyStationed?.LastUpdated != null)
                 {
                     var battleSimulator = new BattleSimulator();
                     short wallLevel = currentVillage.CurrentBuilding?.Wall ?? 20;
@@ -290,7 +297,13 @@ namespace TW.Vault.Controllers
 
             var (scaffoldCurrentVillages, villagesWithPlayerIds) = await ManyTasks.Run(
                 Profile("Get existing scaffold current villages", () => (
-                    from cv in context.CurrentVillage.FromWorld(CurrentWorldId).IncludeCurrentVillageData()
+                    from cv in context.CurrentVillage
+                                      .FromWorld(CurrentWorldId)
+                                      .Include(v => v.ArmyOwned)
+                                      .Include(v => v.ArmyAtHome)
+                                      .Include(v => v.ArmyStationed)
+                                      .Include(v => v.ArmySupporting)
+                                      .Include(v => v.ArmyTraveling)
                     where villageIds.Contains(cv.VillageId)
                     select cv
                 ).ToListAsync())
@@ -387,6 +400,15 @@ namespace TW.Vault.Controllers
             if (!await CanReadVillage(villageId))
                 return StatusCode(401);
 
+            var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUser.Uid).FirstOrDefaultAsync();
+            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
+            var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
+
+            if (needsUpdateReasons != null && needsUpdateReasons.Any())
+            {
+                return StatusCode(423, needsUpdateReasons); // Status code "Locked"
+            }
+
             var commandsFromVillage = await Profile("Get commands from village", () => (
                     from command in context.Command
                                            .FromWorld(CurrentWorldId)
@@ -395,46 +417,18 @@ namespace TW.Vault.Controllers
                     where command.ReturnsAt > CurrentServerTime
                     select command
                 ).ToListAsync());
+            
 
-            var commandsToVillage = !CurrentUserIsAdmin
-                ? new List<Scaffold.Command>()
-                : await Profile("Get commands to village", () => (
-                    from command in context.Command
-                                           .FromWorld(CurrentWorldId)
-                                           .Include(c => c.Army)
-                    where command.TargetVillageId == villageId
-                    where command.ReturnsAt > CurrentServerTime
-                    select command
-                ).ToListAsync());
-
-            var otherVillageIds = commandsFromVillage.Select(c => c.TargetVillageId).Concat(commandsToVillage.Select(c => c.SourceVillageId)).Distinct();
-            var otherVillages = await Profile("Get other villages", () => (
+            var targetVillageIds = commandsFromVillage.Select(c => c.TargetVillageId).Distinct();
+            var targetVillages = await Profile("Get other villages", () => (
                     from village in context.Village.FromWorld(CurrentWorldId)
-                    where otherVillageIds.Contains(village.VillageId)
+                    where targetVillageIds.Contains(village.VillageId)
                     select village
                 ).ToListAsync());
 
-            var otherVillagesById = otherVillages.ToDictionary(v => v.VillageId, v => v);
+            var targetVillagesById = targetVillages.ToDictionary(v => v.VillageId, v => v);
 
             var result = new JSON.VillageCommandSet();
-
-            if (commandsToVillage != null && commandsToVillage.Count > 0)
-            {
-                foreach (var command in commandsToVillage)
-                {
-                    var commandData = new JSON.VillageCommand();
-                    commandData.LandsAt = command.LandsAt;
-                    commandData.ReturnsAt = command.ReturnsAt.Value;
-                    commandData.Army = ArmyConvert.ArmyToJson(command.Army);
-                    commandData.IsReturning = command.IsReturning;
-
-                    var otherVillage = otherVillagesById[command.SourceVillageId];
-                    commandData.OtherVillageName = otherVillage.VillageName;
-                    commandData.OtherVillageCoords = $"{otherVillage.X}|{otherVillage.Y}";
-
-                    result.CommandsToVillage.Add(commandData);
-                }
-            }
 
             if (commandsFromVillage != null && commandsFromVillage.Count > 0)
             {
@@ -446,7 +440,7 @@ namespace TW.Vault.Controllers
                     commandData.Army = ArmyConvert.ArmyToJson(command.Army);
                     commandData.IsReturning = command.IsReturning;
 
-                    var otherVillage = otherVillagesById[command.TargetVillageId];
+                    var otherVillage = targetVillagesById[command.TargetVillageId];
                     commandData.OtherVillageName = otherVillage.VillageName;
                     commandData.OtherVillageCoords = $"{otherVillage.X}|{otherVillage.Y}";
 

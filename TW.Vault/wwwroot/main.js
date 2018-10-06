@@ -20,6 +20,7 @@
     //# REQUIRE ui/map.js
     //# REQUIRE ui/vault.js
     //# REQUIRE ui/tag-incomings.js
+    //# REQUIRE ui/village-info.js
 
     //  Store current script host for dependent scripts that rely on it
     lib.setScriptHost(lib.getScriptHost());
@@ -93,6 +94,9 @@ These terms can be viewed again after running the script. To cancel your agreeme
             // })
             .onPage(lib.pageTypes.INCOMINGS_OVERVIEW, () => {
                 tagOnIncomingsOverviewPage();
+            })
+            .onPage(lib.pageTypes.VILLAGE_INFO, () => {
+                enhanceVillageInfoPage();
             })
             .onPageNotHandled(() => {
                 parseAllPages();
