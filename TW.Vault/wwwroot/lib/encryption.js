@@ -56,7 +56,6 @@
             }
 
             let seed = getCurrentSeed(currentTime);
-            console.log('Using seed ' + seed);
 
             //  Prefix all encrypted data with "vault:" as a validation measure during
             //  decryption

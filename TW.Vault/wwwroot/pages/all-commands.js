@@ -57,7 +57,7 @@
         console.log('Collected new commands: ', newCommands);
 
         if (!newCommands.length) {
-            lib.postApi(lib.makeApiUrl('command/finished-command-uploads'));
+            lib.postApi('command/finished-command-uploads');
             onProgress_ && onProgress_('Finished: No new commands to upload.');
 
             if (onDone_)
@@ -110,7 +110,7 @@
                         commands: [command]
                     };
 
-                    lib.postApi(lib.makeApiUrl('command'), commandData)
+                    lib.postApi('command', commandData)
                         .done(() => {
                             oldCommands.push(command.commandId);
                             lib.setLocalStorage('commands-history', oldCommands);
@@ -128,7 +128,7 @@
 
             if (!requestManager.getStats().total) {
                 lib.setLocalStorage('commands-history', oldCommands);
-                lib.postApi(lib.makeApiUrl('command/finished-command-uploads'));
+                lib.postApi('command/finished-command-uploads');
                 onProgress_ && onProgress_('Finished: No new commands to upload.');
 
                 if (onDone_)
@@ -161,7 +161,7 @@
 
 
     function checkExistingCommands(commandIds, onDone) {
-        lib.postApi(lib.makeApiUrl('command/check-existing-commands'), commandIds)
+        lib.postApi('command/check-existing-commands', commandIds)
             .error(() => {
                 onProgress_ && onProgress_('Failed to check for old commands, uploading all...');
                 setTimeout(onDone, 2000);

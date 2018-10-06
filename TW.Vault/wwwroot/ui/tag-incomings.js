@@ -57,7 +57,7 @@
     lib.setLocalStorage('original-labels', originalLabels);
 
     function getVaultTags(onDone_) {
-        lib.postApi(lib.makeApiUrl('command/tags'), incomings.map((i) => i.id))
+        lib.postApi('command/tags', incomings.map((i) => i.id))
             .done((tags) => {
                 console.log('Got tags: ', tags);
                 incomingTags = tags;

@@ -81,7 +81,7 @@ function makeSmsDisplayTab() {
                 $message.prop('disabled', true);
                 $container.find('#add-notification').prop('disabled', true);
 
-                lib.postApi(lib.makeApiUrl('notification/requests'), data)
+                lib.postApi('notification/requests', data)
                     .done(() => {
                         loadNotifications($container)
                             .done(() => {
@@ -167,7 +167,7 @@ function makeSmsPhoneNumbersTab() {
                 $phoneNumber.prop('disabled', true);
                 $label.prop('disabled', true);
 
-                lib.postApi(lib.makeApiUrl('notification/phone-numbers'), data)
+                lib.postApi('notification/phone-numbers', data)
                     .done(() => {
                         $phoneNumber.val('');
                         $phoneNumber.prop('disabled', false);
@@ -239,7 +239,7 @@ function makeSmsSettingsTab() {
 }
 
 function updatePhoneNumbers($container) {
-    lib.getApi(lib.makeApiUrl('notification/phone-numbers'))
+    lib.getApi('notification/phone-numbers')
         .done((phoneNumbers) => {
             let $phoneNumbersTable = $container.find('table');
             $phoneNumbersTable.find('tr:not(:first-of-type)').remove();
@@ -259,7 +259,7 @@ function updatePhoneNumbers($container) {
                         return;
                     }
 
-                    lib.deleteApi(lib.makeApiUrl('notification/phone-numbers/' + number.id))
+                    lib.deleteApi('notification/phone-numbers/' + number.id)
                         .done(() => {
                             updatePhoneNumbers($container);
                         })
@@ -275,7 +275,7 @@ function updatePhoneNumbers($container) {
 }
 
 function loadNotificationSettings($container) {
-    lib.getApi(lib.makeApiUrl('notification/settings'))
+    lib.getApi('notification/settings')
         .done((data) => {
             $container.find('#notify-window-minutes').val(data.sendNotificationBeforeMinutes);
         })
@@ -304,7 +304,7 @@ function saveNotificationSettings($container) {
     $notificationWindow.prop('disabled', true);
     $container.find('#save-notification-settings-btn').prop('disabled', true);
 
-    lib.postApi(lib.makeApiUrl('notification/settings'), data)
+    lib.postApi('notification/settings', data)
         .done(() => {
             $notificationWindow.prop('disabled', false);
             $container.find('#save-notification-settings-btn').prop('disabled', false);
@@ -317,7 +317,7 @@ function saveNotificationSettings($container) {
 }
 
 function loadNotifications($container) {
-    return lib.getApi(lib.makeApiUrl('notification/requests'))
+    return lib.getApi('notification/requests')
         .done((requests) => {
             let $notificationsTable = $container.find('table');
             $notificationsTable.find('tr:not(:first-of-type)').remove();
@@ -341,7 +341,7 @@ function loadNotifications($container) {
                         return;
                     }
 
-                    lib.deleteApi(lib.makeApiUrl(`notification/requests/${request.id}`))
+                    lib.deleteApi(`notification/requests/${request.id}`)
                         .done(() => {
                             loadNotifications($container);
                         })

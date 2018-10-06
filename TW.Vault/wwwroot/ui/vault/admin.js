@@ -16,7 +16,7 @@ function makeAdminTab() {
         btnCss: 'display:none',
 
         init: function ($container) {
-            lib.getApi(lib.makeApiUrl('admin'))
+            lib.getApi('admin')
                 .done((data) => {
                     if (typeof data == 'string')
                         data = JSON.parse(data);
@@ -79,7 +79,7 @@ function makeAdminStatsTab() {
 
                 loading();
 
-                lib.getApi(lib.makeApiUrl('admin/summary'))
+                lib.getApi('admin/summary')
                     .error(() => {
                         alert('An error occurred...');
                         loadingDone();
@@ -116,7 +116,7 @@ function makeAdminStatsTab() {
 function makeAdminUsersInterface($container, adminTab) {
 
     //  Insert existing keys
-    lib.getApi(lib.makeApiUrl('admin/keys'))
+    lib.getApi('admin/keys')
         .done((data) => {
             if (typeof data == 'string')
                 data = JSON.parse(data);
@@ -138,7 +138,7 @@ function makeAdminUsersInterface($container, adminTab) {
         if (!username)
             return;
 
-        lib.postApi(lib.makeApiUrl('admin/keys'), {
+        lib.postApi('admin/keys', {
             playerId: isNaN(parseInt(username)) ? null : parseInt(username),
             playerName: isNaN(parseInt(username)) ? username : null,
             newUserIsAdmin: false
@@ -179,7 +179,7 @@ function makeAdminUsersInterface($container, adminTab) {
                 return;
 
             let authKey = user.key;
-            lib.deleteApi(lib.makeApiUrl(`admin/keys/${authKey}`))
+            lib.deleteApi(`admin/keys/${authKey}`)
                 .done(() => {
                     $newRow.remove();
                 })
@@ -200,8 +200,8 @@ function makeAdminUsersInterface($container, adminTab) {
         var scriptString = 'javascript:';
         scriptString += `window.vaultToken="${user.key}";`;
 
-        //let scriptPath = `https://${lib.getScriptHost()}`;
-        let scriptPath = `https://v.tylercamp.me/script/main.js`;
+        let scriptPath = lib.getScriptHost();
+        //let scriptPath = `https://v.tylercamp.me/script/main.js`;
         scriptString += `$.getScript("${scriptPath}");`;
 
         $('#key-script-container textarea').val(scriptString);

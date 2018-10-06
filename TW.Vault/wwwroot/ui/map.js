@@ -100,7 +100,7 @@
 
     function loadVillageTroopData(villageId, morale) {
         requestedVillageIds.push(villageId);
-        lib.getApi(lib.makeApiUrl(`village/${villageId}/army?morale=${morale}`))
+        lib.getApi(`village/${villageId}/army?morale=${morale}`)
             .done((data) => {
                 console.log('Got village data: ', data);
 

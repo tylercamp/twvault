@@ -61,7 +61,7 @@
     });
 
     if (!requestManager.getStats().total) {
-        lib.postApi(lib.makeApiUrl('command/finished-incoming-uploads'));
+        lib.postApi('command/finished-incoming-uploads');
         onProgress_ && onProgress_('No incomings to upload.');
         if (onDone_)
             onDone_(false);
@@ -89,7 +89,7 @@
                 isOwnCommands: false,
                 commands: distinctIncomings
             };
-            lib.postApi(lib.makeApiUrl('command'), data)
+            lib.postApi('command', data)
                 .done(() => {
                     $doc.find('input[name*=id_][type=checkbox]').prop('checked', true);
 

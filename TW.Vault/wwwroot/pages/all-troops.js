@@ -204,7 +204,7 @@
 
         function uploadArmy(onDone) {
             console.log('Uploading army data: ', data);
-            lib.postApi(lib.makeApiUrl('village/army/current'), data)
+            lib.postApi('village/army/current', data)
                 .error(onError)
                 .done(() => {
                     onProgress_ && onProgress_('Uploading support to vault...');
@@ -215,7 +215,7 @@
         function uploadSupport(onDone) {
             console.log('Uploading support data: ', supportData);
             lib.queryCurrentPlayerInfo((playerId) => {
-                lib.postApi(lib.makeApiUrl(`player/${playerId}/support`), supportData)
+                lib.postApi(`player/${playerId}/support`, supportData)
                     .error(onError)
                     .done(onDone);
             });

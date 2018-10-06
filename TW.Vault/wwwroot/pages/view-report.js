@@ -114,11 +114,9 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
         }
     }
     
-
-    let reportsEndpoint = lib.makeApiUrl('/report');
     console.log('Made reportInfo: ', reportInfo);
 
-    lib.postApi(reportsEndpoint, reportInfo)
+    lib.postApi('report', reportInfo)
         .done(() => {
             var reportsHistory = lib.getLocalStorage('reports-history', []);
             reportsHistory.push(reportInfo.reportId);

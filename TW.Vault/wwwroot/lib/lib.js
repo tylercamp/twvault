@@ -278,8 +278,8 @@ var lib = (() => {
             //  TODO
         },
 
-        getApi: function getApi(url, data_) {
-            return $.ajax(url, {
+        getApi: function getApi(url) {
+            return $.ajax(lib.makeApiUrl(url), {
                 method: 'GET',
                 beforeSend: (xhr) => {
                     xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
@@ -296,7 +296,7 @@ var lib = (() => {
                 object = encryption.encryptString(object, getCurrentUtcTime());
             }
 
-            return $.ajax(url, {
+            return $.ajax(lib.makeApiUrl(url), {
                 data: object,
                 contentType: 'application/json',
                 type: 'POST',
@@ -314,7 +314,7 @@ var lib = (() => {
                 object = encryption.encryptString(object, getCurrentUtcTime());
             }
 
-            return $.ajax(url, {
+            return $.ajax(lib.makeApiUrl(url), {
                 data: object,
                 contentType: 'application/json',
                 type: 'DELETE',
@@ -398,6 +398,10 @@ var lib = (() => {
 
         // Make a URL relative to 'https://v.tylercamp.me/api' (or whatever the current base path is)
         makeApiUrl: function makeApiUrl(url) {
+            if (url.startsWith('https://')) {
+                return url;
+            }
+
             let serverBase = 'https://v.tylercamp.me';
 
             //  Check if running from dev or from real server

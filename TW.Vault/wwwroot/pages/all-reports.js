@@ -92,7 +92,7 @@
     }
 
     function getExistingReports(reportIds, onDone) {
-        lib.postApi(lib.makeApiUrl('report/check-existing-reports'), reportIds)
+        lib.postApi('report/check-existing-reports', reportIds)
             .done((data) => {
                 if (typeof data == 'string')
                     data = JSON.parse(data);
@@ -167,7 +167,7 @@
         });
 
         if (!requestManager.getStats().total) {
-            lib.postApi(lib.makeApiUrl('report/finished-report-uploads'));
+            lib.postApi('report/finished-report-uploads');
 
             if (!onDone_) {
                 setUploadsDisplay('No new reports to upload.');

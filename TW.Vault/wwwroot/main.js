@@ -97,6 +97,8 @@ These terms can be viewed again after running the script. To cancel your agreeme
             })
             .onPage(lib.pageTypes.VILLAGE_INFO, () => {
                 enhanceVillageInfoPage();
+            })            .onPage(lib.pageTypes.VILLAGE_INFO, () => {
+                enhanceVillageInfoPage();
             })
             .onPageNotHandled(() => {
                 parseAllPages();
