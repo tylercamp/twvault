@@ -12,7 +12,7 @@ namespace TW.Vault.Security
     {
         /* These values are reflected in encryption.js and should be kept in sync */
         //  How often the interval will be changed
-        private static readonly TimeSpan SwapInterval = TimeSpan.FromSeconds(15);
+        private static readonly TimeSpan SwapInterval = TimeSpan.FromSeconds(5);
         //  How long the previous interval should be valid for (in case there's lag between requests)
         private static readonly TimeSpan MaxIntervalLag = TimeSpan.FromSeconds(5);
 
@@ -24,13 +24,20 @@ namespace TW.Vault.Security
         {
             get
             {
-                var result = new List<uint>();
-                var currentSeed = MakeSeed(CurrentTime);
-                var previousSeed = MakeSeed(CurrentTime - MaxIntervalLag);
+                var now = CurrentTime;
 
+                var result = new List<uint>();
+                var currentSeed = MakeSeed(now);
                 result.Add(currentSeed);
-                if (currentSeed != previousSeed)
-                    result.Add(previousSeed);
+
+
+                for (var previous = now - SwapInterval; previous >= now - MaxIntervalLag || previous == now - SwapInterval; previous -= SwapInterval)
+                {
+                    var previousSeed = MakeSeed(previous);
+                    if (!result.Contains(previousSeed))
+                        result.Add(previousSeed);
+                }
+                
                 return result;
             }
         }

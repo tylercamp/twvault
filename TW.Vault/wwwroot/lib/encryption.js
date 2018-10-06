@@ -6,9 +6,13 @@
     // 0x8D760E23 - From EncryptionSeedProvider.cs
     const SEED_SALT = parseInt(atob("MjM3MzMyNDMyMw=="));
     // 15 seconds (15000 ms) - From EncryptionSeedProvider.cs
-    const SEED_SWAP_INTERVAL = parseInt(atob("MTUwMDA="));
+    const SEED_SWAP_INTERVAL = parseInt(atob("NTAwMA=="));
     // Random prime number
     const SEED_RANDOM_PRIME = parseInt(atob("MjAzNTU2NzUxMQ=="));
+
+    //  Encryption must be enabled or disabled on both the server and client, otherwise
+    //  communication will fail
+    const ENCRYPTION_ENABLED = false;
 
 
 
@@ -17,6 +21,9 @@
     const BIT_MASK_32 = parseInt(atob("NDI5NDk2NzI5NQ=="));
 
     function getCurrentSeed(utcTime) {
+        //  Push back UTC time a bit in case the client somehow is a bit further ahead than
+        //  server time
+        utcTime -= 1000;
         let currentInterval = Math.floor(utcTime / SEED_SWAP_INTERVAL) % BIT_MASK_32;
 
         //  Logic mirrors EncryptionSeedProvider.cs and should be kept in sync
@@ -44,9 +51,16 @@
 
     return {
         encryptString: function (data, currentTime) {
+            if (!ENCRYPTION_ENABLED) {
+                return data;
+            }
+
             let seed = getCurrentSeed(currentTime);
-            
-            let dataString = lib.jsonStringify(data);
+            console.log('Using seed ' + seed);
+
+            //  Prefix all encrypted data with "vault:" as a validation measure during
+            //  decryption
+            let dataString = lib.jsonStringify(`vault:${data}`);
             let lzString = lib.lzstr.compressToEncodedURIComponent(dataString);
             let swizzleSizes = makeSwizzleSizesFromSeed(seed);
             let swizzleParts = [];

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,26 +17,46 @@ namespace TW.Vault.Features
     {
         public static String Decrypt(String text)
         {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            // Note: All decrypted text should start with "vault:"; this is so we know if
+            //       the text was properly decrypted. Otherwise we could get a decrypted
+            //       string of junk text when using an old key, which is still technically "valid text"
+
             String result = null;
-            var seeds = EncryptionSeedProvider.AvailableSeeds;
-            foreach (var seed in seeds)
+
+            if (Configuration.Security.UseEncryption)
             {
-                result = DecryptWithSeed(text, seed);
-                if (result != null)
-                    break;
+                var seeds = EncryptionSeedProvider.AvailableSeeds;
+                foreach (var seed in seeds)
+                {
+                    result = DecryptWithSeed(text, seed);
+                    if (!string.IsNullOrWhiteSpace(result) && result.StartsWith("vault:"))
+                        break;
+                    else
+                        result = null;
+                }
+
+                if (result == null)
+                {
+                    Debugger.Log(1, "encryption", "Couldn't decrypt with any of these seeds: " + string.Join(',', seeds));
+                    throw new InvalidStringEncryptionException();
+                }
+            }
+            else
+            {
+                result = text;
             }
 
-            if (result == null)
-                throw new InvalidStringEncryptionException();
+            result = result.Substring("vault:".Length);
 
             return result;
         }
 
         public static String DecryptWithSeed(String text, uint seed)
         {
-            if (!text.StartsWith("ve_"))
-                return text;
-
+            //  Assume texts starts with "ve_"
             text = text.Substring(3);
 
             var unswizzledBuilder = new StringBuilder();

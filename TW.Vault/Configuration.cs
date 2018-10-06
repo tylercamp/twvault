@@ -74,6 +74,8 @@ namespace TW.Vault
 
         public short MinimumRequiredPriveleges { get; set; }
 
+        public bool UseEncryption { get; set; } = true;
+
         public bool EnableScriptFilter { get; set; }
         public List<String> PublicScripts { get; set; }
     }
