@@ -51,6 +51,10 @@ namespace TW.Vault.Model.Convert
 
                 var troopCount = GetOrNull(armyCounts, lowerName);
                 var troopProperty = scaffoldArmyType.GetProperty(troopType, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                var currentCount = (int?)troopProperty.GetValue(result);
+
+                if (currentCount == troopCount)
+                    continue;
                 
                 if (typeof(short?).IsAssignableFrom(troopProperty.PropertyType))
                     troopProperty.SetValue(result, troopCount?.ToShort());

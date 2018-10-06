@@ -34,7 +34,8 @@ namespace TW.Vault.Security
                 try
                 {
                     result.AuthToken = Guid.Parse(authTokenString);
-                } catch { }
+                }
+                catch { }
             }
 
             return result;
