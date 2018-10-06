@@ -139,22 +139,28 @@ namespace TW.Vault.Controllers
                     .Distinct()
                     .ToList();
 
-                var (scaffoldCommands, villageIdsFromCommandsMissingTroopTypes, allVillages) = await ManyTasks.RunToList(
-                    from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
-                    where commandIds.Contains(command.CommandId)
-                    select command
+                var (scaffoldCommands, villageIdsFromCommandsMissingTroopTypes, allVillages) = await ManyTasks.Run(
+                    Profile("Get existing commands", () => (
+                        from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
+                        where commandIds.Contains(command.CommandId)
+                        select command
+                    ).ToListAsync())
                     
                     ,
 
-                    from village in context.Village.FromWorld(CurrentWorldId)
-                    where villageIdsFromCommandsMissingTroopType.Contains(village.VillageId)
-                    select village
+                    Profile("Get villages for commands missing troop type", () => (
+                        from village in context.Village.FromWorld(CurrentWorldId)
+                        where villageIdsFromCommandsMissingTroopType.Contains(village.VillageId)
+                        select village
+                    ).ToListAsync())
 
                     ,
 
-                    from village in context.Village.FromWorld(CurrentWorldId)
-                    where allVillageIds.Contains(village.VillageId)
-                    select village
+                    Profile("Get all relevant villages", () => (
+                        from village in context.Village.FromWorld(CurrentWorldId)
+                        where allVillageIds.Contains(village.VillageId)
+                        select village
+                    ).ToListAsync())
                 );
                 
 
@@ -265,7 +271,7 @@ namespace TW.Vault.Controllers
         [HttpPost("tags", Name = "GetIncomingTags")]
         public async Task<IActionResult> GetIncomingTags([FromBody]List<long> incomingsIds)
         {
-            var incomings = await (
+            var incomings = await Profile("Get existing commands", () => (
                     from command in context.Command.FromWorld(CurrentWorldId)
                                                    .Include(c => c.SourceVillage)
                                                    .Include(c => c.SourceVillage.CurrentVillage)
@@ -274,7 +280,8 @@ namespace TW.Vault.Controllers
                                                    .Include(c => c.SourceVillage.CurrentVillage.ArmyTraveling)
                     where incomingsIds.Contains(command.CommandId)
                     select command
-                ).ToListAsync();
+                ).ToListAsync()
+            );
 
             if (incomings == null)
                 return NotFound();
@@ -294,13 +301,14 @@ namespace TW.Vault.Controllers
 
             //  Don't do any tagging for villages owned by players registered with the vault (so players in other tribes
             //  also using the vault can't infer villa builds)
-            var vaultOwnedVillages = await (
+            var vaultOwnedVillages = await Profile("Get villages owned by vault users", () => (
                     from user in context.User
                     join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
                     join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
                     where user.Enabled
                     select village.VillageId
-                ).ToListAsync();
+                ).ToListAsync()
+            );
 
             //  NOTE - We pull data for all villas requested but only return data for villas not in vaultOwnedVillages,
             //  should stop querying that other data at some point

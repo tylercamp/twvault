@@ -64,20 +64,22 @@ namespace TW.Vault.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var ownVillageIds = await (
+            var ownVillageIds = await Profile("Get own village IDs", () => (
                     from player in context.Player.FromWorld(CurrentWorldId)
                     join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
                     where player.PlayerId == CurrentUser.PlayerId
                     select village.VillageId
-                ).ToListAsync();
+                ).ToListAsync()
+            );
             
-            var existingOutwardSupport = await (
+            var existingOutwardSupport = await Profile("Get existing outward support", () => (
                     from support in context.CurrentVillageSupport
                                            .FromWorld(CurrentWorldId)
                                            .Include(s => s.SupportingArmy)
                     where ownVillageIds.Contains(support.SourceVillageId)
                     select support
-                ).ToListAsync();
+                ).ToListAsync()
+            );
 
             var removedSupport = (
                     from existing in existingOutwardSupport
@@ -90,20 +92,23 @@ namespace TW.Vault.Controllers
 
             context.CurrentVillageSupport.RemoveRange(removedSupport);
 
-            foreach (var jsonData in jsonSupportData.SelectMany(jsd => jsd.SupportedVillages.Select(v => new { SourceId = jsd.SourceVillageId, Support = v })))
+            Profile("Make model data", () =>
             {
-                if (!ownVillageIds.Contains(jsonData.SourceId))
+                foreach (var jsonData in jsonSupportData.SelectMany(jsd => jsd.SupportedVillages.Select(v => new { SourceId = jsd.SourceVillageId, Support = v })))
                 {
-                    context.Add(MakeInvalidDataRecord(JsonConvert.SerializeObject(jsonData), "Player does not own the designated source village"));
-                    continue;
-                }
+                    if (!ownVillageIds.Contains(jsonData.SourceId))
+                    {
+                        context.Add(MakeInvalidDataRecord(JsonConvert.SerializeObject(jsonData), "Player does not own the designated source village"));
+                        continue;
+                    }
 
-                var sourceVillageId = jsonData.SourceId;
-                var support = jsonData.Support;
-                var scaffoldRecord = existingOutwardSupport.SingleOrDefault(e => e.SourceVillageId == sourceVillageId && e.TargetVillageId == support.Id);
-                scaffoldRecord = OutwardSupportConvert.ToModel(sourceVillageId, CurrentWorldId, support, scaffoldRecord, context);
-                scaffoldRecord.WorldId = CurrentWorldId;
-            }
+                    var sourceVillageId = jsonData.SourceId;
+                    var support = jsonData.Support;
+                    var scaffoldRecord = existingOutwardSupport.SingleOrDefault(e => e.SourceVillageId == sourceVillageId && e.TargetVillageId == support.Id);
+                    scaffoldRecord = OutwardSupportConvert.ToModel(sourceVillageId, CurrentWorldId, support, scaffoldRecord, context);
+                    scaffoldRecord.WorldId = CurrentWorldId;
+                }
+            });
 
             await context.SaveChangesAsync();
 
