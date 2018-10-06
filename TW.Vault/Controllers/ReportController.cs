@@ -265,7 +265,7 @@ namespace TW.Vault.Controllers
                         command.Army = ArmyConvert.JsonToArmy(jsonReport.AttackingArmy - jsonReport.AttackingArmyLosses, CurrentWorldId, command.Army, context);
                         command.Army.WorldId = CurrentWorldId;
                         command.TroopType = slowestType.Value.ToTroopString();
-                        command.LandsAt = scaffoldReport.OccuredAt + travelTime;
+                        command.ReturnsAt = scaffoldReport.OccuredAt + travelTime;
                         command.IsReturning = true;
                     });
                 }
