@@ -14,16 +14,18 @@ namespace TW.Vault.Features
         private static TimeSpan PersistProfilingInterval = TimeSpan.FromMinutes(float.Parse(Configuration.Instance["ProfilingStoreIntervalMinutes"] ?? "30.0"));
         private static DateTime LastPersistedAt = DateTime.UtcNow;
 
+        public static int NumPendingRecords => PerformanceRecords.Sum(r => r.Value.Count);
+
         public static void AddRecord(String label, TimeSpan duration)
         {
             ConcurrentBag<TimeSpan> currentRecords = PerformanceRecords.GetOrAdd(label, (k) => new ConcurrentBag<TimeSpan>());
             currentRecords.Add(duration);
         }
 
-        public static async Task StoreData(Scaffold.VaultContext context)
+        public static async Task StoreData(Scaffold.VaultContext context, bool force = false, bool rollover = true)
         {
             DateTime now = DateTime.UtcNow;
-            if (now - LastPersistedAt > PersistProfilingInterval)
+            if (force || now - LastPersistedAt > PersistProfilingInterval)
             {
                 var records = Interlocked.Exchange(ref PerformanceRecords, new ConcurrentDictionary<String, ConcurrentBag<TimeSpan>>());
                 if (records.IsEmpty)
@@ -36,7 +38,7 @@ namespace TW.Vault.Features
                     var operation = kvp.Key;
                     var samples = kvp.Value;
 
-                    if (samples.Count < 10)
+                    if (samples.Count < 10 && rollover)
                     {
                         foreach (var time in kvp.Value)
                             AddRecord(kvp.Key, time);
