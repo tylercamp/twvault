@@ -61,11 +61,7 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.WorldId, e.TribeId });
 
                 entity.ToTable("ally", "tw_provided");
-
-                entity.HasIndex(e => e.WorldId)
-                    .HasName("idx_ally_world_id")
-                    .ForNpgsqlHasMethod("hash");
-
+                
                 entity.Property(e => e.TribeId)
                     .HasColumnName("tribe_id")
                     .ValueGeneratedNever();
@@ -102,10 +98,7 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("command", "tw");
 
                 entity.HasKey(e => new { e.WorldId, e.CommandId });
-
-                entity.HasIndex(e => new { e.WorldId, e.ArmyId })
-                    .HasName("fki_fk_army_id");
-
+                
                 entity.Property(e => e.CommandId)
                     .HasColumnName("command_id")
                     .ValueGeneratedNever();
@@ -411,10 +404,6 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.WorldId, e.VillageId });
 
                 entity.ToTable("current_village", "tw");
-
-                entity.HasIndex(e => e.WorldId)
-                    .HasName("idx_current_village_world_id")
-                    .ForNpgsqlHasMethod("hash");
 
                 entity.Property(e => e.VillageId)
                     .HasColumnName("village_id")
@@ -727,10 +716,6 @@ namespace TW.Vault.Scaffold
 
                 entity.HasKey(e => new { e.WorldId, e.PlayerId });
 
-                entity.HasIndex(e => e.WorldId)
-                    .HasName("idx_player_world_id")
-                    .ForNpgsqlHasMethod("hash");
-
                 entity.Property(e => e.PlayerId)
                     .HasColumnName("player_id")
                     .ValueGeneratedNever();
@@ -761,30 +746,7 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("report", "tw");
 
                 entity.HasKey(e => new { e.WorldId, e.ReportId });
-
-                entity.HasIndex(e => e.AttackerPlayerId)
-                    .HasName("idx_report_attacker_player_id")
-                    .ForNpgsqlHasMethod("hash");
-
-                entity.HasIndex(e => e.AttackerVillageId)
-                    .HasName("idx_report_attacker_village_id")
-                    .ForNpgsqlHasMethod("hash");
-
-                entity.HasIndex(e => e.BuildingId)
-                    .HasName("fki_fk_building_id");
-
-                entity.HasIndex(e => e.DefenderPlayerId)
-                    .HasName("idx_report_defender_player_id")
-                    .ForNpgsqlHasMethod("hash");
-
-                entity.HasIndex(e => e.DefenderVillageId)
-                    .HasName("idx_report_defender_village_id")
-                    .ForNpgsqlHasMethod("hash");
-
-                entity.HasIndex(e => e.WorldId)
-                    .HasName("idx_report_world_id")
-                    .ForNpgsqlHasMethod("hash");
-
+                
                 entity.Property(e => e.ReportId)
                     .HasColumnName("report_id")
                     .ValueGeneratedNever();
@@ -892,11 +854,7 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.WorldId, e.ArmyId });
 
                 entity.ToTable("report_army", "tw");
-
-                entity.HasIndex(e => e.WorldId)
-                    .HasName("idx_report_army_world_id")
-                    .ForNpgsqlHasMethod("hash");
-
+                
                 entity.Property(e => e.ArmyId)
                     .HasColumnName("army_id")
                     .HasDefaultValueSql("nextval('tw.report_armies_army_id_seq'::regclass)");
@@ -941,11 +899,7 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("report_building", "tw");
 
                 entity.HasKey(e => new { e.WorldId, e.ReportBuildingId });
-
-                entity.HasIndex(e => e.WorldId)
-                    .HasName("idx_report_building_world_id")
-                    .ForNpgsqlHasMethod("hash");
-
+                
                 entity.Property(e => e.ReportBuildingId)
                     .HasColumnName("report_building_id")
                     .HasDefaultValueSql("nextval('tw.report_building_report_building_id_seq'::regclass)");
@@ -1133,11 +1087,7 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("village", "tw_provided");
 
                 entity.HasKey(e => new { e.WorldId, e.VillageId });
-
-                entity.HasIndex(e => e.WorldId)
-                    .HasName("idx_village_world_id")
-                    .ForNpgsqlHasMethod("hash");
-
+                
                 entity.Property(e => e.VillageId)
                     .HasColumnName("village_id")
                     .ValueGeneratedNever();
