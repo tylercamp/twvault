@@ -43,13 +43,13 @@ namespace TW.Vault.Features
                     Debugger.Log(1, "encryption", "Couldn't decrypt with any of these seeds: " + string.Join(',', seeds));
                     throw new InvalidStringEncryptionException();
                 }
+
+                result = result.Substring("vault:".Length);
             }
             else
             {
                 result = text;
             }
-
-            result = result.Substring("vault:".Length);
 
             return result;
         }
