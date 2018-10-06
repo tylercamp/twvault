@@ -56,7 +56,7 @@
                 return;
             }
             let morale = Math.round((twCached.morale || twCached.mood) * 100);
-            if (isNaN(morale))
+            if (isNaN(morale) || morale > 100)
                 morale = 100;
             loadVillageTroopData(villageId, morale);
         }
@@ -106,6 +106,7 @@
 
                 data.morale = morale;
 
+                data.atHomeSeenAt = data.atHomeSeenAt ? new Date(data.atHomeSeenAt) : null;
                 data.stationedSeenAt = data.stationedSeenAt ? new Date(data.stationedSeenAt) : null;
                 data.recentlyLostArmySeenAt = data.recentlyLostArmySeenAt ? new Date(data.recentlyLostArmySeenAt) : null;
                 data.travelingSeenAt = data.travelingSeenAt ? new Date(data.travelingSeenAt) : null;
@@ -276,6 +277,13 @@
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_knight.png" title="" alt="" class=""></th>
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_snob.png" title="" alt="" class=""></th>
                         </tr>
+                        ${ !data.atHomeArmy ? '' : `
+                        <tr>
+                            <td>At home</td>
+                            <td>${data.atHomeSeenAt ? lib.formateDateTime(data.atHomeSeenAt) : ''}</td>
+                            ${makeTroopTds(data.atHomeArmy || {})}
+                        </tr>
+                        `}
                         ${ !data.stationedArmy ? '' : `
                         <tr>
                             <td>Stationed</td>
