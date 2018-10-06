@@ -42,7 +42,7 @@ namespace TW.Vault.Controllers
             }
 
             var users = await (
-                    from user in context.User
+                    from user in context.User.FromWorld(CurrentWorldId)
                     join player in context.Player on user.PlayerId equals player.PlayerId
                     join tribe in context.Ally on player.TribeId equals tribe.TribeId into maybeTribe
                     from tribe in maybeTribe.DefaultIfEmpty()
@@ -312,7 +312,8 @@ namespace TW.Vault.Controllers
                 from player in context.Player.FromWorld(CurrentWorldId)
                 join user in context.User.FromWorld(CurrentWorldId) on player.PlayerId equals user.PlayerId
                 join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
-                join currentVillage in context.CurrentVillage.Include(cv => cv.ArmyAtHome)
+                join currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId)
+                                                             .Include(cv => cv.ArmyAtHome)
                                                              .Include(cv => cv.ArmyOwned)
                                                              .Include(cv => cv.ArmyTraveling)
                                     on village.VillageId equals currentVillage.VillageId
@@ -325,7 +326,7 @@ namespace TW.Vault.Controllers
                 //  Get all CurrentPlayer data for the user's tribe (separate from global 'Player' table
                 //      so we can also output stats for players that haven't uploaded anything yet)
                 from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
-                join player in context.Player on currentPlayer.PlayerId equals player.PlayerId
+                join player in context.Player.FromWorld(CurrentWorldId) on currentPlayer.PlayerId equals player.PlayerId
                 join user in context.User.FromWorld(CurrentWorldId) on player.PlayerId equals user.PlayerId
                 where user.Enabled
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
