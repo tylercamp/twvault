@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TW.Vault.Model.Convert;
 using JSON = TW.Vault.Model.JSON;
 using Native = TW.Vault.Model.Native;
 
@@ -23,6 +24,26 @@ namespace TW.Vault.Features.Simulation
         {
             this.worldSpeed = (float)worldSpeed;
             this.unitSpeed = (float)unitSpeed;
+        }
+
+        public JSON.TroopType TravelTroopType(JSON.Army army)
+        {
+            JSON.TroopType slowestType = JSON.TroopType.Spy;
+
+            foreach (var typeName in army.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key))
+            {
+                var type = typeName.ToTroopType();
+                if (Native.ArmyStats.TravelSpeed[type] > Native.ArmyStats.TravelSpeed[slowestType])
+                    slowestType = type;
+            }
+
+            return slowestType;
+        }
+
+        public TimeSpan ArmyFieldSpeed(JSON.Army army)
+        {
+            var slowestSpeed = Native.ArmyStats.TravelSpeed[TravelTroopType(army)];
+            return TimeSpan.FromMinutes(slowestSpeed);
         }
 
         public TimeSpan CalculateTravelTime(JSON.TroopType unitType, int startx, int starty, int endx, int endy)

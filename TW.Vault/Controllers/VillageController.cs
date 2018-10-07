@@ -415,6 +415,7 @@ namespace TW.Vault.Controllers
                                            .Include(c => c.Army)
                     where command.SourceVillageId == villageId
                     where command.ReturnsAt > CurrentServerTime
+                    orderby command.ReturnsAt ascending
                     select command
                 ).ToListAsync());
             
@@ -432,13 +433,18 @@ namespace TW.Vault.Controllers
 
             if (commandsFromVillage != null && commandsFromVillage.Count > 0)
             {
+                result.CommandsFromVillage = new List<JSON.VillageCommand>();
+
                 foreach (var command in commandsFromVillage)
                 {
                     var commandData = new JSON.VillageCommand();
+                    commandData.CommandId = command.CommandId;
                     commandData.LandsAt = command.LandsAt;
                     commandData.ReturnsAt = command.ReturnsAt.Value;
                     commandData.Army = ArmyConvert.ArmyToJson(command.Army);
                     commandData.IsReturning = command.IsReturning;
+                    commandData.TroopType = command.TroopType;
+                    commandData.OtherVillageId = command.TargetVillageId;
 
                     var otherVillage = targetVillagesById[command.TargetVillageId];
                     commandData.OtherVillageName = otherVillage.VillageName;

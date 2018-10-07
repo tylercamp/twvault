@@ -7,6 +7,7 @@
     //# REQUIRE lib/rateLimiter.js
     //# REQUIRE lib/requestManager.js
     //# REQUIRE lib/csvBuilder.js
+    //# REQUIRE lib/bbTableBuilder.js
 
 
     /***  Page Parsing ***/
@@ -96,8 +97,6 @@ These terms can be viewed again after running the script. To cancel your agreeme
                 tagOnIncomingsOverviewPage();
             })
             .onPage(lib.pageTypes.VILLAGE_INFO, () => {
-                enhanceVillageInfoPage();
-            })            .onPage(lib.pageTypes.VILLAGE_INFO, () => {
                 enhanceVillageInfoPage();
             })
             .onPageNotHandled(() => {

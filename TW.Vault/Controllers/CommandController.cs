@@ -14,6 +14,8 @@ using Newtonsoft.Json;
 using TW.Vault.Model.Validation;
 using TW.Vault.Model;
 using Native = TW.Vault.Model.Native;
+using TW.Vault.Features.Planning.Requirements;
+using TW.Vault.Features.Planning;
 
 namespace TW.Vault.Controllers
 {
@@ -195,6 +197,10 @@ namespace TW.Vault.Controllers
                             continue;
                         }
 
+                        var scaffoldCommand = mappedScaffoldCommands.GetValueOrDefault(jsonCommand.CommandId.Value);
+                        //  Don't process/update commands that are already "complete" (have proper army data attached to them)
+                        if (scaffoldCommand?.Army != null)
+                            continue;
 
                         var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
                         var timeRemaining = jsonCommand.LandsAt.Value - CurrentServerTime;
@@ -217,11 +223,6 @@ namespace TW.Vault.Controllers
                                 jsonCommand.TroopType = estimatedType;
                         }
 
-                        var scaffoldCommand = mappedScaffoldCommands.GetValueOrDefault(jsonCommand.CommandId.Value);
-                        //  Don't process/update commands that are already "complete" (have proper army data attached to them)
-                        if (scaffoldCommand?.Army != null)
-                            continue;
-
                         if (scaffoldCommand == null)
                         {
                             scaffoldCommand = new Scaffold.Command();
@@ -242,6 +243,12 @@ namespace TW.Vault.Controllers
                             }
 
                             jsonCommand.ToModel(CurrentWorldId, scaffoldCommand, context);
+                        }
+
+                        if (jsonCommand.TroopType != null)
+                        {
+                            var travelTime = travelCalculator.CalculateTravelTime(jsonCommand.TroopType.Value, sourceVillage, targetVillage);
+                            scaffoldCommand.ReturnsAt = scaffoldCommand.LandsAt + travelTime;
                         }
 
                         scaffoldCommand.Tx = tx;
@@ -421,6 +428,82 @@ namespace TW.Vault.Controllers
             });
 
             return Ok(resultTags);
+        }
+
+        [HttpGet("{commandId}/backtime")]
+        public async Task<IActionResult> MakeBacktimePlan(long commandId)
+        {
+            var command = await context.Command
+                                       .FromWorld(CurrentWorldId)
+                                       .Where(cmd => cmd.CommandId == commandId)
+                                       .Include(cmd => cmd.SourceVillage)
+                                       .FirstOrDefaultAsync();
+
+            if (command == null)
+                return NotFound();
+
+            var options = new List<JSON.BattlePlanCommand>();
+
+            if (command.ReturnsAt == null)
+                return Ok(options);
+
+
+
+
+            var targetVillage = await context.Village.FromWorld(CurrentWorldId).Where(v => v.VillageId == command.SourceVillageId).FirstOrDefaultAsync();
+
+            var availableVillages = await Profile("Get available villages", () => (
+                from currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId).Include(cv => cv.Village).Include(cv => cv.ArmyAtHome)
+                where currentVillage.Village.PlayerId == CurrentUser.PlayerId
+                select currentVillage
+            ).ToListAsync());
+
+            var villagesById = availableVillages.ToDictionary(cv => cv.VillageId, cv => cv);
+
+            var planner = new CommandOptionsCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
+
+            planner.Requirements.Add(new MaximumTravelTimeRequirement(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed)
+            {
+                MaximumTime = command.ReturnsAt.Value - CurrentServerTime
+            });
+
+            planner.Requirements.Add(new MinimumOffenseRequirement
+            {
+                //  Approx. 2000 axe, 1000 lc
+                MinimumOffense = 200000
+            });
+
+            var instructions = Profile("Generate plan", () => planner.GenerateOptions(
+                availableVillages.ToDictionary(cv => cv.Village, cv => cv),
+                targetVillage
+            ));
+
+            foreach (var instruction in instructions)
+            {
+                options.Add(new JSON.BattlePlanCommand
+                {
+                    LandsAt = command.ReturnsAt,
+                    LaunchAt = command.ReturnsAt - instruction.TravelTime,
+                    TravelTime = instruction.TravelTime,
+                    TroopType = instruction.TroopType.ToTroopString(),
+
+                    SourceVillageId = instruction.SendFrom,
+                    TargetVillageId = instruction.SendTo,
+
+                    SourceVillageName = villagesById[instruction.SendFrom].Village.VillageName,
+                    TargetVillageName = targetVillage.VillageName,
+
+                    SourceVillageX = villagesById[instruction.SendFrom].Village.X.Value,
+                    SourceVillageY = villagesById[instruction.SendFrom].Village.Y.Value,
+
+                    TargetVillageX = targetVillage.X.Value,
+                    TargetVillageY = targetVillage.Y.Value
+                });
+            }
+
+            options = options.OrderBy(o => o.LaunchAt).ToList();
+
+            return Ok(options);
         }
     }
 }
