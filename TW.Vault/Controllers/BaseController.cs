@@ -157,31 +157,51 @@ namespace TW.Vault.Controllers
 
         protected void Profile(String label, Action action)
         {
+            label = FormatProfileLabel(label);
+
             DateTime start = DateTime.UtcNow;
             action();
-            Profiling.AddRecord(FormatProfileLabel(label), DateTime.UtcNow - start);
+            var duration = DateTime.UtcNow - start;
+            Profiling.AddRecord(label, duration);
+
+            logger.LogDebug("{0} took {1}ms", label, (int)duration.TotalMilliseconds);
         }
 
         protected T Profile<T>(String label, Func<T> func)
         {
+            label = FormatProfileLabel(label);
+
             DateTime start = DateTime.UtcNow;
             T result = func();
-            Profiling.AddRecord(FormatProfileLabel(label), DateTime.UtcNow - start);
+            var duration = DateTime.UtcNow - start;
+            Profiling.AddRecord(label, duration);
+
+            logger.LogDebug("{0} took {1}ms", label, (int)duration.TotalMilliseconds);
             return result;
         }
 
         protected async Task Profile(String label, Func<Task> func)
         {
+            label = FormatProfileLabel(label);
+
             DateTime start = DateTime.UtcNow;
             await func();
-            Profiling.AddRecord(FormatProfileLabel(label), DateTime.UtcNow - start);
+            var duration = DateTime.UtcNow - start;
+            Profiling.AddRecord(label, duration);
+
+            logger.LogDebug("{0} took {1}ms", label, (int)duration.TotalMilliseconds);
         }
 
         protected async Task<T> Profile<T>(String label, Func<Task<T>> func)
         {
+            label = FormatProfileLabel(label);
+
             DateTime start = DateTime.UtcNow;
             T result = await func();
-            Profiling.AddRecord(FormatProfileLabel(label), DateTime.UtcNow - start);
+            var duration = DateTime.UtcNow - start;
+            Profiling.AddRecord(label, duration);
+
+            logger.LogDebug("{0} took {1}ms", label, (int)duration.TotalMilliseconds);
             return result;
         }
     }

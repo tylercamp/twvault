@@ -220,7 +220,8 @@ namespace TW.Vault.Controllers
                             command.TargetVillageId = jsonReport.DefendingVillageId.Value;
                             command.LandsAt = jsonReport.OccurredAt.Value;
 
-                                bool madeCommand = false;
+                            bool madeCommand = false;
+
                             //  Need to auto-generate a random command ID
                             while (!madeCommand)
                             {
