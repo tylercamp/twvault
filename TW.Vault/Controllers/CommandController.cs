@@ -388,7 +388,21 @@ namespace TW.Vault.Controllers
                             troopsReturning += ArmyConvert.ArmyToJson(command.Army);
                     }
 
-                    var effectiveArmy = armyOwned ?? armyTraveling ?? armyStationed;
+                    Scaffold.CurrentArmy effectiveArmy = null;
+                    bool isConfidentArmy = true;
+                    if (armyOwned != null)
+                    {
+                        effectiveArmy = armyOwned;
+                    }
+                    else if (armyTraveling != null)
+                    {
+                        effectiveArmy = armyTraveling;
+                    }
+                    else if (armyStationed != null)
+                    {
+                        effectiveArmy = armyStationed;
+                        isConfidentArmy = false;
+                    }
 
                     var tag = new JSON.IncomingTag();
                     tag.CommandId = incoming.CommandId;
@@ -403,7 +417,7 @@ namespace TW.Vault.Controllers
                                 (effectiveArmy.Light.HasValue && effectiveArmy.Light.Value > 250)
                             );
 
-                        if (!isOffense)
+                        if (!isOffense && isConfidentArmy)
                             tag.DefiniteFake = true;
 
                         var offensiveArmy = effectiveArmy.OfType(JSON.UnitBuild.Offensive);
@@ -417,7 +431,7 @@ namespace TW.Vault.Controllers
                         if (tag.OffensivePopulation < 0)
                             tag.OffensivePopulation = 0;
 
-                        if (tag.OffensivePopulation < 1000)
+                        if (tag.OffensivePopulation < 1000 && isConfidentArmy)
                             tag.DefiniteFake = true;
 
                         tag.NumCats = effectiveArmy.Catapult;
@@ -469,6 +483,7 @@ namespace TW.Vault.Controllers
 
             planner.Requirements.Add(new MinimumOffenseRequirement
             {
+                //  TODO - Make this a setting
                 //  Approx. 2000 axe, 1000 lc
                 MinimumOffense = 200000
             });
