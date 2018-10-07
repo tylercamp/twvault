@@ -33,8 +33,13 @@ namespace TW.Vault.Controllers
         public IActionResult GetCompiledObfuscated(String name)
         {
             var allowedPublicScripts = Configuration.Security.PublicScripts;
-            if (Configuration.Security.EnableScriptFilter && !allowedPublicScripts.Contains(name))
-                return NotFound();
+            if (Configuration.Security.EnableScriptFilter)
+            {
+                if (allowedPublicScripts.Contains(name))
+                    return Content(GetFileContents(name), "application/json");
+                else
+                    return NotFound();
+            }
 
             String errorString = null, notFoundString = null;
             String scriptContents = MakeCompiled(name, (e) => errorString = e, (n) => notFoundString = n);
