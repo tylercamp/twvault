@@ -20,6 +20,13 @@ function makeUploadsTab() {
                 alert(uploadDetailsMessages[uploadType]);
             });
 
+            $container.find('.upload-clear-cache').click((ev) => {
+                lib.deleteLocalStorage('reports-history');
+                lib.deleteLocalStorage('commands-history');
+
+                alert('Local vault cache cleared.');
+            });
+
             $container.find('.upload-button').click((ev) => {
                 var $el = $(ev.target);
                 var $row = $el.closest('tr');
@@ -30,12 +37,17 @@ function makeUploadsTab() {
                 //  TODO - This is messy, clean this up
                 let alertCaptcha = () => alert(lib.messages.TRIGGERED_CAPTCHA);
 
+                let resetButtons = () => {
+                    $('.upload-button').prop('disabled', false);
+                    $('.upload-clear-cache').prop('disabled', false);
+                };
+
                 switch (uploadType) {
                     default: alert(`Programmer error: no logic for upload type "${uploadType}"!`);
 
                     case 'vault-upload-reports':
                         processUploadReports($statusContainer, (didFail) => {
-                            $('.upload-button').prop('disabled', false);
+                            resetButtons();
                             if (didFail && didFail == lib.errorCodes.CAPTCHA) {
                                 alertCaptcha();
                             }
@@ -44,7 +56,7 @@ function makeUploadsTab() {
 
                     case 'vault-upload-incomings':
                         processUploadIncomings($statusContainer, (didFail) => {
-                            $('.upload-button').prop('disabled', false);
+                            resetButtons();
                             if (didFail && didFail == lib.errorCodes.CAPTCHA) {
                                 alertCaptcha();
                             }
@@ -53,7 +65,7 @@ function makeUploadsTab() {
 
                     case 'vault-upload-commands':
                         processUploadCommands($statusContainer, (didFail) => {
-                            $('.upload-button').prop('disabled', false);
+                            resetButtons();
                             if (didFail && didFail == lib.errorCodes.CAPTCHA) {
                                 alertCaptcha();
                             }
@@ -62,7 +74,7 @@ function makeUploadsTab() {
 
                     case 'vault-upload-troops':
                         processUploadTroops($statusContainer, (didFail) => {
-                            $('.upload-button').prop('disabled', false);
+                            resetButtons();
                             if (didFail && didFail == lib.errorCodes.CAPTCHA) {
                                 alertCaptcha();
                             }
@@ -72,7 +84,6 @@ function makeUploadsTab() {
                     case 'vault-upload-all':
                         $('.status-container').html('<em>Waiting...</em>');
 
-                        let resetButtons = () => $('.upload-button').prop('disabled', false);
                         let resetStatusContainers = () => {
                             $('.status-container').filter((i, el) => $(el).text().toLowerCase().contains("waiting")).empty();
                         };
@@ -135,6 +146,7 @@ function makeUploadsTab() {
                 }
 
                 $('.upload-button').prop('disabled', true);
+                $('.upload-clear-cache').prop('disabled', true);
 
 
                 function processUploadReports($statusContainer, onDone) {
@@ -281,6 +293,8 @@ function makeUploadsTab() {
                         </td>
                     </tr>
                 </table>
+
+                <input type="button" class="upload-clear-cache" value="Clear Cache" style="float:right">
             `;
         }
     };
