@@ -327,7 +327,7 @@ function loadNotifications($container) {
 
                 let $row = $(`
                         <tr data-id="${request.id}">
-                            <td>${lib.formateDateTime(request.eventOccursAt)}</td>
+                            <td>${lib.formatDateTime(request.eventOccursAt)}</td>
                             <td>${request.message}</td>
                             <td><input type="submit" value="Delete"></td>
                         </tr>
@@ -336,7 +336,7 @@ function loadNotifications($container) {
                 $row.find('input').click((ev) => {
                     ev.originalEvent.preventDefault();
 
-                    let confirmInfo = `"${request.message}" at ${lib.formateDateTime(request.eventOccursAt)}`;
+                    let confirmInfo = `"${request.message}" at ${lib.formatDateTime(request.eventOccursAt)}`;
                     if (!confirm(`Are you sure you want to delete this notification?\n\n${confirmInfo}`)) {
                         return;
                     }

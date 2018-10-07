@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -40,7 +41,7 @@ namespace TW.Vault.Features
 
                 if (result == null)
                 {
-                    Debugger.Log(1, "encryption", "Couldn't decrypt with any of these seeds: " + string.Join(',', seeds));
+                    //Serilog.Log.Information("Couldn't decrypt with any of these seeds: " + string.Join(',', seeds) + " at timestamp: " + new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds());
                     throw new InvalidStringEncryptionException();
                 }
 

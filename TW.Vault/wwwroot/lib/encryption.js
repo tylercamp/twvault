@@ -12,7 +12,7 @@
 
     //  Encryption must be enabled or disabled on both the server and client, otherwise
     //  communication will fail
-    const ENCRYPTION_ENABLED = false;
+    const ENCRYPTION_ENABLED = true;
 
 
 
@@ -56,6 +56,8 @@
             }
 
             let seed = getCurrentSeed(currentTime);
+            //console.log('UTC time is: ', currentTime);
+            //console.log('Using seed: ', seed);
 
             //  Prefix all encrypted data with "vault:" as a validation measure during
             //  decryption

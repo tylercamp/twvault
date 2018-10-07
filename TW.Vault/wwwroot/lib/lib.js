@@ -26,11 +26,9 @@ var lib = (() => {
 
     let encryption = makeEncryption();
 
-    let getCurrentUtcTime = () => Date.now() - utcTimeOffset;
-
     let makeAuthHeader = (playerId, tribeId, authKey) => {
         let authString = `${playerId}:${tribeId}:${authKey}`;
-        return encryption.encryptString(authString, getCurrentUtcTime());
+        return encryption.encryptString(authString, lib.getCurrentUtcTimestamp());
     };
 
     let lib = {
@@ -76,6 +74,18 @@ var lib = (() => {
 
             let fullString = `${$serverTime.text().trim()} ${$serverDate.text().trim()}`;
             return lib.parseTimeString(fullString);
+        },
+
+        getCurrentUtcTimestamp: () => Date.now() + utcTimeOffset,
+
+        getTwUtcOffset: function getTribalWarsServerUtcOffset($doc_) {
+            let serverTime = lib.getServerDateTime($doc_).valueOf();
+            let utcNow = lib.getCurrentUtcTimestamp();
+
+            let fullOffset = utcNow - serverTime;
+            let fiveMinutes = 5 * 60 * 1000; // Round to the nearest 5 minutes to correct for small errors
+            fullOffset = Math.round(fullOffset / fiveMinutes) * fiveMinutes;
+            return fullOffset;
         },
 
         //  Parses a variety of TW date/time formats to JS Date or into splits it into its parts
@@ -201,7 +211,7 @@ var lib = (() => {
             }
         },
 
-        formateDateTime: function (dateTime) {
+        formatDateTime: function (dateTime) {
             let minLength = (str) => '0'.repeat(2 - str.toString().length) + str.toString();
 
             return `${minLength(dateTime.getUTCHours())}:${minLength(dateTime.getUTCMinutes())}:${minLength(dateTime.getUTCSeconds())} on ${minLength(dateTime.getUTCDate())}/${minLength(dateTime.getUTCMonth()+1)}/${dateTime.getUTCFullYear()}`;
@@ -281,6 +291,9 @@ var lib = (() => {
         getApi: function getApi(url) {
             return $.ajax(lib.makeApiUrl(url), {
                 method: 'GET',
+                converters: {
+                    "text json": lib.jsonParse
+                },
                 beforeSend: (xhr) => {
                     xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
                 }
@@ -293,13 +306,16 @@ var lib = (() => {
                 object = JSON.stringify(object);
 
             if (object && object.length) {
-                object = encryption.encryptString(object, getCurrentUtcTime());
+                object = encryption.encryptString(object, lib.getCurrentUtcTimestamp());
             }
 
             return $.ajax(lib.makeApiUrl(url), {
                 data: object,
                 contentType: 'application/json',
                 type: 'POST',
+                converters: {
+                    "text json": lib.jsonParse
+                },
                 beforeSend: (xhr) => {
                     xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
                 }
@@ -311,13 +327,16 @@ var lib = (() => {
                 object = JSON.stringify(object);
 
             if (object && object.length) {
-                object = encryption.encryptString(object, getCurrentUtcTime());
+                object = encryption.encryptString(object, lib.getCurrentUtcTimestamp());
             }
 
             return $.ajax(lib.makeApiUrl(url), {
                 data: object,
                 contentType: 'application/json',
                 type: 'DELETE',
+                converters: {
+                    "text json": lib.jsonParse
+                },
                 beforeSend: (xhr) => {
                     xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
                 }
@@ -373,7 +392,7 @@ var lib = (() => {
                 url = pageUrls[url];
             }
 
-            url = '/game.php?' + url;
+            url = location.origin + '/game.php?' + url;
 
             var t = query['t'];
             if (t) {
@@ -586,6 +605,11 @@ var lib = (() => {
             }
         },
 
+        deleteLocalStorage: function deleteLocalStorage(key) {
+            const finalKey = `${localStoragePrefix}${key}`;
+            window.localStorage.removeItem(finalKey);
+        },
+
         getLocalStorageSize: function getLocalStorageSize() {
             var totalSize = 0;
             var vaultSize = 0;
@@ -627,7 +651,7 @@ var lib = (() => {
 
         //  Parse JSON while checking for date formatting
         jsonParse: function jsonParseWithDates(json) {
-            let stringIsDate = (str) => !!str.match(/^\w+,?\s+\d+\s+\w+\s+\d+\s+\d+:\d+:\d+/);
+            let stringIsDate = (str) => !!str.match(/^\w+,?\s+\d+\s+\w+\s+\d+\s+\d+:\d+:\d+/) || !!str.match(/^\d+\-\d+\-\d+T\d+:\d+:\d+(?:\.\d+)?Z$/);
 
             if (stringIsDate(json))
                 return new Date(json);
@@ -684,7 +708,7 @@ var lib = (() => {
             if (!valueSelector_)
                 array.forEach((v) => keySelectorOrTransformer(result, v));
             else
-                array.forEach((v) => result[keySelector(v)] = valueSelector(v));
+                array.forEach((v) => result[keySelectorOrTransformer(v)] = valueSelector_(v));
             return result;
         },
 
@@ -741,7 +765,9 @@ var lib = (() => {
                 $.get(lib.makeApiUrl('time'))
                     .done((data) => {
                         let serverUtcTime = data.utcTime;
+                        //console.log('serverUtcTime = ' + serverUtcTime);
                         utcTimeOffset = serverUtcTime - Date.now();
+                        //console.log('utcTimeOffset = ' + utcTimeOffset);
                         callback();
                     });
             });

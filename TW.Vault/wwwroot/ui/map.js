@@ -105,16 +105,6 @@
                 console.log('Got village data: ', data);
 
                 data.morale = morale;
-
-                data.atHomeSeenAt = data.atHomeSeenAt ? new Date(data.atHomeSeenAt) : null;
-                data.stationedSeenAt = data.stationedSeenAt ? new Date(data.stationedSeenAt) : null;
-                data.recentlyLostArmySeenAt = data.recentlyLostArmySeenAt ? new Date(data.recentlyLostArmySeenAt) : null;
-                data.travelingSeenAt = data.travelingSeenAt ? new Date(data.travelingSeenAt) : null;
-                data.ownedArmySeenAt = data.ownedArmySeenAt ? new Date(data.ownedArmySeenAt) : null;
-
-                data.lastBuildingsSeenAt = data.lastBuildingsSeenAt ? new Date(data.lastBuildingsSeenAt) : null;
-                data.lastLoyaltySeenAt = data.lastLoyaltySeenAt ? new Date(data.lastLoyaltySeenAt) : null;
-
                 cachedData[villageId] = data;
 
                 //  User changed village while the data was loading
@@ -280,35 +270,35 @@
                         ${ !data.atHomeArmy ? '' : `
                         <tr>
                             <td>At home</td>
-                            <td>${data.atHomeSeenAt ? lib.formateDateTime(data.atHomeSeenAt) : ''}</td>
+                            <td>${data.atHomeSeenAt ? lib.formatDateTime(data.atHomeSeenAt) : ''}</td>
                             ${makeTroopTds(data.atHomeArmy || {})}
                         </tr>
                         `}
                         ${ !data.stationedArmy ? '' : `
                         <tr>
                             <td>Stationed</td>
-                            <td>${data.stationedSeenAt ? lib.formateDateTime(data.stationedSeenAt) : ''}</td>
+                            <td>${data.stationedSeenAt ? lib.formatDateTime(data.stationedSeenAt) : ''}</td>
                             ${makeTroopTds(data.stationedArmy || {})}
                         </tr>
                         `}
                         ${ !data.travelingArmy ? '' : `
                         <tr>
                             <td>Traveling</td>
-                            <td>${data.travelingSeenAt ? lib.formateDateTime(data.travelingSeenAt) : ''}</td>
+                            <td>${data.travelingSeenAt ? lib.formatDateTime(data.travelingSeenAt) : ''}</td>
                             ${makeTroopTds(data.travelingArmy || {})}
                         </tr>
                         `}
                         ${ !data.recentlyLostArmy ? '' : `
                         <tr>
                             <td>Recently lost</td>
-                            <td>${data.recentlyLostArmySeenAt ? lib.formateDateTime(data.recentlyLostArmySeenAt) : ''}</td>
+                            <td>${data.recentlyLostArmySeenAt ? lib.formatDateTime(data.recentlyLostArmySeenAt) : ''}</td>
                             ${makeTroopTds(data.recentlyLostArmy || {})}
                         </tr>
                         `}
                         ${ !data.ownedArmy ? '' : `
                         <tr>
                             <td>Owned</td>
-                            <td>${data.ownedArmySeenAt ? lib.formateDateTime(data.ownedArmySeenAt) : ''}</td>
+                            <td>${data.ownedArmySeenAt ? lib.formatDateTime(data.ownedArmySeenAt) : ''}</td>
                             ${makeTroopTds(data.ownedArmy || {})}
                         </tr>
                         `}
@@ -345,7 +335,7 @@
                             </tr>
                             <tr>
                                 <td>Latest levels</td>
-                                <td>${data.lastBuildingsSeenAt ? lib.formateDateTime(data.lastBuildingsSeenAt) : ''}</td>
+                                <td>${data.lastBuildingsSeenAt ? lib.formatDateTime(data.lastBuildingsSeenAt) : ''}</td>
                                 <td>${data.lastBuildings ? data.lastBuildings['snob'] || '-' : '' }</td>
                                 <td>${data.lastBuildings ? data.lastBuildings['smith'] || '-' : '' }</td>
                                 <td>${data.lastBuildings ? data.lastBuildings['farm'] || '-' : '' }</td>
@@ -371,7 +361,7 @@
                         </tr>
                         <tr>
                             <td>Latest loyalty</td>
-                            <td>${data.lastLoyaltySeenAt ? lib.formateDateTime(data.lastLoyaltySeenAt) : ''}</td>
+                            <td>${data.lastLoyaltySeenAt ? lib.formatDateTime(data.lastLoyaltySeenAt) : ''}</td>
                             <td>${data.lastLoyalty ? data.lastLoyalty || '-' : ''}</td>
                         </tr>
                         <tr>
