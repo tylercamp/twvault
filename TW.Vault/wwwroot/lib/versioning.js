@@ -1,5 +1,5 @@
 ﻿function makeVersioningSetup() {
-    let currentVersion = '1.0.2';
+    let currentVersion = '1.1.0';
     let lastVersionKey = 'version';
 
     return {
