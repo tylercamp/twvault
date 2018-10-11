@@ -212,14 +212,13 @@ function makeAdminUsersInterface($container, adminTab) {
 }
 
 function makeArmySummaryCsv(armyData) {
-    let fullNukePop = 20000;
-    let almostNukePop = 15000;
+    let nukePower = 400000;
+    let nukePop = 15000;
     let fullDVPop = 20000;
 
     let playerSummaries = [];
 
     var totalNukes = 0;
-    var totalAlmostNukes = 0;
     var totalDVs = 0;
     var totalNobles = 0;
     var totalPossibleNobles = 0;
@@ -239,7 +238,7 @@ function makeArmySummaryCsv(armyData) {
         let defensiveArmyPop = lib.twcalc.totalPopulation(defensiveArmy);
         return defensiveArmyPop;
     };
-
+    
     armyData.forEach((ad) => {
         let playerId = ad.playerId;
         let playerName = ad.playerName;
@@ -250,7 +249,6 @@ function makeArmySummaryCsv(armyData) {
             playerName: playerName,
             tribeName: ad.tribeName,
             numNukes: 0,
-            numAlmostNukes: 0,
             numNukesTraveling: 0,
             numNobles: 0,
             numPossibleNobles: maxNobles,
@@ -285,13 +283,10 @@ function makeArmySummaryCsv(armyData) {
             let offensiveArmyPop = offensiveArmyPopulation(army);
             let defensiveArmyPop = defensiveArmyPopulation(army);
 
-            if (offensiveArmyPop >= fullNukePop) {
+            if (lib.twcalc.totalAttackPower(army) >= nukePower) {
                 playerData.numNukes++;
-            } else if (offensiveArmyPop >= almostNukePop) {
-                playerData.numAlmostNukes++;
-            }
-
-            if (defensiveArmyPop > 2000 && defensiveArmyPop > offensiveArmyPop) {
+                playerData.numOffensiveVillas++;
+            } else if (defensiveArmyPop > 2000 && defensiveArmyPop > offensiveArmyPop) {
                 playerData.numDefensiveVillas++;
                 playerData.numOwnedDVs += defensiveArmyPop / fullDVPop;
             } else if (offensiveArmyPop > 2000 && offensiveArmyPop > defensiveArmyPop) {
@@ -305,8 +300,9 @@ function makeArmySummaryCsv(armyData) {
 
         armiesTraveling.forEach((army) => {
             let offensivePop = offensiveArmyPopulation(army);
-            if (offensivePop > fullNukePop / 2) {
-                playerData.numNukesTraveling += offensivePop / fullNukePop;
+            let attackPower = lib.twcalc.totalAttackPower(army);
+            if (offensivePop > nukePop / 2 || attackPower >= nukePower) {
+                playerData.numNukesTraveling += Math.min(1, offensivePop / nukePop);
             }
         });
 
@@ -340,7 +336,6 @@ function makeArmySummaryCsv(armyData) {
         });
 
         totalNukes += playerData.numNukes;
-        totalAlmostNukes += playerData.numAlmostNukes;
         totalDVs += playerData.numOwnedDVs;
         totalNobles += playerData.numNobles;
         totalPossibleNobles += playerData.numPossibleNobles;
@@ -354,14 +349,14 @@ function makeArmySummaryCsv(armyData) {
     var csvBuilder = new CsvBuilder();
     supportedTribeNames.sort();
 
-    csvBuilder.addRow('', '', '', '', 'Total nukes', 'Total 3/4 nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs');
-    csvBuilder.addRow('', '', '', '', totalNukes, totalAlmostNukes, totalNobles, totalPossibleNobles, totalDVs);
+    csvBuilder.addRow('', '', '', '', 'Total nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs');
+    csvBuilder.addRow('', '', '', '', totalNukes, totalNobles, totalPossibleNobles, totalDVs);
 
     csvBuilder.addBlank(2);
 
     csvBuilder.addRow(
         'Time', 'Needs upload?', 'Tribe', 'Player', 'Nukes',
-        '3/4 Nukes', 'Nukes traveling', 'Nobles', 'Possible nobles', 
+        'Nukes traveling', 'Nobles', 'Possible nobles', 
         'Owned DVs', 'DVs at Home', 'DVs Traveling', 'DVs Supporting Self', 'DVs Supporting Others',
         'Est. Off. Villas', 'Est. Def. Villas',
         '',
@@ -371,7 +366,7 @@ function makeArmySummaryCsv(armyData) {
     playerSummaries.forEach((s) => {
         csvBuilder.addRow(
             s.uploadedAt, s.needsUpload ? 'YES' : '', s.tribeName, s.playerName, s.numNukes,
-            s.numAlmostNukes, s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
+            s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
             s.numOwnedDVs, s.numDVsAtHome, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,
             s.numOffensiveVillas, s.numDefensiveVillas, '', ...supportedTribeNames.map((tn) => s.numDVsSupportingTribes[tn] || '0')
         );

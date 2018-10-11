@@ -56,6 +56,34 @@
                     result.push(t);
             });
             return result;
+        },
+
+        totalAttackPower: function calculateTotalAttackPower(army) {
+            army = normalizeToArray(army);
+            var power = 0;
+            army.forEach((t) => {
+                let name = t.name;
+                let count = t.count;
+
+                let unit = twstats.getUnit(name);
+                power += unit.attack * count;
+            });
+            return power;
+        },
+
+        totalDefensePower: function calculateTotalDefensePower(army) {
+            army = normalizeToArray(army);
+            var power = 0;
+            army.forEach((t) => {
+                let name = t.name;
+                let count = t.count;
+
+                let unit = twstats.getUnit(name);
+                power += unit.defense[0].value * count;
+                power += unit.defense[1].value * count;
+                power += unit.defense[2].value * count;
+            });
+            return power;
         }
     };
 }
