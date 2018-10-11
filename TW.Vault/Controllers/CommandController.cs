@@ -417,7 +417,7 @@ namespace TW.Vault.Controllers
                                 (effectiveArmy.Light.HasValue && effectiveArmy.Light.Value > 250)
                             );
 
-                        if (!isOffense && isConfidentArmy)
+                        if (!isOffense && isConfidentArmy && (effectiveArmy.Snob == null || effectiveArmy.Snob == 0) && incoming.TroopType != JSON.TroopType.Snob.ToTroopString())
                             tag.DefiniteFake = true;
 
                         var offensiveArmy = effectiveArmy.OfType(JSON.UnitBuild.Offensive);

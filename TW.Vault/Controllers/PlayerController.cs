@@ -90,7 +90,18 @@ namespace TW.Vault.Controllers
                     select existing
                 ).ToList();
 
-            context.CurrentVillageSupport.RemoveRange(removedSupport);
+            //  Duplicates happen sometimes apparently? Just get rid of them, we'll recreate those entries with new data
+            var duplicateSupport = (
+                    from existing in existingOutwardSupport
+                    where existingOutwardSupport.Count(cs => cs.SourceVillageId == existing.SourceVillageId && cs.TargetVillageId == existing.TargetVillageId) > 1
+                    select existing
+                ).ToList();
+
+            context.CurrentVillageSupport.RemoveRange(removedSupport.Concat(duplicateSupport));
+
+            await Profile("Save removed support", () => context.SaveChangesAsync());
+
+            existingOutwardSupport = existingOutwardSupport.Except(removedSupport.Concat(duplicateSupport)).ToList();
 
             Profile("Make model data", () =>
             {
@@ -110,7 +121,7 @@ namespace TW.Vault.Controllers
                 }
             });
 
-            await context.SaveChangesAsync();
+            await Profile("Save new support data", () => context.SaveChangesAsync());
 
             return Ok();
         }
