@@ -12,17 +12,57 @@
     //  Hook into 'TWMap.displayForVillage', which is invoked whenever the village info popup is made
     //  by TW
 
+    var mapOverlayTags = null;
     var currentVillageId = null;
     let $popup = $doc.find('#map_popup');
 
     $doc.find('#continent_id').parent().append('<span> - Using Vault</span>');
+
+    let groupStyles = $('.colorgroup-other-entry, .colorgroup-own-entry').toArray().map((row) => {
+        let $row = $(row);
+
+        let groupId = $row.data('id');
+        let name = $row.find('td:nth-of-type(2)').text().trim();
+        let template = $row.find('.marker')[0].outerHTML;
+
+        return {
+            id: groupId,
+            name: name,
+            template: template
+        };
+    });
+
+    let groupStylesById = lib.arrayToObject(groupStyles, (g) => g.id, (g) => g);
 
     var cachedData = {};
     let requestedVillageIds = [];
     let settings = loadSettings();
     let lockedDataReasons = null;
 
+    const TAG_TYPES = {
+        NOBLES: 'nobles',
+        NUKE: 'nuke',
+        STACKED: 'stacked'
+    };
+
+    let groupMappings = {};
+    groupMappings[TAG_TYPES.NOBLES] = groupStylesById[settings.overlayNobleGroupId] || groupStyles[0];
+    groupMappings[TAG_TYPES.NUKE] = groupStylesById[settings.overlayNukeGroupId] || groupStyles[1 % groupStyles.length];
+    groupMappings[TAG_TYPES.STACKED] = groupStylesById[settings.overlayStackedGroupId] || groupStyles[2 % groupStyles.length];
+
+    console.log('Made group style: ', groupStyles);
+
     $(window).unload(() => isUnloading = true);
+
+    //  Get all data for the whole world for now
+    lib.getApi(`village/0/0/1000/1000/tags`)
+        .done((data) => {
+            console.log('Got map tags: ', data);
+            mapOverlayTags = data;
+
+            if (settings.showOverlay)
+                applyMapOverlay();
+        });
 
     createSettingsUI();
 
@@ -98,6 +138,14 @@
         }
     };
 
+    let originalSpawnSector = TWMap.mapHandler.spawnSector;
+    TWMap.mapHandler.spawnSector = function (data, sector) {
+        originalSpawnSector.call(TWMap.mapHandler, data, sector);
+
+        if (mapOverlayTags && settings.showOverlay)
+            applyMapOverlay(sector._elements);
+    };
+
     function loadVillageTroopData(villageId, morale) {
         requestedVillageIds.push(villageId);
         lib.getApi(`village/${villageId}/army?morale=${morale}`)
@@ -138,7 +186,132 @@
             });
     }
 
-    console.log('Added map hook');
+    function applyMapOverlay(elements) {
+        if (!elements) {
+            elements = lib.objectToArray(TWMap.map._visibleSectors, (_, v) => v).map((s) => s._elements).flat();
+        }
+
+        elements.forEach((img) => {
+            const imgId = img.id;
+            if (imgId == null) {
+                return;
+            }
+            let villageId = imgId.match(/map_village_(\d+)/);
+            if (!villageId) {
+                return;
+            }
+            villageId = parseInt(villageId[1]);
+
+            if (!mapOverlayTags[villageId]) {
+                return;
+            }
+
+            let $parent = $(img).parent();
+            let x = $(img).css('left');
+            let y = $(img).css('top');
+
+            if (hasHighlights(mapOverlayTags[villageId])) {
+                let $overlay = $(`<div id="vault_overlay_${villageId}">`);
+                $overlay.css({
+                    width: '52px',
+                    height: '37px',
+                    position: 'absolute',
+                    left: x,
+                    top: y,
+                    'z-index': 50,
+                    outline: 'rgba(51, 255, 0, 0.7) solid 2px',
+                    'background-color': 'rgba(155, 252, 10, 0.14)'
+                });
+
+                $overlay.appendTo($parent);
+            }
+
+            let tags = makeTagElements(mapOverlayTags[villageId]);
+
+            tags.forEach((tag, i) => {
+                let $tag = $(tag);
+                $tag.css({
+                    position: 'absolute',
+                    left: x,
+                    top: y,
+                    'z-index': 51,
+                    width: '18px',
+                    height: '18px',
+                    'margin-top': '18px',
+                    'margin-left': `${20 * i}px`
+                })
+
+                $tag.find('img').css({
+                    width: '18px',
+                    height: '18px'
+                })
+
+                $tag.appendTo($parent);
+            });
+        });
+    }
+
+    function hasHighlights(tag) {
+        switch (settings.overlayHighlights) {
+            case 'none': return false;
+            case 'limited': return isRecentIntel(tag.stackSeenAt) || isRecentIntel(tag.nukeSeenAt) || isRecentIntel(tag.noblesSeenAt);
+            case 'all': return true;
+        }
+    }
+
+    function makeTagElements(tag, villageId) {
+        let result = [];
+        if (tag.isStacked && isRecentIntel(tag.stackSeenAt)) {
+            let $stackedIcon = $(groupMappings[TAG_TYPES.STACKED].template);
+            $stackedIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.STACKED}_${villageId}`)
+            result.push($stackedIcon);
+        }
+        if (tag.hasNuke && isRecentIntel(tag.nukeSeenAt)) {
+            let $nukeIcon = $(groupMappings[TAG_TYPES.NUKE].template);
+            $nukeIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.NUKE}_${villageId}`);
+            result.push($nukeIcon);
+        }
+        if (tag.hasNobles && isRecentIntel(tag.noblesSeenAt)) {
+            let $nobleIcon = $(groupMappings[TAG_TYPES.NOBLES].template);
+            $nobleIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.NOBLES}_${villageId}`);
+            result.push($nobleIcon);
+        }
+
+        return result;
+    }
+
+    function isRecentIntel(intelDate) {
+        return intelDate && intelDate.valueOf() > lib.getServerDateTime().valueOf() - 24 * 60 * 60 * 1000 * settings.maxIntelAgeDays;
+    }
+
+    function updateTagIcons(tag) {
+        let $tags = $(`*[id^=vault_overlay_icon_${tag}]`);
+        $tags.each((i, el) => {
+            let $tag = $(el);
+            let $parent = $tag.parent();
+
+            let $newTag = $(groupMappings[tag].template);
+            $newTag.prop('id', $tag.prop('id'));
+            $newTag.css({
+                position: 'absolute',
+                width: '18px',
+                height: '18px',
+                left: $tag.css('left'),
+                top: $tag.css('top'),
+                'z-index': 51,
+                'margin-top': '18px',
+                'margin-left': $tag.css('margin-left')
+            });
+
+            $newTag.find('img').css({
+                width: '18px',
+                height: '18px'
+            });
+
+            $tag.remove();
+            $newTag.appendTo($parent);
+        });
+    }
 
     function makeOutputContainer() {
         let $villageInfoContainer = $('<div id="vault_info" style="background-color:#e5d7b2;">');
@@ -185,7 +358,6 @@
             });
 
             //  Collect command data for later
-            let commandId = parseInt($row.find('.command_hover_details').data('command-id'));
             let commandData = {
                 isSmall: isSmall,
                 isSupport: isSupport,
@@ -422,9 +594,20 @@
     }
 
     function createSettingsUI() {
+
+        function makeGroupOptions(currentId) {
+            let result = [];
+
+            groupStyles.forEach((grp) => {
+                result.push(`<option value="${grp.id}" ${grp.id == currentId ? 'selected' : ''}> ${ grp.name }</option >`);
+            });
+
+            return result.join('\n');
+        }
+
         let $container = $(`
             <div>
-                <h4>Vault Overlay Settings</h4>
+                <h4>Hover Settings</h4>
                 <p>
                     <input type="checkbox" id="vault-show-commands" ${settings.showCommands ? 'checked' : ''}>
                     <label for="vault-show-commands">Commands</label>
@@ -441,10 +624,45 @@
                     <input type="checkbox" id="vault-show-loyalty" ${settings.showLoyalty ? 'checked' : ''}>
                     <label for="vault-show-loyalty">Loyalty</label>
                 </p>
+                <h4>Overlay Settings</h4>
+                <p>
+                    <input type="checkbox" id="vault-show-overlay" ${settings.showOverlay ? 'checked' : ''}>
+                    <label for="vault-show-overlay">Show overlay</label>
+
+                    <br><br>
+
+                    <label for="vault-overlay-max-age">Ignore intel over </label>
+                    <input id="vault-overlay-max-age" style="text-align:center;width:1.75em" value="${settings.maxIntelAgeDays}">
+                    <label for="vault-overlay-max-age"> days old</label>
+
+                    <br><br>
+
+                    <select id="vault-overlay-highlight-method">
+                        <option value="none" ${settings.overlayHighlights == "none" ? "selected" : ''}>None</option>
+                        <option value="limited" ${settings.overlayHighlights == "limited" ? "selected" : ''}>Has group</option>
+                        <option value="all" ${settings.overlayHighlights == "all" ? "selected" : ''}>Has intel</option>
+                    </select>
+                    <label for="vault-overlay-highlight-method">Highlights</label>
+
+                    <select id="vault-overlay-nuke-group">
+                        ${makeGroupOptions(settings.overlayNukeGroupId)}
+                    </select>
+                    <label for="vault-overlay-nuke-group">Nuke group</label>
+
+                    <select id="vault-overlay-noble-group">
+                        ${makeGroupOptions(settings.overlayNobleGroupId)}
+                    </select>
+                    <label for="vault-overlay-noble-group">Noble group</label>
+
+                    <select id="vault-overlay-stacked-group">
+                        ${makeGroupOptions(settings.overlayStackedGroupId)}
+                    </select>
+                    <label for="vault-overlay-stacked-group">Stacked group</label>
+                </p>
             </div>
         `.trim());
 
-        $container.find('label').css({
+        $container.find('label:not([for=vault-overlay-max-age])').css({
             'margin-right': '1.5em'
         });
 
@@ -484,16 +702,95 @@
             settings.showLoyalty = $checkbox.prop('checked');
             saveSettings(settings);
         });
+
+        $container.find('#vault-show-overlay').change(() => {
+            settings.showOverlay = $container.find('#vault-show-overlay').prop('checked');
+            saveSettings(settings);
+
+            if (settings.showOverlay && mapOverlayTags) {
+                applyMapOverlay();
+            } else {
+                $('*[id^=vault_overlay]').remove();
+            }
+        });
+
+        $container.find('#vault-overlay-max-age').change(() => {
+            let max = parseInt($container.find('#vault-overlay-max-age').val());
+            if (isNaN(max) || max <= 0) {
+                return;
+            }
+            settings.maxIntelAgeDays = max;
+            saveSettings(settings);
+
+            $('*[id^=vault_overlay]').remove();
+            if (settings.showOverlay && mapOverlayTags)
+                applyMapOverlay();
+        });
+
+        $container.find('#vault-overlay-highlight-method').change(() => {
+            settings.overlayHighlights = $('#vault-overlay-highlight-method').val();
+            saveSettings(settings);
+
+            $('*[id^=vault_overlay]').remove();
+            if (settings.showOverlay && mapOverlayTags)
+                applyMapOverlay();
+        });
+
+        $container.find('#vault-overlay-nuke-group').change(() => {
+            let value = $container.find('#vault-overlay-nuke-group').val();
+            settings.overlayNukeGroupId = parseInt(value);
+            groupMappings[TAG_TYPES.NUKE] = groupStylesById[value];
+            saveSettings(settings);
+            updateTagIcons(TAG_TYPES.NUKE);
+        });
+
+        $container.find('#vault-overlay-noble-group').change(() => {
+            let value = $container.find('#vault-overlay-noble-group').val();
+            settings.overlayNobleGroupId = parseInt(value);
+            groupMappings[TAG_TYPES.NOBLES] = groupStylesById[value];
+            saveSettings(settings);
+            updateTagIcons(TAG_TYPES.NOBLES);
+        });
+
+        $container.find('#vault-overlay-stacked-group').change(() => {
+            let value = $container.find('#vault-overlay-stacked-group').val();
+            settings.overlayStackedGroupId = parseInt(value);
+            groupMappings[TAG_TYPES.STACKED] = groupStylesById[value];
+            saveSettings(settings);
+            updateTagIcons(TAG_TYPES.STACKED);
+        });
     }
 
     function loadSettings() {
-        return lib.getLocalStorage('map-settings') || {
+        var settings = lib.getLocalStorage('map-settings') || {
             showCommands: true,
             showPossiblyRecruited: true,
             showBuildings: true,
             showNukes: true,
             showLoyalty: true
         };
+
+        if (typeof settings.showOverlay != 'boolean')
+            settings.showOverlay = true;
+
+        if (!settings.maxIntelAgeDays)
+            settings.maxIntelAgeDays = 5;
+
+        if (!settings.overlayHighlights)
+            settings.overlayHighlights = "limited";
+
+        if (!settings.overlayNukeGroupId)
+            settings.overlayNukeGroupId = groupStyles[0].id;
+
+        if (!settings.overlayNobleGroupId)
+            settings.overlayNobleGroupId = groupStyles[1 % groupStyles.length].id;
+
+        if (!settings.overlayStackedGroupId)
+            settings.overlayStackedGroupId = groupStyles[2 % groupStyles.length].id;
+
+        saveSettings(settings);
+
+        return settings;
     }
 
     function saveSettings(settings) {

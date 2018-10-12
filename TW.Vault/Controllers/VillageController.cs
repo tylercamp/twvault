@@ -458,7 +458,96 @@ namespace TW.Vault.Controllers
         }
 
 
+        [HttpGet("{x}/{y}/{width}/{height}/tags")]
+        public async Task<IActionResult> GetMapTags(int x, int y, int width, int height)
+        {
+            var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUser.Uid).FirstOrDefaultAsync();
+            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
+            var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
 
+            if (needsUpdateReasons != null && needsUpdateReasons.Any())
+            {
+                return StatusCode(423, needsUpdateReasons); // Status code "Locked"
+            }
+
+            var vaultTribes = await Profile("Get tribe IDs", () => (
+                from user in context.User.FromWorld(CurrentWorldId)
+                join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                where player.TribeId != null && user.Enabled
+                select player.TribeId.Value
+            ).Distinct().ToListAsync());
+
+            var villageData = await Profile("Get village data", () => (
+                from currentVillage in context.CurrentVillage
+                                                .FromWorld(CurrentWorldId)
+                                                .Include(cv => cv.ArmyOwned)
+                                                .Include(cv => cv.ArmyTraveling)
+                                                .Include(cv => cv.ArmyStationed)
+
+                join village in context.Village.FromWorld(CurrentWorldId) on currentVillage.VillageId equals village.VillageId
+                join player in context.Player.FromWorld(CurrentWorldId) on village.PlayerId equals player.PlayerId
+                where CurrentUserIsAdmin || player.TribeId == null || !vaultTribes.Contains(player.TribeId.Value)
+
+                where village.X >= x && village.Y >= y && village.X <= x + width && village.Y <= y + height
+                select new { CurrentVillage = currentVillage, player.PlayerId }
+            ).ToListAsync());
+
+            var validVillages = villageData.Where(vd => vd.PlayerId != CurrentUser.PlayerId).ToList();
+            var result = new Dictionary<long, JSON.VillageTags>();
+
+            Profile("Generate JSON tags", () =>
+            {
+                foreach (var village in validVillages.Select(vv => vv.CurrentVillage))
+                {
+                    var tag = new JSON.VillageTags();
+
+                    if (village.ArmyStationed?.LastUpdated != null)
+                    {
+                        var stationed = village.ArmyStationed;
+                        tag.IsStacked = BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(stationed)) > 2e6;
+                        if (tag.IsStacked)
+                            tag.StackSeenAt = stationed.LastUpdated;
+                    }
+
+                    var validArmies = new[] {
+                        village.ArmyOwned,
+                        village.ArmyTraveling,
+                        village.ArmyStationed
+                    }.Where(a => a.LastUpdated != null && !ArmyConvert.ArmyToJson(a).IsEmpty()).ToList();
+
+                    var nukeArmy = (
+                            from army in validArmies
+                            where BattleSimulator.TotalAttackPower(ArmyConvert.ArmyToJson(army)) > 4e5
+                            where ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(army.OfType(JSON.UnitBuild.Offensive))) > 10000
+                            orderby army.LastUpdated.Value descending
+                            select army
+                        ).FirstOrDefault();
+
+                    var nobleArmy = (
+                            from army in validArmies
+                            where army.Snob > 0
+                            orderby army.LastUpdated.Value descending
+                            select army
+                        ).FirstOrDefault();
+
+                    if (nukeArmy != null)
+                    {
+                        tag.HasNuke = true;
+                        tag.NukeSeenAt = nukeArmy.LastUpdated;
+                    }
+
+                    if (nobleArmy != null)
+                    {
+                        tag.HasNobles = true;
+                        tag.NoblesSeenAt = nobleArmy.LastUpdated;
+                    }
+
+                    result.Add(village.VillageId, tag);
+                }
+            });
+
+            return Ok(result);
+        }
 
 
 
