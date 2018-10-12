@@ -46,9 +46,9 @@
     };
 
     let groupMappings = {};
-    groupMappings[TAG_TYPES.NOBLES] = groupStylesById[settings.overlayNobleGroupId] || groupStyles[0];
-    groupMappings[TAG_TYPES.NUKE] = groupStylesById[settings.overlayNukeGroupId] || groupStyles[1 % groupStyles.length];
-    groupMappings[TAG_TYPES.STACKED] = groupStylesById[settings.overlayStackedGroupId] || groupStyles[2 % groupStyles.length];
+    groupMappings[TAG_TYPES.NOBLES] = groupStylesById[settings.overlayNobleGroupId] || null;
+    groupMappings[TAG_TYPES.NUKE] = groupStylesById[settings.overlayNukeGroupId] || null;
+    groupMappings[TAG_TYPES.STACKED] = groupStylesById[settings.overlayStackedGroupId] || null;
 
     console.log('Made group style: ', groupStyles);
 
@@ -261,17 +261,17 @@
 
     function makeTagElements(tag, villageId) {
         let result = [];
-        if (tag.isStacked && isRecentIntel(tag.stackSeenAt)) {
+        if (tag.isStacked && isRecentIntel(tag.stackSeenAt) && groupMappings[TAG_TYPES.STACKED]) {
             let $stackedIcon = $(groupMappings[TAG_TYPES.STACKED].template);
             $stackedIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.STACKED}_${villageId}`)
             result.push($stackedIcon);
         }
-        if (tag.hasNuke && isRecentIntel(tag.nukeSeenAt)) {
+        if (tag.hasNuke && isRecentIntel(tag.nukeSeenAt) && groupMappings[TAG_TYPES.NUKE]) {
             let $nukeIcon = $(groupMappings[TAG_TYPES.NUKE].template);
             $nukeIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.NUKE}_${villageId}`);
             result.push($nukeIcon);
         }
-        if (tag.hasNobles && isRecentIntel(tag.noblesSeenAt)) {
+        if (tag.hasNobles && isRecentIntel(tag.noblesSeenAt) && groupMappings[TAG_TYPES.NOBLES]) {
             let $nobleIcon = $(groupMappings[TAG_TYPES.NOBLES].template);
             $nobleIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.NOBLES}_${villageId}`);
             result.push($nobleIcon);
