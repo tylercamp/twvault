@@ -24,6 +24,7 @@ namespace TW.Vault.Scaffold
         public DateTime TransactionTime { get; set; }
         public Guid? AdminAuthToken { get; set; }
         public long? AdminPlayerId { get; set; }
+        public bool IsReadOnly { get; set; }
 
         public World World { get; set; }
         public NotificationUserSettings NotificationUserSettings { get; set; }

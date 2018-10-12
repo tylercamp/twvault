@@ -146,6 +146,7 @@ namespace TW.Vault.Controllers
             newAuthUser.AdminAuthToken = CurrentUser.AuthToken;
             newAuthUser.AdminPlayerId = CurrentUser.PlayerId;
             newAuthUser.KeySource = CurrentUser.Uid;
+            newAuthUser.Label = player.PlayerName;
 
             if (keyRequest.NewUserIsAdmin)
                 newAuthUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;
@@ -317,7 +318,7 @@ namespace TW.Vault.Controllers
                                                              .Include(cv => cv.ArmyOwned)
                                                              .Include(cv => cv.ArmyTraveling)
                                     on village.VillageId equals currentVillage.VillageId
-                where user.Enabled
+                where user.Enabled && !user.IsReadOnly
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 select new { player, currentVillage }
 
@@ -328,7 +329,7 @@ namespace TW.Vault.Controllers
                 from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
                 join player in context.Player.FromWorld(CurrentWorldId) on currentPlayer.PlayerId equals player.PlayerId
                 join user in context.User.FromWorld(CurrentWorldId) on player.PlayerId equals user.PlayerId
-                where user.Enabled
+                where user.Enabled && !user.IsReadOnly
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 select currentPlayer
                 
@@ -339,9 +340,12 @@ namespace TW.Vault.Controllers
                 join user in context.User.FromWorld(CurrentWorldId) on history.Uid equals user.Uid
                 join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
-                where user.Enabled
+                where user.Enabled && !user.IsReadOnly
                 select new { playerId = player.PlayerId, history }
             );
+
+            //  Do some extra work to support multiple keys for the same player
+
 
             var tribeIds = tribeVillages.Select(tv => tv.player.TribeId)
                                         .Where(tid => tid != null)

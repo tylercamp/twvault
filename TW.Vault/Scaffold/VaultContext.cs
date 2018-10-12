@@ -1010,6 +1010,8 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
+                entity.Property(e => e.IsReadOnly).HasColumnName("is_read_only");
+
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.User)
                     .HasForeignKey(d => d.WorldId)
