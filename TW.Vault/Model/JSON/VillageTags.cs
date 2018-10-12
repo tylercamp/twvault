@@ -8,6 +8,7 @@ namespace TW.Vault.Model.JSON
     public class VillageTags
     {
         public bool IsStacked { get; set; }
+        public float? StackDVs { get; set; }
         public DateTime? StackSeenAt { get; set; }
 
         public bool HasNuke { get; set; }

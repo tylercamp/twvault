@@ -503,10 +503,15 @@ namespace TW.Vault.Controllers
 
                     if (village.ArmyStationed?.LastUpdated != null)
                     {
+                        // 1 DV is approx. 1.5m total defense power
                         var stationed = village.ArmyStationed;
-                        tag.IsStacked = BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(stationed)) > 2e6;
+                        var defensePower = BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(stationed));
+                        tag.IsStacked = defensePower > 2e6;
                         if (tag.IsStacked)
+                        {
                             tag.StackSeenAt = stationed.LastUpdated;
+                            tag.StackDVs = defensePower / (float)1.5e6;
+                        }
                     }
 
                     var validArmies = new[] {
