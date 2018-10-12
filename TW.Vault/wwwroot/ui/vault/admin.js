@@ -279,18 +279,21 @@ function makeArmySummaryCsv(armyData) {
         let armySupportingOthers = ad.armySupportingOthers;
         let armySupportingSelf = ad.armySupportingSelf;
 
+        let offensiveArmies = [];
+        let defensiveArmies = [];
+
         armiesOwned.forEach((army) => {
             let offensiveArmyPop = offensiveArmyPopulation(army);
             let defensiveArmyPop = defensiveArmyPopulation(army);
 
             if (lib.twcalc.totalAttackPower(army) >= nukePower) {
                 playerData.numNukes++;
-                playerData.numOffensiveVillas++;
+                offensiveArmies.push(army);
             } else if (defensiveArmyPop > 2000 && defensiveArmyPop > offensiveArmyPop) {
-                playerData.numDefensiveVillas++;
-                playerData.numOwnedDVs += defensiveArmyPop / fullDVPop;
+                playerData.numOwnedDVs += Math.min(1, defensiveArmyPop / fullDVPop);
+                defensiveArmies.push(army);
             } else if (offensiveArmyPop > 2000 && offensiveArmyPop > defensiveArmyPop) {
-                playerData.numOffensiveVillas++;
+                offensiveArmies.push(army);
             }
 
             if (army.snob) {
@@ -301,8 +304,11 @@ function makeArmySummaryCsv(armyData) {
         armiesTraveling.forEach((army) => {
             let offensivePop = offensiveArmyPopulation(army);
             let attackPower = lib.twcalc.totalAttackPower(army);
-            if (offensivePop > nukePop / 2 || attackPower >= nukePower) {
+            if (offensivePop > nukePop / 2 || (attackPower >= nukePower && offensivePop > 8000)) {
                 playerData.numNukesTraveling += Math.min(1, offensivePop / nukePop);
+            } else {
+                let defensiveTravelingPop = defensiveArmyPopulation(armyTraveling);
+                playerData.numDVsTraveling = round(defensiveTravelingPop / fullDVPop);
             }
         });
 
@@ -312,11 +318,6 @@ function makeArmySummaryCsv(armyData) {
         if (armyAtHome) {
             let defensiveAtHomePop = defensiveArmyPopulation(armyAtHome);
             playerData.numDVsAtHome = round(defensiveAtHomePop / fullDVPop);
-        }
-
-        if (armyTraveling) {
-            let defensiveTravelingPop = defensiveArmyPopulation(armyTraveling);
-            playerData.numDVsTraveling = round(defensiveTravelingPop / fullDVPop);
         }
 
         if (armySupportingOthers) {
@@ -339,6 +340,9 @@ function makeArmySummaryCsv(armyData) {
         totalDVs += playerData.numOwnedDVs;
         totalNobles += playerData.numNobles;
         totalPossibleNobles += playerData.numPossibleNobles;
+
+        playerData.numOffensiveVillas = offensiveArmies.length;
+        playerData.numDefensiveVillas = defensiveArmies.length;
 
         playerSummaries.push(playerData);
     });
