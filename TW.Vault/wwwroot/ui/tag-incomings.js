@@ -89,6 +89,9 @@
             <div id="v-tagging-ui" class="content-border">
                 <h3>Vault Tagging</h3>
                 <p>
+                    <b>Note - this feature is EXPERIMENTAL and may not be accurate!</b>
+                </p>
+                <p>
                     <button id="v-upload-incomings">Upload Incomings</button>
                 </p>
                 <p>
