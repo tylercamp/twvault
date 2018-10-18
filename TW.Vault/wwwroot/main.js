@@ -8,6 +8,8 @@ try {
         alertInvalidBrowser();
     } else if (5 != eval("let x = 5; x")) {
         alertInvalidBrowser();
+    } else if (!window.MutationObserver) {
+        alertInvalidBrowser();
     } else {
         $.getScript(getScriptBase() + "/vault.js?_=" + Math.round(Math.random() * 1000000));
     }
@@ -28,7 +30,7 @@ function getScriptBase() {
     for (var i = 0; i < stack.length; i++)
         stack[i] = stack[i].trim();
     var firstScope = stack[stack.length - 1];
-    var sourceUrl = firstScope.match(/at (.+\.js)/);
+    var sourceUrl = firstScope.match(/(https:\/\/.+\.js)/);
     if (sourceUrl)
         sourceUrl = sourceUrl[1];
 

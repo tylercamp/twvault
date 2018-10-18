@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TW.Vault.Features.Simulation;
 using TW.Vault.Model.Convert;
 using TW.Vault.Model.Native;
 using JSON = TW.Vault.Model.JSON;
@@ -30,6 +31,108 @@ namespace TW.Vault.Controllers
             return new { isAdmin = CurrentUserIsAdmin };
         }
 
+        [HttpGet("logs")]
+        public async Task<IActionResult> GetUserLogs()
+        {
+            if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
+                return Unauthorized();
+            }
+
+            var userLogs = await context.UserLog.FromWorld(CurrentWorldId).Include(l => l.Tx).OrderByDescending(l => l.TransactionTime).ToListAsync();
+            var playerIds = userLogs
+                .Select(l => l.PlayerId)
+                .Concat(userLogs.Where(l => l.AdminPlayerId != null)
+                .Select(l => l.AdminPlayerId.Value))
+                .Distinct()
+                .ToList();
+
+            var playerNames = await (
+                    from player in context.Player.FromWorld(CurrentWorldId)
+                    where playerIds.Contains(player.PlayerId)
+                    select new { player.PlayerId, player.PlayerName }
+                ).ToListAsync();
+
+            var userNames = await (
+                    from user in context.User.FromWorld(CurrentWorldId)
+                    join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                    select new { user.Uid, player.PlayerName }
+                ).ToListAsync();
+
+            var playerNamesById = playerIds.ToDictionary(pid => pid, pid => WebUtility.UrlDecode(playerNames.SingleOrDefault(n => n.PlayerId == pid)?.PlayerName));
+            var userNamesById = userNames.ToDictionary(u => u.Uid, u => WebUtility.UrlDecode(u.PlayerName));
+
+            var logsByPlayerId = playerIds.ToDictionary(pid => pid, pid => userLogs.Where(l => l.PlayerId == pid).ToList());
+
+            var result = new List<JSON.UserLog>();
+            foreach (var log in userLogs)
+            {
+                var json = new JSON.UserLog();
+                if (log.Tx != null)
+                {
+                    json.OccurredAt = log.Tx.OccurredAt;
+                    json.AdminUserName = userNamesById[log.Tx.Uid];
+                }
+                else
+                {
+                    json.OccurredAt = log.TransactionTime;
+                    json.AdminUserName = log.AdminPlayerId == null ? "System" : (playerNamesById[log.AdminPlayerId.Value] ?? "Unknown");
+                }
+
+                var logsForPlayer = logsByPlayerId[log.PlayerId].OrderBy(l => l.Tx?.OccurredAt ?? l.TransactionTime).ToList();
+                int logIdx = logsForPlayer.IndexOf(log);
+                var previousLog = logIdx > 0 ? logsForPlayer[logIdx - 1] : null;
+
+                var playerName = playerNamesById[log.PlayerId] ?? "Unknown";
+
+                switch (log.OperationType)
+                {
+                    case "INSERT":
+                        json.EventDescription = $"Added key for {playerName}";
+                        break;
+
+                    case "UPDATE":
+                        if (previousLog == null)
+                        {
+                            json.EventDescription = $"Updated {playerName} (unknown change)";
+                        }
+                        else
+                        {
+                            if (log.PermissionsLevel != previousLog.PermissionsLevel)
+                            {
+                                if (log.PermissionsLevel < (short)Security.PermissionLevel.Admin)
+                                    json.EventDescription = $"Revoked admin priveleges for {playerName}";
+                                else
+                                    json.EventDescription = $"Gave admin priveleges to {playerName}";
+                            }
+                            else if (log.Enabled != previousLog.Enabled)
+                            {
+                                if (log.Enabled)
+                                    json.EventDescription = $"Re-enabled key for {playerName}";
+                                else
+                                    json.EventDescription = $"Disabled key for {playerName}";
+                            }
+                            else
+                            {
+                                json.EventDescription = $"Updated {playerName} (unknown change)";
+                            }
+                        }
+                        break;
+
+                    case "DELETE":
+                        json.EventDescription = $"Deleted key for {playerName}";
+                        break;
+                }
+
+                result.Add(json);
+            }
+
+            return Ok(result.OrderByDescending(l => l.OccurredAt));
+        }
+
         [HttpGet("keys")]
         public async Task<IActionResult> GetVaultKeys()
         {
@@ -46,8 +149,8 @@ namespace TW.Vault.Controllers
                     join player in context.Player on user.PlayerId equals player.PlayerId
                     join tribe in context.Ally on player.TribeId equals tribe.TribeId into maybeTribe
                     from tribe in maybeTribe.DefaultIfEmpty()
-                    where CurrentUser.KeySource == null || user.KeySource == CurrentUser.Uid || !Configuration.Security.RestrictAccessWithinTribes
-                    where user.Enabled
+                    where CurrentUser.KeySource == null || user.KeySource == CurrentUserId || !Configuration.Security.RestrictAccessWithinTribes
+                    where user.Enabled && !user.IsReadOnly
                     where player.WorldId == CurrentWorldId
                     where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
                     orderby tribe.Tag, player.PlayerName
@@ -55,7 +158,7 @@ namespace TW.Vault.Controllers
                 ).ToListAsync();
 
             if (Configuration.Security.RestrictAccessWithinTribes && !CurrentUserIsSystem)
-                users = users.Where(u => u.tribe?.TribeId == CurrentTribeId || u.user.AdminAuthToken == CurrentUser.AuthToken).ToList();
+                users = users.Where(u => u.tribe?.TribeId == CurrentTribeId || u.user.AdminAuthToken == CurrentAuthToken).ToList();
 
             var jsonUsers = users.Select(p => UserConvert.ModelToJson(
                 p.user,
@@ -143,10 +246,11 @@ namespace TW.Vault.Controllers
             newAuthUser.AuthToken = Guid.NewGuid();
             newAuthUser.Enabled = true;
             newAuthUser.TransactionTime = DateTime.UtcNow;
-            newAuthUser.AdminAuthToken = CurrentUser.AuthToken;
-            newAuthUser.AdminPlayerId = CurrentUser.PlayerId;
-            newAuthUser.KeySource = CurrentUser.Uid;
+            newAuthUser.AdminAuthToken = CurrentAuthToken;
+            newAuthUser.AdminPlayerId = CurrentPlayerId;
+            newAuthUser.KeySource = CurrentUserId;
             newAuthUser.Label = player.PlayerName;
+            newAuthUser.Tx = BuildTransaction();
 
             if (keyRequest.NewUserIsAdmin)
                 newAuthUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;
@@ -202,7 +306,7 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = "No user exists with that auth key." });
             }
 
-            if (requestedUser.AuthToken == CurrentUser.AuthToken)
+            if (requestedUser.AuthToken == CurrentAuthToken)
             {
                 return BadRequest(new { error = "You cannot delete your own key." });
             }
@@ -214,17 +318,18 @@ namespace TW.Vault.Controllers
 
             if (requestedUser.PermissionsLevel == (short)Security.PermissionLevel.Admin)
             {
-                if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUser.Uid)
+                if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUserId)
                 {
                     return BadRequest(new { error = "You cannot delete an admin user that you have not created." });
                 }
             }
 
-            logger.LogWarning("User {SourceKey} disabling {TargetKey}", CurrentUser.AuthToken, authKey);
+            logger.LogWarning("User {SourceKey} disabling {TargetKey}", CurrentAuthToken, authKey);
             requestedUser.Enabled = false;
-            requestedUser.AdminAuthToken = CurrentUser.AuthToken;
-            requestedUser.AdminPlayerId = CurrentUser.PlayerId;
+            requestedUser.AdminAuthToken = CurrentAuthToken;
+            requestedUser.AdminPlayerId = CurrentPlayerId;
             requestedUser.TransactionTime = DateTime.UtcNow;
+            requestedUser.Tx = BuildTransaction(requestedUser.Tx?.TxId);
 
             context.User.Update(requestedUser);
             await context.SaveChangesAsync();
@@ -268,25 +373,26 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = "No user exists with that auth key." });
             }
 
-            if (requestedUser.AuthToken == CurrentUser.AuthToken)
+            if (requestedUser.AuthToken == CurrentAuthToken)
             {
                 return BadRequest(new { error = "You cannot change admin status of your own key." });
             }
 
             if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System)
             {
-                return BadRequest(new { error = "You cannot change admin status of a system key." });
+                return BadRequest(new { error = "You cannot change admin status of an admin that you have not created key." });
             }
 
-            if (requestedUser.PermissionsLevel == (short)Security.PermissionLevel.Admin)
-            {
-                if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUser.Uid)
-                {
-                    return BadRequest(new { error = "You cannot change the admin status of an admin that you have not created." });
-                }
-            }
+            if (updateRequest.HasAdmin)
+                requestedUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;
+            else
+                requestedUser.PermissionsLevel = (short)Security.PermissionLevel.Default;
 
-            throw new NotImplementedException();
+            requestedUser.TransactionTime = DateTime.UtcNow;
+            requestedUser.Tx = BuildTransaction(requestedUser.Tx?.TxId);
+
+            await context.SaveChangesAsync();
+            return Ok();
         }
 
 
@@ -295,6 +401,8 @@ namespace TW.Vault.Controllers
         {
             //  Dear jesus this is such a mess
 
+            context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
             if (!CurrentUserIsAdmin)
             {
                 var authRecord = MakeFailedAuthRecord("User is not admin");
@@ -302,8 +410,6 @@ namespace TW.Vault.Controllers
                 await context.SaveChangesAsync();
                 return Unauthorized();
             }
-
-            DateTime start = DateTime.UtcNow;
 
             //  This is a mess because of different classes for Player, CurrentPlayer, etc
 
@@ -430,7 +536,7 @@ namespace TW.Vault.Controllers
 
                 villagesSupportByPlayerIdByTargetTribeId.Add(player.PlayerId, supportByTribe);
             }
-
+            
             var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
 
             var jsonData = new List<JSON.PlayerSummary>();
@@ -441,33 +547,61 @@ namespace TW.Vault.Controllers
                 String tribeName = tribeNamesById.GetValueOrDefault(player.TribeId ?? -1);
                 var playerVillages = kvp.Value;
 
-                var playerSummary = new JSON.PlayerSummary();
-                playerSummary.PlayerName = WebUtility.UrlDecode(playerName);
-                playerSummary.PlayerId = player.PlayerId;
-                playerSummary.TribeName = tribeName;
-                playerSummary.ArmiesOwned = new List<JSON.Army>();
-                playerSummary.ArmiesTraveling = new List<JSON.Army>();
+                var playerHistory = uploadHistoryByPlayer.GetValueOrDefault(player.PlayerId);
+                var playerSummary = new JSON.PlayerSummary
+                {
+                    PlayerName = WebUtility.UrlDecode(playerName),
+                    PlayerId = player.PlayerId,
+                    TribeName = tribeName,
+                    UploadedAt = playerHistory?.LastUploadedTroopsAt ?? new DateTime(),
+                    UploadedReportsAt = playerHistory?.LastUploadedReportsAt ?? new DateTime(),
+                    UploadedIncomingsAt = playerHistory?.LastUploadedIncomingsAt ?? new DateTime(),
+                    UploadedCommandsAt = playerHistory?.LastUploadedCommandsAt ?? new DateTime(),
+                    NumNobles = playerVillages.Select(v => v.ArmyOwned?.Snob ?? 0).Sum()
+                };
+
+                playerSummary.UploadAge = DateTime.UtcNow - playerSummary.UploadedAt;
 
                 if (maxNoblesByPlayer.ContainsKey(player.PlayerId))
                     playerSummary.MaxPossibleNobles = maxNoblesByPlayer[player.PlayerId];
 
-                var playerHistory = uploadHistoryByPlayer.GetValueOrDefault(player.PlayerId);
-                playerSummary.UploadedAt = playerHistory?.LastUploadedTroopsAt ?? new DateTime();
-                playerSummary.UploadAge = DateTime.UtcNow - playerSummary.UploadedAt;
-                playerSummary.UploadedReportsAt = playerHistory?.LastUploadedReportsAt ?? new DateTime();
-                playerSummary.UploadedIncomingsAt = playerHistory?.LastUploadedIncomingsAt ?? new DateTime();
-                playerSummary.UploadedCommandsAt = playerHistory?.LastUploadedCommandsAt ?? new DateTime();
+                var oneNukePower = 500000.0f;
+                var oneDvPower = 1850000.0f;
 
                 //  General army data
-                foreach (var village in playerVillages)
+                foreach (var village in playerVillages.Where(v => v.ArmyOwned != null && v.ArmyTraveling != null && v.ArmyAtHome != null))
                 {
+                    var armyOwned = ArmyConvert.ArmyToJson(village.ArmyOwned);
                     var armyTraveling = ArmyConvert.ArmyToJson(village.ArmyTraveling);
+                    var armyAtHome = ArmyConvert.ArmyToJson(village.ArmyAtHome);
 
-                    playerSummary.ArmiesOwned.Add(ArmyConvert.ArmyToJson(village.ArmyOwned));
-                    playerSummary.ArmiesTraveling.Add(armyTraveling);
+                    var armyPopSize = ArmyStats.CalculateTotalPopulation(armyOwned) / 20000.0f;
+                    armyPopSize = Math.Clamp(armyPopSize, 0, 1);
 
-                    playerSummary.ArmyAtHome += ArmyConvert.ArmyToJson(village.ArmyAtHome);
-                    playerSummary.ArmyTraveling += armyTraveling;
+                    bool isOffensive = village.ArmyOwned.Axe > 100;
+                    if (isOffensive)
+                    {
+                        playerSummary.NumOffensiveVillages++;
+
+                        var offensivePower = BattleSimulator.TotalAttackPower(armyOwned);
+
+                        if (BattleSimulator.TotalAttackPower(armyOwned) >= oneNukePower)
+                            playerSummary.NukesOwned++;
+                        if (BattleSimulator.TotalAttackPower(armyTraveling) >= oneNukePower)
+                            playerSummary.NukesTraveling++;
+                    }
+                    else
+                    {
+                        playerSummary.NumDefensiveVillages++;
+
+                        var ownedDefensivePower = BattleSimulator.TotalDefensePower(armyOwned);
+                        var atHomeDefensivePower = BattleSimulator.TotalDefensePower(armyAtHome);
+                        var travelingDefensivePower = BattleSimulator.TotalDefensePower(armyTraveling);
+
+                        playerSummary.DVsAtHome += atHomeDefensivePower / oneDvPower;
+                        playerSummary.DVsOwned += ownedDefensivePower / oneDvPower;
+                        playerSummary.DVsTraveling += travelingDefensivePower / oneDvPower;
+                    }
                 }
 
                 //  Support data
@@ -476,11 +610,11 @@ namespace TW.Vault.Controllers
                 {
                     //  Support where the target is one of the players' own villages
                     foreach (var support in playerSupport.Where(s => playerVillages.Any(v => v.VillageId == s.TargetVillageId)))
-                        playerSummary.ArmySupportingSelf += ArmyConvert.ArmyToJson(support.SupportingArmy);
+                        playerSummary.DVsSupportingSelf += BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(support.SupportingArmy)) / oneDvPower;
 
                     //  Support where the target isn't any of the players' own villages
                     foreach (var support in playerSupport.Where(s => playerVillages.All(v => v.VillageId != s.TargetVillageId)))
-                        playerSummary.ArmySupportingOthers += ArmyConvert.ArmyToJson(support.SupportingArmy);
+                        playerSummary.DVsSupportingOthers += BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(support.SupportingArmy)) / oneDvPower;
 
                     playerSummary.SupportPopulationByTargetTribe = new Dictionary<string, int>();
 

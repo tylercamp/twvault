@@ -6,7 +6,7 @@ namespace TW.Vault.Scaffold
     public partial class UserLog
     {
         public long Id { get; set; }
-        public long Uid { get; set; }
+        public int Uid { get; set; }
         public long PlayerId { get; set; }
         public short PermissionsLevel { get; set; }
         public string Label { get; set; }
@@ -18,7 +18,9 @@ namespace TW.Vault.Scaffold
         public Guid? AdminAuthToken { get; set; }
         public long? AdminPlayerId { get; set; }
         public string OperationType { get; set; }
+        public long? TxId { get; set; }
 
         public World World { get; set; }
+        public Transaction Tx { get; set; }
     }
 }

@@ -23,12 +23,17 @@ namespace TW.Vault.Controllers
         {
         }
 
+        //  Notifications generally not available when an account is being sat, to preserve privacy
+
         [HttpGet("requests")]
         public async Task<IActionResult> GetNotificationRequests()
         {
+            if (IsSitter)
+                return Ok(Enumerable.Empty<JSON.Notification>());
+
             var requests = await (
                     from request in context.NotificationRequest
-                    where request.Uid == CurrentUser.Uid && request.Enabled
+                    where request.Uid == CurrentUserId && request.Enabled
                     orderby request.EventOccursAt
                     select request
                 ).ToListAsync();
@@ -40,9 +45,12 @@ namespace TW.Vault.Controllers
         [HttpPost("requests")]
         public async Task<IActionResult> AddOrUpdateNotificationRequest([FromBody]JSON.Notification jsonNotification)
         {
+            if (IsSitter)
+                return Ok();
+
             var scaffoldRequest = NotificationConvert.JsonToModel(jsonNotification, null);
             scaffoldRequest.Enabled = true;
-            scaffoldRequest.Uid = CurrentUser.Uid;
+            scaffoldRequest.Uid = CurrentUserId;
 
             var tx = BuildTransaction();
             scaffoldRequest.Tx = tx;
@@ -55,11 +63,14 @@ namespace TW.Vault.Controllers
         [HttpDelete("requests/{requestId}")]
         public async Task<IActionResult> DeleteNotificationRequest(long requestId)
         {
+            if (IsSitter)
+                return Ok();
+
             var request = await context.NotificationRequest.FirstOrDefaultAsync(r => r.Id == requestId);
             if (request == null)
                 return NotFound();
 
-            if (request.Uid != CurrentUser.Uid)
+            if (request.Uid != CurrentUserId)
             {
                 context.Add(MakeFailedAuthRecord("User did not own the notification request"));
                 await context.SaveChangesAsync();
@@ -67,7 +78,7 @@ namespace TW.Vault.Controllers
             }
 
             request.Enabled = false;
-            request.Tx = BuildTransaction(request.Tx);
+            request.Tx = BuildTransaction(request.TxId);
             await context.SaveChangesAsync();
             return Ok();
         }
@@ -75,9 +86,12 @@ namespace TW.Vault.Controllers
         [HttpGet("phone-numbers")]
         public async Task<IActionResult> GetPhoneNumbers()
         {
+            if (IsSitter)
+                return Ok(Enumerable.Empty<JSON.PhoneNumber>());
+
             var phoneNumbers = await (
                     from sms in context.NotificationPhoneNumber
-                    where sms.Uid == CurrentUser.Uid && sms.Enabled
+                    where sms.Uid == CurrentUserId && sms.Enabled
                     select sms
                 ).ToListAsync();
 
@@ -99,7 +113,7 @@ namespace TW.Vault.Controllers
 
             var scaffoldPhoneNumber = await (
                     from phoneNumber in context.NotificationPhoneNumber
-                    where phoneNumber.Uid == CurrentUser.Uid
+                    where phoneNumber.Uid == CurrentUserId
                     where phoneNumber.PhoneNumber == formattedNumber
                     select phoneNumber
                 ).FirstOrDefaultAsync();
@@ -113,7 +127,7 @@ namespace TW.Vault.Controllers
             else
             {
                 var newNumber = new Scaffold.NotificationPhoneNumber();
-                newNumber.Uid = CurrentUser.Uid;
+                newNumber.Uid = CurrentUserId;
                 newNumber.PhoneNumber = formattedNumber;
                 newNumber.Label = phoneNumberRequest.Label;
                 newNumber.Enabled = true;
@@ -121,11 +135,11 @@ namespace TW.Vault.Controllers
 
                 scaffoldPhoneNumber = newNumber;
 
-                var hasSettings = await context.NotificationUserSettings.Where(s => s.Uid == CurrentUser.Uid).AnyAsync();
+                var hasSettings = await context.NotificationUserSettings.Where(s => s.Uid == CurrentUserId).AnyAsync();
                 if (!hasSettings)
                 {
                     var newSettings = new Scaffold.NotificationUserSettings();
-                    newSettings.Uid = CurrentUser.Uid;
+                    newSettings.Uid = CurrentUserId;
                     newSettings.Tx = BuildTransaction();
 
                     context.Add(newSettings);
@@ -135,7 +149,7 @@ namespace TW.Vault.Controllers
             isNewNumber = isNewNumber || !scaffoldPhoneNumber.Enabled;
 
             scaffoldPhoneNumber.Enabled = true;
-            scaffoldPhoneNumber.Tx = BuildTransaction(scaffoldPhoneNumber.Tx);
+            scaffoldPhoneNumber.Tx = BuildTransaction(scaffoldPhoneNumber.TxId);
             context.Add(scaffoldPhoneNumber.Tx);
 
             await context.SaveChangesAsync();
@@ -154,11 +168,14 @@ namespace TW.Vault.Controllers
         [HttpDelete("phone-numbers/{id}")]
         public async Task<IActionResult> DeletePhoneNumber(int id)
         {
+            if (IsSitter)
+                return Ok();
+
             var phoneNumber = await context.NotificationPhoneNumber.FirstOrDefaultAsync(pn => pn.Id == id);
             if (phoneNumber == null)
                 return NotFound();
 
-            if (phoneNumber.Uid != CurrentUser.Uid)
+            if (phoneNumber.Uid != CurrentUserId)
             {
                 context.Add(MakeFailedAuthRecord("User did not own the phone number"));
                 await context.SaveChangesAsync();
@@ -179,7 +196,7 @@ namespace TW.Vault.Controllers
                 catch { }
             }
 
-            logger.LogInformation("Phone number for user {0} was deleted by IP {1}", CurrentUser.Uid, UserIP.ToString());
+            logger.LogInformation("Phone number for user {0} was deleted by IP {1}", CurrentUserId, UserIP.ToString());
 
             return Ok();
         }
@@ -187,11 +204,11 @@ namespace TW.Vault.Controllers
         [HttpGet("settings")]
         public async Task<IActionResult> GetSettings()
         {
-            var settings = await context.NotificationUserSettings.FirstOrDefaultAsync(s => s.Uid == CurrentUser.Uid);
+            var settings = await context.NotificationUserSettings.FirstOrDefaultAsync(s => s.Uid == CurrentUserId);
             if (settings == null)
             {
                 settings = new Scaffold.NotificationUserSettings();
-                settings.Uid = CurrentUser.Uid;
+                settings.Uid = CurrentUserId;
                 settings.Tx = BuildTransaction();
                 context.Add(settings);
                 await context.SaveChangesAsync();
@@ -203,10 +220,13 @@ namespace TW.Vault.Controllers
         [HttpPost("settings")]
         public async Task<IActionResult> UpdateSettings([FromBody]JSON.NotificationSettings newSettings)
         {
-            var scaffoldSettings = await context.NotificationUserSettings.FirstOrDefaultAsync(s => s.Uid == CurrentUser.Uid);
+            if (IsSitter)
+                return Ok();
+
+            var scaffoldSettings = await context.NotificationUserSettings.FirstOrDefaultAsync(s => s.Uid == CurrentUserId);
             NotificationConvert.JsonToModel(newSettings, scaffoldSettings, context);
 
-            scaffoldSettings.Tx = BuildTransaction(scaffoldSettings.Tx);
+            scaffoldSettings.Tx = BuildTransaction(scaffoldSettings.TxId);
             context.Add(scaffoldSettings.Tx);
 
             await context.SaveChangesAsync();

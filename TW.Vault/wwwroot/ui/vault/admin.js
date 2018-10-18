@@ -4,10 +4,12 @@ function makeAdminTab() {
 
     let usersTab = makeAdminUsersTab();
     let statsTab = makeAdminStatsTab();
+    let logTab = makeAdminLogTab();
 
     let tabs = [
         statsTab,
-        usersTab
+        usersTab,
+        logTab
     ];
 
     let adminTab = {
@@ -51,15 +53,17 @@ function makeAdminUsersTab() {
                 <h5 style="margin-top:2em">New Vault Script</h5>
                 <textarea cols=100 rows=5></textarea>
             </div>
-            <table id="keys-table" style="width:100%">
-                <tr>
-                    <th>User name</th>
-                    <th>Current tribe</th>
-                    <th>Auth key</th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </table>
+            <div style="max-height:500px;overflow-y:auto">
+                <table id="keys-table" style="width:100%">
+                    <tr>
+                        <th>User name</th>
+                        <th>Current tribe</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </table>
+            </div>
         `
     };
 }
@@ -112,8 +116,46 @@ function makeAdminStatsTab() {
     };
 }
 
+function makeAdminLogTab() {
+    return {
+        label: "Log",
+        containerId: "vault-admin-log-container",
+
+        getContent: () => `
+            <h4>User Log</h4>
+
+            <div style="max-height:500px; overflow-y:auto">
+                <table id="admin-logs-table" style="width:100%;font-size:11px">
+                    <tr>
+                        <th style="width:200px">Admin</th>
+                        <th>Event</th>
+                        <th>Time</th>
+                    </tr>
+                </table>
+            </div>
+        `
+    };
+}
+
 
 function makeAdminUsersInterface($container, adminTab) {
+
+    lib.getApi('admin/logs')
+        .done((logs) => {
+            console.log('Got admin logs: ', logs);
+
+            let $table = $container.find('#admin-logs-table');
+            logs.forEach((log) => {
+                $table.append(`
+                            <tr>
+                                <td>${log.adminUserName}</td>
+                                <td>${log.eventDescription}</td>
+                                <td>${lib.formatDateTime(log.occurredAt)}</td>
+                            </tr>
+                        `.trim());
+            });
+        })
+        .error(() => alert('An error occurred...'));
 
     //  Insert existing keys
     lib.getApi('admin/keys')
@@ -164,11 +206,11 @@ function makeAdminUsersInterface($container, adminTab) {
 
         var $newRow = $(`
                 <tr data-auth-key="${user.key}">
-                    <td>${user.playerName}</td>
-                    <td>${user.tribeName}</td>
-                    <td>${user.key || '-'}</td>
+                    <td>${user.playerName + (user.isAdmin ? " <b>(Admin)</b>" : "")}</td>
+                    <td>${user.tribeName || "(No tribe)"}</td>
                     <td><input type="button" class="get-script" value="Get script"></td>
                     <td><input type="button" class="delete-user" value="Delete"></td>
+                    <td><input type="button" class="give-admin" value="${user.isAdmin ? 'Revoke admin' : 'Make admin'}"></td>
                 </tr>
             `.trim());
 
@@ -193,7 +235,38 @@ function makeAdminUsersInterface($container, adminTab) {
                 });
         });
 
-        $container.find('#keys-table').append($newRow);
+        $newRow.find('input.give-admin').click(() => {
+            let updatedAdmin = !user.isAdmin;
+            let message = '';
+
+            if (!updatedAdmin) {
+                message = `${user.playerName} will no longer have admin rights.`;
+            } else {
+                message =
+                    `${user.playerName} will be given admin status, and will be able to:\n` +
+                    "\n- Access all troop information available" +
+                    "\n- Add new users" +
+                    "\n- Give and revoke admin priveleges for users";
+            }
+
+            if (!confirm(message))
+                return;
+
+            let authKey = user.key;
+            lib.postApi(`admin/keys/${authKey}/setAdmin`, { hasAdmin: updatedAdmin })
+                .done(() => {
+                    user.isAdmin = updatedAdmin;
+                    if (updatedAdmin)
+                        $newRow.find('input.give-admin').val('Revoke admin');
+                    else
+                        $newRow.find('input.give-admin').val('Make admin');
+                })
+                .error(() => {
+                    alert('An error occurred...');
+                });
+        });
+
+        $container.find('#keys-table tbody').append($newRow);
     }
 
     function displayUserScript(user) {
@@ -226,18 +299,6 @@ function makeArmySummaryCsv(armyData) {
     let supportedTribeNames = [];
 
     let round = (num) => Math.roundTo(num, 1);
-
-    let offensiveArmyPopulation = (army) => {
-        let offensiveArmy = lib.twcalc.getOffensiveArmy(army);
-        let offensiveArmyPop = lib.twcalc.totalPopulation(offensiveArmy);
-        return offensiveArmyPop;
-    };
-
-    let defensiveArmyPopulation = (army) => {
-        let defensiveArmy = lib.twcalc.getDefensiveArmy(army);
-        let defensiveArmyPop = lib.twcalc.totalPopulation(defensiveArmy);
-        return defensiveArmyPop;
-    };
     
     armyData.forEach((ad) => {
         let playerId = ad.playerId;
@@ -248,20 +309,20 @@ function makeArmySummaryCsv(armyData) {
             playerId: playerId,
             playerName: playerName,
             tribeName: ad.tribeName,
-            numNukes: 0,
-            numNukesTraveling: 0,
-            numNobles: 0,
+            numNukes: ad.nukesOwned,
+            numNukesTraveling: ad.nukesTraveling,
+            numNobles: ad.numNobles,
             numPossibleNobles: maxNobles,
 
-            numOwnedDVs: 0,
-            numDVsAtHome: 0,
-            numDVsTraveling: 0,
-            numDVsSupportingOthers: 0,
-            numDVsSupportingSelf: 0,
+            numOwnedDVs: round(ad.dVsOwned),
+            numDVsAtHome: round(ad.dVsAtHome),
+            numDVsTraveling: round(ad.dVsTraveling),
+            numDVsSupportingOthers: round(ad.dVsSupportingOthers),
+            numDVsSupportingSelf: round(ad.dVsSupportingSelf),
             numDVsSupportingTribes: {},
 
-            numDefensiveVillas: 0,
-            numOffensiveVillas: 0
+            numDefensiveVillas: ad.numDefensiveVillages,
+            numOffensiveVillas: ad.numOffensiveVillages
         };
 
         let uploadAge = ad.uploadAge.split(':')[0];
@@ -272,63 +333,7 @@ function makeArmySummaryCsv(armyData) {
         let uploadedAt = new Date(ad.uploadedAt);
         playerData.uploadedAt = `${uploadedAt.getUTCMonth() + 1}/${uploadedAt.getUTCDate()}/${uploadedAt.getUTCFullYear()}`;
 
-        let armiesOwned = ad.armiesOwned;
-        let armiesTraveling = ad.armiesTraveling;
-        let armyTraveling = ad.armyTraveling;
-        let armyAtHome = ad.armyAtHome;
-        let armySupportingOthers = ad.armySupportingOthers;
-        let armySupportingSelf = ad.armySupportingSelf;
-
-        let offensiveArmies = [];
-        let defensiveArmies = [];
-
-        armiesOwned.forEach((army) => {
-            let offensiveArmyPop = offensiveArmyPopulation(army);
-            let defensiveArmyPop = defensiveArmyPopulation(army);
-
-            if (lib.twcalc.totalAttackPower(army) >= nukePower) {
-                playerData.numNukes++;
-                offensiveArmies.push(army);
-            } else if (defensiveArmyPop > 2000 && defensiveArmyPop > offensiveArmyPop) {
-                playerData.numOwnedDVs += Math.min(1, defensiveArmyPop / fullDVPop);
-                defensiveArmies.push(army);
-            } else if (offensiveArmyPop > 2000 && offensiveArmyPop > defensiveArmyPop) {
-                offensiveArmies.push(army);
-            }
-
-            if (army.snob) {
-                playerData.numNobles += army.snob;
-            }
-        });
-
-        armiesTraveling.forEach((army) => {
-            let offensivePop = offensiveArmyPopulation(army);
-            let attackPower = lib.twcalc.totalAttackPower(army);
-            if (offensivePop > nukePop / 2 || (attackPower >= nukePower && offensivePop > 8000)) {
-                playerData.numNukesTraveling += Math.min(1, offensivePop / nukePop);
-            } else {
-                let defensiveTravelingPop = defensiveArmyPopulation(armyTraveling);
-                playerData.numDVsTraveling = round(defensiveTravelingPop / fullDVPop);
-            }
-        });
-
-        playerData.numOwnedDVs = round(playerData.numOwnedDVs);
-        playerData.numNukesTraveling = round(playerData.numNukesTraveling);
-
-        if (armyAtHome) {
-            let defensiveAtHomePop = defensiveArmyPopulation(armyAtHome);
-            playerData.numDVsAtHome = round(defensiveAtHomePop / fullDVPop);
-        }
-
-        if (armySupportingOthers) {
-            let defensiveSupportingOthersPop = defensiveArmyPopulation(armySupportingOthers);
-            playerData.numDVsSupportingOthers = round(defensiveSupportingOthersPop / fullDVPop);
-        }
-
-        if (armySupportingSelf) {
-            let defensiveSupportingSelfPop = defensiveArmyPopulation(armySupportingSelf);
-            playerData.numDVsSupportingSelf = round(defensiveSupportingSelfPop / fullDVPop);
-        }
+        
 
         lib.objForEach(ad.supportPopulationByTargetTribe, (tribe, pop) => {
             playerData.numDVsSupportingTribes[tribe] = round(pop / fullDVPop);
@@ -340,9 +345,6 @@ function makeArmySummaryCsv(armyData) {
         totalDVs += playerData.numOwnedDVs;
         totalNobles += playerData.numNobles;
         totalPossibleNobles += playerData.numPossibleNobles;
-
-        playerData.numOffensiveVillas = offensiveArmies.length;
-        playerData.numDefensiveVillas = defensiveArmies.length;
 
         playerSummaries.push(playerData);
     });

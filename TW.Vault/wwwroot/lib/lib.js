@@ -26,8 +26,8 @@ var lib = (() => {
 
     let encryption = makeEncryption();
 
-    let makeAuthHeader = (playerId, tribeId, authKey) => {
-        let authString = `${playerId}:${tribeId}:${authKey}`;
+    let makeAuthHeader = (playerId, tribeId, authKey, isSitter) => {
+        let authString = `${playerId}:${tribeId}:${authKey}:${!!isSitter}`;
         return encryption.encryptString(authString, lib.getCurrentUtcTimestamp());
     };
 
@@ -295,7 +295,7 @@ var lib = (() => {
                     "text json": lib.jsonParse
                 },
                 beforeSend: (xhr) => {
-                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
+                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken, lib.isSitter()));
                 }
             });
         },
@@ -317,7 +317,7 @@ var lib = (() => {
                     "text json": lib.jsonParse
                 },
                 beforeSend: (xhr) => {
-                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
+                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken, lib.isSitter()));
                 }
             });
         },
@@ -338,7 +338,7 @@ var lib = (() => {
                     "text json": lib.jsonParse
                 },
                 beforeSend: (xhr) => {
-                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken));
+                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken, lib.isSitter()));
                 }
             });
         },
@@ -406,6 +406,10 @@ var lib = (() => {
             return url;
         },
 
+        isSitter: function () {
+            return !!window.location.href.match(/[?&]t=\w+/);
+        },
+
         absoluteTwUrl: function formatToAbsoluteTwUrl(url) {
             if (!url.startsWith(window.location.origin)) {
                 if (!url.startsWith('/'))
@@ -455,6 +459,14 @@ var lib = (() => {
 
                 callback(playerId, tribeId);
             });
+        },
+
+        getCurrentPlayerId: function () {
+            return authUserId;
+        },
+
+        getCurrentTribeId: function () {
+            return authTribeId;
         },
 
         //  Gets the links to all pages of the current view, ie get links for each pages of reports if there are over 1000, etc
@@ -518,7 +530,7 @@ var lib = (() => {
         },
 
         checkUserHasPremium: function userHasPremium() {
-            return !!$('.menu-column-item a[href*=quickbar]').length;
+            return window.premium;
         },
 
         troopsArrayToObject: function troopsArrayToNamedObject(array) {

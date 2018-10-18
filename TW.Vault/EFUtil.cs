@@ -124,6 +124,10 @@ namespace TW.Vault
             userQuery
                 .Where(q => q.WorldId == null || q.WorldId == worldId);
 
+        public static IQueryable<UserLog> FromWorld(this IQueryable<UserLog> userLogQuery, long worldId) =>
+            userLogQuery
+                .Where(q => q.WorldId == null || q.WorldId == worldId);
+
         public static IQueryable<Transaction> FromWorld(this IQueryable<Transaction> transactionQuery, long worldId) =>
             transactionQuery
                 .Where(q => q.WorldId == worldId);

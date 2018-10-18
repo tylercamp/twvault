@@ -15,6 +15,8 @@ using Newtonsoft.Json;
 using TW.Vault.Model.Native;
 using TW.Vault.Model;
 using TW.Vault.Model.Validation;
+using System.Net;
+using TW.Vault.Model.JSON;
 
 namespace TW.Vault.Controllers
 {
@@ -72,7 +74,7 @@ namespace TW.Vault.Controllers
                 return StatusCode(401);
 
             var uploadHistory = await Profile("Get user upload history", () =>
-                context.UserUploadHistory.Where(h => h.Uid == CurrentUser.Uid).FirstOrDefaultAsync()
+                context.UserUploadHistory.Where(h => h.Uid == CurrentUserId).FirstOrDefaultAsync()
             );
 
             var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
@@ -192,17 +194,29 @@ namespace TW.Vault.Controllers
                 }
 
                 //  Might have CurrentArmy entries but they're just empty/null - not based on any report data
-                if (jsonData.OwnedArmy != null && jsonData.OwnedArmySeenAt == null)
+                if (jsonData.OwnedArmy != null && (jsonData.OwnedArmySeenAt == null || jsonData.OwnedArmy.Count == 0))
+                {
                     jsonData.OwnedArmy = null;
+                    jsonData.OwnedArmySeenAt = null;
+                }
 
-                if (jsonData.StationedArmy != null && jsonData.StationedSeenAt == null)
+                if (jsonData.StationedArmy != null && (jsonData.StationedSeenAt == null || jsonData.StationedArmy.Count == 0))
+                {
                     jsonData.StationedArmy = null;
+                    jsonData.StationedSeenAt = null;
+                }
 
-                if (jsonData.TravelingArmy != null && jsonData.TravelingSeenAt == null)
+                if (jsonData.TravelingArmy != null && (jsonData.TravelingSeenAt == null || jsonData.TravelingArmy.Count == 0))
+                {
                     jsonData.TravelingArmy = null;
+                    jsonData.TravelingSeenAt = null;
+                }
 
-                if (jsonData.RecentlyLostArmy != null && jsonData.RecentlyLostArmySeenAt == null)
+                if (jsonData.RecentlyLostArmy != null && (jsonData.RecentlyLostArmySeenAt == null || jsonData.RecentlyLostArmy.Count == 0))
+                {
                     jsonData.RecentlyLostArmy = null;
+                    jsonData.RecentlyLostArmySeenAt = null;
+                }
 
 
                 var armyCalculator = new RecruitmentCalculator(2, jsonData.LastBuildings);
@@ -356,7 +370,7 @@ namespace TW.Vault.Controllers
                     var villagePlayerId = villageIdsByPlayerId[currentVillage.VillageId];
 
                     if (!Configuration.Security.AllowUploadArmyForNonOwner
-                            && villagePlayerId != CurrentUser.PlayerId)
+                            && villagePlayerId != CurrentPlayerId)
                     {
                         context.InvalidDataRecord.Add(MakeInvalidDataRecord(
                             JsonConvert.SerializeObject(currentArmySetJson),
@@ -380,14 +394,14 @@ namespace TW.Vault.Controllers
                 }
             });
 
-            var currentPlayer = await EFUtil.GetOrCreateCurrentPlayer(context, CurrentUser.PlayerId, CurrentWorldId);
+            var currentPlayer = await EFUtil.GetOrCreateCurrentPlayer(context, CurrentPlayerId, CurrentWorldId);
             currentPlayer.CurrentPossibleNobles = currentArmySetJson.PossibleNobles;
 
             await Profile("Save changes", () => context.SaveChangesAsync());
 
             //  Run upload history update in separate query to prevent creating multiple history
             //  entries
-            var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+            var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
             userUploadHistory.LastUploadedTroopsAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
 
@@ -400,7 +414,7 @@ namespace TW.Vault.Controllers
             if (!await CanReadVillage(villageId))
                 return StatusCode(401);
 
-            var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUser.Uid).FirstOrDefaultAsync();
+            var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUserId).FirstOrDefaultAsync();
             var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
             var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
 
@@ -461,7 +475,7 @@ namespace TW.Vault.Controllers
         [HttpGet("{x}/{y}/{width}/{height}/tags")]
         public async Task<IActionResult> GetMapTags(int x, int y, int width, int height)
         {
-            var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUser.Uid).FirstOrDefaultAsync();
+            var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUserId).FirstOrDefaultAsync();
             var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
             var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
 
@@ -489,28 +503,39 @@ namespace TW.Vault.Controllers
                 where CurrentUserIsAdmin || player.TribeId == null || !vaultTribes.Contains(player.TribeId.Value)
 
                 where village.X >= x && village.Y >= y && village.X <= x + width && village.Y <= y + height
-                select new { CurrentVillage = currentVillage, player.PlayerId }
+                select new { CurrentVillage = currentVillage, player.PlayerId, player.TribeId }
             ).ToListAsync());
 
-            var validVillages = villageData.Where(vd => vd.PlayerId != CurrentUser.PlayerId).ToList();
+            var validVillages = villageData.Where(vd => vd.PlayerId != CurrentPlayerId).ToList();
             var result = new Dictionary<long, JSON.VillageTags>();
+
+            var tribeIds = validVillages.Select(vv => vv.TribeId).Where(t => t != null).Select(t => t.Value).Distinct();
+            var tribeNames = await Profile("Get tribe names", () => (
+                from tribe in context.Ally.FromWorld(CurrentWorldId)
+                where tribeIds.Contains(tribe.TribeId)
+                select new { tribe.Tag, tribe.TribeId }
+            ).ToListAsync());
+
+            var tribeNamesById = tribeIds.ToDictionary(tid => tid, tid => WebUtility.UrlDecode(tribeNames.First(tn => tn.TribeId == tid).Tag));
 
             Profile("Generate JSON tags", () =>
             {
-                foreach (var village in validVillages.Select(vv => vv.CurrentVillage))
+                foreach (var data in validVillages)
                 {
+                    var village = data.CurrentVillage;
                     var tag = new JSON.VillageTags();
+                    tag.TribeName = data.TribeId == null ? null : tribeNamesById[data.TribeId.Value];
 
                     if (village.ArmyStationed?.LastUpdated != null)
                     {
-                        // 1 DV is approx. 1.5m total defense power
+                        // 1 DV is approx. 1.7m total defense power
                         var stationed = village.ArmyStationed;
                         var defensePower = BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(stationed));
-                        tag.IsStacked = defensePower > 2e6;
+                        tag.IsStacked = defensePower > 1.7e6;
                         if (tag.IsStacked)
                         {
                             tag.StackSeenAt = stationed.LastUpdated;
-                            tag.StackDVs = defensePower / (float)1.5e6;
+                            tag.StackDVs = defensePower / (float)1.7e6;
                         }
                     }
 
@@ -520,10 +545,30 @@ namespace TW.Vault.Controllers
                         village.ArmyStationed
                     }.Where(a => a.LastUpdated != null && !ArmyConvert.ArmyToJson(a).IsEmpty()).ToList();
 
+                    bool IsNuke(Scaffold.CurrentArmy army)
+                    {
+                        var jsonArmy = ArmyConvert.ArmyToJson(army);
+                        if (BattleSimulator.TotalAttackPower(jsonArmy) < 3.5e5)
+                            return false;
+
+                        if (ArmyStats.CalculateTotalPopulation(jsonArmy, TroopType.Axe, TroopType.Light, TroopType.Marcher) < 4000)
+                            return false;
+
+                        //  Check HC nuke
+                        if (army.Light < 100)
+                        {
+                            return ArmyStats.CalculateTotalPopulation(jsonArmy, TroopType.Axe, TroopType.Heavy, TroopType.Marcher) > 15000 && army.Axe > army.Heavy;
+                        }
+                        else
+                        {
+                            //  13k pop, ie 5k axe, 2k lc
+                            return ArmyStats.CalculateTotalPopulation(jsonArmy, TroopType.Axe, TroopType.Light, TroopType.Marcher) > 13000;
+                        }
+                    }
+
                     var nukeArmy = (
                             from army in validArmies
-                            where BattleSimulator.TotalAttackPower(ArmyConvert.ArmyToJson(army)) > 4e5
-                            where ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(army.OfType(JSON.UnitBuild.Offensive))) > 10000
+                            where IsNuke(army)
                             orderby army.LastUpdated.Value descending
                             select army
                         ).FirstOrDefault();
@@ -588,7 +633,7 @@ namespace TW.Vault.Controllers
                         canReadFromTribe = !registeredTribeIds.Contains(owningPlayer.TribeId.Value);
                 }
 
-                if (!owningPlayer.TribeId.HasValue || canReadFromTribe || CurrentUserIsAdmin)
+                if (owningPlayer.PlayerId == CurrentPlayerId || !owningPlayer.TribeId.HasValue || canReadFromTribe || CurrentUserIsAdmin)
                 {
                     //  Allowed to read if:
                     //

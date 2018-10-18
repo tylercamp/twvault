@@ -116,7 +116,7 @@ namespace TW.Vault.Controllers
         [HttpPost("finished-report-uploads")]
         public async Task<IActionResult> SetUserFinishedReportUploads()
         {
-            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
             history.LastUploadedReportsAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
             return Ok();
@@ -282,7 +282,7 @@ namespace TW.Vault.Controllers
 
                 //  Run upload history update in separate query to prevent creating multiple history
                 //  entries
-                var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+                var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
                 userUploadHistory.LastUploadedReportsAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
 

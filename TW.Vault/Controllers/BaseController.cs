@@ -24,6 +24,8 @@ namespace TW.Vault.Controllers
         {
             this.context = context;
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+
+            
         }
 
 
@@ -66,26 +68,38 @@ namespace TW.Vault.Controllers
 
         //  Security helpers
 
-        //  "User" assigned in RequireAuthAttribute, when the request is first made
-        protected User CurrentUser => HttpContext.Items["User"] as User;
+        protected int CurrentUserId => (int)HttpContext.Items["UserId"];
+        protected long CurrentPlayerId => (long)HttpContext.Items["PlayerId"];
+        protected short CurrentUserPermissions => (short)HttpContext.Items["UserPermissions"];
+        protected bool IsSitter => (bool)HttpContext.Items["UserIsSitter"];
+        protected long CurrentTribeId => (long)HttpContext.Items["TribeId"];
+        protected Guid CurrentAuthToken => (Guid)HttpContext.Items["AuthToken"];
+
+        /// <summary>
+        /// Warning - Try not to use this directly, as it won't include permissions based on whether the
+        /// current user is being sat.
+        /// </summary>
+        protected User CurrentUser => (User)HttpContext.Items["User"];
+
+
 
         protected IPAddress UserIP => Request.HttpContext.Connection.RemoteIpAddress;
 
-        protected bool CurrentUserIsAdmin => CurrentUser.PermissionsLevel >= (short)PermissionLevel.Admin;
-        protected bool CurrentUserIsSystem => CurrentUser.PermissionsLevel >= (short)PermissionLevel.System;
+        protected bool CurrentUserIsAdmin => CurrentUserPermissions >= (short)PermissionLevel.Admin;
+        protected bool CurrentUserIsSystem => CurrentUserPermissions >= (short)PermissionLevel.System;
 
-        protected Transaction BuildTransaction(Transaction previousTransaction = null) => new Transaction
+        protected Transaction BuildTransaction(long? previousTransactionId = null) => new Transaction
         {
             Ip = HttpContext.Connection.RemoteIpAddress,
             OccurredAt = DateTime.UtcNow,
-            Uid = CurrentUser.Uid,
+            Uid = CurrentUserId,
             WorldId = CurrentWorld.Id,
-            PreviousTxId = previousTransaction?.TxId
+            PreviousTxId = previousTransactionId
         };
 
         protected InvalidDataRecord MakeInvalidDataRecord(String data, String reason) => new InvalidDataRecord
         {
-            UserId = CurrentUser.Uid,
+            UserId = CurrentUserId,
             DataString = data,
             Reason = reason,
             Endpoint = $"{Request.Method}:{Request.Path.Value}"
@@ -95,7 +109,7 @@ namespace TW.Vault.Controllers
         {
             Ip = UserIP,
             OccurredAt = DateTime.UtcNow,
-            PlayerId = CurrentUser.PlayerId,
+            PlayerId = CurrentPlayerId,
             RequestedEndpoint = Request.Path.ToString(),
             TribeId = CurrentTribeId,
             WorldId = CurrentWorldId,
@@ -141,8 +155,6 @@ namespace TW.Vault.Controllers
         }
 
         protected WorldSettings CurrentWorldSettings => CurrentWorld.WorldSettings;
-
-        protected long CurrentTribeId => (long)HttpContext.Items["TribeId"];
         
         protected DateTime CurrentServerTime => DateTime.UtcNow + CurrentWorldSettings.UtcOffset;
 

@@ -1,4 +1,4 @@
-﻿function parseAllPages($doc) {
+﻿function displayMainVaultUI($doc) {
 
     //# REQUIRE ui/vault/ui-lib.js
 
@@ -13,6 +13,8 @@
     let smsTab = makeSmsTab();
     let adminTab = makeAdminTab();
     let termsTab = makeTermsTab();
+
+    let onClosedListeners = [];
 
     let tabs = [
         uploadsTab,
@@ -88,8 +90,16 @@
         if (isUploading && !confirm("Current uploads will continue running while this popup is closed.")) {
             return;
         }
-        $uiContainer.remove()
+        $uiContainer.remove();
+
+        onClosedListeners.forEach((c) => c());
     });
 
     uilib.init($uiContainer);
+
+    return {
+        onClosed: function addOnClosedListener(callback) {
+            onClosedListeners.push(callback);
+        }
+    };
 }

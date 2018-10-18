@@ -106,7 +106,7 @@ namespace TW.Vault.Controllers
         [HttpPost("finished-command-uploads")]
         public async Task<IActionResult> SetUserFinishedCommandUploads()
         {
-            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
             history.LastUploadedCommandsAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
             return Ok();
@@ -115,7 +115,7 @@ namespace TW.Vault.Controllers
         [HttpPost("finished-incoming-uploads")]
         public async Task<IActionResult> SetUserFinishedIncomingUploads()
         {
-            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
             history.LastUploadedIncomingsAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
             return Ok();
@@ -259,7 +259,7 @@ namespace TW.Vault.Controllers
 
                 //  Run upload history update in separate query to prevent creating multiple history
                 //  entries
-                var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUser.Uid);
+                var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
                 if (jsonCommands.IsOwnCommands.Value)
                     userUploadHistory.LastUploadedCommandsAt = DateTime.UtcNow;
                 else
@@ -294,7 +294,7 @@ namespace TW.Vault.Controllers
                 return NotFound();
 
             var uploadHistory = await Profile("Get user upload history", () =>
-                context.UserUploadHistory.Where(h => h.Uid == CurrentUser.Uid).FirstOrDefaultAsync()
+                context.UserUploadHistory.Where(h => h.Uid == CurrentUserId).FirstOrDefaultAsync()
             );
 
             var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromTaggingRestrictions(uploadHistory);
@@ -431,7 +431,7 @@ namespace TW.Vault.Controllers
                         if (tag.OffensivePopulation < 0)
                             tag.OffensivePopulation = 0;
 
-                        if (tag.OffensivePopulation < 1000 && isConfidentArmy)
+                        if ((tag.OffensivePopulation > 100 || returningPop > 5000) && tag.OffensivePopulation < 5000 && isConfidentArmy)
                             tag.DefiniteFake = true;
 
                         tag.NumCats = effectiveArmy.Catapult;
@@ -468,7 +468,7 @@ namespace TW.Vault.Controllers
 
             var availableVillages = await Profile("Get available villages", () => (
                 from currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId).Include(cv => cv.Village).Include(cv => cv.ArmyAtHome)
-                where currentVillage.Village.PlayerId == CurrentUser.PlayerId
+                where currentVillage.Village.PlayerId == CurrentPlayerId
                 select currentVillage
             ).ToListAsync());
 

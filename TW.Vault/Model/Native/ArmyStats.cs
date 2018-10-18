@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TW.Vault.Model.Convert;
+using TW.Vault.Model.JSON;
 
 namespace TW.Vault.Model.Native
 {
@@ -194,10 +195,10 @@ namespace TW.Vault.Model.Native
             { 20, 20 + 50*20 },
         };
 
-        public static int CalculateTotalPopulation(JSON.Army armyCounts)
+        public static int CalculateTotalPopulation(JSON.Army armyCounts, params TroopType[] troopTypes)
         {
             int totalPopulation = 0;
-            foreach (var kvp in armyCounts)
+            foreach (var kvp in armyCounts.Where(kvp => troopTypes.Length == 0 || troopTypes.Contains(kvp.Key.ToTroopType())))
             {
                 totalPopulation += kvp.Value * Population[TroopTypeConvert.StringToTroopType(kvp.Key).Value];
             }

@@ -7,25 +7,41 @@ namespace TW.Vault.Model.JSON
 {
     public class PlayerSummary
     {
+        /* General info */
         public long PlayerId { get; set; }
         public String PlayerName { get; set; }
         public String TribeName { get; set; }
+
+        /* Nobles */
         public int? MaxPossibleNobles { get; set; }
+        public int NumNobles { get; set; }
+
+        /* Upload history */
         public TimeSpan UploadAge { get; set; }
         public DateTime UploadedAt { get; set; }
         public DateTime UploadedIncomingsAt { get; set; }
         public DateTime UploadedCommandsAt { get; set; }
         public DateTime UploadedReportsAt { get; set; }
 
-        public List<Army> ArmiesOwned { get; set; }
-        public List<Army> ArmiesTraveling { get; set; }
-        public Army ArmyTraveling { get; set; }
-        public Army ArmyAtHome { get; set; }
-        public Army ArmySupportingOthers { get; set; }
-        public Army ArmySupportingSelf { get; set; }
+        /* Off/Def village estimates */
+        public int NumOffensiveVillages { get; set; }
+        public int NumDefensiveVillages { get; set; }
 
+        /* Off stats */
+        public float NukesOwned { get; set; }
+        public float NukesTraveling { get; set; }
+
+        /* Def stats */
         public Dictionary<String, int> SupportPopulationByTargetTribe { get; set; }
 
+        public float DVsAtHome { get; set; }
+        public float DVsOwned { get; set; }
+        public float DVsSupportingSelf { get; set; }
+        public float DVsSupportingOthers { get; set; }
+        public float DVsTraveling { get; set; }
+
+
+        /* Command stats */
         public int NumAttackCommands { get; set; }
         public int NumSupportCommands { get; set; }
         public int NumIncomings { get; set; }

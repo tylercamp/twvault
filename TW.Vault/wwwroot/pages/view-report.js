@@ -1,5 +1,8 @@
 ﻿
 function parseReportPage($doc, href_, showNotice_, onError_) {
+
+    //  Thresholds to prevent uploads of reports after being faked
+    const minAttackerPopAsDefender = 100;
     
     lib.ensurePage(lib.pageTypes.VIEW_REPORT);
     $doc = $doc || $(document);
@@ -93,11 +96,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     reportInfo.defendingArmy = troopListToDictionary(reportInfo.defendingArmy);
     reportInfo.defendingArmyLosses = troopListToDictionary(reportInfo.defendingArmyLosses);
 
-    // TODO reportInfo.travelingTroops = troopListToDictionary(reportInfo.travelingTroops);
-
     reportInfo.buildingLevels = buildingsListToDictionary(reportInfo.buildingLevels);
-
-
 
     //  ram/cat damage
     if (reportInfo.buildingLevels == null) {
@@ -116,12 +115,39 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     
     console.log('Made reportInfo: ', reportInfo);
 
+    //  Ignore incomings that were fakes
+    if (reportInfo.defendingPlayerId == lib.getCurrentPlayerId()) {
+        let attackerPop = lib.twcalc.totalPopulation(reportInfo.attackingArmy);
+        if (attackerPop < minAttackerPopAsDefender) {
+            markReportAsSaved();
+            if (showNotice_)
+                alert("There's no useful info here!");
+            console.warn('Skipping incoming that was a fake');
+            return;
+        }
+    }
+
+    //  Ignore attacks on barbarian villages without any troops
+    if (reportInfo.defendingPlayerId == null) {
+        let defenderPop = lib.twcalc.totalPopulation(reportInfo.defendingArmy);
+        if (defenderPop < 100) {
+            markReportAsSaved();
+            if (showNotice_)
+                alert("There's no useful info here!");
+            console.warn('Skipping report for empty barb');
+            return;
+        }
+    }
+
+    function markReportAsSaved() {
+        let reportsHistory = lib.getLocalStorage('reports-history', []);
+        reportsHistory.push(reportInfo.reportId);
+        lib.setLocalStorage('reports-history', reportsHistory);
+    }
+
     lib.postApi('report', reportInfo)
         .done(() => {
-            var reportsHistory = lib.getLocalStorage('reports-history', []);
-            reportsHistory.push(reportInfo.reportId);
-            lib.setLocalStorage('reports-history', reportsHistory);
-
+            markReportAsSaved();
             if (showNotice_)
                 alert('Uploaded the report!');
         })

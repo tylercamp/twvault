@@ -15,14 +15,49 @@
     let settings = lib.getLocalStorage('tag-settings', {
         tagFormat: defaultFormat,
         ignoreMissingData: true,
-        autoLabelFakes: true,
+        labelGuessedFakes: true,
         maxFakePop: 5
     });
+
+    if (typeof settings.labelGuessedFakes == 'undefined') {
+        settings.labelGuessedFakes = false;
+    }
 
     let $incomingRows = $doc.find('#incomings_table tr:not(:first-of-type):not(:last-of-type)');
     foreachCommand((cmd) => {
         cmd.wasLabeled = !!originalLabels[cmd.id];
         incomings.push(cmd);
+    });
+
+    //  This is supposed to update the row elements for the commands that we're tagging in
+    //  case they change after an attack lands, but apparently adding this observer stops
+    //  that updating completely? Eh, not intentional but it works
+    let mutationObserver = new MutationObserver((mutations) => {
+        var incomingsUpdated = false;
+        mutations.forEach((mut) => {
+            mut.addedNodes.forEach((n) => {
+                if ($(n).prop('id') == 'paged_view_content') {
+                    incomingsUpdated = true;
+                }
+            });
+        });
+
+        if (incomingsUpdated) {
+            console.log('Incomings updated, refreshing...');
+            let $newRows = $('tr:not(:first-of-type):not(:last-of-type)');
+
+            foreachCommand((cmd) => {
+                let inc = incomings.find((i) => i.id == cmd.id);
+                inc.$row = cmd.$row;
+            }, $newRows);
+
+            $incomingRows = $newRows;
+        }
+    });
+
+    mutationObserver.observe(document, {
+        childList: true,
+        subtree: true
     });
 
     let incomingTags = null;
@@ -33,14 +68,17 @@
         makeTaggingUI();
     });
 
+    //  Store the original labels of new commands so we can restore them later
     foreachCommand((cmd) => {
-        if (!originalLabels[cmd.id])
+        if (!originalLabels[cmd.id]) {
             originalLabels[cmd.id] = {
                 label: cmd.label.trim(),
                 arrivesAt: cmd.arrivesAt
             };
+        }
     });
 
+    //  Remove old labels for commands that have landed (so we don't blow up localStorage size)
     (() => {
         let serverTime = lib.getServerDateTime();
         let oldIncomingIds = [];
@@ -76,7 +114,7 @@
                     }
 
                     alert(alertMessage);
-                    parseAllPages();
+                    displayMainVaultUI();
                 } else if (xhr.status != 401) {
                     alert("An error occurred...");
                 }
@@ -217,11 +255,7 @@
 
         $container.find('#v-upload-incomings').click((e) => {
             e.originalEvent.preventDefault();
-            parseAllPages();
-            //  Annoying to need to hook into specific UI element from main UI but whatever
-            $('.vault-close-btn').click(() => {
-                getVaultTags();
-            });
+            displayMainVaultUI().onClosed(getVaultTags);
         });
 
         let oldLabels = null;
@@ -412,8 +446,8 @@
         return selectedIds;
     }
 
-    function foreachCommand(callback) {
-        $incomingRows.each((i, row) => {
+    function foreachCommand(callback, $commandRows_) {
+        ($commandRows_ || $incomingRows).each((i, row) => {
             let $row = $(row);
             let $link = $row.find('a[href*=info_command][href*=id]');
             let label = $link.text().trim();

@@ -12,7 +12,7 @@ namespace TW.Vault.Model.Convert
         {
             var result = new JSON.User();
             result.PlayerId = user.PlayerId;
-            result.Priveleges = user.PermissionsLevel;
+            result.IsAdmin = user.PermissionsLevel >= (short)Security.PermissionLevel.Admin;
             result.PlayerName = playerName;
             result.TribeName = tribeName;
 

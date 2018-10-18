@@ -90,6 +90,7 @@
                     requestManager.setFinishedHandler(parseAndFinish);
                     requestManager.start();
                 } else {
+                    $supportPages.push($supportDoc);
                     parseAndFinish();
                 }
 

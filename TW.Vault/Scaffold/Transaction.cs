@@ -32,5 +32,8 @@ namespace TW.Vault.Scaffold
         public ICollection<NotificationRequest> NotificationRequest { get; set; }
         public ICollection<NotificationUserSettings> NotificationUserSettings { get; set; }
         public ICollection<Report> Report { get; set; }
+        public ICollection<CurrentVillageSupport> CurrentVillageSupport { get; set; }
+        public ICollection<User> User { get; set; }
+        public ICollection<UserLog> UserLog { get; set; }
     }
 }

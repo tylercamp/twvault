@@ -493,6 +493,7 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.TargetVillageId).HasColumnName("target_village_id");
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
+                entity.Property(e => e.TxId).HasColumnName("tx_id");
 
                 entity.HasOne(d => d.SourceVillage)
                     .WithMany(p => p.CurrentVillageSupportSourceVillage)
@@ -517,6 +518,12 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey(d => d.WorldId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_world_id");
+
+                entity.HasOne(d => d.Tx)
+                    .WithMany(p => p.CurrentVillageSupport)
+                    .HasForeignKey(d => d.TxId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("fk_tx_id");
             });
 
             modelBuilder.Entity<FailedAuthorizationRecord>(entity =>
@@ -1012,10 +1019,17 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.IsReadOnly).HasColumnName("is_read_only");
 
+                entity.Property(e => e.TxId).HasColumnName("tx_id");
+
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.User)
                     .HasForeignKey(d => d.WorldId)
                     .HasConstraintName("fk_world_id");
+
+                entity.HasOne(d => d.Tx)
+                    .WithMany(p => p.User)
+                    .HasForeignKey(d => d.TxId)
+                    .HasConstraintName("fk_tx_id");
             });
 
             modelBuilder.Entity<UserLog>(entity =>
@@ -1053,10 +1067,17 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
+                entity.Property(e => e.TxId).HasColumnName("tx_id");
+
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.UserLog)
                     .HasForeignKey(d => d.WorldId)
                     .HasConstraintName("fk_world_id");
+
+                entity.HasOne(d => d.Tx)
+                    .WithMany(p => p.UserLog)
+                    .HasForeignKey(d => d.TxId)
+                    .HasConstraintName("fk_tx_id");
             });
 
             modelBuilder.Entity<UserUploadHistory>(entity =>

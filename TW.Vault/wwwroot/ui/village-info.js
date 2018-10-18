@@ -7,6 +7,7 @@
             <div id="vault-commands-backtime-bbcode" style="padding-bottom:10px;display:none">
                 <textarea style="width:100%; box-sizing:border-box;min-height:100px"></textarea>
             </div>
+            <button id="vault-show-main">Open Vault</button>
             <table class="vis" width="100%">
                 <tr>
                     <th width="52%">Vault - commands from here</th>
@@ -19,42 +20,69 @@
 
     $('#content_value > table > tbody > tr > td:nth-of-type(2) > .vis').after($container);
 
+    $container.find('#vault-show-main').click(() => {
+        displayMainVaultUI().onClosed(loadCommandData);
+    });
+
     let villageCommandData = null;
     let commandsById = null;
+    let showedNeedsUploadMessage = false;
 
-    /*
-     * 
-     * window.Timing.tickHandlers.timers._timers.push({
-     *  element: $(targetElement),
-     *  end: endServerTimeSeconds
-     * })
-     * 
-     */
+    loadCommandData();
 
-    let currentVillageId = location.href.match(/id=(\d+)/)[1];
-    lib.getApi(`village/${currentVillageId}/commands`)
-        .done((data) => {
-            if (typeof data == 'string')
-                data = lib.jsonParse(data);
+    function loadCommandData() {
+        let currentVillageId = location.href.match(/id=(\d+)/)[1];
+        lib.getApi(`village/${currentVillageId}/commands`)
+            .done((data) => {
+                if (typeof data == 'string')
+                    data = lib.jsonParse(data);
 
-            console.log('Got command data: ', data);
+                console.log('Got command data: ', data);
 
-            villageCommandData = data;
-            commandsById = lib.arrayToObject(data.commandsFromVillage, (c) => c.commandId, (c) => c);
-            makeCommandsUI();
-            UI.ToolTip('.vault-command-icons', {
-                bodyHandler: handleIconHover
+                villageCommandData = data;
+                commandsById = lib.arrayToObject(data.commandsFromVillage || [], (c) => c.commandId, (c) => c);
+                makeCommandsUI();
+                UI.ToolTip('.vault-command-icons', {
+                    bodyHandler: handleIconHover
+                });
+                UI.ToolTip('.vault-backtime', {
+                    bodyHandler: () => '<b>Make BB-code for back-timing</b>'
+                });
+            })
+            .error((xhr) => {
+                if (xhr.status == 423) {
+                    if (showedNeedsUploadMessage) {
+                        return;
+                    }
+
+                    let reasons = null;
+                    try {
+                        reasons = JSON.parse(xhr.responseText);
+                    } catch (_) { }
+                    let alertMessage = "You haven't uploaded data in a while, you can't use the backtiming script until you do. Upload your data then refresh the page and run this script again.";
+                    if (reasons) {
+                        alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
+                    }
+                    alert(alertMessage);
+                    displayMainVaultUI().onClosed(loadCommandData);
+                    showedNeedsUploadMessage = true;
+                } else {
+                    alert('An error occurred...');
+                }
             });
-            UI.ToolTip('.vault-backtime', {
-                bodyHandler: () => '<b>Make BB-code for back-timing</b>'
-            });
-        })
-        .error(() => {
-            alert('An error occurred...');
-        });
+    }
 
 
     function makeCommandsUI() {
+        $container.find('table tr:not(:first-of-type)').remove();
+
+        if (!villageCommandData || !villageCommandData.commandsFromVillage || !villageCommandData.commandsFromVillage.length) {
+            $container.find('table').append(`
+                <tr><td colspan="3" style="text-align:center">No commands available</td></tr>
+            `.trim());
+            return;
+        }
+
         villageCommandData.commandsFromVillage.forEach((cmd) => {
             let targetTime = cmd.isReturning ? cmd.returnsAt : cmd.landsAt;
 

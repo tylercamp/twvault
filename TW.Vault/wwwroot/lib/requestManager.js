@@ -54,14 +54,14 @@ RequestManager.prototype.start = function () {
 
                 self._requestTimes.push(new Date());
 
-                console.log('Getting ', request);
+                //console.log('Getting ', request);
                 numResponding++;
 
                 $.ajax(request)
                     .done((data, result) => {
                         self.stats.done++;
                         var numCompleted = self.stats.done + "/" + self.stats.total;
-                        console.log(numCompleted);
+                        //console.log(numCompleted);
                         numResponding--;
 
                         var err;

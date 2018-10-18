@@ -24,12 +24,20 @@ namespace TW.Vault.Security
                 var playerIdString = tokenParts.Length > 0 ? tokenParts[0] : null;
                 var tribeIdString = tokenParts.Length > 1 ? tokenParts[1] : null;
                 var authTokenString = tokenParts.Length > 2 ? tokenParts[2] : null;
+                var sitterString = tokenParts.Length > 3 ? tokenParts[3] : null;
 
                 int playerId, tribeId;
                 if (int.TryParse(playerIdString, out playerId))
                     result.PlayerId = playerId;
                 if (int.TryParse(tribeIdString, out tribeId))
                     result.TribeId = tribeId;
+
+                bool isSitter;
+                if (bool.TryParse(sitterString, out isSitter))
+                    result.IsSitter = isSitter;
+                else
+                    result.IsSitter = true;
+
 
                 try
                 {

@@ -25,8 +25,10 @@ namespace TW.Vault.Scaffold
         public Guid? AdminAuthToken { get; set; }
         public long? AdminPlayerId { get; set; }
         public bool IsReadOnly { get; set; }
+        public long? TxId { get; set; }
 
         public World World { get; set; }
+        public Transaction Tx { get; set; }
         public NotificationUserSettings NotificationUserSettings { get; set; }
         public ICollection<InvalidDataRecord> InvalidDataRecord { get; set; }
         public ICollection<NotificationPhoneNumber> NotificationPhoneNumber { get; set; }

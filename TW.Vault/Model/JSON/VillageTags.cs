@@ -19,5 +19,7 @@ namespace TW.Vault.Model.JSON
 
         public bool HasDefense { get; set; }
         public DateTime? DefenseSeenAt { get; set; }
+
+        public String TribeName { get; set; }
     }
 }

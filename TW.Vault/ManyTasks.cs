@@ -60,5 +60,11 @@ namespace TW.Vault
 
         public static Task<Tuple<List<T1>, List<T2>, List<T3>>> RunToList<T1, T2, T3>(IQueryable<T1> q1, IQueryable<T2> q2, IQueryable<T3> q3) =>
             Run(q1.ToListAsync(), q2.ToListAsync(), q3.ToListAsync());
+
+        public static Task<Tuple<List<T1>, List<T2>, List<T3>, List<T4>>> RunToList<T1, T2, T3, T4>(IQueryable<T1> q1, IQueryable<T2> q2, IQueryable<T3> q3, IQueryable<T4> q4) =>
+            Run(q1.ToListAsync(), q2.ToListAsync(), q3.ToListAsync(), q4.ToListAsync());
+
+        public static Task<Tuple<List<T1>, List<T2>, List<T3>, List<T4>, List<T5>>> RunToList<T1, T2, T3, T4, T5>(IQueryable<T1> q1, IQueryable<T2> q2, IQueryable<T3> q3, IQueryable<T4> q4, IQueryable<T5> q5) =>
+            Run(q1.ToListAsync(), q2.ToListAsync(), q3.ToListAsync(), q4.ToListAsync(), q5.ToListAsync());
     }
 }

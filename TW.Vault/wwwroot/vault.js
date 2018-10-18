@@ -100,7 +100,7 @@ These terms can be viewed again after running the script. To cancel your agreeme
                 enhanceVillageInfoPage();
             })
             .onPageNotHandled(() => {
-                parseAllPages();
+                displayMainVaultUI();
             })
         ;
     });

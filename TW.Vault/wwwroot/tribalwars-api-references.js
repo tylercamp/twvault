@@ -9,3 +9,8 @@ UI.ToolTip(selector, {
     }
 })
 
+//  Adding timers that sync with TW server time
+window.Timing.tickHandlers.timers._timers.push({
+  element: $(targetElement),
+  end: endServerTimeSeconds
+})

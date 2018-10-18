@@ -156,8 +156,13 @@ namespace TW.Vault.Security
                 return;
             }
 
-
+            context.HttpContext.Items["UserId"] = discoveredUser.Uid;
+            context.HttpContext.Items["UserIsSitter"] = authHeaders.IsSitter;
+            context.HttpContext.Items["UserPermissions"] = authHeaders.IsSitter ? (short)PermissionLevel.Default : discoveredUser.PermissionsLevel;
+            context.HttpContext.Items["PlayerId"] = authHeaders.PlayerId.Value;
             context.HttpContext.Items["TribeId"] = authHeaders.TribeId.Value;
+            context.HttpContext.Items["AuthToken"] = authHeaders.AuthToken.Value;
+
             context.HttpContext.Items["User"] = discoveredUser;
         }
 

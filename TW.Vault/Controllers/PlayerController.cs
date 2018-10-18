@@ -67,7 +67,7 @@ namespace TW.Vault.Controllers
             var ownVillageIds = await Profile("Get own village IDs", () => (
                     from player in context.Player.FromWorld(CurrentWorldId)
                     join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
-                    where player.PlayerId == CurrentUser.PlayerId
+                    where player.PlayerId == CurrentPlayerId
                     select village.VillageId
                 ).ToListAsync()
             );
@@ -103,6 +103,9 @@ namespace TW.Vault.Controllers
 
             existingOutwardSupport = existingOutwardSupport.Except(removedSupport.Concat(duplicateSupport)).ToList();
 
+            var tx = BuildTransaction(existingOutwardSupport.FirstOrDefault(s => s.TxId != null)?.TxId);
+            context.Add(tx);
+
             Profile("Make model data", () =>
             {
                 foreach (var jsonData in jsonSupportData.SelectMany(jsd => jsd.SupportedVillages.Select(v => new { SourceId = jsd.SourceVillageId, Support = v })))
@@ -118,6 +121,7 @@ namespace TW.Vault.Controllers
                     var scaffoldRecord = existingOutwardSupport.SingleOrDefault(e => e.SourceVillageId == sourceVillageId && e.TargetVillageId == support.Id);
                     scaffoldRecord = OutwardSupportConvert.ToModel(sourceVillageId, CurrentWorldId, support, scaffoldRecord, context);
                     scaffoldRecord.WorldId = CurrentWorldId;
+                    scaffoldRecord.Tx = tx;
                 }
             });
 
