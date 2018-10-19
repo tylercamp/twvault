@@ -15,10 +15,7 @@ namespace TW.Vault.Model.Validation
 
             int totalPop = 0;
             foreach (var kvp in army)
-            {
-                var asEnum = ArmyConvert.StringToType(kvp.Key);
-                totalPop += Native.ArmyStats.Population[asEnum] * kvp.Value;
-            }
+                totalPop += Native.ArmyStats.Population[kvp.Key] * kvp.Value;
 
             return totalPop < populationCap;
         }

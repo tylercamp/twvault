@@ -59,11 +59,11 @@ namespace TW.Vault.Features.Planning
 
         IEnumerable<Army> ArmyPermutations(Army army)
         {
-            var possibleSpeeds = army.Where(kvp => kvp.Value > 0).Select(kvp => ArmyStats.TravelSpeed[kvp.Key.ToTroopType()]).Distinct();
+            var possibleSpeeds = army.Where(kvp => kvp.Value > 0).Select(kvp => ArmyStats.TravelSpeed[kvp.Key]).Distinct();
             foreach (var speed in possibleSpeeds)
             {
                 var permutation = new Army();
-                foreach (var unit in army.Where(kvp => ArmyStats.TravelSpeed[kvp.Key.ToTroopType()] <= speed))
+                foreach (var unit in army.Where(kvp => ArmyStats.TravelSpeed[kvp.Key] <= speed))
                     permutation.Add(unit.Key, unit.Value);
 
                 yield return permutation;

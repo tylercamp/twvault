@@ -7,7 +7,7 @@ namespace TW.Vault.Model.Convert
 {
     public static class ConvertUtil
     {
-        public static T? GetOrNull<T>(IDictionary<String, T> dictionary, String key) where T : struct
+        public static T? GetOrNull<K, T>(IDictionary<K, T> dictionary, K key) where T : struct
         {
             if (dictionary.ContainsKey(key))
                 return new T?(dictionary[key]);
@@ -15,7 +15,7 @@ namespace TW.Vault.Model.Convert
                 return null;
         }
 
-        public static void AddIfNotNull<T>(IDictionary<String, T> dictionary, String key, T? value) where T : struct
+        public static void AddIfNotNull<K, T>(IDictionary<K, T> dictionary, K key, T? value) where T : struct
         {
             if (value.HasValue)
                 dictionary.Add(key, value.Value);

@@ -41,16 +41,16 @@ namespace TW.Testing
         {
             var attackingArmy = new Army
             {
-                { "axe", 7000 },
-                { "light", 3000 },
-                { "ram", 220 },
-                { "catapult", 75 }
+                { TroopType.Axe, 7000 },
+                { TroopType.Light, 3000 },
+                { TroopType.Ram, 220 },
+                { TroopType.Catapult, 75 }
             };
 
             var defendingArmy = new Army
             {
-                { "spear", 10000 },
-                { "sword", 10000 }
+                { TroopType.Spear, 10000 },
+                { TroopType.Sword, 10000 }
             };
 
             int testWallLevel = 15;

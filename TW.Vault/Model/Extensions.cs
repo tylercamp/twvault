@@ -61,11 +61,10 @@ namespace TW.Vault.Model
         public static JSON.Army OfType(this JSON.Army army, JSON.UnitBuild build)
         {
             var result = new JSON.Army();
-            foreach (var typeString in army.Keys)
+            foreach (var type in army.Keys)
             {
-                var type = typeString.ToTroopType();
                 if (Native.ArmyStats.UnitBuild[type] == build)
-                    result.Add(typeString, army[typeString]);
+                    result.Add(type, army[type]);
             }
             return result;
         }

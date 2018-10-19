@@ -232,13 +232,13 @@ namespace TW.Vault.Controllers
                                     await context.SaveChangesAsync();
                                     madeCommand = true;
                                 }
-                                catch (Exception e) { }
+                                catch (Exception) { }
                             }
                         }
 
                         JSON.TroopType? slowestType = null;
                         float slowestSpeed = -1;
-                        foreach (var troopType in jsonReport.AttackingArmy.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key.ToTroopType()))
+                        foreach (var troopType in jsonReport.AttackingArmy.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key))
                         {
                             var travelSpeed = Native.ArmyStats.TravelSpeed[troopType];
                             if (slowestType == null)

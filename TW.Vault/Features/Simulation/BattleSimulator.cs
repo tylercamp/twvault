@@ -19,22 +19,22 @@ namespace TW.Vault.Features.Simulation
     {
         private static Army DefaultNukeArmy { get; } = new Army
         {
-            { TroopType.Axe.ToTroopString(),        6900 },
-            { TroopType.Light.ToTroopString(),      3000 },
-            { TroopType.Ram.ToTroopString(),        220 },
-            { TroopType.Catapult.ToTroopString(),   75 }
+            { TroopType.Axe,        6900 },
+            { TroopType.Light,      3000 },
+            { TroopType.Ram,        220 },
+            { TroopType.Catapult,   75 }
         };
 
         private static bool IsArmyEmpty(Army army) => army.Count == 0 || army.Values.All(c => c == 0);
 
-        public static int TotalAttackPower(Army attackingArmy) => attackingArmy.Count == 0 ? 0 : attackingArmy.Sum(kvp => kvp.Value * ArmyStats.AttackPower[TroopTypeConvert.StringToTroopType(kvp.Key).Value]);
+        public static int TotalAttackPower(Army attackingArmy) => attackingArmy.Count == 0 ? 0 : attackingArmy.Sum(kvp => kvp.Value * ArmyStats.AttackPower[kvp.Key]);
         public static int TotalAttackPower(Army attackingArmy, UnitType unitType)
         {
-            var troopsOfType = attackingArmy.Where(kvp => ArmyStats.UnitType[TroopTypeConvert.StringToTroopType(kvp.Key).Value] == unitType).ToList();
+            var troopsOfType = attackingArmy.Where(kvp => ArmyStats.UnitType[kvp.Key] == unitType).ToList();
             if (troopsOfType.Count == 0)
                 return 0;
 
-            return troopsOfType.Sum(kvp => ArmyStats.AttackPower[TroopTypeConvert.StringToTroopType(kvp.Key).Value] * kvp.Value);
+            return troopsOfType.Sum(kvp => ArmyStats.AttackPower[kvp.Key] * kvp.Value);
         }
 
         public static UnitPower AttackPower(Army attackingArmy)
@@ -42,18 +42,17 @@ namespace TW.Vault.Features.Simulation
             UnitPower result = new UnitPower();
             foreach (var kvp in attackingArmy)
             {
-                TroopType troopType = TroopTypeConvert.StringToTroopType(kvp.Key).Value;
-                switch (ArmyStats.UnitType[troopType])
+                switch (ArmyStats.UnitType[kvp.Key])
                 {
-                    case UnitType.Infantry: result.Infantry += ArmyStats.AttackPower[troopType] * kvp.Value; break;
-                    case UnitType.Cavalry: result.Cavalry += ArmyStats.AttackPower[troopType] * kvp.Value; break;
-                    case UnitType.Archer: result.Archer += ArmyStats.AttackPower[troopType] * kvp.Value; break;
+                    case UnitType.Infantry: result.Infantry += ArmyStats.AttackPower[kvp.Key] * kvp.Value; break;
+                    case UnitType.Cavalry: result.Cavalry += ArmyStats.AttackPower[kvp.Key] * kvp.Value; break;
+                    case UnitType.Archer: result.Archer += ArmyStats.AttackPower[kvp.Key] * kvp.Value; break;
                 }
             }
             return result;
         }
 
-        public static int TotalDefensePower(Army defendingArmy) => defendingArmy.Count == 0 ? 0 : defendingArmy.Sum(kvp => kvp.Value * ArmyStats.DefensePower[TroopTypeConvert.StringToTroopType(kvp.Key).Value].Total);
+        public static int TotalDefensePower(Army defendingArmy) => defendingArmy.Count == 0 ? 0 : defendingArmy.Sum(kvp => kvp.Value * ArmyStats.DefensePower[kvp.Key].Total);
 
         public static int TotalDefensePower(Army defendingArmy, UnitType unitType)
         {
@@ -66,9 +65,9 @@ namespace TW.Vault.Features.Simulation
             {
                 switch (unitType)
                 {
-                    case UnitType.Infantry: totalDefense += kvp.Value * ArmyStats.DefensePower[TroopTypeConvert.StringToTroopType(kvp.Key).Value].Infantry; break;
-                    case UnitType.Cavalry: totalDefense += kvp.Value * ArmyStats.DefensePower[TroopTypeConvert.StringToTroopType(kvp.Key).Value].Cavalry; break;
-                    case UnitType.Archer: totalDefense += kvp.Value * ArmyStats.DefensePower[TroopTypeConvert.StringToTroopType(kvp.Key).Value].Archer; break;
+                    case UnitType.Infantry: totalDefense += kvp.Value * ArmyStats.DefensePower[kvp.Key].Infantry; break;
+                    case UnitType.Cavalry: totalDefense += kvp.Value * ArmyStats.DefensePower[kvp.Key].Cavalry; break;
+                    case UnitType.Archer: totalDefense += kvp.Value * ArmyStats.DefensePower[kvp.Key].Archer; break;
                 }
             }
 
@@ -81,10 +80,9 @@ namespace TW.Vault.Features.Simulation
 
             foreach (var kvp in defendingArmy)
             {
-                TroopType troopType = TroopTypeConvert.StringToTroopType(kvp.Key).Value;
-                result.Infantry += ArmyStats.DefensePower[troopType].Infantry;
-                result.Cavalry += ArmyStats.DefensePower[troopType].Cavalry;
-                result.Archer += ArmyStats.DefensePower[troopType].Archer;
+                result.Infantry += ArmyStats.DefensePower[kvp.Key].Infantry;
+                result.Cavalry += ArmyStats.DefensePower[kvp.Key].Cavalry;
+                result.Archer += ArmyStats.DefensePower[kvp.Key].Archer;
             }
 
             return result;
@@ -131,7 +129,7 @@ namespace TW.Vault.Features.Simulation
         {
             float morale = moralePercent / 100.0f;
 
-            int numRams = attackingArmy.GetValueOrDefault("ram", 0);
+            int numRams = attackingArmy.GetValueOrDefault(TroopType.Ram, 0);
             int effectiveWallLevel = LowerWallPreemptiveLevelAmount(numRams, wallLevel);
             if (!DoRamsLowerWallPreemptively(numRams, wallLevel))
                 effectiveWallLevel = wallLevel;
@@ -180,14 +178,14 @@ namespace TW.Vault.Features.Simulation
             attackingArmy = new Army(attackingArmy);
             defendingArmy = new Army(defendingArmy);
 
-            int numRams = attackingArmy.GetValueOrDefault("ram", 0);
+            int numRams = attackingArmy.GetValueOrDefault(TroopType.Ram, 0);
             int effectiveWallLevel = LowerWallPreemptiveLevelAmount(numRams, wallLevel);
             if (!DoRamsLowerWallPreemptively(numRams, wallLevel))
                 effectiveWallLevel = wallLevel;
 
             while (!IsArmyEmpty(attackingArmy) && !IsArmyEmpty(defendingArmy))
             {
-                var attackPerTroopType = attackingArmy.ToDictionary(kvp => kvp.Key, kvp => morale * kvp.Value * ArmyStats.AttackPower[TroopTypeConvert.StringToTroopType(kvp.Key).Value]);
+                var attackPerTroopType = attackingArmy.ToDictionary(kvp => kvp.Key, kvp => morale * kvp.Value * ArmyStats.AttackPower[kvp.Key]);
                 var totalAttack = attackPerTroopType.Values.Sum();
 
                 var percentPerTroopType = attackPerTroopType.ToDictionary(kvp => kvp.Key, kvp => kvp.Value / totalAttack);
@@ -196,8 +194,8 @@ namespace TW.Vault.Features.Simulation
                     float defenderPercent = percentPerTroopType[attackingTroopType];
                     var currentArmy = defendingArmy * defenderPercent;
 
-                    float attackerPower = attackingArmy[attackingTroopType] * ArmyStats.AttackPower[TroopTypeConvert.StringToTroopType(attackingTroopType).Value];
-                    float defenderPower = TotalDefensePower(currentArmy, ArmyStats.UnitType[TroopTypeConvert.StringToTroopType(attackingTroopType).Value]);
+                    float attackerPower = attackingArmy[attackingTroopType] * ArmyStats.AttackPower[attackingTroopType];
+                    float defenderPower = TotalDefensePower(currentArmy, ArmyStats.UnitType[attackingTroopType]);
                     defenderPower *= ArmyStats.WallDefenseBuff[effectiveWallLevel];
                     defenderPower += ArmyStats.WallBonusDefense[effectiveWallLevel] * defenderPercent;
 
@@ -228,7 +226,7 @@ namespace TW.Vault.Features.Simulation
             {
                 //  Attacker won
                 int originalRams = numRams;
-                int newRams = attackingArmy.GetValueOrDefault("ram", 0);
+                int newRams = attackingArmy.GetValueOrDefault(TroopType.Ram, 0);
                 wallLevel = WallLevelAfterDowngradeAttackerWon(newRams, originalRams - newRams, wallLevel);
             }
 

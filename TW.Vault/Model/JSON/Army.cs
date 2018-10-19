@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace TW.Vault.Model.JSON
 {
-    public class Army : Dictionary<String, int>
+    public class Army : Dictionary<TroopType, int>
     {
         public Army()
         {
@@ -89,7 +89,7 @@ namespace TW.Vault.Model.JSON
             if (a.Keys.All(k => b.ContainsKey(k)) || !b.Keys.All(k => a.ContainsKey(k)))
                 return false;
 
-            foreach (String key in a.Keys)
+            foreach (var key in a.Keys)
             {
                 if (a[key] != b[key])
                     return false;

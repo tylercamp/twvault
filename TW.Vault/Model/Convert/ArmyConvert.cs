@@ -45,12 +45,10 @@ namespace TW.Vault.Model.Convert
             }
 
             var scaffoldArmyType = typeof(T);
-            foreach (String troopType in Enum.GetNames(typeof(JSON.TroopType)))
+            foreach (var troopType in Enum.GetValues(typeof(JSON.TroopType)).Cast<JSON.TroopType>())
             {
-                String lowerName = troopType.ToLower();
-
-                var troopCount = GetOrNull(armyCounts, lowerName);
-                var troopProperty = scaffoldArmyType.GetProperty(troopType, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                var troopCount = GetOrNull(armyCounts, troopType);
+                var troopProperty = scaffoldArmyType.GetProperty(troopType.ToString(), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                 var currentCount = (int?)troopProperty.GetValue(result);
 
                 if (currentCount == troopCount)
@@ -80,11 +78,11 @@ namespace TW.Vault.Model.Convert
             var result = new JSON.Army();
 
             var scaffoldArmyType = army.GetType();
-            foreach (String troopType in Enum.GetNames(typeof(JSON.TroopType)))
+            foreach (var troopType in Enum.GetValues(typeof(JSON.TroopType)).Cast<JSON.TroopType>())
             {
-                String lowerName = troopType.ToLower();
+                String name = troopType.ToString();
 
-                var troopProperty = scaffoldArmyType.GetProperty(troopType, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                var troopProperty = scaffoldArmyType.GetProperty(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
                 var nullableTroopCount = troopProperty.GetValue(army);
 
                 if (nullableTroopCount != null)
@@ -95,7 +93,7 @@ namespace TW.Vault.Model.Convert
                     else
                         troopCount = ((int?)troopProperty.GetValue(army)).Value;
 
-                    result.Add(lowerName, troopCount);
+                    result.Add(troopType, troopCount);
                 }
             }
 

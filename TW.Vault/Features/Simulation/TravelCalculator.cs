@@ -30,9 +30,8 @@ namespace TW.Vault.Features.Simulation
         {
             JSON.TroopType slowestType = JSON.TroopType.Spy;
 
-            foreach (var typeName in army.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key))
+            foreach (var type in army.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key))
             {
-                var type = typeName.ToTroopType();
                 if (Native.ArmyStats.TravelSpeed[type] > Native.ArmyStats.TravelSpeed[slowestType])
                     slowestType = type;
             }

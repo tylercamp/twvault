@@ -29,7 +29,7 @@ namespace TW.Vault.Security
                     string unencrypted = Encryption.Decrypt(bodyContents);
                     context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(unencrypted));
                 }
-                catch (InvalidStringEncryptionException ex)
+                catch (InvalidStringEncryptionException)
                 {
                     //  TODO
                     //  

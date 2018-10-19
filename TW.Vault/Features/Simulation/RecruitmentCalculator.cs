@@ -102,7 +102,7 @@ namespace TW.Vault.Features.Simulation
 
             var result = new JSON.Army();
             foreach (var type in troopTypes)
-                result.Add(type.ToTroopString(), 0);
+                result.Add(type, 0);
 
             var typesBySource = troopTypes.GroupBy(t => Native.ArmyStats.UnitSource[t]).ToDictionary((s) => s.Key, s => s.Select(t => t));
 
@@ -114,8 +114,7 @@ namespace TW.Vault.Features.Simulation
 
             bool ReachedCountLimit(JSON.TroopType troopType)
             {
-                var typeString = troopType.ToTroopString();
-                return maxCounts != null && maxCounts.ContainsKey(troopType) && result[typeString] >= maxCounts[troopType];
+                return maxCounts != null && maxCounts.ContainsKey(troopType) && result[troopType] >= maxCounts[troopType];
             }
 
             while (simulatedTime < timeSpan && totalPop < MaxPopulation && totalPop != previousPop)
@@ -134,7 +133,7 @@ namespace TW.Vault.Features.Simulation
                             factor = 1;
 
                         var troops = CalculatePossibleUnitRecruitment(type, interval * factor);
-                        result[type.ToTroopString()] += troops;
+                        result[type] += troops;
                     }
                 }
 
@@ -142,12 +141,11 @@ namespace TW.Vault.Features.Simulation
                 {
                     foreach (var type in maxCounts.Keys)
                     {
-                        var typeString = type.ToTroopString();
-                        if (!result.ContainsKey(typeString))
+                        if (!result.ContainsKey(type))
                             continue;
 
-                        if (result[typeString] > maxCounts[type])
-                            result[typeString] = maxCounts[type];
+                        if (result[type] > maxCounts[type])
+                            result[type] = maxCounts[type];
                     }
                 }
 
