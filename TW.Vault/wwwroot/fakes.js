@@ -1,14 +1,14 @@
-﻿; (() => {
+﻿; (function () {
 
     function getCookie(name) {
         var match;
-        return (match = document.cookie.match(new RegExp(`${name}=([^\s\;]+)`))) ? match[1] : null;
+        return (match = document.cookie.match(new RegExp(name + '=([^\s\;]+)'))) ? match[1] : null;
     }
 
     function setCookie(name, value) {
         if (!value) value = '';
         if (!(typeof value == 'string')) value = JSON.stringify(value);
-        document.cookie = `${name}=${value}`;
+        document.cookie = name + '=' + value;
     }
 
     function objForEach(obj, callback) {
@@ -38,7 +38,7 @@
 
     console.log('Using window.vaultFakes = ', vaultFakes);
 
-    var targets = (() => {
+    var targets = (function () {
         var matcher, targets = [], regex = /(\d+\|\d+)/g;
         while (matcher = regex.exec(vaultFakes.targets)) {
             targets.push(matcher[1]);
@@ -57,7 +57,7 @@
     }
 
     var troopCounts = {};
-    $('a[id^=units_entry_all_]').each((i, el) => {
+    $('a[id^=units_entry_all_]').each(function (i, el) {
         var id = $(el).attr('id');
         var unit = id.match(/units_entry_all_(\w+)/)[1];
         var count = $(el).text();
@@ -76,11 +76,14 @@
 
         var result;
 
-        vaultFakes.troopCounts.forEach((build) => {
+        vaultFakes.troopCounts.forEach(function (build) {
             if (result) return;
 
             var canUse = true;
-            objForEach(build, (troopName, cnt) => troopCounts[troopName] < cnt ? canUse = false : null);
+            objForEach(build, function (troopName, cnt) {
+                if (troopCounts[troopName] < cnt)
+                    canUse = false
+            });
             if (!canUse) return;
 
             result = build;
@@ -91,8 +94,8 @@
 
     function updateTroops(troops) {
         console.log('Updating troop inputs');
-        objForEach(troops, (name, value) => {
-            var $input = $(`#unit_input_${name}`);
+        objForEach(troops, function (name, value) {
+            var $input = $('#unit_input_' + name);
             $input.val(value);
         });
     }
