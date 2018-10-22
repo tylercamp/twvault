@@ -208,7 +208,7 @@
         let army = commandsById[$el.data('command-id')].army;
 
         if (!army) {
-            return 'No data is available';
+            return '<b>No data is available</b>';
         }
 
         let troopNames = ['spear', 'sword', 'axe', 'spy', 'light', 'heavy', 'ram', 'catapult', 'snob', 'knight'];

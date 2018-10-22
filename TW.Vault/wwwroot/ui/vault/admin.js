@@ -295,6 +295,8 @@ function makeArmySummaryCsv(armyData) {
     var totalDVs = 0;
     var totalNobles = 0;
     var totalPossibleNobles = 0;
+    var totalIncomings = 0;
+    var totalAttacks = 0;
 
     let supportedTribeNames = [];
 
@@ -322,7 +324,10 @@ function makeArmySummaryCsv(armyData) {
             numDVsSupportingTribes: {},
 
             numDefensiveVillas: ad.numDefensiveVillages,
-            numOffensiveVillas: ad.numOffensiveVillages
+            numOffensiveVillas: ad.numOffensiveVillages,
+
+            numIncomings: ad.numIncomings,
+            numAttacks: ad.numAttackCommands
         };
 
         let uploadAge = ad.uploadAge.split(':')[0];
@@ -345,6 +350,8 @@ function makeArmySummaryCsv(armyData) {
         totalDVs += playerData.numOwnedDVs;
         totalNobles += playerData.numNobles;
         totalPossibleNobles += playerData.numPossibleNobles;
+        totalIncomings += playerData.numIncomings;
+        totalAttacks += playerData.numAttacks;
 
         playerSummaries.push(playerData);
     });
@@ -355,8 +362,8 @@ function makeArmySummaryCsv(armyData) {
     var csvBuilder = new CsvBuilder();
     supportedTribeNames.sort();
 
-    csvBuilder.addRow('', '', '', '', 'Total nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs');
-    csvBuilder.addRow('', '', '', '', totalNukes, totalNobles, totalPossibleNobles, totalDVs);
+    csvBuilder.addRow('', '', '', '', 'Total nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs', 'Total Incs', 'Total Attacks');
+    csvBuilder.addRow('', '', '', '', totalNukes, totalNobles, totalPossibleNobles, totalDVs, totalIncomings, totalAttacks);
 
     csvBuilder.addBlank(2);
 
@@ -364,7 +371,7 @@ function makeArmySummaryCsv(armyData) {
         'Time', 'Needs upload?', 'Tribe', 'Player', 'Nukes',
         'Nukes traveling', 'Nobles', 'Possible nobles', 
         'Owned DVs', 'DVs at Home', 'DVs Traveling', 'DVs Supporting Self', 'DVs Supporting Others',
-        'Est. Off. Villas', 'Est. Def. Villas',
+        'Est. Off. Villas', 'Est. Def. Villas', '# Incs', '# Attacks',
         '',
         ...supportedTribeNames.map((tn) => `DVs to ${tn}`)
     );
@@ -374,7 +381,7 @@ function makeArmySummaryCsv(armyData) {
             s.uploadedAt, s.needsUpload ? 'YES' : '', s.tribeName, s.playerName, s.numNukes,
             s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
             s.numOwnedDVs, s.numDVsAtHome, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,
-            s.numOffensiveVillas, s.numDefensiveVillas, '', ...supportedTribeNames.map((tn) => s.numDVsSupportingTribes[tn] || '0')
+            s.numOffensiveVillas, s.numDefensiveVillas, s.numIncomings, s.numAttacks, '', ...supportedTribeNames.map((tn) => s.numDVsSupportingTribes[tn] || '0')
         );
     });
 

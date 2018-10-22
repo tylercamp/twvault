@@ -450,8 +450,18 @@ namespace TW.Vault.Controllers
                 select new { playerId = player.PlayerId, history }
             );
 
-            //  Do some extra work to support multiple keys for the same player
+            var villageIds = tribeVillages.Select(v => v.currentVillage.VillageId).Distinct().ToList();
+            var attackedVillageIds = await Profile("Get incomings", () => (
+                    from command in context.Command.FromWorld(CurrentWorldId)
+                    where villageIds.Contains(command.TargetVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime
+                    select command.TargetVillageId
+                ).ToListAsync());
 
+            var attackingVillageIds = await Profile("Get attacks", () => (
+                    from command in context.Command.FromWorld(CurrentWorldId)
+                    where villageIds.Contains(command.SourceVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime
+                    select command.SourceVillageId
+                ).ToListAsync());
 
             var tribeIds = tribeVillages.Select(tv => tv.player.TribeId)
                                         .Where(tid => tid != null)
@@ -536,6 +546,26 @@ namespace TW.Vault.Controllers
 
                 villagesSupportByPlayerIdByTargetTribeId.Add(player.PlayerId, supportByTribe);
             }
+
+            var numIncomingsByPlayer = new Dictionary<long, int>();
+            var numAttacksByPlayer = new Dictionary<long, int>();
+            var villageOwnerIdById = tribeVillages.ToDictionary(v => v.currentVillage.VillageId, v => v.player.PlayerId);
+
+            foreach (var target in attackedVillageIds)
+            {
+                var playerId = villageOwnerIdById[target];
+                if (!numIncomingsByPlayer.ContainsKey(playerId))
+                    numIncomingsByPlayer[playerId] = 0;
+                numIncomingsByPlayer[playerId]++;
+            }
+
+            foreach (var source in attackingVillageIds)
+            {
+                var playerId = villageOwnerIdById[source];
+                if (!numAttacksByPlayer.ContainsKey(playerId))
+                    numAttacksByPlayer[playerId] = 0;
+                numAttacksByPlayer[playerId]++;
+            }
             
             var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
 
@@ -557,7 +587,9 @@ namespace TW.Vault.Controllers
                     UploadedReportsAt = playerHistory?.LastUploadedReportsAt ?? new DateTime(),
                     UploadedIncomingsAt = playerHistory?.LastUploadedIncomingsAt ?? new DateTime(),
                     UploadedCommandsAt = playerHistory?.LastUploadedCommandsAt ?? new DateTime(),
-                    NumNobles = playerVillages.Select(v => v.ArmyOwned?.Snob ?? 0).Sum()
+                    NumNobles = playerVillages.Select(v => v.ArmyOwned?.Snob ?? 0).Sum(),
+                    NumIncomings = numIncomingsByPlayer.GetValueOrDefault(player.PlayerId, 0),
+                    NumAttackCommands = numAttacksByPlayer.GetValueOrDefault(player.PlayerId, 0)
                 };
 
                 playerSummary.UploadAge = DateTime.UtcNow - playerSummary.UploadedAt;

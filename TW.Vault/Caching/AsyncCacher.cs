@@ -8,15 +8,15 @@ namespace TW.Vault.Caching
     public class AsyncCacher<T> where T : class
     {
         T value;
-        Func<Task<T>> populator;
+        Func<object, Task<T>> populator;
         CachingTimeTracker tracker = new CachingTimeTracker();
 
-        public AsyncCacher(Func<Task<T>> populator)
+        public AsyncCacher(Func<object, Task<T>> populator)
         {
             this.populator = populator;
         }
 
-        public AsyncCacher(Func<Task<T>> populator, TimeSpan? maxAge)
+        public AsyncCacher(Func<object, Task<T>> populator, TimeSpan? maxAge)
         {
             this.populator = populator;
             this.MaxAge = maxAge;
@@ -30,20 +30,17 @@ namespace TW.Vault.Caching
 
         public bool IsExpired => this.value == null || tracker.IsExpired;
 
-        public Task<T> Value
+        public Task<T> Value(object context)
         {
-            get
-            {
-                if (IsExpired)
-                    return Reload();
-                else
-                    return Task.FromResult(value);
-            }
+            if (IsExpired)
+                return Reload(context);
+            else
+                return Task.FromResult(value);
         }
 
-        public async Task<T> Reload()
+        public async Task<T> Reload(object context)
         {
-            this.value = await populator();
+            this.value = await populator(context);
             tracker.MarkUpdated();
             return this.value;
         }

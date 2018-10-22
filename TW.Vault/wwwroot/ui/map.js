@@ -38,7 +38,8 @@
     const TAG_TYPES = {
         NOBLES: 'nobles',
         NUKE: 'nuke',
-        STACKED: 'stacked'
+        STACKED: 'stacked',
+        WALL: 'wall'
     };
 
     let tagIconTemplates = {};
@@ -57,6 +58,12 @@
     tagIconTemplates[TAG_TYPES.STACKED] = `
         <span class="marker">
             <img src="/graphic/unit_map/spear.png" style="width:18px;height:18px;">
+        </span>
+    `.trim();
+
+    tagIconTemplates[TAG_TYPES.WALL] = `
+        <span class="marker" style="background-color:white">
+            <img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/wall.png" style="width:18px;height:18px;">
         </span>
     `.trim();
     
@@ -121,7 +128,17 @@
             if (requestedVillageIds.indexOf(villageId) >= 0) {
                 return;
             }
-            let morale = Math.round((twCached.morale || twCached.mood) * 100);
+            let morale = twCached.morale || twCached.mood;
+            if (morale <= 1) {
+                morale *= 100;
+            }
+            moral = Math.round(morale);
+            if (morale > 100) {
+                morale = 100;
+            }
+            if (morale < 0) {
+                morale = 0;
+            }
             if (isNaN(morale) || morale > 100)
                 morale = 100;
             loadVillageTroopData(villageId, morale);
@@ -294,9 +311,10 @@
             case 'all': return true;
 
             case 'limited':
-                return (settings.overlayShowStacks && isRecentIntel(tag.stackSeenAt)) ||
+                return (settings.overlayShowStacks && isRecentIntel(tag.stackSeenAt) && tag.stackDVs >= settings.stackMinDV) ||
                        (settings.overlayShowNukes  && isRecentIntel(tag.nukeSeenAt)) ||
-                       (settings.overlayShowNobles && isRecentIntel(tag.noblesSeenAt));
+                       (settings.overlayShowNobles && isRecentIntel(tag.noblesSeenAt)) ||
+                       (settings.overlayShowWall && isRecentIntel(tag.wallLevelSeenAt) && tag.wallLevel < settings.wallMinLevel);
         }
     }
 
@@ -307,7 +325,7 @@
             return result;
         }
 
-        if (tag.isStacked && isRecentIntel(tag.stackSeenAt) && settings.overlayShowStacks) {
+        if (isRecentIntel(tag.stackSeenAt) && settings.overlayShowStacks && tag.stackDVs >= settings.stackMinDV) {
             let $stackedIcon = $(tagIconTemplates[TAG_TYPES.STACKED]);
             $stackedIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.STACKED}_${villageId}`)
             let stackSize = tag.stackDVs;
@@ -343,6 +361,11 @@
             let $nobleIcon = $(tagIconTemplates[TAG_TYPES.NOBLES]);
             $nobleIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.NOBLES}_${villageId}`);
             result.push($nobleIcon);
+        }
+        if (isRecentIntel(tag.wallLevelSeenAt) && settings.overlayShowWall && tag.wallLevel < settings.wallMinLevel) {
+            let $wallIcon = $(tagIconTemplates[TAG_TYPES.WALL]);
+            $wallIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.WALL}_${villageId}`);
+            result.push($wallIcon);
         }
 
         return result;
@@ -678,6 +701,9 @@
 
                         <input type="checkbox" id="vault-overlay-show-stacks" ${settings.overlayShowStacks ? 'checked' : ''}>
                         <label for="vault-overlay-show-stacks">Stacks</label>
+
+                        <input type="checkbox" id="vault-overlay-show-wall" ${settings.overlayShowWall ? 'checked' : ''}>
+                        <label for="vault-overlay-show-wall">Wall under level <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center" value="${settings.wallMinLevel}"></label>
                     </p>
 
                     <p>
@@ -804,8 +830,8 @@
         });
 
         $container.find('#vault-overlay-stack-min-dv').change(() => {
-            let min = parseInt($container.find('#vault-overlay-stack-min-dv').val());
-            if (isNaN(min) || min <= 0) {
+            let min = parseFloat($container.find('#vault-overlay-stack-min-dv').val());
+            if (isNaN(min) || min < 0) {
                 return;
             }
             settings.stackMinDV = min;
@@ -817,11 +843,35 @@
         });
 
         $container.find('#vault-overlay-stack-max-dv').change(() => {
-            let max = parseInt($container.find('#vault-overlay-stack-max-dv').val());
-            if (isNaN(max) || max <= 0) {
+            let max = parseFloat($container.find('#vault-overlay-stack-max-dv').val());
+            if (isNaN(max) || max < 0) {
                 return;
             }
             settings.stackMaxDV = max;
+            saveSettings(settings);
+
+            $('*[id^=vault_overlay]').remove();
+            if (settings.showOverlay && mapOverlayTags)
+                applyMapOverlay();
+        });
+
+        $container.find('#vault-overlay-show-wall').change(() => {
+            let showWall = $container.find('#vault-overlay-show-wall').prop('checked');
+            settings.overlayShowWall = showWall;
+            saveSettings(settings);
+
+            $('*[id^=vault_overlay]').remove();
+            if (settings.showOverlay && mapOverlayTags)
+                applyMapOverlay();
+        });
+
+        $container.find('#vault-overlay-wall-min').change(() => {
+            let wallLevel = parseInt($container.find('#vault-overlay-wall-min').val());
+            if (wallLevel < 0 || wallLevel > 20 || isNaN(wallLevel)) {
+                return;
+            }
+
+            settings.wallMinLevel = wallLevel;
             saveSettings(settings);
 
             $('*[id^=vault_overlay]').remove();
@@ -856,8 +906,10 @@
             overlayShowNukes: true,
             overlayShowNobles: true,
             overlayShowStacks: true,
+            overlayShowWall: true,
             stackMinDV: 1,
-            stackMaxDV: 8
+            stackMaxDV: 8,
+            wallMinLevel: 15
         }, lib.getLocalStorage('map-settings') || {});
 
         saveSettings(settings);

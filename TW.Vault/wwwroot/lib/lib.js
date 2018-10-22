@@ -217,6 +217,12 @@ var lib = (() => {
             return `${minLength(dateTime.getUTCHours())}:${minLength(dateTime.getUTCMinutes())}:${minLength(dateTime.getUTCSeconds())} on ${minLength(dateTime.getUTCDate())}/${minLength(dateTime.getUTCMonth()+1)}/${dateTime.getUTCFullYear()}`;
         },
 
+        parseHtml: function (htmlText) {
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(htmlText, "text/html");
+            return $(doc);
+        },
+
         //  Checks that the current page is 'pageType'; if not, returns false and optionally
         //  displays a message (if a messsage is displayed, this throws an exception and stops
         //  the script from running any further)
@@ -419,8 +425,7 @@ var lib = (() => {
             return url;
         },
 
-        // Make a URL relative to 'https://v.tylercamp.me/api' (or whatever the current base path is)
-        makeApiUrl: function makeApiUrl(url) {
+        makeVaultUrl: function makeVaultUrl(url) {
             if (url.startsWith('https://')) {
                 return url;
             }
@@ -442,14 +447,19 @@ var lib = (() => {
             var apiBasePath;
             rootPaths.forEach((p) => path.contains(p) ? apiBasePath = path.substr(0, path.indexOf(p)) : null);
 
-            let result = `${serverBase.trim('/')}${apiBasePath ? '/' + apiBasePath.trim('/') : ''}/api/${lib.getCurrentServer()}/${url.trim('/')}`;
+            let result = `${serverBase.trim('/')}${apiBasePath ? '/' + apiBasePath.trim('/') : ''}/${url}`;
             return result;
+        },
+
+        // Make a URL relative to 'https://v.tylercamp.me/api' (or whatever the current base path is)
+        makeApiUrl: function makeApiUrl(url) {
+            return lib.makeVaultUrl(`api/${lib.getCurrentServer()}/${url.trim('/')}`);
         },
 
         queryCurrentPlayerInfo: function (callback) {
             let queryUrl = lib.makeTwUrl('screen=ranking&mode=player');
             $.get(queryUrl, (data) => {
-                let $doc = $(data);
+                let $doc = lib.parseHtml(data);
 
                 let $playerInfo = $doc.find('.lit a');
                 let playerId = parseInt($($playerInfo[0]).prop('href').match(/id\=(\w+)/)[1]);
@@ -872,6 +882,18 @@ var lib = (() => {
                     result.push(v);
             }
         });
+        return result;
+    };
+
+    Array.prototype.distinctBy = function distinctBy(selector) {
+        var map = {};
+        this.forEach((v) => map[selector(v)] = v);
+
+        var result = [];
+        for (var prop in map) {
+            if (map.hasOwnProperty(prop))
+                result.push(map[prop]);
+        }
         return result;
     };
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cors;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NUglify;
+using TW.Vault.Caching;
 using TW.Vault.Scaffold;
 using TW.Vault.Security;
 
@@ -28,6 +30,58 @@ namespace TW.Vault.Controllers
         {
             this.environment = environment;
         }
+
+        private static AsyncCachingMap<String> CachedFakeScripts = new AsyncCachingMap<String> { MaxCacheAge = TimeSpan.FromMinutes(5) };
+
+        [HttpGet("fake.js")]
+        public async Task<IActionResult> GetFakeScript()
+        {
+            IEnumerable<String> TrimAndFilter(IEnumerable<String> e) => e.Select(s => s.Trim()).Where(s => !String.IsNullOrWhiteSpace(s)).OrderBy(s => s);
+
+            var players = TrimAndFilter(Request.Query["player"].ToString().Split(',')).ToList();
+            var tribes = TrimAndFilter(Request.Query["tribe"].ToString().Split(',')).ToList();
+            var continents = TrimAndFilter(Request.Query["k"].ToString().Split(',')).Where(k => k.Length == 2).ToList();
+            var server = Request.Query["server"].ToString();
+
+            players = players.Select(WebUtility.UrlEncode).ToList();
+            tribes = tribes.Select(WebUtility.UrlEncode).ToList();
+
+            var scriptId = $"player_{string.Join('_', players)}__tribe_{string.Join('_',tribes)}__k_{string.Join('_',continents)}__server_{server}";
+
+            scriptId = Regex.Replace(scriptId, @"[^\w\d_]", "_");
+
+            var fakeScript = await CachedFakeScripts.GetOrPopulate(scriptId, context, async (ctx) =>
+            {
+                var context = ctx as VaultContext;
+
+                logger.LogInformation("Regenerating fake script for {0}", scriptId);
+
+                var worldId = (await context.World.FirstOrDefaultAsync(w => w.Hostname == server))?.Id;
+                if (worldId == null)
+                    return null;
+
+                var coordString = await Features.VillageSearch.ListCoords(context, new Features.VillageSearch.Query
+                {
+                    WorldId = worldId.Value,
+                    PlayerNames = players,
+                    TribeNamesOrTags = tribes,
+                    Continents = continents
+                });
+
+                var baseScript = GetFileContents("fakes.js");
+
+                var formattedScript = baseScript
+                    .Replace("{TARGET_COORDS}", coordString)
+                    .Replace("{COOKIE}", scriptId);
+
+                return formattedScript;
+            });
+
+            if (fakeScript == null)
+                return NotFound();
+            else
+                return Content(fakeScript, "application/json");
+        }
         
         [HttpGet("{name}", Name = "GetCompiledObfuscatedScript")]
         public IActionResult GetCompiledObfuscated(String name)
@@ -36,7 +90,7 @@ namespace TW.Vault.Controllers
             if (Configuration.Security.EnableScriptFilter)
             {
                 if (allowedPublicScripts.Contains(name))
-                    return Content(GetFileContents(name), "application/json");
+                    return Content(ResolveFileContents(name), "application/json");
                 else
                     return NotFound();
             }
@@ -112,14 +166,34 @@ namespace TW.Vault.Controllers
         [HttpGet("raw/{authToken}/{name}", Name = "GetRawUnobfuscatedScript")]
         public IActionResult GetRaw(String authToken, String name)
         {
-            String contents = GetFileContents(name);
+            String contents = ResolveFileContents(name);
             if (contents == null)
                 return NotFound();
             else
                 return Content(contents, "application/javascript");
         }
-        
+
         private String GetFileContents(String name)
+        {
+            if (String.IsNullOrWhiteSpace(name))
+                return null;
+            
+            String rootPath = Path.Combine(environment.WebRootPath, ScriptsBasePath);
+
+            String fullPath = Path.Combine(rootPath, name);
+            String absolutePath = Path.GetFullPath(fullPath);
+
+            //  Prevent directory traversal
+            if (!absolutePath.StartsWith(rootPath))
+                return null;
+
+            if (System.IO.File.Exists(fullPath))
+                return System.IO.File.ReadAllText(fullPath);
+            else
+                return null;
+        }
+        
+        private String ResolveFileContents(String name)
         {
             if (String.IsNullOrWhiteSpace(name))
                 return null;
@@ -158,7 +232,7 @@ namespace TW.Vault.Controllers
             IEnumerable<String> circularDependencyChain = null;
             scriptCompiler.DependencyResolver = (fileName) =>
             {
-                String contents = GetFileContents(fileName);
+                String contents = ResolveFileContents(fileName);
                 if (contents == null)
                     failedFiles.Add(fileName);
                 return contents;

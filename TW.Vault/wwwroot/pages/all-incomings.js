@@ -14,6 +14,26 @@
         return;
     }
 
+    var filtersEnabled = false;
+    $doc.find('form[action*=save_filter] input[type=text]').each((i, el) => {
+        let $el = $(el);
+        if ($el.val().trim().length > 0) {
+            filtersEnabled = true;
+        }
+    });
+
+    if (filtersEnabled) {
+        if (onProgress_)
+            onProgress_(lib.messages.FILTER_APPLIED);
+        else
+            alert(lib.messages.FILTER_APPLIED);
+
+        if (onDone_) {
+            onDone_(lib.errorCodes.FILTER_APPLIED);
+        }
+        return;
+    }
+
     let pages = lib.detectMultiPages($doc);
     pages.push(lib.makeTwUrl(lib.pageTypes.INCOMINGS_OVERVIEW));
     console.log('Got incomings pages: ', pages);
@@ -55,7 +75,7 @@
             }
 
             onProgress_ && onProgress_(`${collectPagesMessage} (${requestManager.getStats().done}/${pages.length} done, ${requestManager.getStats().numFailed} failed)`);
-            let pageIncomings = parseUploadIncomingsOverviewPage($(data));
+            let pageIncomings = parseUploadIncomingsOverviewPage(lib.parseHtml(data));
             allIncomings.push(...pageIncomings);
         });
     });
@@ -79,9 +99,7 @@
 
         lib.queryCurrentPlayerInfo((playerId) => {
             allIncomings.forEach((inc) => inc.targetPlayerId = playerId);
-            var distinctIncomings = allIncomings.distinct((a, b) => {
-                return JSON.stringify(a) == JSON.stringify(b);
-            });
+            var distinctIncomings = allIncomings.distinctBy((inc) => inc.commandId);
 
             console.log('From ' + allIncomings.length + ', made ' + distinctIncomings.length + ' distinct incomings');
 

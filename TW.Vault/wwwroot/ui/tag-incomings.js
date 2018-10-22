@@ -48,7 +48,11 @@
 
             foreachCommand((cmd) => {
                 let inc = incomings.find((i) => i.id == cmd.id);
-                inc.$row = cmd.$row;
+                if (inc) {
+                    inc.$row = cmd.$row;
+                } else {
+                    console.warn("Couldn't find command entry for " + cmd.id);
+                }
             }, $newRows);
 
             $incomingRows = $newRows;
@@ -100,6 +104,13 @@
                 console.log('Got tags: ', tags);
                 incomingTags = tags;
                 onDone_ && onDone_();
+
+                let numMissingIncs = incomings.filter((i) => !incomingTags[i.id]).length;
+                if (numMissingIncs > 0) {
+                    $('#missing-command-uploads').html(`<b>${numMissingIncs} incomings weren't uploaded to Vault yet and won't be tagged!</b>`);
+                } else {
+                    $('#missing-command-uploads').html('');
+                }
             })
             .error((xhr, b, c) => {
                 if (xhr.status == 423) {
@@ -132,6 +143,7 @@
                 <p>
                     <button id="v-upload-incomings">Upload Incomings</button>
                 </p>
+                <p id="missing-command-uploads"></p>
                 <p>
                     <table class="vis">
                         <tr>
@@ -495,7 +507,7 @@
             .replace("%popPerc%", missingNukePop ? '?' : nukePopPerc)
             .replace("%popCnt%", missingNukePop ? '?' : nukePopK)
             .replace("%numCats%", missingNumCats ? '?' : incomingData.numCats)
-            .replace("%numComs%", incomingData.numFromVillage)
+            .replace("%numComs%", incomingData.numFromVillage || '?')
         ;
     }
 

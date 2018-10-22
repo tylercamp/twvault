@@ -52,7 +52,7 @@ function parseOwnTroopsOverviewPage($doc) {
             case 5: return 'heavy'; break;
             case 6: return 'ram'; break;
             case 7: return 'catapult'; break;
-            case 8: return 'paladin'; break;
+            case 8: return 'knight'; break;
             case 9: return 'snob'; break;
             case 10: return 'militia'; break;
         }

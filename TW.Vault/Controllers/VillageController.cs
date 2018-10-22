@@ -77,7 +77,7 @@ namespace TW.Vault.Controllers
                 context.UserUploadHistory.Where(h => h.Uid == CurrentUserId).FirstOrDefaultAsync()
             );
 
-            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
+            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(CurrentUser, uploadHistory);
             List<String> needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
@@ -415,7 +415,7 @@ namespace TW.Vault.Controllers
                 return StatusCode(401);
 
             var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUserId).FirstOrDefaultAsync();
-            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
+            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(CurrentUser, uploadHistory);
             var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
@@ -432,6 +432,14 @@ namespace TW.Vault.Controllers
                     orderby command.ReturnsAt ascending
                     select command
                 ).ToListAsync());
+
+            foreach (var command in commandsFromVillage.Where(c => !c.IsReturning))
+            {
+                if (command.LandsAt <= CurrentServerTime)
+                    command.IsReturning = true;
+            }
+
+            await context.SaveChangesAsync();
             
 
             var targetVillageIds = commandsFromVillage.Select(c => c.TargetVillageId).Distinct();
@@ -461,7 +469,7 @@ namespace TW.Vault.Controllers
                     commandData.OtherVillageId = command.TargetVillageId;
 
                     var otherVillage = targetVillagesById[command.TargetVillageId];
-                    commandData.OtherVillageName = otherVillage.VillageName;
+                    commandData.OtherVillageName = WebUtility.UrlDecode(otherVillage.VillageName);
                     commandData.OtherVillageCoords = $"{otherVillage.X}|{otherVillage.Y}";
 
                     result.CommandsFromVillage.Add(commandData);
@@ -476,7 +484,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetMapTags(int x, int y, int width, int height)
         {
             var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUserId).FirstOrDefaultAsync();
-            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(uploadHistory);
+            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(CurrentUser, uploadHistory);
             var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
@@ -497,6 +505,7 @@ namespace TW.Vault.Controllers
                                                 .Include(cv => cv.ArmyOwned)
                                                 .Include(cv => cv.ArmyTraveling)
                                                 .Include(cv => cv.ArmyStationed)
+                                                .Include(cv => cv.CurrentBuilding)
 
                 join village in context.Village.FromWorld(CurrentWorldId) on currentVillage.VillageId equals village.VillageId
                 join player in context.Player.FromWorld(CurrentWorldId) on village.PlayerId equals player.PlayerId
@@ -526,17 +535,17 @@ namespace TW.Vault.Controllers
                     var tag = new JSON.VillageTags();
                     tag.TribeName = data.TribeId == null ? null : tribeNamesById[data.TribeId.Value];
 
+                    tag.WallLevel = data.CurrentVillage.CurrentBuilding?.Wall;
+                    tag.WallLevelSeenAt = data.CurrentVillage.CurrentBuilding?.LastUpdated;
+
                     if (village.ArmyStationed?.LastUpdated != null)
                     {
                         // 1 DV is approx. 1.7m total defense power
                         var stationed = village.ArmyStationed;
                         var defensePower = BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(stationed));
                         tag.IsStacked = defensePower > 1.7e6;
-                        if (tag.IsStacked)
-                        {
-                            tag.StackSeenAt = stationed.LastUpdated;
-                            tag.StackDVs = defensePower / (float)1.7e6;
-                        }
+                        tag.StackDVs = defensePower / (float)1.7e6;
+                        tag.StackSeenAt = village.ArmyStationed.LastUpdated;
                     }
 
                     var validArmies = new[] {
@@ -597,6 +606,30 @@ namespace TW.Vault.Controllers
             });
 
             return Ok(result);
+        }
+
+        [HttpGet("coords")]
+        public async Task<IActionResult> QueryCoords(String player = null, String tribe = null, String k = null)
+        {
+            player = player ?? "";
+            tribe = tribe ?? "";
+            k = k ?? "";
+
+            IEnumerable<String> TrimAndFilter(IEnumerable<String> e) => e.Select(n => n.Trim()).Where(n => n.Length > 0);
+
+            var players = TrimAndFilter(player.Split(',')).ToList();
+            var tribes = TrimAndFilter(tribe.Split(',')).ToList();
+            var continents = TrimAndFilter(k.Split(',')).ToList();
+
+            var coords = await Features.VillageSearch.ListCoords(context, new Features.VillageSearch.Query
+            {
+                WorldId = CurrentWorldId,
+                PlayerNames = players,
+                TribeNamesOrTags = tribes,
+                Continents = continents
+            });
+
+            return Ok(new { coords });
         }
 
 

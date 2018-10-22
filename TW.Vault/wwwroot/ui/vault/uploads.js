@@ -36,6 +36,7 @@ function makeUploadsTab() {
 
                 //  TODO - This is messy, clean this up
                 let alertCaptcha = () => alert(lib.messages.TRIGGERED_CAPTCHA);
+                let alertFilter = () => alert(lib.messages.FILTER_APPLIED);
 
                 let resetButtons = () => {
                     $('.upload-button').prop('disabled', false);
@@ -48,8 +49,12 @@ function makeUploadsTab() {
                     case 'vault-upload-reports':
                         processUploadReports($statusContainer, (didFail) => {
                             resetButtons();
-                            if (didFail && didFail == lib.errorCodes.CAPTCHA) {
-                                alertCaptcha();
+                            if (didFail) {
+                                if (didFail == lib.errorCodes.CAPTCHA) {
+                                    alertCaptcha();
+                                } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    alertFilter();
+                                }
                             }
                         });
                         break;
@@ -57,8 +62,12 @@ function makeUploadsTab() {
                     case 'vault-upload-incomings':
                         processUploadIncomings($statusContainer, (didFail) => {
                             resetButtons();
-                            if (didFail && didFail == lib.errorCodes.CAPTCHA) {
-                                alertCaptcha();
+                            if (didFail) {
+                                if (didFail == lib.errorCodes.CAPTCHA) {
+                                    alertCaptcha();
+                                } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    alertFilter();
+                                }
                             }
                         });
                         break;
@@ -66,8 +75,12 @@ function makeUploadsTab() {
                     case 'vault-upload-commands':
                         processUploadCommands($statusContainer, (didFail) => {
                             resetButtons();
-                            if (didFail && didFail == lib.errorCodes.CAPTCHA) {
-                                alertCaptcha();
+                            if (didFail) {
+                                if (didFail == lib.errorCodes.CAPTCHA) {
+                                    alertCaptcha();
+                                } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    alertFilter();
+                                }
                             }
                         });
                         break;
@@ -75,8 +88,12 @@ function makeUploadsTab() {
                     case 'vault-upload-troops':
                         processUploadTroops($statusContainer, (didFail) => {
                             resetButtons();
-                            if (didFail && didFail == lib.errorCodes.CAPTCHA) {
-                                alertCaptcha();
+                            if (didFail) {
+                                if (didFail == lib.errorCodes.CAPTCHA) {
+                                    alertCaptcha();
+                                } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    alertFilter();
+                                }
                             }
                         });
                         break;
@@ -95,7 +112,9 @@ function makeUploadsTab() {
                             if (didFail) {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
-                                } else if (didFail != lib.errorCodes.FILTER_APPLIED) {
+                                } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    alertFilter();
+                                } else {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -108,7 +127,9 @@ function makeUploadsTab() {
                             if (didFail) {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
-                                } else if (!lib.errorCodes[didFail]) {
+                                } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    alertFilter();
+                                } else {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -121,7 +142,9 @@ function makeUploadsTab() {
                             if (didFail) {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
-                                } else if (!lib.errorCodes[didFail]) {
+                                } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    alertFilter();
+                                } else {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -132,8 +155,10 @@ function makeUploadsTab() {
                                 if (didFail) {
                                     if (didFail == lib.errorCodes.CAPTCHA) {
                                         alertCaptcha();
-                                    } else if (!lib.errorCodes[didFail]) {
-                                        alert('An unexpected error occurred: ', didFail);
+                                    } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                        alertFilter();
+                                    } else {
+                                        alert('An unexpected error occurred: ' + didFail);
                                     }
                                 }
                                 resetButtons();
@@ -156,7 +181,7 @@ function makeUploadsTab() {
                                 return onDone(lib.errorCodes.CAPTCHA);
                             }
 
-                            let $doc = $(data);
+                            let $doc = lib.parseHtml(data);
                             parseAllReports($doc, (msg) => {
                                 $statusContainer.text(msg);
                             }, (didFail) => {
@@ -178,7 +203,7 @@ function makeUploadsTab() {
                                 return onDone(lib.errorCodes.CAPTCHA);
                             }
 
-                            let $doc = $(data);
+                            let $doc = lib.parseHtml(data);
                             parseAllIncomings($doc, (msg) => {
                                 $statusContainer.text(msg);
                             }, (didFail) => {
@@ -200,7 +225,7 @@ function makeUploadsTab() {
                                 return onDone(lib.errorCodes.CAPTCHA);
                             }
 
-                            let $doc = $(data);
+                            let $doc = lib.parseHtml(data);
                             parseAllCommands($doc, (msg) => {
                                 $statusContainer.text(msg);
                             }, (didFail) => {
@@ -222,7 +247,7 @@ function makeUploadsTab() {
                                 return onDone(lib.errorCodes.CAPTCHA);
                             }
 
-                            let $doc = $(data);
+                            let $doc = lib.parseHtml(data);
                             parseAllTroops($doc, (msg) => {
                                 $statusContainer.text(msg);
                             }, (didFail) => {

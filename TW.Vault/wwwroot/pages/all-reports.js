@@ -132,7 +132,7 @@
                         return;
                     }
 
-                    let $doc = $(data);
+                    let $doc = lib.parseHtml(data);
                     try {
                         parseReportPage($doc, link, false, () => {
                             //  onError

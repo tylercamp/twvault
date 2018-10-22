@@ -75,14 +75,14 @@
         $.get(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW))
             .done((data) => {
                 onProgress_ && onProgress_('Collecting supported villages and DVs...');
-                let $supportDoc = $(data);
+                let $supportDoc = lib.parseHtml(data);
                 let supportPages = lib.detectMultiPages($supportDoc);
                 let $supportPages = [];
 
                 requestManager.resetStats();
                 supportPages.forEach((link) => {
                     requestManager.addRequest(link, (data) => {
-                        $supportPages.push($(data));
+                        $supportPages.push(lib.parseHtml(data));
                     });
                 });
 
@@ -108,7 +108,7 @@
     function findVillaWithAcademy(onDone) {
         $.get(lib.makeTwUrl(lib.pageTypes.BUILDINGS_OVERVIEW))
             .done((data) => {
-                let $doc = $(data);
+                let $doc = lib.parseHtml(data);
                 var villaWithAcademy = null;
                 $doc.find('.b_snob').each((i, el) => {
                     if (villaWithAcademy != null)
@@ -148,7 +148,7 @@
     function getPossibleNobles(villaIdWithAcademy, onDone) {
         $.get(lib.makeTwUrl(`village=${villaIdWithAcademy}&screen=snob`))
             .done((data) => {
-                let docText = $(data).text();
+                let docText = lib.parseHtml(data).text();
                 let limit = docText.match(/Noblemen\s+limit:\s*(\d+)/);
                 let current = docText.match(/Number\s+of\s+conquered\s+villages:\s*(\d+)/);
 

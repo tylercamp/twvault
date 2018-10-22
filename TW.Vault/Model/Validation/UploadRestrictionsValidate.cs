@@ -9,6 +9,7 @@ namespace TW.Vault.Model.Validation
     {
         public struct ValidateInfo
         {
+            public Scaffold.User User;
             public Scaffold.UserUploadHistory History;
 
             public TimeSpan MaxCommandsAge;
@@ -16,10 +17,11 @@ namespace TW.Vault.Model.Validation
             public TimeSpan MaxReportsAge;
             public TimeSpan MaxTroopsAge;
 
-            public static ValidateInfo FromMapRestrictions(Scaffold.UserUploadHistory history)
+            public static ValidateInfo FromMapRestrictions(Scaffold.User user, Scaffold.UserUploadHistory history)
             {
                 return new ValidateInfo
                 {
+                    User = user,
                     History = history,
                     MaxCommandsAge = TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceCommandUpload),
                     MaxIncomingsAge = TimeSpan.FromDays(Configuration.Behavior.Map.MaxDaysSinceIncomingsUpload),
@@ -28,10 +30,11 @@ namespace TW.Vault.Model.Validation
                 };
             }
 
-            public static ValidateInfo FromTaggingRestrictions(Scaffold.UserUploadHistory history)
+            public static ValidateInfo FromTaggingRestrictions(Scaffold.User user, Scaffold.UserUploadHistory history)
             {
                 return new ValidateInfo
                 {
+                    User = user,
                     History = history,
                     MaxCommandsAge = TimeSpan.FromDays(Configuration.Behavior.Tagging.MaxDaysSinceCommandUpload),
                     MaxIncomingsAge = TimeSpan.FromDays(Configuration.Behavior.Tagging.MaxDaysSinceIncomingsUpload),
@@ -44,10 +47,13 @@ namespace TW.Vault.Model.Validation
         public static List<String> GetNeedsUpdateReasons(DateTime currentTime, ValidateInfo info)
         {
             var now = DateTime.UtcNow;
-
             var history = info.History;
 
             List<String> reasons = new List<String>();
+
+            if (info.User.IsReadOnly)
+                return reasons;
+
             if (history?.LastUploadedCommandsAt == null ||
                 (now - history.LastUploadedCommandsAt.Value > info.MaxCommandsAge))
             {

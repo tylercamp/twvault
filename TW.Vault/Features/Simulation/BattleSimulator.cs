@@ -252,7 +252,7 @@ namespace TW.Vault.Features.Simulation
             var activeDefendingArmy = new Army(defendingArmy);
             int numNukes = 0;
             float lastNukeLossRatio = 0;
-            while (!IsArmyEmpty(activeDefendingArmy))
+            while (!IsArmyEmpty(activeDefendingArmy) && numNukes < 50)
             {
                 var battleResult = SimulateAttack(DefaultNukeArmy, activeDefendingArmy, wallLevel, moralePercent);
                 wallLevel = battleResult.NewWallLevel;

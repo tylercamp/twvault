@@ -38,7 +38,7 @@
 
             onProgress_ && onProgress_(`${collectingPagesMessage} (${requestManager.getStats().done}/${pages.length})`);
 
-            let pageCommands = parseOwnCommandsOverviewPage($(data));
+            let pageCommands = parseOwnCommandsOverviewPage(lib.parseHtml(data));
             commandLinks.push(...pageCommands);
         });
     });
@@ -101,7 +101,7 @@
                         return;
                     }
 
-                    let command = parseOwnCommand(commandId, cmd.commandType, cmd.isReturning, $(data));
+                    let command = parseOwnCommand(commandId, cmd.commandType, cmd.isReturning, lib.parseHtml(data));
 
                     let notifyOnDone = () => requestManager.pendingRequests.length && onProgress_ && onProgress_(`${fetchingCommandsMessage} (${requestManager.getStats().done}/${requestManager.getStats().total} done, ${requestManager.getStats().numFailed} failed)`);
 

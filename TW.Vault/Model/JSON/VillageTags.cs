@@ -20,6 +20,9 @@ namespace TW.Vault.Model.JSON
         public bool HasDefense { get; set; }
         public DateTime? DefenseSeenAt { get; set; }
 
+        public int? WallLevel { get; set; }
+        public DateTime? WallLevelSeenAt { get; set; }
+
         public String TribeName { get; set; }
     }
 }

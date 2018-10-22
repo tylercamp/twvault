@@ -297,7 +297,7 @@ namespace TW.Vault.Controllers
                 context.UserUploadHistory.Where(h => h.Uid == CurrentUserId).FirstOrDefaultAsync()
             );
 
-            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromTaggingRestrictions(uploadHistory);
+            var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromTaggingRestrictions(CurrentUser, uploadHistory);
             List<String> needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
@@ -330,19 +330,28 @@ namespace TW.Vault.Controllers
 
             var commandsReturningByVillageId = await Profile("Get returning commands for all source villages", async () =>
             {
-                var commandsReturning = await (
+                var sentCommands = await (
                     from command in context.Command
                                             .FromWorld(CurrentWorldId)
                                             .Include(c => c.Army)
                     where commandSourceVillageIds.Contains(command.SourceVillageId)
-                    where command.IsReturning
                     where command.LandsAt > CurrentServerTime || command.ReturnsAt > CurrentServerTime
                     select command
                 ).ToListAsync();
 
+                foreach (var cmd in sentCommands.Where(cmd => !cmd.IsReturning))
+                {
+                    if (cmd.LandsAt <= CurrentServerTime)
+                        cmd.IsReturning = true;
+                }
+
+                await context.SaveChangesAsync();
+
+                var returningCommands = sentCommands.Where(cmd => cmd.IsReturning).ToList();
+
                 return commandSourceVillageIds.ToDictionary(
                     vid => vid,
-                    vid => commandsReturning.Where(cmd => cmd.SourceVillageId == vid).ToList()
+                    vid => returningCommands.Where(cmd => cmd.SourceVillageId == vid).ToList()
                 );
             });
 

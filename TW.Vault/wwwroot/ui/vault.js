@@ -6,6 +6,7 @@
     //# REQUIRE ui/vault/sms.js
     //# REQUIRE ui/vault/terms.js
     //# REQUIRE ui/vault/uploads.js
+    //# REQUIRE ui/vault/tools.js
 
     $doc = $doc || $(document);
 
@@ -13,14 +14,16 @@
     let smsTab = makeSmsTab();
     let adminTab = makeAdminTab();
     let termsTab = makeTermsTab();
+    let toolsTab = makeToolsTab();
 
     let onClosedListeners = [];
 
     let tabs = [
         uploadsTab,
         smsTab,
+        toolsTab,
         adminTab,
-        termsTab
+        termsTab,
     ];
 
     $doc.find('#vault-ui-container').remove();

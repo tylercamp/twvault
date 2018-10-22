@@ -22,6 +22,9 @@ namespace TW.Vault.Caching
             }
         }
 
-        public Task<T> GetOrPopulate(String key, Func<Task<T>> populator) => cachedContents.GetOrAdd(key, new AsyncCacher<T>(populator, maxCacheAge)).Value;
+        public Task<T> GetOrPopulate(String key, object context, Func<object, Task<T>> populator)
+        {
+            return cachedContents.GetOrAdd(key, new AsyncCacher<T>(populator, maxCacheAge)).Value(context);
+        }
     }
 }
