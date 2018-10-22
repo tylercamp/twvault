@@ -36,7 +36,7 @@ function makeUploadsTab() {
 
                 //  TODO - This is messy, clean this up
                 let alertCaptcha = () => alert(lib.messages.TRIGGERED_CAPTCHA);
-                let alertFilter = () => alert(lib.messages.FILTER_APPLIED);
+                let alertFilter = (type) => alert(lib.messages.FILTER_APPLIED(type));
 
                 let resetButtons = () => {
                     $('.upload-button').prop('disabled', false);
@@ -53,7 +53,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter();
+                                    alertFilter('reports');
                                 }
                             }
                         });
@@ -66,7 +66,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter();
+                                    alertFilter('incomings');
                                 }
                             }
                         });
@@ -79,7 +79,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter();
+                                    alertFilter('commands');
                                 }
                             }
                         });
@@ -92,7 +92,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter();
+                                    alertFilter('troops');
                                 }
                             }
                         });

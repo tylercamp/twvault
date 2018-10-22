@@ -13,9 +13,9 @@
 
     if (hasFilters) {
         if (onProgress_)
-            onProgress_(lib.messages.FILTER_APPLIED);
+            onProgress_(lib.messages.FILTER_APPLIED('reports'));
         else
-            alert(lib.messages.FILTER_APPLIED);
+            alert(lib.messages.FILTER_APPLIED('reports'));
 
         if (onDone_) {
             onDone_(lib.errorCodes.FILTER_APPLIED);

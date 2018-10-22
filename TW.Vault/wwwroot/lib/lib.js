@@ -52,7 +52,7 @@ var lib = (() => {
         messages: {
             TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again. Any uploads will continue where they left off.',
             IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\".",
-            FILTER_APPLIED: 'You have filters set for your reports, please remove them before uploading.'
+            FILTER_APPLIED: (type) => `You have filters set for your ${type}, please remove them before uploading.`
         },
 
         errorCodes: {
