@@ -516,6 +516,20 @@ namespace TW.Vault.Controllers
             ).ToListAsync());
 
             var validVillages = villageData.Where(vd => vd.PlayerId != CurrentPlayerId).ToList();
+            var validVillageIds = villageData.Select(d => d.CurrentVillage.VillageId).ToList();
+
+            var commandData = await Profile("Get command data", () => (
+                from command in context.Command
+                                        .FromWorld(CurrentWorldId)
+                                        .Include(cmd => cmd.Army)
+                where command.IsReturning && command.ReturnsAt > CurrentServerTime
+                select new { command.SourceVillageId, command.Army }
+            ).ToListAsync());
+
+            var commandsByVillageId = validVillageIds.ToDictionary(id => id, id => new List<Scaffold.CommandArmy>());
+            foreach (var command in commandData.Where(cmd => commandsByVillageId.ContainsKey(cmd.SourceVillageId)))
+                commandsByVillageId[command.SourceVillageId].Add(command.Army);
+            
             var result = new Dictionary<long, JSON.VillageTags>();
 
             var tribeIds = validVillages.Select(vv => vv.TribeId).Where(t => t != null).Select(t => t.Value).Distinct();
@@ -537,6 +551,8 @@ namespace TW.Vault.Controllers
 
                     tag.WallLevel = data.CurrentVillage.CurrentBuilding?.Wall;
                     tag.WallLevelSeenAt = data.CurrentVillage.CurrentBuilding?.LastUpdated;
+
+                    tag.ReturningTroopsPopulation = commandsByVillageId[data.CurrentVillage.VillageId].Sum((army) => ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(army)));
 
                     if (village.ArmyStationed?.LastUpdated != null)
                     {

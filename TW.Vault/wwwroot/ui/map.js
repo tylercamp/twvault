@@ -39,7 +39,8 @@
         NOBLES: 'nobles',
         NUKE: 'nuke',
         STACKED: 'stacked',
-        WALL: 'wall'
+        WALL: 'wall',
+        RETURNING_TROOPS: 'returning'
     };
 
     let tagIconTemplates = {};
@@ -64,6 +65,12 @@
     tagIconTemplates[TAG_TYPES.WALL] = `
         <span class="marker" style="background-color:white">
             <img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/wall.png" style="width:18px;height:18px;">
+        </span>
+    `.trim();
+
+    tagIconTemplates[TAG_TYPES.RETURNING_TROOPS] = `
+        <span class="marker" style="background-color:white">
+            <img src="https://dsen.innogamescdn.com/8.143/38747/graphic/command/return_attack_large.png" style="width:18px;height:18px;">
         </span>
     `.trim();
     
@@ -310,10 +317,12 @@
             case 'all': return true;
 
             case 'limited':
-                return (settings.overlayShowStacks && isRecentIntel(tag.stackSeenAt) && tag.stackDVs >= settings.stackMinDV) ||
-                       (settings.overlayShowNukes  && isRecentIntel(tag.nukeSeenAt)) ||
-                       (settings.overlayShowNobles && isRecentIntel(tag.noblesSeenAt)) ||
-                       (settings.overlayShowWall && isRecentIntel(tag.wallLevelSeenAt) && tag.wallLevel < settings.wallMinLevel);
+                return
+                    (settings.overlayShowStacks && isRecentIntel(tag.stackSeenAt) && tag.stackDVs >= settings.stackMinDV) ||
+                    (settings.overlayShowNukes  && isRecentIntel(tag.nukeSeenAt)) ||
+                    (settings.overlayShowNobles && isRecentIntel(tag.noblesSeenAt)) ||
+                    (settings.overlayShowWall && isRecentIntel(tag.wallLevelSeenAt) && tag.wallLevel < settings.wallMinLevel) ||
+                    (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop);
         }
     }
 
@@ -365,6 +374,11 @@
             let $wallIcon = $(tagIconTemplates[TAG_TYPES.WALL]);
             $wallIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.WALL}_${villageId}`);
             result.push($wallIcon);
+        }
+        if (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop) {
+            let $returningIcon = $(tagIconTemplates[TAG_TYPES.RETURNING_TROOPS]);
+            $returningIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.RETURNING_TROOPS}_${villageId}`);
+            result.push($returningIcon);
         }
 
         return result;
@@ -703,6 +717,9 @@
 
                         <input type="checkbox" id="vault-overlay-show-wall" ${settings.overlayShowWall ? 'checked' : ''}>
                         <label for="vault-overlay-show-wall">Wall under level <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center" value="${settings.wallMinLevel}"></label>
+
+                        <input type="checkbox" id="vault-overlay-show-returning" ${settings.overlayShowReturning ? 'checked' : ''}>
+                        <label for="vault-overlay-show-returning">Show returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center" value="${settings.returningMinPop}">k pop</label>
                     </p>
 
                     <p>
@@ -729,6 +746,12 @@
         });
 
         $('#content_value > h2').after($container);
+
+        function refreshOverlay() {
+            $('*[id^=vault_overlay]').remove();
+            if (settings.showOverlay && mapOverlayTags)
+                applyMapOverlay();
+        }
 
         $container.find('#vault-show-commands').change(() => {
             let $checkbox = $container.find('#vault-show-commands');
@@ -784,9 +807,7 @@
             settings.maxIntelAgeDays = max;
             saveSettings(settings);
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+            refreshOverlay();
         });
 
         $container.find('#vault-overlay-highlight-method').change(() => {
@@ -803,9 +824,7 @@
             settings.overlayShowNukes = showNukes;
             saveSettings(settings);
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+            refreshOverlay();
         });
 
         $container.find('#vault-overlay-show-nobles').change(() => {
@@ -813,9 +832,7 @@
             settings.overlayShowNobles = showNobles;
             saveSettings(settings);
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+            refreshOverlay();
         });
 
         $container.find('#vault-overlay-show-stacks').change(() => {
@@ -823,9 +840,7 @@
             settings.overlayShowStacks = showStacks;
             saveSettings(settings);
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+            refreshOverlay();
         });
 
         $container.find('#vault-overlay-stack-min-dv').change(() => {
@@ -836,9 +851,7 @@
             settings.stackMinDV = min;
             saveSettings(settings);
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+            refreshOverlay();
         });
 
         $container.find('#vault-overlay-stack-max-dv').change(() => {
@@ -849,9 +862,7 @@
             settings.stackMaxDV = max;
             saveSettings(settings);
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+            refreshOverlay();
         });
 
         $container.find('#vault-overlay-show-wall').change(() => {
@@ -859,9 +870,7 @@
             settings.overlayShowWall = showWall;
             saveSettings(settings);
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+            refreshOverlay();
         });
 
         $container.find('#vault-overlay-wall-min').change(() => {
@@ -873,9 +882,7 @@
             settings.wallMinLevel = wallLevel;
             saveSettings(settings);
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+            refreshOverlay();
         });
 
         $container.find('#vault-overlay-highlight-tribe').change(() => {
@@ -885,10 +892,26 @@
             }
 
             selectedHighlightTribeName = selected;
+            refreshOverlay();
+        });
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
+        $container.find('#vault-overlay-show-returning').change(() => {
+            let showReturning = $container.find('#vault-overlay-show-returning').prop('checked');
+            settings.overlayShowReturning = showReturning;
+            saveSettings(settings);
+            refreshOverlay();
+        });
+
+        $container.find('#vault-overlay-returning-min-pop').change(() => {
+            let minPop = parseFloat($container.find('#vault-overlay-returning-min-pop'));
+            if (minPop < 0 || isNaN(minPop)) {
+                return;
+            }
+
+            settings.returningMinPop = minPop;
+            saveSettings(settings);
+
+            refreshOverlay();
         });
     }
 
@@ -906,9 +929,11 @@
             overlayShowNobles: true,
             overlayShowStacks: true,
             overlayShowWall: true,
+            overlayShowReturning: true,
             stackMinDV: 1,
             stackMaxDV: 8,
-            wallMinLevel: 15
+            wallMinLevel: 15,
+            returningMinPop: 5
         }, lib.getLocalStorage('map-settings') || {});
 
         saveSettings(settings);

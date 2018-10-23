@@ -23,6 +23,8 @@ namespace TW.Vault.Model.JSON
         public int? WallLevel { get; set; }
         public DateTime? WallLevelSeenAt { get; set; }
 
+        public int? ReturningTroopsPopulation { get; set; }
+
         public String TribeName { get; set; }
     }
 }
