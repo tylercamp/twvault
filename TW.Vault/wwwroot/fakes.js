@@ -95,8 +95,7 @@
     function updateTroops(troops) {
         console.log('Updating troop inputs');
         objForEach(troops, function (name, value) {
-            var $input = $('#unit_input_' + name);
-            $input.val(value);
+            document.forms[0][name].value = value;
         });
     }
 
@@ -120,9 +119,9 @@
         }
 
         if (target) {
-            var $coordInput = $('input[data-type=player]');
-            $coordInput.val(target);
-            $coordInput.submit();
+            document.forms[0].x.value = target.split('|')[0];
+            document.forms[0].y.value = target.split('|')[1];
+            $('#place_target').val(target);
             setCookie(vaultFakes.cookie, target);
             return true;
         } else {

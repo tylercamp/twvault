@@ -245,6 +245,9 @@ namespace TW.Vault.Controllers
                             jsonCommand.ToModel(CurrentWorldId, scaffoldCommand, context);
                         }
 
+                        if (String.IsNullOrWhiteSpace(scaffoldCommand.UserLabel) || scaffoldCommand.UserLabel == "Attack")
+                            scaffoldCommand.UserLabel = scaffoldCommand.TroopType.Capitalized();
+
                         if (jsonCommand.TroopType != null)
                         {
                             var travelTime = travelCalculator.CalculateTravelTime(jsonCommand.TroopType.Value, sourceVillage, targetVillage);
@@ -415,6 +418,7 @@ namespace TW.Vault.Controllers
 
                     var tag = new JSON.IncomingTag();
                     tag.CommandId = incoming.CommandId;
+                    tag.OriginalTag = incoming.UserLabel;
                     tag.NumFromVillage = countsByVillage.GetValueOrDefault(sourceVillageId);
                     tag.TroopType = TroopTypeConvert.StringToTroopType(incoming.TroopType);
 

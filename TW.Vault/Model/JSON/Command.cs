@@ -17,6 +17,8 @@ namespace TW.Vault.Model.JSON
         [Required]
         public long? CommandId { get; set; }
         [Required]
+        public String UserLabel { get; set; }
+        [Required]
         public long? SourceVillageId { get; set; }
         [Required]
         public long? SourcePlayerId { get; set; }

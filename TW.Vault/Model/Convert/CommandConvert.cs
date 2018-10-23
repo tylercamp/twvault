@@ -39,6 +39,7 @@ namespace TW.Vault.Model.Convert
             }
 
             result.CommandId        = command.CommandId.Value;
+            result.UserLabel        = result.UserLabel ?? command.UserLabel; // Don't overwrite existing labels
             result.SourcePlayerId   = command.SourcePlayerId.Value;
             result.SourceVillageId  = command.SourceVillageId.Value;
             result.TargetPlayerId   = command.TargetPlayerId;
@@ -61,6 +62,7 @@ namespace TW.Vault.Model.Convert
             var result = new JSON.Command();
 
             result.CommandId        = command.CommandId;
+            result.UserLabel        = command.UserLabel;
             result.SourcePlayerId   = command.SourcePlayerId;
             result.SourceVillageId  = command.SourceVillageId;
             result.TargetPlayerId   = command.TargetPlayerId;

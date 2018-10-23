@@ -6,6 +6,7 @@
     let commandLinks = [];
 
     $commandLinks.each((i, el) => {
+        let label = $(el).text();
         let link = $(el).prop('href');
         let $td = $(el).closest('td');
         var commandState = $td.find('img:first-of-type').prop('src').match(/(\w+)\.png/)[1];
@@ -18,6 +19,7 @@
         commandLinks.push({
             link: link,
             commandId: commandId,
+            userLabel: label,
             commandType: commandType,
             isReturning: isReturning
         });

@@ -8,6 +8,7 @@ namespace TW.Vault.Model.JSON
     public class IncomingTag
     {
         public long CommandId { get; set; }
+        public String OriginalTag { get; set; }
         public int NumFromVillage { get; set; }
         public int? OffensivePopulation { get; set; }
         public int? NumCats { get; set; }

@@ -113,7 +113,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter();
+                                    alertFilter('reports');
                                 } else {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
@@ -128,7 +128,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter();
+                                    alertFilter('incomings');
                                 } else {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
@@ -143,7 +143,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter();
+                                    alertFilter('troops');
                                 } else {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
@@ -156,7 +156,7 @@ function makeUploadsTab() {
                                     if (didFail == lib.errorCodes.CAPTCHA) {
                                         alertCaptcha();
                                     } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                        alertFilter();
+                                        alertFilter('commands');
                                     } else {
                                         alert('An unexpected error occurred: ' + didFail);
                                     }

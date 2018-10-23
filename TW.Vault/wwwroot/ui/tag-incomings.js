@@ -111,6 +111,11 @@
                 } else {
                     $('#missing-command-uploads').html('');
                 }
+
+                //  Note we're using labels from current page rather than labels stored in vault (for now)
+                //incomings.forEach((inc) => {
+                //    incomingTags[inc.id].oldLabel = incomingTags[inc.id].oldLabel || 
+                //});
             })
             .error((xhr, b, c) => {
                 if (xhr.status == 423) {
@@ -174,6 +179,12 @@
                             <td>%numComs%</td>
                             <td># of total commands from the village to the tribe</td>
                         </tr>
+                        <!--
+                        <tr class="row_a">
+                            <td>%oldTag%</td>
+                            <td>The original tag for the incoming</td>
+                        </tr>
+                        -->
                     </table>
                 </p>
                 <p>
@@ -508,6 +519,7 @@
             .replace("%popCnt%", missingNukePop ? '?' : nukePopK)
             .replace("%numCats%", missingNumCats ? '?' : incomingData.numCats)
             .replace("%numComs%", incomingData.numFromVillage || '?')
+            .replace("%oldTag%", )
         ;
     }
 

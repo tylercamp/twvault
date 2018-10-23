@@ -1,4 +1,4 @@
-﻿function parseOwnCommand(commandId, commandType, isReturning, $doc) {
+﻿function parseOwnCommand(commandId, commandType, isReturning, userLabel, $doc) {
     let $container = $doc.find('#content_value');
     let sourcePlayerId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(2) td:nth-of-type(3) a').prop('href').match(/id=(\w+)/)[1];
     let sourceVillageId = $doc.find('#content_value .vis:nth-of-type(1) tr:nth-of-type(3) td:nth-of-type(2) a').prop('href').match(/id=(\w+)/)[1];
@@ -34,6 +34,7 @@
 
     let command = {
         commandId: commandId,
+        userLabel: userLabel,
         sourcePlayerId: parseInt(sourcePlayerId),
         sourceVillageId: parseInt(sourceVillageId),
         targetPlayerId: parseInt(targetPlayerId),

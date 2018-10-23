@@ -11,7 +11,17 @@ namespace TW.Vault.Features
 {
     public class InvalidStringEncryptionException : Exception
     {
-        public override string Message => "The given text was not encrypted with any active seeds";
+        String encryptedString;
+
+        public InvalidStringEncryptionException(String encryptedString)
+        {
+            this.encryptedString = encryptedString;
+
+            if (this.encryptedString.Length > 50)
+                this.encryptedString = this.encryptedString.Substring(0, 47) + "...";
+        }
+
+        public override string Message => "The given text was not encrypted with any active seeds: " + encryptedString;
     }
 
     public static class Encryption
@@ -42,7 +52,7 @@ namespace TW.Vault.Features
                 if (result == null)
                 {
                     //Serilog.Log.Information("Couldn't decrypt with any of these seeds: " + string.Join(',', seeds) + " at timestamp: " + new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds());
-                    throw new InvalidStringEncryptionException();
+                    throw new InvalidStringEncryptionException(text);
                 }
 
                 result = result.Substring("vault:".Length);
