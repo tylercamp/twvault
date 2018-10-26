@@ -261,7 +261,8 @@
             let x = $(img).css('left');
             let y = $(img).css('top');
 
-            if (hasHighlights(mapOverlayTags[villageId])) {
+            let highlight = hasHighlights(mapOverlayTags[villageId]);
+            if (highlight) {
                 let $overlay = $(`<div id="vault_overlay_${villageId}">`);
                 $overlay.css({
                     width: '52px',
@@ -317,12 +318,13 @@
             case 'all': return true;
 
             case 'limited':
-                return
+                return (
                     (settings.overlayShowStacks && isRecentIntel(tag.stackSeenAt) && tag.stackDVs >= settings.stackMinDV) ||
                     (settings.overlayShowNukes  && isRecentIntel(tag.nukeSeenAt)) ||
                     (settings.overlayShowNobles && isRecentIntel(tag.noblesSeenAt)) ||
                     (settings.overlayShowWall && isRecentIntel(tag.wallLevelSeenAt) && tag.wallLevel < settings.wallMinLevel) ||
-                    (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop);
+                    (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop * 1000)
+                );
         }
     }
 
@@ -375,7 +377,7 @@
             $wallIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.WALL}_${villageId}`);
             result.push($wallIcon);
         }
-        if (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop) {
+        if (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop * 1000) {
             let $returningIcon = $(tagIconTemplates[TAG_TYPES.RETURNING_TROOPS]);
             $returningIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.RETURNING_TROOPS}_${villageId}`);
             result.push($returningIcon);
@@ -719,7 +721,7 @@
                         <label for="vault-overlay-show-wall">Wall under level <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center" value="${settings.wallMinLevel}"></label>
 
                         <input type="checkbox" id="vault-overlay-show-returning" ${settings.overlayShowReturning ? 'checked' : ''}>
-                        <label for="vault-overlay-show-returning">Show returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center" value="${settings.returningMinPop}">k pop</label>
+                        <label for="vault-overlay-show-returning">Returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center" value="${settings.returningMinPop}">k pop</label>
                     </p>
 
                     <p>

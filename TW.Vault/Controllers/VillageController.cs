@@ -522,7 +522,7 @@ namespace TW.Vault.Controllers
                 from command in context.Command
                                         .FromWorld(CurrentWorldId)
                                         .Include(cmd => cmd.Army)
-                where command.IsReturning && command.ReturnsAt > CurrentServerTime
+                where command.IsReturning && command.ReturnsAt > CurrentServerTime && command.ArmyId != null
                 select new { command.SourceVillageId, command.Army }
             ).ToListAsync());
 
@@ -631,7 +631,7 @@ namespace TW.Vault.Controllers
             tribe = tribe ?? "";
             k = k ?? "";
 
-            IEnumerable<String> TrimAndFilter(IEnumerable<String> e) => e.Select(n => n.Trim()).Where(n => n.Length > 0);
+            IEnumerable<String> TrimAndFilter(IEnumerable<String> e) => e.Select(n => n.Trim()).Where(n => n.Length > 0).Select(WebUtility.UrlEncode);
 
             var players = TrimAndFilter(player.Split(',')).ToList();
             var tribes = TrimAndFilter(tribe.Split(',')).ToList();

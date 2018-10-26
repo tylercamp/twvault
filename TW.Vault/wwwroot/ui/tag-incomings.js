@@ -488,10 +488,20 @@
     }
 
     function makeLabel(incomingData) {
+
+        incomingData = incomingData || {
+            offensivePopulation: null,
+            numCats: null,
+            numFromVillage: null,
+            troopType: null
+        };
+
         let hasData =
+            incomingData && (
             (typeof incomingData.offensivePopulation != 'undefined' && incomingData.offensivePopulation != null) ||
             (typeof incomingData.numCats != 'undefined' && incomingData.numCats != null) ||
-            incomingData.numFromVillage > 1;
+            incomingData.numFromVillage > 1
+        );
 
         if (!hasData && settings.ignoreMissingData)
             return null;
