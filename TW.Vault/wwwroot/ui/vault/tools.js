@@ -129,7 +129,7 @@ $.getScript("${link}");
                 </div>
 
                 <div>
-                    <textarea id="fake-script-output" style="width:100%;height:5em" disabled></textarea>
+                    <textarea id="fake-script-output" style="width:100%;height:5em"></textarea>
                 </div>
             `;
         }

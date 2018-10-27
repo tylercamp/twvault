@@ -10,7 +10,8 @@ namespace TW.Vault.Model
         public int X;
         public int Y;
 
-        public float DistanceTo(Coordinate other) => MathF.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y));
+        public float DistanceTo(int x, int y) => MathF.Sqrt((X - x) * (X - x) + (Y - y) * (Y - y));
+        public float DistanceTo(Coordinate other) => DistanceTo(other.X, other.Y);
     }
 
     public static class ScaffoldExtensions

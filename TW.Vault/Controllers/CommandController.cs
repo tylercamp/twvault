@@ -16,6 +16,7 @@ using TW.Vault.Model;
 using Native = TW.Vault.Model.Native;
 using TW.Vault.Features.Planning.Requirements;
 using TW.Vault.Features.Planning;
+using System.Net;
 
 namespace TW.Vault.Controllers
 {
@@ -323,6 +324,21 @@ namespace TW.Vault.Controllers
             //  NOTE - We pull data for all villas requested but only return data for villas not in vaultOwnedVillages,
             //  should stop querying that other data at some point
             var commandSourceVillageIds = incomings.Select(inc => inc.SourceVillageId).Distinct().ToList();
+            var commandTargetVillageIds = incomings.Select(inc => inc.TargetVillageId).Distinct().ToList();
+
+            var relevantVillages = await (
+                    from village in context.Village.FromWorld(CurrentWorldId)
+                    where commandSourceVillageIds.Contains(village.VillageId) || commandTargetVillageIds.Contains(village.VillageId)
+                    select new { village.PlayerId, village.VillageId, village.VillageName, X = village.X.Value, Y = village.Y.Value }
+                ).ToDictionaryAsync(v => v.VillageId, v => v);
+
+            var sourcePlayerIds = relevantVillages.Values.Where(v => commandSourceVillageIds.Contains(v.VillageId)).Select(v => v.PlayerId ?? 0).ToList();
+
+            var sourcePlayerNames = await (
+                    from player in context.Player.FromWorld(CurrentWorldId)
+                    where sourcePlayerIds.Contains(player.PlayerId)
+                    select new { player.PlayerId, player.PlayerName }
+                ).ToDictionaryAsync(p => p.PlayerId, p => p.PlayerName);
 
             var countsByVillage = await (
                     from command in context.Command.FromWorld(CurrentWorldId)
@@ -331,14 +347,26 @@ namespace TW.Vault.Controllers
                     select new { VillageId = villageCommands.Key, Count = villageCommands.Count() }
                 ).ToDictionaryAsync(vc => vc.VillageId, vc => vc.Count);
 
+            var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
+            DateTime CommandLaunchedAt(Scaffold.Command command) => command.LandsAt - travelCalculator.CalculateTravelTime(
+                (command.TroopType ?? "ram").ToTroopType(),
+                relevantVillages[command.SourceVillageId].X, relevantVillages[command.SourceVillageId].Y,
+                relevantVillages[command.TargetVillageId].X, relevantVillages[command.TargetVillageId].Y
+            );
+
+            var earliestLaunchTime = incomings.Select(CommandLaunchedAt).DefaultIfEmpty(DateTime.UtcNow).Min() - CurrentWorldSettings.UtcOffset;
+
             var commandsReturningByVillageId = await Profile("Get returning commands for all source villages", async () =>
             {
+                var commandSeenThreshold = earliestLaunchTime - TimeSpan.FromDays(1);
+
                 var sentCommands = await (
                     from command in context.Command
                                             .FromWorld(CurrentWorldId)
                                             .Include(c => c.Army)
+                    where command.FirstSeenAt < commandSeenThreshold
+                    where command.Army != null
                     where commandSourceVillageIds.Contains(command.SourceVillageId)
-                    where command.LandsAt > CurrentServerTime || command.ReturnsAt > CurrentServerTime
                     select command
                 ).ToListAsync();
 
@@ -358,6 +386,34 @@ namespace TW.Vault.Controllers
                 );
             });
 
+            var otherTargetedVillageIds = commandsReturningByVillageId.SelectMany(kvp => kvp.Value).Select(c => c.TargetVillageId).Distinct().Except(relevantVillages.Keys);
+            var otherTargetVillages = await context.Village.FromWorld(CurrentWorldId).Where(v => otherTargetedVillageIds.Contains(v.VillageId)).ToListAsync();
+            foreach (var id in otherTargetedVillageIds)
+            {
+                var village = otherTargetVillages.First(v => v.VillageId == id);
+                relevantVillages.Add(id, new
+                {
+                    village.PlayerId, village.VillageId, village.VillageName, X = village.X.Value, Y = village.Y.Value
+                });
+            }
+
+            var launchTimesByCommandId = commandsReturningByVillageId.SelectMany(kvp => kvp.Value).Where(cmd => !vaultOwnedVillages.Contains(cmd.SourceVillageId)).ToDictionary(
+                cmd => cmd.CommandId,
+                cmd => CommandLaunchedAt(cmd)
+            );
+
+            IEnumerable<Scaffold.Command> RelevantCommandsForIncoming(Scaffold.Command incoming)
+            {
+                if (!relevantVillages.ContainsKey(incoming.SourceVillageId))
+                    return Enumerable.Empty<Scaffold.Command>();
+
+                var launchTime = CommandLaunchedAt(incoming);
+                var returningCommands = commandsReturningByVillageId.GetValueOrDefault(incoming.SourceVillageId);
+                if (returningCommands == null)
+                    return Enumerable.Empty<Scaffold.Command>();
+                return returningCommands.Where(cmd => launchTimesByCommandId[cmd.CommandId] < launchTime || cmd.ReturnsAt > launchTime);
+            }
+
             Dictionary<long, JSON.IncomingTag> resultTags = new Dictionary<long, JSON.IncomingTag>();
             Profile("Make incomings tags", () =>
             {
@@ -368,7 +424,7 @@ namespace TW.Vault.Controllers
                         continue;
 
                     var sourceCurrentVillage = incoming.SourceVillage?.CurrentVillage;
-                    var commandsReturning = commandsReturningByVillageId.GetValueOrDefault(sourceVillageId);
+                    var commandsReturning = RelevantCommandsForIncoming(incoming);
 
                     var armyOwned = sourceCurrentVillage?.ArmyOwned;
                     var armyTraveling = sourceCurrentVillage?.ArmyTraveling;
@@ -422,6 +478,15 @@ namespace TW.Vault.Controllers
                     tag.NumFromVillage = countsByVillage.GetValueOrDefault(sourceVillageId);
                     tag.TroopType = TroopTypeConvert.StringToTroopType(incoming.TroopType);
 
+                    var sourceVillage = relevantVillages[incoming.SourceVillageId];
+                    var targetVillage = relevantVillages[incoming.TargetVillageId];
+                    tag.SourceVillageCoords = $"{sourceVillage.X}|{sourceVillage.Y}";
+                    tag.TargetVillageCoords = $"{targetVillage.X}|{targetVillage.Y}";
+                    tag.SourcePlayerName = WebUtility.UrlDecode(sourcePlayerNames[incoming.SourcePlayerId]);
+                    tag.SourceVillageName = WebUtility.UrlDecode(sourceVillage.VillageName);
+                    tag.TargetVillageName = WebUtility.UrlDecode(targetVillage.VillageName);
+                    tag.Distance = new Coordinate { X = sourceVillage.X, Y = sourceVillage.Y }.DistanceTo(targetVillage.X, targetVillage.Y);
+
                     if (effectiveArmy != null)
                     {
                         //  TODO - Make this a setting
@@ -429,6 +494,8 @@ namespace TW.Vault.Controllers
                                 (effectiveArmy.Axe.HasValue && effectiveArmy.Axe.Value > 500) ||
                                 (effectiveArmy.Light.HasValue && effectiveArmy.Light.Value > 250)
                             );
+
+                        tag.VillageType = isOffense ? "Offense" : "Defense";
 
                         if (!isOffense && isConfidentArmy && (effectiveArmy.Snob == null || effectiveArmy.Snob == 0) && incoming.TroopType != JSON.TroopType.Snob.ToTroopString())
                             tag.DefiniteFake = true;
@@ -446,6 +513,8 @@ namespace TW.Vault.Controllers
 
                         if ((tag.OffensivePopulation > 100 || returningPop > 5000) && tag.OffensivePopulation < 5000 && isConfidentArmy)
                             tag.DefiniteFake = true;
+
+                        tag.ReturningPopulation = returningPop;
 
                         tag.NumCats = effectiveArmy.Catapult;
                     }

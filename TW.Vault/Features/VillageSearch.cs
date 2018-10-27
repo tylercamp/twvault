@@ -16,7 +16,7 @@ namespace TW.Vault.Features
             public List<String> Continents;
         }
 
-        public static async Task<String> ListCoords(Scaffold.VaultContext context, Query query)
+        public static async Task<String> ListCoords(Scaffold.VaultContext context, Query query, bool randomize = true)
         {
             var players = new List<String>(query.PlayerNames);
             var tribes = query.TribeNamesOrTags;
@@ -37,7 +37,8 @@ namespace TW.Vault.Features
 
             var villageCoords = await context.Village
                 .Where(v => playerIds.Contains(v.PlayerId.Value))
-                .Select(v => new { v.X, v.Y })
+                .Select(v => new { X = v.X.Value, Y = v.Y.Value, v.VillageId })
+                .OrderBy(v => v.VillageId)
                 .ToListAsync();
 
             if (continents.Count > 0)
@@ -51,6 +52,13 @@ namespace TW.Vault.Features
                         coord.X >= xmin && coord.X < xmin + 100 &&
                         coord.Y >= ymin && coord.Y < ymin + 100;
                 })).ToList();
+            }
+
+            if (randomize)
+            {
+                var random = new System.Random(0);
+                var ranked = villageCoords.Select(c => new { Rank = random.Next(), Coord = c }).OrderBy(r => r.Rank).Select(r => r.Coord);
+                villageCoords = ranked.ToList();
             }
 
             var coordString = String.Join(' ', villageCoords.Select(c => $"{c.X}|{c.Y}"));

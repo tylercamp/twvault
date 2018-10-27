@@ -8,6 +8,7 @@
         %troopName% %tagType% Pop: %popPerc%% Cats: %numCats% Com:1/%numComs%
     `.trim();
 
+    const UNLABELED_TAG_NAME = 'Attack';
     let rateLimiter = new RateLimiter();
 
     let incomings = [];
@@ -21,6 +22,10 @@
 
     if (typeof settings.labelGuessedFakes == 'undefined') {
         settings.labelGuessedFakes = false;
+    }
+
+    if (typeof settings.onlyTagUnlabeled == 'undefined') {
+        settings.onlyTagUnlabeled = false;
     }
 
     let $incomingRows = $doc.find('#incomings_table tr:not(:first-of-type):not(:last-of-type)');
@@ -146,7 +151,8 @@
                     <b>Note - this feature is EXPERIMENTAL and may not be accurate!</b>
                 </p>
                 <p>
-                    <button id="v-upload-incomings">Upload Incomings</button>
+                    <button id="v-show-vault">Open Vault</button>
+                    <button id="v-upload-visible-incomings">Upload Visible Incomings</button>
                 </p>
                 <p id="missing-command-uploads"></p>
                 <p>
@@ -172,6 +178,14 @@
                             <td>Offensive pop known at the village, ie 19.2k or ?k</td>
                         </tr>
                         <tr class="row_a">
+                            <td>%popReturnPerc%</td>
+                            <td>% of a full nuke known returning to the village when this command was sent, ie 89% or ?%</td>
+                        </tr>
+                        <tr class="row_b">
+                            <td>%popReturnCnt%</td>
+                            <td>Offensive pop known returning to the village when this command was sent, ie 19.2k or ?k</td>
+                        </tr>
+                        <tr class="row_a">
                             <td>%numCats%</td>
                             <td># of catapults known at the village</td>
                         </tr>
@@ -179,23 +193,53 @@
                             <td>%numComs%</td>
                             <td># of total commands from the village to the tribe</td>
                         </tr>
-                        <!--
                         <tr class="row_a">
-                            <td>%oldTag%</td>
-                            <td>The original tag for the incoming</td>
+                            <td>%srcPlayer%</td>
+                            <td>Name of the player that sent the attack</td>
                         </tr>
-                        -->
+                        <tr class="row_b">
+                            <td>%srcVilla%</td>
+                            <td>Name of the village that sent the attack</td>
+                        </tr>
+                        <tr class="row_a">
+                            <td>%targetVilla%</td>
+                            <td>Name of the village being attacked</td>
+                        </tr>
+                        <tr class="row_b">
+                            <td>%srcCoords%</td>
+                            <td>Coords of the village that sent the attack</td>
+                        </tr>
+                        <tr class="row_a">
+                            <td>%targetCoords%</td>
+                            <td>Coords of the village being attacked</td>
+                        </tr>
+                        <tr class="row_b">
+                            <td>%distance%</td>
+                            <td>Distance between the source and target village</td>
+                        </tr>
+                        <tr class="row_a">
+                            <td>%villaType%</td>
+                            <td>Whether the village is Off., Def., or unknown</td>
+                        </tr>
+                        <tr class="row_b">
+                            <td>%customLabel%</td>
+                            <td>Custom labels you've added to the command that should be left untouched; these are surrounded by quotes ie <b>"Dodged"</b></td>
+                        </tr>
                     </table>
                 </p>
                 <p>
                     <label for="v-tag-format">Tag format: </label>
-                    <input type="text" id="v-tag-format" style="width:40em">
+                    <input type="text" id="v-tag-format" style="width:80em">
                     <button id="v-reset-format">Reset</button>
+                </p>
+                <p>
+                    <input type="checkbox" id="v-tag-unlabeled" ${settings.onlyTagUnlabeled ? 'checked' : ''}>
+                    <label for="v-tag-unlabeled">Only tag unlabeled incomings</label>
                 </p>
                 <p>
                     <input type="checkbox" id="v-autoset-fakes" ${settings.autoLabelFakes ? 'checked' : ''}>
                     <label for="v-autoset-fakes">
-                        Label as "Fake" if less than <input id="v-max-fake-pop" type="text" style="width:2em; text-align:center" value="${settings.maxFakePop}"> thousand offense population
+                        Label as "Fakes" if less than <input id="v-max-fake-pop" type="text" style="width:2em; text-align:center" value="${settings.maxFakePop}"> thousand offense population
                     <label>
                 </p>
                 <p>
@@ -265,8 +309,8 @@
         $container.find('#v-max-fake-pop').focusout(() => {
             let $maxFakePop = $container.find('#v-max-fake-pop');
             let maxPopText = $maxFakePop.val();
-            let maxPop = parseInt(maxPopText);
-            if (isNaN(maxPop) || maxPopText.match(/[^\d]/)) {
+            let maxPop = parseFloat(maxPopText);
+            if (isNaN(maxPop) || maxPopText.match(/[^\d\.]/)) {
                 alert("That's not a number!");
                 $maxFakePop.val(settings.maxFakePop);
                 return;
@@ -276,9 +320,29 @@
             saveSettings();
         });
 
-        $container.find('#v-upload-incomings').click((e) => {
+        $container.find('#v-show-vault').click((e) => {
             e.originalEvent.preventDefault();
             displayMainVaultUI().onClosed(getVaultTags);
+        });
+
+        $container.find('#v-upload-visible-incomings').click((e) => {
+            e.originalEvent.preventDefault();
+            toggleUploadButtons(false);
+
+            let visibleIncomings = parseUploadIncomingsOverviewPage($(document));
+            let data = {
+                commands: visibleIncomings,
+                isOwnCommands: false,
+            };
+
+            lib.postApi('command', data)
+                .done(() => {
+                    getVaultTags();
+                    toggleUploadButtons(true);
+                })
+                .error(() => {
+                    alert('An error occurred...');
+                });
         });
 
         let oldLabels = null;
@@ -291,7 +355,7 @@
                 oldLabels = {};
 
                 let selectedIncomings = getSelectedIncomingIds();
-                if (!selectedIncomings.length)
+                if (!selectedIncomings.length && !settings.onlyTagUnlabeled)
                     selectedIncomings = incomings.map((i) => i.id);
                 console.log('Selected: ', selectedIncomings);
 
@@ -307,7 +371,7 @@
 
                     oldLabels[cmd.id] = originalLabel;
 
-                    let newLabel = makeLabel(incomingTags[cmd.id] || {});
+                    let newLabel = makeLabel(incomingTags[cmd.id] || {}, originalLabel);
                     if (newLabel)
                         $label.text(newLabel);
                 });
@@ -324,9 +388,14 @@
             }
         });
 
+        $container.find('#v-tag-unlabeled').change(() => {
+            settings.onlyTagUnlabeled = $container.find('#v-tag-unlabeled').prop('checked');
+            saveSettings();
+        });
+
         $container.find('#v-tag-all').click((e) => {
             e.originalEvent.preventDefault();
-            beginTagging(incomings.map((i) => i.id));
+            beginTagging(incomings.filter(i => !settings.onlyTagUnlabeled || i.$row.find('.quickedit-label').text().trim() == UNLABELED_TAG_NAME).map((i) => i.id));
         });
 
         $container.find('#v-tag-selected').click((e) => {
@@ -401,7 +470,7 @@
 
             let cmd = incomings.find((i) => i.id == id);
             let $label = cmd.$row.find('.quickedit-label');
-            let newLabel = makeLabel(incomingTags[id]);
+            let newLabel = makeLabel(incomingTags[id], $label.text().trim());
 
             if (!newLabel)
                 return;
@@ -464,7 +533,9 @@
             let $row = $(el);
             let $link = $row.find('a[href*=info_command][href*=id]');
             let commandId = $link.prop('href').match(/id=(\w+)/)[1];
-            selectedIds.push(parseInt(commandId));
+
+            if ($link.text().trim() == UNLABELED_TAG_NAME || !settings.onlyTagUnlabeled)
+                selectedIds.push(parseInt(commandId));
         });
         return selectedIds;
     }
@@ -487,7 +558,7 @@
         });
     }
 
-    function makeLabel(incomingData) {
+    function makeLabel(incomingData, currentLabel) {
 
         incomingData = incomingData || {
             offensivePopulation: null,
@@ -498,10 +569,11 @@
 
         let hasData =
             incomingData && (
-            (typeof incomingData.offensivePopulation != 'undefined' && incomingData.offensivePopulation != null) ||
-            (typeof incomingData.numCats != 'undefined' && incomingData.numCats != null) ||
-            incomingData.numFromVillage > 1
-        );
+                (typeof incomingData.offensivePopulation != 'undefined' && incomingData.offensivePopulation != null) ||
+                (typeof incomingData.numCats != 'undefined' && incomingData.numCats != null) ||
+                (typeof incomingData.returningPopulation != 'undefined' && incomingData.returningPopulation != null) ||
+                incomingData.numFromVillage > 1
+            );
 
         if (!hasData && settings.ignoreMissingData)
             return null;
@@ -509,6 +581,7 @@
         let format = settings.tagFormat;
         let missingNukePop = typeof incomingData.offensivePopulation == 'undefined' || incomingData.offensivePopulation == null;
         let missingNumCats = typeof incomingData.numCats == 'undefined' || incomingData.numCats == null;
+        let missingReturnPop = typeof incomingData.returningPopulation == 'undefined' || incomingData.returningPopulation == null;
         let troopTypeName = incomingData.troopType ? (
             lib.twstats.getUnit(incomingData.troopType).name
         ) : 'Unknown';
@@ -517,10 +590,17 @@
         let nukePop = Math.min(maxNukePop, incomingData.offensivePopulation || 0);
         let nukePopK = Math.roundTo(nukePop / 1000, 1);
         let nukePopPerc = Math.roundTo(nukePop / maxNukePop * 100, 1);
+        let returnPop = Math.min(maxNukePop, incomingData.returningPopulation || 0);
+        let returnPopK = Math.roundTo(returnPop / 1000, 1);
+        let returnPopPerc = Math.roundTo(returnPop / maxNukePop * 100, 1);
 
         if (settings.autoLabelFakes && !missingNukePop && nukePopK < settings.maxFakePop) {
-            return 'Fake';
+            return 'Fakes';
         }
+
+        let customLabel = currentLabel.match(/".+"/);
+        if (customLabel)
+            customLabel = customLabel[0];
 
         return format
             .replace("%troopName%", troopTypeName)
@@ -529,7 +609,16 @@
             .replace("%popCnt%", missingNukePop ? '?' : nukePopK)
             .replace("%numCats%", missingNumCats ? '?' : incomingData.numCats)
             .replace("%numComs%", incomingData.numFromVillage || '?')
-            .replace("%oldTag%", )
+            .replace("%customLabel%", customLabel || '')
+            .replace("%popReturnPerc%", missingReturnPop ? '?' : returnPopPerc)
+            .replace("%popReturnCnt%", missingReturnPop ? '?' : returnPopK)
+            .replace("%villaType%", incomingData.villageType || '?')
+            .replace("%distance%", Math.roundTo(incomingData.distance || 0, 1))
+            .replace("%targetCoords%", incomingData.targetVillageCoords)
+            .replace("%srcCoords%", incomingData.sourceVillageCoords)
+            .replace("%srcVilla%", incomingData.sourceVillageName)
+            .replace("%targetVilla%", incomingData.targetVillageName)
+            .replace("%srcPlayer%", incomingData.sourcePlayerName)
         ;
     }
 
@@ -557,9 +646,11 @@
 
     function toggleUploadButtons(enabled) {
         let inputIds = [
-            '#v-upload-incomings',
+            '#v-show-vault',
+            '#v-upload-visible-incomings',
             '#v-tag-format',
             '#v-reset-format',
+            '#v-tag-unlabeled',
             '#v-autoset-fakes',
             '#v-max-fake-pop',
             '#v-ignore-missing',
