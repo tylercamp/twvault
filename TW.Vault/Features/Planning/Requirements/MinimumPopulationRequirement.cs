@@ -10,6 +10,12 @@ namespace TW.Vault.Features.Planning.Requirements
 {
     public class MinimumPopulationRequirement : ICommandRequirements
     {
+        public static MinimumPopulationRequirement FullVillage = new MinimumPopulationRequirement { MinimumPopulation = 20000 };
+        public static MinimumPopulationRequirement ThreeQuarterVillage = new MinimumPopulationRequirement { MinimumPopulation = 15000 };
+        public static MinimumPopulationRequirement HalfVillage = new MinimumPopulationRequirement { MinimumPopulation = 10000 };
+        public static MinimumPopulationRequirement QuarterVillage = new MinimumPopulationRequirement { MinimumPopulation = 5000 };
+
+
         public int MinimumPopulation { get; set; }
 
         public bool MeetsRequirement(Coordinate source, Coordinate target, Army army)

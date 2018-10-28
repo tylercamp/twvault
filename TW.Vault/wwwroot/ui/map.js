@@ -918,7 +918,7 @@
     }
 
     function loadSettings() {
-        var settings = $.extend({
+        var settings = lib.getLocalStorage('map-settings', {
             showCommands: true,
             showPossiblyRecruited: true,
             showBuildings: true,
@@ -936,7 +936,7 @@
             stackMaxDV: 8,
             wallMinLevel: 15,
             returningMinPop: 5
-        }, lib.getLocalStorage('map-settings') || {});
+        });
 
         saveSettings(settings);
 

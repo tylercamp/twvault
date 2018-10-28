@@ -17,16 +17,9 @@
         tagFormat: defaultFormat,
         ignoreMissingData: true,
         labelGuessedFakes: true,
-        maxFakePop: 5
+        maxFakePop: 5,
+        onlyTagUnlabeled: false
     });
-
-    if (typeof settings.labelGuessedFakes == 'undefined') {
-        settings.labelGuessedFakes = false;
-    }
-
-    if (typeof settings.onlyTagUnlabeled == 'undefined') {
-        settings.onlyTagUnlabeled = false;
-    }
 
     let $incomingRows = $doc.find('#incomings_table tr:not(:first-of-type):not(:last-of-type)');
     foreachCommand((cmd) => {
@@ -594,7 +587,7 @@
         let returnPopK = Math.roundTo(returnPop / 1000, 1);
         let returnPopPerc = Math.roundTo(returnPop / maxNukePop * 100, 1);
 
-        if (settings.autoLabelFakes && !missingNukePop && nukePopK < settings.maxFakePop) {
+        if (settings.autoLabelFakes && incomingData.troopType != 'snob' && !missingNukePop && nukePopK < settings.maxFakePop) {
             return 'Fakes';
         }
 

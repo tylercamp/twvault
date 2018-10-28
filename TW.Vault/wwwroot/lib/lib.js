@@ -620,7 +620,11 @@ var lib = (() => {
                 }
             } else {
                 try {
-                    return lib.jsonParse(stored);
+                    let result = lib.jsonParse(stored);
+                    if (typeof result == 'object' && !(result instanceof Array) && !(result instanceof Date) && defaultValue_) {
+                        result = $.extend(defaultValue_, result);
+                    }
+                    return result;
                 } catch (_) {
                     return stored;
                 }

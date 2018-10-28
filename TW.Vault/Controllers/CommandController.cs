@@ -563,12 +563,7 @@ namespace TW.Vault.Controllers
                 MaximumTime = command.ReturnsAt.Value - CurrentServerTime
             });
 
-            planner.Requirements.Add(new MinimumOffenseRequirement
-            {
-                //  TODO - Make this a setting
-                //  Approx. 2000 axe, 1000 lc
-                MinimumOffense = 200000
-            });
+            planner.Requirements.Add(MinimumOffenseRequirement.HalfNuke);
 
             var instructions = Profile("Generate plan", () => planner.GenerateOptions(
                 availableVillages.ToDictionary(cv => cv.Village, cv => cv),

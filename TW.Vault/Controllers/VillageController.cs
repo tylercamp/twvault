@@ -515,6 +515,13 @@ namespace TW.Vault.Controllers
                 select new { CurrentVillage = currentVillage, player.PlayerId, player.TribeId }
             ).ToListAsync());
 
+            var ownVillageData = await Profile("Get own village data", () => (
+                from village in context.Village.FromWorld(CurrentWorldId)
+                join currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId).Include(v => v.ArmyAtHome) on village.VillageId equals currentVillage.VillageId
+                where village.PlayerId == CurrentPlayerId
+                select new { Village = village, currentVillage.ArmyAtHome }
+            ).ToListAsync());
+
             var validVillages = villageData.Where(vd => vd.PlayerId != CurrentPlayerId).ToList();
             var validVillageIds = villageData.Select(d => d.CurrentVillage.VillageId).ToList();
 
