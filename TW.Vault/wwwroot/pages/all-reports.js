@@ -104,6 +104,9 @@
                 }
             })
             .error(() => {
+                if (lib.isUnloading())
+                    return;
+
                 onProgress_ && onProgress_('An error occurred while checking for existing reports, continuing...');
                 setTimeout(() => onDone([]), 2000);
             });

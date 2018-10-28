@@ -18,6 +18,9 @@ var lib = (() => {
     var authTribeId = null;
     var wasPageHandled = false;
     var utcTimeOffset = -1;
+    var isUnloading = false;
+
+    window.addEventListener('unload', () => isUnloading = true);
 
     //  TODO - Pull this from server
     let worldSettings = {
@@ -278,6 +281,10 @@ var lib = (() => {
             }
 
             return !hasRan;
+        },
+
+        isUnloading: function () {
+            return isUnloading;
         },
 
         //  Iterates over the properties of an object similar to iterating over an array

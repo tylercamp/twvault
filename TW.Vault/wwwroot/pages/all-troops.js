@@ -135,6 +135,9 @@
                 }
             })
             .error(() => {
+                if (lib.isUnloading())
+                    return;
+
                 if (onProgress_)
                     onProgress_('An error occurred while finding villa with academy...');
                 else
@@ -162,6 +165,9 @@
                 }
             })
             .error(() => {
+                if (lib.isUnloading())
+                    return;
+
                 if (onProgress_)
                     onProgress_('An error occurred while getting possible noble counts...');
                 else
@@ -184,6 +190,9 @@
         };
 
         let onError = () => {
+            if (lib.isUnloading())
+                return;
+
             if (onProgress_)
                 onProgress_("An error occurred while uploading to the vault.");
 

@@ -118,6 +118,9 @@
 
                         })
                         .fail((req, status, err) => {
+                            if (lib.isUnloading())
+                                return;
+
                             requestManager.getStats().numFailed++;
                             notifyOnDone();
 
@@ -163,6 +166,9 @@
     function checkExistingCommands(commandIds, onDone) {
         lib.postApi('command/check-existing-commands', commandIds)
             .error(() => {
+                if (lib.isUnloading())
+                    return;
+
                 onProgress_ && onProgress_('Failed to check for old commands, uploading all...');
                 setTimeout(onDone, 2000);
             })

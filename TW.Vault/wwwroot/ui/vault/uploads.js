@@ -114,7 +114,7 @@ function makeUploadsTab() {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
                                     alertFilter('reports');
-                                } else {
+                                } else if (!lib.isUnloading()) {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -129,7 +129,7 @@ function makeUploadsTab() {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
                                     alertFilter('incomings');
-                                } else {
+                                } else if (!lib.isUnloading()) {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -144,7 +144,7 @@ function makeUploadsTab() {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
                                     alertFilter('troops');
-                                } else {
+                                } else if (!lib.isUnloading()) {
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -157,7 +157,7 @@ function makeUploadsTab() {
                                         alertCaptcha();
                                     } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
                                         alertFilter('commands');
-                                    } else {
+                                    } else if (!lib.isUnloading()) {
                                         alert('An unexpected error occurred: ' + didFail);
                                     }
                                 }

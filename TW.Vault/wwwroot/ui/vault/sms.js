@@ -101,6 +101,10 @@ function makeSmsDisplayTab() {
                         $notificationTime.prop('disabled', false);
                         $message.prop('disabled', false);
                         $container.find('#add-notification').prop('disabled', false);
+
+                        if (lib.isUnloading())
+                            return;
+
                         alert('An error occurred.');
                     });
             });
@@ -178,6 +182,9 @@ function makeSmsPhoneNumbersTab() {
                         updatePhoneNumbers($container);
                     })
                     .error(() => {
+                        if (lib.isUnloading())
+                            return;
+
                         $phoneNumber.prop('disabled', false);
                         $label.prop('disabled', false);
                         alert('An error occurred.');
@@ -270,6 +277,9 @@ function updatePhoneNumbers($container) {
             });
         })
         .error(() => {
+            if (lib.isUnloading())
+                return;
+
             alert('An error occurred while getting your phone numbers.');
         });
 }
@@ -280,6 +290,9 @@ function loadNotificationSettings($container) {
             $container.find('#notify-window-minutes').val(data.sendNotificationBeforeMinutes);
         })
         .error(() => {
+            if (lib.isUnloading())
+                return;
+
             alert('An error occurred.');
         });
 }
@@ -312,6 +325,10 @@ function saveNotificationSettings($container) {
         .error(() => {
             $notificationWindow.prop('disabled', false);
             $container.find('#save-notification-settings-btn').prop('disabled', false);
+
+            if (lib.isUnloading())
+                return;
+
             alert('An error occurred.');
         });
 }
@@ -346,6 +363,9 @@ function loadNotifications($container) {
                             loadNotifications($container);
                         })
                         .error(() => {
+                            if (lib.isUnloading())
+                                return;
+
                             alert('An error occurred.');
                         });
                 });
@@ -354,6 +374,9 @@ function loadNotifications($container) {
             });
         })
         .error(() => {
+            if (lib.isUnloading())
+                return;
+
             alert("An error occurred while loading notification requests.");
         });
 }

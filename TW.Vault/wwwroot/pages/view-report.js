@@ -152,6 +152,9 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
                 alert('Uploaded the report!');
         })
         .fail((req, status, err) => {
+            if (lib.isUnloading())
+                return;
+
             if (showNotice_)
                 alert('An error occurred...');
             console.error('POST request failed: ', req, status, err);

@@ -7,7 +7,6 @@
 
     window.ranVaultMap = true;
     var canUse = true;
-    var isUnloading = false;
 
     //  Hook into 'TWMap.displayForVillage', which is invoked whenever the village info popup is made
     //  by TW
@@ -74,8 +73,7 @@
         </span>
     `.trim();
     
-
-    $(window).unload(() => isUnloading = true);
+    
 
     //  Get all data for the whole world for now
     lib.getApi(`village/0/0/1000/1000/tags`)
@@ -112,7 +110,7 @@
         console.log('intercepted displayForVillage');
         originalDisplayForVillage.call(TWMap.popup, e, a, t);
 
-        if (isUnloading) {
+        if (lib.isUnloading()) {
             return;
         }
 
@@ -158,7 +156,7 @@
         console.log('Intercepted receivedPopupInformation');
         originalReceivedInfo.call(TWMap.popup, e);
 
-        if (isUnloading) {
+        if (lib.isUnloading()) {
             return;
         }
 
@@ -230,7 +228,7 @@
                     alert(alertMessage);
                     canUse = false;
                 } else if (xhr.status != 401) {
-                    if (!isUnloading) {
+                    if (!lib.isUnloading()) {
                         alert("An error occurred...");
                     }
                 }
@@ -401,7 +399,7 @@
             return;
         }
 
-        if (isUnloading) {
+        if (lib.isUnloading()) {
             return;
         }
 

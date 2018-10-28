@@ -85,6 +85,8 @@ function makeAdminStatsTab() {
 
                 lib.getApi('admin/summary')
                     .error(() => {
+                        if (lib.isUnloading())
+                            return;
                         alert('An error occurred...');
                         loadingDone();
                     })
@@ -155,7 +157,12 @@ function makeAdminUsersInterface($container, adminTab) {
                         `.trim());
             });
         })
-        .error(() => alert('An error occurred...'));
+        .error(() => {
+            if (lib.isUnloading())
+                return;
+
+            alert('An error occurred...');
+        });
 
     //  Insert existing keys
     lib.getApi('admin/keys')
@@ -166,6 +173,9 @@ function makeAdminUsersInterface($container, adminTab) {
             data.forEach((d) => insertNewAuthKey(d));
         })
         .error((xhr) => {
+            if (lib.isUnloading())
+                return;
+
             if (xhr.responseText) {
                 let error = JSON.parse(xhr.responseText).error;
                 alert(error);
@@ -192,6 +202,9 @@ function makeAdminUsersInterface($container, adminTab) {
                 displayUserScript(data);
             })
             .error((xhr) => {
+                if (lib.isUnloading())
+                    return;
+
                 if (xhr.responseText) {
                     let error = JSON.parse(xhr.responseText).error;
                     alert(error);
@@ -226,6 +239,9 @@ function makeAdminUsersInterface($container, adminTab) {
                     $newRow.remove();
                 })
                 .error((xhr) => {
+                    if (lib.isUnloading())
+                        return;
+
                     if (xhr.responseText) {
                         let error = JSON.parse(xhr.responseText).error;
                         alert(error);
@@ -262,6 +278,9 @@ function makeAdminUsersInterface($container, adminTab) {
                         $newRow.find('input.give-admin').val('Make admin');
                 })
                 .error(() => {
+                    if (lib.isUnloading())
+                        return;
+
                     alert('An error occurred...');
                 });
         });

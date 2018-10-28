@@ -121,6 +121,9 @@
                         onDone_();
                 })
                 .fail((req, status, err) => {
+                    if (lib.isUnloading())
+                        return;
+
                     if (onProgress_) {
                         onProgress_('An error occurred while uploading data.');
                     }

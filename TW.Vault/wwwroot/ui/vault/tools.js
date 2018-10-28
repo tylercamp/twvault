@@ -88,6 +88,9 @@ $.getScript("${link}");
                         $container.find('#fake-script-output').val(coords);
                     })
                     .error(() => {
+                        if (lib.isUnloading())
+                            return;
+
                         alert('An error occurred...');
                     });
             });
