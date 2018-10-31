@@ -122,7 +122,7 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.UserLabel)
                     .HasColumnName("user_label")
-                    .HasMaxLength(128);
+                    .HasMaxLength(512);
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
