@@ -278,6 +278,20 @@ namespace TW.Vault.Controllers
                     });
                 }
 
+                if (jsonReport.Loyalty <= 0)
+                {
+                    var conquer = new Scaffold.Conquer
+                    {
+                        WorldId = CurrentWorldId,
+                        OldOwner = jsonReport.DefendingPlayerId,
+                        NewOwner = jsonReport.AttackingPlayerId,
+                        VillageId = jsonReport.DefendingVillageId,
+                        UnixTimestamp = new DateTimeOffset(jsonReport.OccurredAt.Value).ToUnixTimeSeconds()
+                    };
+
+                    context.Add(conquer);
+                }
+
                 await Profile("Save changes", () => context.SaveChangesAsync());
 
                 //  Run upload history update in separate query to prevent creating multiple history
