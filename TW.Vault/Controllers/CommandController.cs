@@ -282,6 +282,9 @@ namespace TW.Vault.Controllers
         [HttpPost("tags", Name = "GetIncomingTags")]
         public async Task<IActionResult> GetIncomingTags([FromBody]List<long> incomingsIds)
         {
+            // Preload world data since we need world settings within queries below
+            LoadWorldData();
+
             var incomings = await Profile("Get existing commands", () => (
                     from command in context.Command.FromWorld(CurrentWorldId)
                                                    .Include(c => c.SourceVillage)
@@ -309,18 +312,6 @@ namespace TW.Vault.Controllers
                 return StatusCode(423, needsUpdateReasons); // Status code "Locked"
             }
 
-
-            //  Don't do any tagging for villages owned by players registered with the vault (so players in other tribes
-            //  also using the vault can't infer villa builds)
-            var vaultOwnedVillages = await Profile("Get villages owned by vault users", () => (
-                    from user in context.User
-                    join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
-                    join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
-                    where user.Enabled
-                    select village.VillageId
-                ).ToListAsync()
-            );
-
             //  NOTE - We pull data for all villas requested but only return data for villas not in vaultOwnedVillages,
             //  should stop querying that other data at some point
             var commandSourceVillageIds = incomings.Select(inc => inc.SourceVillageId).Distinct().ToList();
@@ -334,18 +325,35 @@ namespace TW.Vault.Controllers
 
             var sourcePlayerIds = relevantVillages.Values.Where(v => commandSourceVillageIds.Contains(v.VillageId)).Select(v => v.PlayerId ?? 0).ToList();
 
-            var sourcePlayerNames = await (
+            (var vaultOwnedVillages, var sourcePlayerNames, var countsByVillage) = await ManyTasks.Run(
+                //  Don't do any tagging for villages owned by players registered with the vault (so players in other tribes
+                //  also using the vault can't infer villa builds)
+                Profile("Get villages owned by vault users", () => (
+                    from user in context.User
+                    join village in context.Village.FromWorld(CurrentWorldId) on user.PlayerId equals village.PlayerId
+                    where user.Enabled
+                    select village.VillageId
+                ).ToListAsync())
+
+                ,
+
+                Profile("Get player names", () => (
                     from player in context.Player.FromWorld(CurrentWorldId)
                     where sourcePlayerIds.Contains(player.PlayerId)
                     select new { player.PlayerId, player.PlayerName }
-                ).ToDictionaryAsync(p => p.PlayerId, p => p.PlayerName);
+                ).ToDictionaryAsync(p => p.PlayerId, p => p.PlayerName))
 
-            var countsByVillage = await (
+                ,
+
+                Profile("Get command counts", () => (
                     from command in context.Command.FromWorld(CurrentWorldId)
                     where !command.IsReturning && command.LandsAt > CurrentServerTime
                     group command by command.SourceVillageId into villageCommands
                     select new { VillageId = villageCommands.Key, Count = villageCommands.Count() }
-                ).ToDictionaryAsync(vc => vc.VillageId, vc => vc.Count);
+                ).ToDictionaryAsync(vc => vc.VillageId, vc => vc.Count))
+
+            );
+            
 
             var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
             DateTime CommandLaunchedAt(Scaffold.Command command) => command.LandsAt - travelCalculator.CalculateTravelTime(
@@ -356,38 +364,48 @@ namespace TW.Vault.Controllers
 
             var earliestLaunchTime = incomings.Select(CommandLaunchedAt).DefaultIfEmpty(DateTime.UtcNow).Min() - CurrentWorldSettings.UtcOffset;
 
-            var commandsReturningByVillageId = await Profile("Get returning commands for all source villages", async () =>
+            var commandsReturningByVillageId = await Profile("Process returning commands for all source villages", async () =>
             {
                 var commandSeenThreshold = earliestLaunchTime - TimeSpan.FromDays(1);
 
-                var sentCommands = await (
+                var sentCommands = await Profile("Query returning commands for all source villages", () => (
                     from command in context.Command
                                             .FromWorld(CurrentWorldId)
                                             .Include(c => c.Army)
-                    where command.FirstSeenAt < commandSeenThreshold
+                    where command.FirstSeenAt > commandSeenThreshold
                     where command.Army != null
                     where commandSourceVillageIds.Contains(command.SourceVillageId)
                     select command
-                ).ToListAsync();
+                ).ToListAsync());
 
-                foreach (var cmd in sentCommands.Where(cmd => !cmd.IsReturning))
+                bool updatedCommands = false;
+                var result = commandSourceVillageIds.ToDictionary(vid => vid, vid => new List<Scaffold.Command>());
+
+                foreach (var cmd in sentCommands)
                 {
                     if (cmd.LandsAt <= CurrentServerTime)
-                        cmd.IsReturning = true;
+                    {
+                        if (!cmd.IsReturning)
+                        {
+                            updatedCommands = true;
+                            cmd.IsReturning = true;
+                        }
+
+                        result[cmd.SourceVillageId].Add(cmd);
+                    }
                 }
 
-                await context.SaveChangesAsync();
+                if (updatedCommands)
+                    await context.SaveChangesAsync();
 
-                var returningCommands = sentCommands.Where(cmd => cmd.IsReturning).ToList();
-
-                return commandSourceVillageIds.ToDictionary(
-                    vid => vid,
-                    vid => returningCommands.Where(cmd => cmd.SourceVillageId == vid).ToList()
-                );
+                return result;
             });
 
             var otherTargetedVillageIds = commandsReturningByVillageId.SelectMany(kvp => kvp.Value).Select(c => c.TargetVillageId).Distinct().Except(relevantVillages.Keys);
-            var otherTargetVillages = await context.Village.FromWorld(CurrentWorldId).Where(v => otherTargetedVillageIds.Contains(v.VillageId)).ToListAsync();
+            var otherTargetVillages = await Profile("Get other villages targeted by inc source villas", () =>
+                context.Village.FromWorld(CurrentWorldId).Where(v => otherTargetedVillageIds.Contains(v.VillageId)).ToListAsync()
+            );
+
             foreach (var id in otherTargetedVillageIds)
             {
                 var village = otherTargetVillages.First(v => v.VillageId == id);
@@ -411,7 +429,8 @@ namespace TW.Vault.Controllers
                 var returningCommands = commandsReturningByVillageId.GetValueOrDefault(incoming.SourceVillageId);
                 if (returningCommands == null)
                     return Enumerable.Empty<Scaffold.Command>();
-                return returningCommands.Where(cmd => launchTimesByCommandId[cmd.CommandId] < launchTime || cmd.ReturnsAt > launchTime);
+
+                return returningCommands.Where(cmd => cmd.ReturnsAt > launchTime || (launchTimesByCommandId.ContainsKey(cmd.CommandId) && launchTimesByCommandId[cmd.CommandId] > launchTime));
             }
 
             Dictionary<long, JSON.IncomingTag> resultTags = new Dictionary<long, JSON.IncomingTag>();
