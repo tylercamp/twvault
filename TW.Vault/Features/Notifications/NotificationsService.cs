@@ -82,6 +82,11 @@ namespace TW.Vault.Features.Notifications
                         select notification
                     ).ToList();
 
+                    if (upcomingNotifications.Count == 0)
+                    {
+                        logger.LogWarning("Found {0} possible notifications but will only be running {1}", possibleNotifications.Count, upcomingNotifications.Count);
+                    }
+
                     var notificationsByUser = upcomingNotifications.Select(r => r.Notification.Uid).Distinct().ToDictionary(
                             uid => uid,
                             uid => upcomingNotifications.Where(r => r.Notification.Uid == uid && r.Notification.Enabled).ToList()
@@ -90,9 +95,21 @@ namespace TW.Vault.Features.Notifications
                     foreach (var userNotifications in notificationsByUser)
                     {
                         var notifications = userNotifications.Value;
+
+                        if (notifications.Count == 0)
+                        {
+                            logger.LogWarning("Notifications are being processed for UID={0} but no notifications were selected in this run", userNotifications.Key);
+                        }
+
                         var timeOffset = notifications.First().ServerTimeOffset;
                         var notificationText = BuildNotificationText(notifications.Select(r => r.Notification).ToList(), DateTime.UtcNow + timeOffset);
-                        foreach (var phoneNumber in userNotifications.Value[0].PhoneNumbers.Select(pn => pn.PhoneNumber))
+                        var phoneNumbers = notifications[0].PhoneNumbers.Select(pn => pn.PhoneNumber).ToList();
+                        if (phoneNumbers.Count == 0)
+                        {
+                            logger.LogWarning("Notification was requested but no phone numbers were found for UID={0}", userNotifications.Key);
+                        }
+
+                        foreach (var phoneNumber in phoneNumbers)
                         {
                             try
                             {
