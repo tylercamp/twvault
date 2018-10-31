@@ -52,7 +52,17 @@ namespace TW.Vault.Model.Convert
             result.Army             = ArmyConvert.JsonToArmy(command.Troops, worldId, result.Army, context);
 
             if (result.TroopType == null)
-                result.TroopType    = TroopTypeConvert.TroopTypeToString(command.TroopType);
+            {
+                result.TroopType = TroopTypeConvert.TroopTypeToString(command.TroopType);
+            }
+            else if (command.TroopType != null)
+            {
+                var currentType = result.TroopType.ToTroopType();
+                var updatedType = command.TroopType.Value;
+
+                if (Native.ArmyStats.TravelSpeed[currentType] < Native.ArmyStats.TravelSpeed[updatedType])
+                    result.TroopType = updatedType.ToTroopString();
+            }
 
             return result;
         }
