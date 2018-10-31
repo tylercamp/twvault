@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using TW.Vault.Scaffold;
 
 namespace TW.Vault.Controllers
 {
@@ -14,9 +16,16 @@ namespace TW.Vault.Controllers
     [Produces("application/json")]
     [Route("api/{worldName}/Time")]
     [EnableCors("AllOrigins")]
-    public class TimeController : Controller
+    public class TimeController : BaseController
     {
+        public TimeController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        {
+        }
+
         [HttpGet]
         public IActionResult GetCurrentUtcTime() => Ok(new { UtcTime = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds() });
+
+        [HttpGet("server")]
+        public IActionResult GetCurrentServerTime() => Ok(new { TwTime = CurrentServerTime });
     }
 }
