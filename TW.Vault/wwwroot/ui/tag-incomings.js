@@ -16,7 +16,7 @@
     let settings = lib.getLocalStorage('tag-settings', {
         tagFormat: defaultFormat,
         ignoreMissingData: true,
-        labelGuessedFakes: true,
+        labelGuessedFakes: false,
         maxFakePop: 5,
         onlyTagUnlabeled: false
     });
@@ -388,11 +388,17 @@
 
         $container.find('#v-tag-all').click((e) => {
             e.originalEvent.preventDefault();
+            if (settings.autoLabelFakes && !confirm("WARNING - Fake detection isn't 100% accurate, but you have enabled the 'label as fakes' option."))
+                return;
+
             beginTagging(incomings.filter(i => !settings.onlyTagUnlabeled || i.$row.find('.quickedit-label').text().trim() == UNLABELED_TAG_NAME).map((i) => i.id));
         });
 
         $container.find('#v-tag-selected').click((e) => {
             e.originalEvent.preventDefault();
+            if (settings.autoLabelFakes && !confirm("WARNING - Fake detection isn't 100% accurate, but you have enabled the 'label as fakes' option."))
+                return;
+
             let selectedIds = getSelectedIncomingIds();
             if (!selectedIds.length)
                 alert("You didn't select any incomings!");
@@ -468,6 +474,7 @@
             if (!newLabel)
                 return;
 
+            newLabel = newLabel.trim();
             if (newLabel == $label.text().trim())
                 return;
 
@@ -607,11 +614,11 @@
             .replace("%popReturnCnt%", missingReturnPop ? '?' : returnPopK)
             .replace("%villaType%", incomingData.villageType || '?')
             .replace("%distance%", Math.roundTo(incomingData.distance || 0, 1))
-            .replace("%targetCoords%", incomingData.targetVillageCoords)
-            .replace("%srcCoords%", incomingData.sourceVillageCoords)
-            .replace("%srcVilla%", incomingData.sourceVillageName)
-            .replace("%targetVilla%", incomingData.targetVillageName)
-            .replace("%srcPlayer%", incomingData.sourcePlayerName)
+            .replace("%targetCoords%", incomingData.targetVillageCoords || '?')
+            .replace("%srcCoords%", incomingData.sourceVillageCoords || '?')
+            .replace("%srcVilla%", incomingData.sourceVillageName || '?')
+            .replace("%targetVilla%", incomingData.targetVillageName || '?')
+            .replace("%srcPlayer%", incomingData.sourcePlayerName || '?')
         ;
     }
 
