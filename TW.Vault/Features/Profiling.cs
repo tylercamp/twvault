@@ -59,6 +59,8 @@ namespace TW.Vault.Features
 
                 context.AddRange(newRecords);
                 await context.SaveChangesAsync();
+
+                LastPersistedAt = now;
             }
         }
     }
