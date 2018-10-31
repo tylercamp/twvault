@@ -158,6 +158,12 @@ namespace TW.Vault.Controllers
         
         protected DateTime CurrentServerTime => DateTime.UtcNow + CurrentWorldSettings.UtcOffset;
 
+        //  In case world data needs to be pre-loaded
+        protected void LoadWorldData()
+        {
+            _currentWorld = CurrentWorld;
+        }
+
 
 
         //  Performance profiling helpers
