@@ -201,7 +201,7 @@ namespace TW.Vault.Controllers
 
                         var command = await Model.UtilQuery.FindCommandForReport(scaffoldReport, context);
 
-                        if (command == null && !lostAllTroops)
+                        if (command == null && !lostAllTroops && (jsonReport.Loyalty == null || jsonReport.Loyalty > 0))
                         {
                             //  WARNING - This will auto-generate a command with a random ID,
                             //      if a new TW command is uploaded with the given ID any backtime
@@ -278,19 +278,19 @@ namespace TW.Vault.Controllers
                     });
                 }
 
-                if (jsonReport.Loyalty <= 0)
-                {
-                    var conquer = new Scaffold.Conquer
-                    {
-                        WorldId = CurrentWorldId,
-                        OldOwner = jsonReport.DefendingPlayerId,
-                        NewOwner = jsonReport.AttackingPlayerId,
-                        VillageId = jsonReport.DefendingVillageId,
-                        UnixTimestamp = new DateTimeOffset(jsonReport.OccurredAt.Value).ToUnixTimeSeconds()
-                    };
+                //if (jsonReport.Loyalty <= 0)
+                //{
+                //    var conquer = new Scaffold.Conquer
+                //    {
+                //        WorldId = CurrentWorldId,
+                //        OldOwner = jsonReport.DefendingPlayerId,
+                //        NewOwner = jsonReport.AttackingPlayerId,
+                //        VillageId = jsonReport.DefendingVillageId,
+                //        UnixTimestamp = new DateTimeOffset(jsonReport.OccurredAt.Value).ToUnixTimeSeconds()
+                //    };
 
-                    context.Add(conquer);
-                }
+                //    context.Add(conquer);
+                //}
 
                 await Profile("Save changes", () => context.SaveChangesAsync());
 
