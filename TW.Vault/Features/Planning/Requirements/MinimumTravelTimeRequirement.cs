@@ -10,19 +10,11 @@ namespace TW.Vault.Features.Planning.Requirements
 {
     public class MinimumTravelTimeRequirement : ICommandRequirements
     {
-        decimal worldSpeed, unitSpeed;
-
         public TimeSpan MinimumTime { get; set; }
 
-        public MinimumTravelTimeRequirement(decimal worldSpeed, decimal unitSpeed)
+        public bool MeetsRequirement(decimal worldSpeed, decimal travelSpeed, Coordinate source, Coordinate target, Army army)
         {
-            this.worldSpeed = worldSpeed;
-            this.unitSpeed = unitSpeed;
-        }
-
-        public bool MeetsRequirement(Coordinate source, Coordinate target, Army army)
-        {
-            var calculator = new TravelCalculator(worldSpeed, unitSpeed);
+            var calculator = new TravelCalculator(worldSpeed, travelSpeed);
             var fieldSpeed = calculator.ArmyFieldSpeed(army);
             return fieldSpeed * source.DistanceTo(target) >= MinimumTime;
         }

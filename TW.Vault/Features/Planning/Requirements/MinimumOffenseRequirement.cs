@@ -16,9 +16,13 @@ namespace TW.Vault.Features.Planning.Requirements
         public static readonly MinimumOffenseRequirement QuarterNuke = new MinimumOffenseRequirement { MinimumOffense = 125000 };
 
         public int MinimumOffense { get; set; }
+        public TroopType[] AllowedTypes { get; set; }
 
-        public bool MeetsRequirement(Coordinate source, Coordinate target, Army army)
+        public bool MeetsRequirement(decimal worldSpeed, decimal travelSpeed, Coordinate source, Coordinate target, Army army)
         {
+            if (AllowedTypes != null)
+                army = army.Only(AllowedTypes);
+
             return BattleSimulator.AttackPower(army).Total >= MinimumOffense;
         }
     }

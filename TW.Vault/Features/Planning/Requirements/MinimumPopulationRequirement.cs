@@ -18,7 +18,7 @@ namespace TW.Vault.Features.Planning.Requirements
 
         public int MinimumPopulation { get; set; }
 
-        public bool MeetsRequirement(Coordinate source, Coordinate target, Army army)
+        public bool MeetsRequirement(decimal worldSpeed, decimal travelSpeed, Coordinate source, Coordinate target, Army army)
         {
             return ArmyStats.CalculateTotalPopulation(army) >= MinimumPopulation;
         }

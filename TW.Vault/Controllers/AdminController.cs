@@ -468,14 +468,6 @@ namespace TW.Vault.Controllers
                                         .Distinct()
                                         .Select(tid => tid.Value)
                                         .ToList();
-            //  Get tribe labels
-            var tribeNames = await (
-                    from tribe in context.Ally.FromWorld(CurrentWorldId)
-                    where tribeIds.Contains(tribe.TribeId)
-                    select new { tribe.Tag, tribe.TribeId }
-                ).ToListAsync();
-
-            var tribeNamesById = tribeNames.ToDictionary(tn => tn.TribeId, tn => tn.Tag);
 
             //  Collect villages grouped by owner
             var villagesByPlayer = tribeVillages
@@ -524,8 +516,25 @@ namespace TW.Vault.Controllers
                 v => v.player.TribeId ?? -1
             );
 
+            //  Get tribes being supported that are not from vault
+            var nonTribeVillageIds = villagesSupport.Select(s => s.TargetVillageId).Distinct().Except(tribeVillageIds).ToList();
+
+            var nonTribeTargetTribesByVillageId = await (
+                    from village in context.Village.FromWorld(CurrentWorldId)
+                    join player in context.Player.FromWorld(CurrentWorldId) on village.PlayerId equals player.PlayerId
+                    join ally in context.Ally.FromWorld(CurrentWorldId) on player.TribeId equals ally.TribeId
+                    where nonTribeVillageIds.Contains(village.VillageId)
+                    select new { village.VillageId, ally.TribeId }
+                ).ToDictionaryAsync(d => d.VillageId, d => d.TribeId);
+
+            foreach (var entry in nonTribeTargetTribesByVillageId)
+                tribeIdsByVillage.Add(entry.Key, entry.Value);
+
+            tribeIds = tribeIds.Concat(nonTribeTargetTribesByVillageId.Values.Distinct()).Distinct().ToList();
+
             var villagesSupportByPlayerId = new Dictionary<long, List<Scaffold.CurrentVillageSupport>>();
             var villagesSupportByPlayerIdByTargetTribeId = new Dictionary<long, Dictionary<long, List<Scaffold.CurrentVillageSupport>>>();
+
 
             foreach (var player in currentPlayers)
             {
@@ -568,6 +577,15 @@ namespace TW.Vault.Controllers
             }
             
             var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
+
+            //  Get tribe labels
+            var tribeNames = await (
+                    from tribe in context.Ally.FromWorld(CurrentWorldId)
+                    where tribeIds.Contains(tribe.TribeId)
+                    select new { tribe.Tag, tribe.TribeId }
+                ).ToListAsync();
+
+            var tribeNamesById = tribeNames.ToDictionary(tn => tn.TribeId, tn => tn.Tag);
 
             var jsonData = new List<JSON.PlayerSummary>();
             foreach (var kvp in villagesByPlayer.OrderBy(kvp => kvp.Key.TribeId).ThenBy(kvp => kvp.Key.PlayerName))

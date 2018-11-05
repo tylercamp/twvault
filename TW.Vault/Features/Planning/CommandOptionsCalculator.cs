@@ -17,7 +17,11 @@ namespace TW.Vault.Features.Planning
 
         public List<ICommandRequirements> Requirements { get; } = new List<ICommandRequirements>();
 
-
+        public CommandOptionsCalculator(Scaffold.WorldSettings settings)
+        {
+            this.worldSpeed = settings.GameSpeed;
+            this.unitSpeed = settings.UnitSpeed;
+        }
 
         public CommandOptionsCalculator(decimal worldSpeed, decimal unitSpeed)
         {
@@ -30,15 +34,25 @@ namespace TW.Vault.Features.Planning
             var result = new List<CommandInstruction>();
             var travelCalculator = new TravelCalculator(worldSpeed, unitSpeed);
 
+            if (availableVillages == null)
+                throw new ArgumentNullException(nameof(availableVillages));
+
             foreach ((var source, var currentVillage) in availableVillages.Tupled())
             {
+                if (source == null)
+                    throw new ArgumentNullException("source");
+                if (currentVillage == null)
+                    throw new ArgumentNullException("currentVillage");
+
                 var villageArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyAtHome);
+                if (villageArmy == null)
+                    throw new ArgumentNullException("villageArmy");
                 if (villageArmy.IsEmpty())
                     continue;
 
                 foreach (var permutation in ArmyPermutations(villageArmy))
                 {
-                    if (Requirements.Any(r => !r.MeetsRequirement(source.Coordinates(), target.Coordinates(), permutation)))
+                    if (Requirements.Any(r => !r.MeetsRequirement(worldSpeed, unitSpeed, source.Coordinates(), target.Coordinates(), permutation)))
                         continue;
 
                     var travelTroopType = travelCalculator.TravelTroopType(permutation);

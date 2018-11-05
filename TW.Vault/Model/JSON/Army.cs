@@ -23,6 +23,31 @@ namespace TW.Vault.Model.JSON
             return this.Count == 0 || this.All(kvp => kvp.Value == 0);
         }
 
+        public Army BasedOn(TroopType troopType)
+        {
+            var maxSpeed = Native.ArmyStats.TravelSpeed[troopType];
+            var result = new Army();
+            foreach (var type in this.Keys.Where(type => Native.ArmyStats.TravelSpeed[type] <= maxSpeed))
+                result.Add(type, this[type]);
+            return result;
+        }
+
+        public Army Except(params TroopType[] troopTypes)
+        {
+            var result = new Army();
+            foreach (var type in this.Keys.Where((t) => !troopTypes.Contains(t)))
+                result.Add(type, this[type]);
+            return result;
+        }
+
+        public Army Only(params TroopType[] troopTypes)
+        {
+            var result = new Army();
+            foreach (var type in this.Keys.Where((t) => troopTypes.Contains(t)))
+                result.Add(type, this[type]);
+            return result;
+        }
+
         public static Army operator +(Army a, Army b)
         {
             if (a == null && b == null)
@@ -99,6 +124,10 @@ namespace TW.Vault.Model.JSON
         }
 
         public static bool operator !=(Army a, Army b) => !(a == b);
+
+        public static implicit operator Army(Scaffold.ReportArmy reportArmy) => Convert.ArmyConvert.ArmyToJson(reportArmy);
+        public static implicit operator Army(Scaffold.CurrentArmy currentArmy) => Convert.ArmyConvert.ArmyToJson(currentArmy);
+        public static implicit operator Army(Scaffold.CommandArmy commandArmy) => Convert.ArmyConvert.ArmyToJson(commandArmy);
 
         public override bool Equals(object obj)
         {

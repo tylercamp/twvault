@@ -1,9 +1,11 @@
 ﻿
 function makeToolsTab() {
     let fakeTab = makeFakeScriptTab();
+    let backtimeTab = makeBacktimeListTab();
 
     let tabs = [
-        fakeTab
+        fakeTab,
+        backtimeTab
     ];
 
     let toolsTab = {
@@ -138,4 +140,242 @@ $.getScript("${link}");
         }
     }
 }
+
+
+function makeBacktimeListTab() {
+
+    const nukeAttackPower = 500000;
+    var currentCommands = [];
+
+    let settings = lib.getLocalStorage('backtime-list-settings', {
+        minReturningPop: 13000,
+        minAttackingNukeSizePercent: 50,
+        maxTravelHours: 24,
+        maxInstructionsCount: 100,
+        hideBacktimedNukes: true,
+        ignoreStacked: true,
+        ignoredTroopTypes: []
+    });
+
+    function saveSettings() {
+        lib.setLocalStorage('backtime-list-settings', settings);
+    }
+
+    function updateBacktimingList($container) {
+
+        //  Filter commands by settings
+        const maxTravelSeconds = settings.maxTravelHours * 60 * 60;
+        let selectedCommands = currentCommands
+            // Meets minimum returning nuke requirements
+            .filter((cmd) => cmd.travelingArmyPopulation >= settings.minReturningPop)
+            // Has any timings meeting max travel time requirements
+            .filter((cmd) => !!cmd.instructions.find((i) => i.travelTimeSeconds < maxTravelSeconds))
+            // Has any timings that aren't in the list of ignored troop types for travel times
+            .filter((cmd) => !!cmd.instructions.find((i) => !settings.ignoredTroopTypes.contains(i.troopType)))
+            // Has any timings that meet the minimum backtiming attack power
+            .filter((cmd) => !!cmd.instructions.find((i) => i.commandAttackPower >= nukeAttackPower * settings.minAttackingNukeSizePercent / 100))
+            // Has existing backtimes
+            .filter((cmd) => !settings.hideBacktimedNukes || cmd.existingBacktimes == 0)
+            // Is not stacked
+            .filter((cmd) => !settings.ignoreStacked || !cmd.isStacked)
+        ;
+
+        let builder = new BBTableBuilder();
+        builder.setColumnNames("Source Village", "Launch Time", "Landing Time", "Troop Req.");
+
+        let allCommands = [];
+        selectedCommands.forEach((com) => {
+            let filteredInstructions = com.instructions
+                .filter((i) => i.travelTimeSeconds < maxTravelSeconds)
+                .filter((i) => !settings.ignoredTroopTypes.contains(i.troopType))
+                .filter((i) => i.commandAttackPower >= nukeAttackPower * settings.minAttackingNukeSizePercent / 100);
+
+            allCommands.push(...filteredInstructions);
+        });
+
+        allCommands.sort((a, b) => a.launchAt.valueOf() - b.launchAt.valueOf());
+
+        console.log('Made full plan list: ', allCommands);
+
+        $container.find('#backtime-output-container').css({
+            display: 'block'
+        });
+
+        let total = allCommands.length;
+        let max = settings.maxInstructionsCount;
+        let effective = Math.min(total, max);
+
+        let displayedCommands = allCommands.slice(0, effective);
+        console.log('Made filtered plan list: ', displayedCommands);
+
+        let numNukes = allCommands.distinctBy(c => c.targetVillageId + '_' + c.landsAt.valueOf()).length;
+
+        $container.find('#backtime-output-container p').text(`Found ${total} timings for ${numNukes} returning nukes (${displayedCommands.length} shown)`);
+
+        displayedCommands.forEach((i) => {
+            builder.addRow(
+                `[url=${lib.makeTwUrl(`village=${i.sourceVillageId}&screen=place&from=simulator&att_${i.troopType}=1&target_village_id=${i.targetVillageId}`)}]${i.sourceVillageName} (${i.sourceVillageX}|${i.sourceVillageY})[/url]`,
+                lib.formatDateTime(i.launchAt),
+                lib.formatDateTime(i.landsAt),
+                `[unit]${i.troopType}[/unit]`
+            );
+        });
+
+        let bbcode = builder.toString();
+        $container.find('#backtime-output-container textarea').val(bbcode);
+    }
+
+    return {
+        label: 'Find Backtimes',
+        containerId: 'vault-backtime-search',
+        init: function ($container) {
+            $container.find('td').css({
+                'text-align': 'left'
+            });
+
+            $container.find('tr td:nth-of-type(2)').css({
+                'padding-left': '1em'
+            });
+
+            $container.find('input[type=text]').css({
+                'text-align': 'center',
+                'width': '30px'
+            })
+
+            $container.find('#backtime-make-list button').click((ev) => {
+                let $el = $(ev.originalEvent.target);
+                $el.text('Working... (This may take a while)');
+                lib.getApi('plan/backtime-list')
+                    .done((data) => {
+                        console.log('Got plan data:', data);
+                        $el.text('Search');
+
+                        currentCommands = data;
+                        updateBacktimingList($container);
+                    })
+                    .error(() => {
+                        alert('An error occurred...');
+                    });
+            });
+
+            function updateSettings() {
+                saveSettings();
+                updateBacktimingList($container);
+            }
+
+            uilib.syncProp('#backtime-list-settings-min-return-pop', settings, 'minReturningPop', updateSettings);
+            uilib.syncProp('#backtime-list-settings-min-attack-nuke-size', settings, 'minAttackingNukeSizePercent', updateSettings);
+            uilib.syncProp('#backtime-list-settings-max-travel-hours', settings, 'maxTravelHours', updateSettings);
+            uilib.syncProp('#backtime-list-settings-max-instructions', settings, 'maxInstructionsCount', updateSettings);
+            uilib.syncProp('#backtime-list-settings-hide-existing-backtimes', settings, 'hideBacktimedNukes', updateSettings);
+            uilib.syncProp('#backtime-list-settings-hide-stacked-backtimes', settings, 'ignoreStacked', updateSettings);
+        },
+
+        getContent: function () {
+
+            function makeIgnoreTroopOption(troopType) {
+                let name = troopType.canonicalName;
+                let check = settings.ignoredTroopTypes.contains(name) ? 'checked' : '';
+
+                return `
+                    <div style="display:inline-block">
+                        <input type="checkbox" id="backtime-list-settings-ignore-${name}" ${check}>
+                        <label for="backtime-list-settings-ignore-${name}" style="margin-right:8px">
+                            <img src="${troopType.icon}" style="max-width:16px">
+                        </label>
+                    </div>
+                `;
+            }
+
+            return `
+                <h3>Find Backtimes</h3>
+                <p>
+                    Get plans for all available backtimes that you can make for enemy nukes using the troops you've uploaded to the vault.
+                </p>
+                <p>
+                    <b>Upload your troops frequently to get the most accurate timings!</b>
+                </p>
+                <p id="backtime-make-list">
+                    ${uilib.mkBtn(null, 'Search')}
+                <p>
+                <div id="backtime-output-container" style="display:none;text-align:left">
+                    <h4>Options</h4>
+                    <table style="text-align:left">
+                        <tr>
+                            <td>
+                                <label for="backtime-list-settings-min-return-pop">
+                                    Minimum returning population: 
+                                </label>
+                            </td>
+                            <td>
+                                <input id="backtime-list-settings-min-return-pop" type="text">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="backtime-list-settings-min-attack-nuke-size">
+                                    Minimum attack size:
+                                </label>
+                            </td>
+                            <td>
+                                <input id="backtime-list-settings-min-attack-nuke-size" type="text">% of a full nuke
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="backtime-list-settings-max-travel-hours">
+                                    Max travel time:
+                                </label>
+                            </td>
+                            <td>
+                                <input id="backtime-list-settings-max-travel-hours" type="text"> hours
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="backtime-list-settings-max-instructions">
+                                    Max number of timings:
+                                </label>
+                            </td>
+                            <td>
+                                <input id="backtime-list-settings-max-instructions" type="text">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="backtime-list-settings-hide-existing-backtimes">Hide backtimed nukes:</label>
+                            </td>
+                            <td>
+                                <input id="backtime-list-settings-hide-existing-backtimes" type="checkbox">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="backtime-list-settings-hide-stacked-backtimes">Hide stacked nukes:</label>
+                            </td>
+                            <td>
+                                <input id="backtime-list-settings-hide-stacked-backtimes" type="checkbox">
+                            </td>
+                        </tr>
+                        <!--
+                        <tr>
+                            <td>
+                                <label>
+                                    Ignore troop types:
+                                </label>
+                            </td>
+                            <td>
+                                ${ lib.twstats.unitTypes.map((t) => makeIgnoreTroopOption(t)).join('\n') }
+                            </td>
+                        </tr>
+                        -->
+                    </table>
+                    <p></p>
+                    <textarea style="width:100%;height:10em"></textarea>
+                </div>
+            `;
+        }
+    };
+}
+
 

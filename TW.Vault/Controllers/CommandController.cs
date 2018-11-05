@@ -17,6 +17,7 @@ using Native = TW.Vault.Model.Native;
 using TW.Vault.Features.Planning.Requirements;
 using TW.Vault.Features.Planning;
 using System.Net;
+using TW.Vault.Features.Simulation;
 
 namespace TW.Vault.Controllers
 {
@@ -284,6 +285,9 @@ namespace TW.Vault.Controllers
         {
             // Preload world data since we need world settings within queries below
             LoadWorldData();
+            //  Lots of data read but only updating some of it; whenever we do SaveChanges it checks
+            //  for changes against all queried objects. Disable tracking by default and track explicitly if necessary
+            context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
             var incomings = await Profile("Get existing commands", () => (
                     from command in context.Command.FromWorld(CurrentWorldId)
@@ -369,7 +373,7 @@ namespace TW.Vault.Controllers
                 var commandSeenThreshold = earliestLaunchTime - TimeSpan.FromDays(1);
 
                 var sentCommands = await Profile("Query returning commands for all source villages", () => (
-                    from command in context.Command
+                    from command in context.Command.AsTracking()
                                             .FromWorld(CurrentWorldId)
                                             .Include(c => c.Army)
                     where command.FirstSeenAt > commandSeenThreshold
@@ -381,22 +385,25 @@ namespace TW.Vault.Controllers
                 bool updatedCommands = false;
                 var result = commandSourceVillageIds.ToDictionary(vid => vid, vid => new List<Scaffold.Command>());
 
-                foreach (var cmd in sentCommands)
+                Profile("Update command returning and sort into dictionary", () =>
                 {
-                    if (cmd.LandsAt <= CurrentServerTime)
+                    foreach (var cmd in sentCommands)
                     {
-                        if (!cmd.IsReturning)
+                        if (cmd.LandsAt <= CurrentServerTime)
                         {
-                            updatedCommands = true;
-                            cmd.IsReturning = true;
-                        }
+                            if (!cmd.IsReturning)
+                            {
+                                updatedCommands = true;
+                                cmd.IsReturning = true;
+                            }
 
-                        result[cmd.SourceVillageId].Add(cmd);
+                            result[cmd.SourceVillageId].Add(cmd);
+                        }
                     }
-                }
+                });
 
                 if (updatedCommands)
-                    await context.SaveChangesAsync();
+                    await Profile("Save commands now set to returning", () => context.SaveChangesAsync());
 
                 return result;
             });
@@ -577,7 +584,7 @@ namespace TW.Vault.Controllers
 
             var planner = new CommandOptionsCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
 
-            planner.Requirements.Add(new MaximumTravelTimeRequirement(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed)
+            planner.Requirements.Add(new MaximumTravelTimeRequirement
             {
                 MaximumTime = command.ReturnsAt.Value - CurrentServerTime
             });
@@ -591,12 +598,20 @@ namespace TW.Vault.Controllers
 
             foreach (var instruction in instructions)
             {
+                var sourceVillageArmy = villagesById[instruction.SendFrom].ArmyAtHome;
+                var instructionArmy = ((JSON.Army)sourceVillageArmy).BasedOn(instruction.TroopType);
+
+
+                
                 options.Add(new JSON.BattlePlanCommand
                 {
                     LandsAt = command.ReturnsAt,
                     LaunchAt = command.ReturnsAt - instruction.TravelTime,
-                    TravelTime = instruction.TravelTime,
+                    TravelTimeSeconds = (int)instruction.TravelTime.TotalSeconds,
                     TroopType = instruction.TroopType.ToTroopString(),
+                    CommandPopulation = Native.ArmyStats.CalculateTotalPopulation(instructionArmy),
+                    CommandAttackPower = BattleSimulator.TotalAttackPower(instructionArmy),
+                    CommandDefensePower = BattleSimulator.TotalDefensePower(instructionArmy),
 
                     SourceVillageId = instruction.SendFrom,
                     TargetVillageId = instruction.SendTo,

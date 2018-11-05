@@ -31,7 +31,7 @@
         },
 
         mkBtn: function makeButtonHtml(id, label, css_) {
-            return `<button class="btn btn-confirm-yes" id="${id}" ${css_ ? `style="${css_}"` : ''}>${label}</button>`;
+            return `<button class="btn btn-confirm-yes" ${id ? `id="${id}"` : ''} ${css_ ? `style="${css_}"` : ''}>${label}</button>`;
         },
 
         mkTabbedContainer: function makeTabbedContainerHtml(defaultTab, tabs) {
@@ -52,6 +52,51 @@
                     ${containerInfo.map((i) => `<div style="display:${i.tabId == defaultTab ? 'block' : 'none'}" id="${i.tabId}">${i.tab.getContent()}</div>`).join('\n')}
                 </div>
             `.trim();
+        },
+
+        syncProp: function ($input, targetObject, targetProp, onChange) {
+            if (!$input) {
+                return;
+            }
+
+            $input = $($input);
+            const tag = $input[0].tagName.toLowerCase(); 
+            switch (tag) {
+                case 'input':
+                    switch ($input.prop('type')) {
+                        case 'number':
+                        case 'text':
+                            $input.val(targetObject[targetProp] || '');
+                            $input.change(() => {
+                                let val = $input.val();
+                                targetObject[targetProp] = val;
+                                onChange && onChange(val);
+                            })
+                            break;
+
+                        case 'checkbox':
+                            $input.prop('checked', !!targetObject[targetProp]);
+                            $input.change(() => {
+                                let val = $input.prop('checked');
+                                targetObject[targetProp] = val;
+                                onChange && onChange(val);
+                            });
+                            break;
+                    }
+                    break;
+
+                case 'textarea':
+                    $input.val(targetObject[targetProp] || '');
+                    $input.change(() => {
+                        let val = $input.val();
+                        targetObject[targetProp] = val;
+                        onChange && onChange(val);
+                    });
+                    break;
+
+                default:
+                    console.warn('Unhandled tag: ', tag);
+            }
         }
     };
 

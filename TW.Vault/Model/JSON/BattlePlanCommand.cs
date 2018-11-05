@@ -20,8 +20,11 @@ namespace TW.Vault.Model.JSON
 
         public DateTime? LaunchAt { get; set; }
         public DateTime? LandsAt { get; set; }
-        public TimeSpan TravelTime { get; set; }
+        public int TravelTimeSeconds { get; set; }
 
         public String TroopType { get; set; }
+        public int CommandPopulation { get; set; }
+        public int CommandAttackPower { get; set; }
+        public int CommandDefensePower { get; set; }
     }
 }
