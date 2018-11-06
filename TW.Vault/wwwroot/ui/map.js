@@ -460,6 +460,7 @@
 
         let numFakes = data.fakes ? data.fakes.length : 0;
         let numNukes = data.nukes ? data.nukes.length : 0;
+        let numNobles = data.nobles ? data.nobles.length : 0;
         let numPlayers = data.players ? data.players.length : 0;
 
         let numDVs = 0;
@@ -487,12 +488,14 @@
                             <tr>
                                 <th># Fakes</th>
                                 <th># Nukes</th>
+                                <th># Nobles</th>
                                 <th># DVs</th>
                                 <th># Players Sending</th>
                             </tr>
                             <tr>
                                 <td>${numFakes}</td>
                                 <td>${numNukes}</td>
+                                <td>${numNobles}</td>
                                 <td>${numDVs}</td>
                                 <td>${numPlayers}</td>
                             </tr>
@@ -674,61 +677,61 @@
             <div>
                 <h4>Hover Settings</h4>
                 <p>
-                    <input type="checkbox" id="vault-show-commands" ${settings.showCommands ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-commands">
                     <label for="vault-show-commands">Commands</label>
 
-                    <input type="checkbox" id="vault-show-recruits" ${settings.showPossiblyRecruited ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-recruits">
                     <label for="vault-show-recruits">Possible recruits</label>
 
-                    <input type="checkbox" id="vault-show-buildings" ${settings.showBuildings ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-buildings">
                     <label for="vault-show-buildings">Buildings</label>
 
-                    <input type="checkbox" id="vault-show-nukes" ${settings.showNukes ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-nukes">
                     <label for="vault-show-nukes">Nukes required</label>
 
-                    <input type="checkbox" id="vault-show-loyalty" ${settings.showLoyalty ? 'checked' : ''}>
+                    <input type="checkbox" id="vault-show-loyalty">
                     <label for="vault-show-loyalty">Loyalty</label>
                 </p>
                 <h4>Overlay Settings</h4>
                 <p>
                     <p>
-                        <input type="checkbox" id="vault-show-overlay" ${settings.showOverlay ? 'checked' : ''}>
+                        <input type="checkbox" id="vault-show-overlay">
                         <label for="vault-show-overlay">Show overlay</label>
 
                         <label for="vault-overlay-max-age">Ignore intel over </label>
-                        <input id="vault-overlay-max-age" style="text-align:center;width:1.75em" value="${settings.maxIntelAgeDays}">
+                        <input id="vault-overlay-max-age" style="text-align:center;width:1.75em">
                         <label for="vault-overlay-max-age"> days old</label>
 
                         <select id="vault-overlay-highlight-method" style="margin-left:1.5em">
-                            <option value="none" ${settings.overlayHighlights == "none" ? "selected" : ''}>None</option>
-                            <option value="limited" ${settings.overlayHighlights == "limited" ? "selected" : ''}>Has group</option>
-                            <option value="all" ${settings.overlayHighlights == "all" ? "selected" : ''}>Has intel</option>
+                            <option value="none">None</option>
+                            <option value="limited">Has group</option>
+                            <option value="all">Has intel</option>
                         </select>
                         <label for="vault-overlay-highlight-method">Highlights</label>
 
-                        <input type="checkbox" id="vault-overlay-show-nukes" ${settings.overlayShowNukes ? 'checked' : ''}>
+                        <input type="checkbox" id="vault-overlay-show-nukes">
                         <label for="vault-overlay-show-nukes">Nukes</label>
 
-                        <input type="checkbox" id="vault-overlay-show-nobles" ${settings.overlayShowNobles ? 'checked' : ''}>
+                        <input type="checkbox" id="vault-overlay-show-nobles">
                         <label for="vault-overlay-show-nobles">Nobles</label>
 
-                        <input type="checkbox" id="vault-overlay-show-stacks" ${settings.overlayShowStacks ? 'checked' : ''}>
+                        <input type="checkbox" id="vault-overlay-show-stacks">
                         <label for="vault-overlay-show-stacks">Stacks</label>
 
-                        <input type="checkbox" id="vault-overlay-show-wall" ${settings.overlayShowWall ? 'checked' : ''}>
-                        <label for="vault-overlay-show-wall">Wall under level <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center" value="${settings.wallMinLevel}"></label>
+                        <input type="checkbox" id="vault-overlay-show-wall">
+                        <label for="vault-overlay-show-wall">Wall under level <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center"></label>
 
-                        <input type="checkbox" id="vault-overlay-show-returning" ${settings.overlayShowReturning ? 'checked' : ''}>
-                        <label for="vault-overlay-show-returning">Returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center" value="${settings.returningMinPop}">k pop</label>
+                        <input type="checkbox" id="vault-overlay-show-returning">
+                        <label for="vault-overlay-show-returning">Returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center">k pop</label>
                     </p>
 
                     <p>
                         <label for="vault-overlay-stack-min-dv">A small stack is </label>
-                        <input type="text" id="vault-overlay-stack-min-dv" style="width:1.5em;text-align:center" value="${settings.stackMinDV}">
+                        <input type="text" id="vault-overlay-stack-min-dv" style="width:1.5em;text-align:center">
                         <label for="vault-overlay-stack-min-dv">DV</label>, and
 
                         <label for="vault-overlay-stack-max-dv">a big stack is </label>
-                        <input type="text" id="vault-overlay-stack-max-dv" style="width:1.5em;text-align:center" value="${settings.stackMaxDV}">
+                        <input type="text" id="vault-overlay-stack-max-dv" style="width:1.5em;text-align:center">
                         <label for="vault-overlay-stack-max-dv">DV</label>
                     </p>
 
@@ -753,137 +756,36 @@
                 applyMapOverlay();
         }
 
-        $container.find('#vault-show-commands').change(() => {
-            let $checkbox = $container.find('#vault-show-commands');
-            console.log('settings.showCommands = ' + $checkbox.prop('checked'));
-            settings.showCommands = $checkbox.prop('checked');
+        function saveAndRefresh() {
             saveSettings(settings);
-        });
-
-        $container.find('#vault-show-recruits').change(() => {
-            let $checkbox = $container.find('#vault-show-recruits');
-            console.log('settings.showRecruits = ' + $checkbox.prop('checked'));
-            settings.showPossiblyRecruited = $checkbox.prop('checked');
-            saveSettings(settings);
-        });
-
-        $container.find('#vault-show-buildings').change(() => {
-            let $checkbox = $container.find('#vault-show-buildings');
-            console.log('settings.showBuildings = ' + $checkbox.prop('checked'));
-            settings.showBuildings = $checkbox.prop('checked');
-            saveSettings(settings);
-        });
-
-        $container.find('#vault-show-nukes').change(() => {
-            let $checkbox = $container.find('#vault-show-nukes');
-            console.log('settings.showNukes = ' + $checkbox.prop('checked'));
-            settings.showNukes = $checkbox.prop('checked');
-            saveSettings(settings);
-        });
-
-        $container.find('#vault-show-loyalty').change(() => {
-            let $checkbox = $container.find('#vault-show-loyalty');
-            console.log('settings.showLoyalty = ' + $checkbox.prop('checked'));
-            settings.showLoyalty = $checkbox.prop('checked');
-            saveSettings(settings);
-        });
-
-        $container.find('#vault-show-overlay').change(() => {
-            settings.showOverlay = $container.find('#vault-show-overlay').prop('checked');
-            saveSettings(settings);
-
-            if (settings.showOverlay && mapOverlayTags) {
-                applyMapOverlay();
-            } else {
-                $('*[id^=vault_overlay]').remove();
-            }
-        });
-
-        $container.find('#vault-overlay-max-age').change(() => {
-            let max = parseInt($container.find('#vault-overlay-max-age').val());
-            if (isNaN(max) || max <= 0) {
-                return;
-            }
-            settings.maxIntelAgeDays = max;
-            saveSettings(settings);
-
             refreshOverlay();
-        });
+        }
 
-        $container.find('#vault-overlay-highlight-method').change(() => {
-            settings.overlayHighlights = $('#vault-overlay-highlight-method').val();
-            saveSettings(settings);
+        uilib.syncProp('#vault-show-commands', settings, 'showCommands', () => saveSettings(settings));
+        uilib.syncProp('#vault-show-recruits', settings, 'showPossiblyRecruited', () => saveSettings(settings));
+        uilib.syncProp('#vault-show-buildings', settings, 'showBuildings', () => saveSettings(settings));
+        uilib.syncProp('#vault-show-nukes', settings, 'showNukes', () => saveSettings(settings));
+        uilib.syncProp('#vault-show-loyalty', settings, 'showLoyalty', () => saveSettings(settings));
 
-            $('*[id^=vault_overlay]').remove();
-            if (settings.showOverlay && mapOverlayTags)
-                applyMapOverlay();
-        });
+        uilib.syncProp('#vault-show-overlay', settings, 'showOverlay', saveAndRefresh);
+        uilib.syncProp('#vault-overlay-show-nukes', settings, 'overlayShowNukes', saveAndRefresh);
+        uilib.syncProp('#vault-overlay-show-nobles', settings, 'overlayShowNobles', saveAndRefresh);
+        uilib.syncProp('#vault-overlay-show-stacks', settings, 'overlayShowStacks', saveAndRefresh);
+        uilib.syncProp('#vault-overlay-show-wall', settings, 'overlayShowWall', saveAndRefresh);
+        uilib.syncProp('#vault-overlay-show-returning', settings, 'overlayShowReturning', saveAndRefresh);
+        uilib.syncProp('#vault-overlay-highlight-method', settings, 'overlayHighlights', saveAndRefresh);
 
-        $container.find('#vault-overlay-show-nukes').change(() => {
-            let showNukes = $container.find('#vault-overlay-show-nukes').prop('checked');
-            settings.overlayShowNukes = showNukes;
-            saveSettings(settings);
+        function genericNumberFilter(newNumber, oldNumber) {
+            if (typeof newNumber == 'string')
+                newNumber = parseFloat(newNumber);
+            return isNaN(newNumber) || newNumber < 0 ? oldNumber : newNumber;
+        }
 
-            refreshOverlay();
-        });
-
-        $container.find('#vault-overlay-show-nobles').change(() => {
-            let showNobles = $container.find('#vault-overlay-show-nobles').prop('checked');
-            settings.overlayShowNobles = showNobles;
-            saveSettings(settings);
-
-            refreshOverlay();
-        });
-
-        $container.find('#vault-overlay-show-stacks').change(() => {
-            let showStacks = $container.find('#vault-overlay-show-stacks').prop('checked');
-            settings.overlayShowStacks = showStacks;
-            saveSettings(settings);
-
-            refreshOverlay();
-        });
-
-        $container.find('#vault-overlay-stack-min-dv').change(() => {
-            let min = parseFloat($container.find('#vault-overlay-stack-min-dv').val());
-            if (isNaN(min) || min < 0) {
-                return;
-            }
-            settings.stackMinDV = min;
-            saveSettings(settings);
-
-            refreshOverlay();
-        });
-
-        $container.find('#vault-overlay-stack-max-dv').change(() => {
-            let max = parseFloat($container.find('#vault-overlay-stack-max-dv').val());
-            if (isNaN(max) || max < 0) {
-                return;
-            }
-            settings.stackMaxDV = max;
-            saveSettings(settings);
-
-            refreshOverlay();
-        });
-
-        $container.find('#vault-overlay-show-wall').change(() => {
-            let showWall = $container.find('#vault-overlay-show-wall').prop('checked');
-            settings.overlayShowWall = showWall;
-            saveSettings(settings);
-
-            refreshOverlay();
-        });
-
-        $container.find('#vault-overlay-wall-min').change(() => {
-            let wallLevel = parseInt($container.find('#vault-overlay-wall-min').val());
-            if (wallLevel < 0 || wallLevel > 20 || isNaN(wallLevel)) {
-                return;
-            }
-
-            settings.wallMinLevel = wallLevel;
-            saveSettings(settings);
-
-            refreshOverlay();
-        });
+        uilib.syncProp('#vault-overlay-max-age', settings, 'maxIntelAgeDays', saveAndRefresh, genericNumberFilter);
+        uilib.syncProp('#vault-overlay-stack-min-dv', settings, 'stackMinDV', saveAndRefresh, genericNumberFilter);
+        uilib.syncProp('#vault-overlay-stack-max-dv', settings, 'stackMaxDV', saveAndRefresh, genericNumberFilter);
+        uilib.syncProp('#vault-overlay-returning-min-pop', settings, 'returningMinPop', saveAndRefresh, genericNumberFilter);
+        uilib.syncProp('#vault-overlay-wall-min', settings, 'wallMinLevel', saveAndRefresh, genericNumberFilter);
 
         $container.find('#vault-overlay-highlight-tribe').change(() => {
             let selected = $container.find('#vault-overlay-highlight-tribe').val();
@@ -892,25 +794,6 @@
             }
 
             selectedHighlightTribeName = selected;
-            refreshOverlay();
-        });
-
-        $container.find('#vault-overlay-show-returning').change(() => {
-            let showReturning = $container.find('#vault-overlay-show-returning').prop('checked');
-            settings.overlayShowReturning = showReturning;
-            saveSettings(settings);
-            refreshOverlay();
-        });
-
-        $container.find('#vault-overlay-returning-min-pop').change(() => {
-            let minPop = parseFloat($container.find('#vault-overlay-returning-min-pop'));
-            if (minPop < 0 || isNaN(minPop)) {
-                return;
-            }
-
-            settings.returningMinPop = minPop;
-            saveSettings(settings);
-
             refreshOverlay();
         });
     }

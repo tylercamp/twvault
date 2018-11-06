@@ -54,7 +54,9 @@
             `.trim();
         },
 
-        syncProp: function ($input, targetObject, targetProp, onChange) {
+        // onChange(newVal) => null
+        // transformer_(newVal, oldVal) => transformedVal
+        syncProp: function ($input, targetObject, targetProp, onChange, transformer_) {
             if (!$input) {
                 return;
             }
@@ -69,6 +71,9 @@
                             $input.val(targetObject[targetProp] || '');
                             $input.change(() => {
                                 let val = $input.val();
+                                if (transformer_) {
+                                    val = transformer_(val, targetObject[targetProp]);
+                                }
                                 targetObject[targetProp] = val;
                                 onChange && onChange(val);
                             })
@@ -78,6 +83,9 @@
                             $input.prop('checked', !!targetObject[targetProp]);
                             $input.change(() => {
                                 let val = $input.prop('checked');
+                                if (transformer_) {
+                                    val = transformer_(val, targetObject[targetProp]);
+                                }
                                 targetObject[targetProp] = val;
                                 onChange && onChange(val);
                             });
@@ -89,6 +97,23 @@
                     $input.val(targetObject[targetProp] || '');
                     $input.change(() => {
                         let val = $input.val();
+                        if (transformer_) {
+                            val = transformer_(val, targetObject[targetProp]);
+                        }
+                        targetObject[targetProp] = val;
+                        onChange && onChange(val);
+                    });
+                    break;
+
+                case 'select':
+                    if (targetObject[targetProp])
+                        $input.val(targetObject[targetProp]);
+
+                    $input.change(() => {
+                        let val = $input.val();
+                        if (transformer_) {
+                            val = transformer_(val, targetObject[targetProp]);
+                        }
                         targetObject[targetProp] = val;
                         onChange && onChange(val);
                     });

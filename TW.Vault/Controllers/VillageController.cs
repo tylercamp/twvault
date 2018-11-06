@@ -266,6 +266,7 @@ namespace TW.Vault.Controllers
                 jsonData.DVs = new Dictionary<long, int>();
                 jsonData.Fakes = new List<long>();
                 jsonData.Nukes = new List<long>();
+                jsonData.Nobles = new List<long>();
 
                 jsonData.Players = commandsToVillage.Select(c => c.SourcePlayerId).Distinct().ToList();
 
@@ -274,6 +275,7 @@ namespace TW.Vault.Controllers
                     var army = ArmyConvert.ArmyToJson(command.Army);
                     var offensivePop = ArmyStats.CalculateTotalPopulation(army.OfType(JSON.UnitBuild.Offensive));
                     var defensivePop = ArmyStats.CalculateTotalPopulation(army.OfType(JSON.UnitBuild.Defensive));
+                    var isNoble = command.Army.Snob > 0 && command.IsAttack;
 
                     bool isFake = false;
                     bool isNuke = false;
@@ -292,6 +294,9 @@ namespace TW.Vault.Controllers
                         jsonData.Nukes.Add(command.CommandId);
                     else if (defensivePop > 3000 && !command.IsAttack)
                         jsonData.DVs.Add(command.CommandId, defensivePop);
+
+                    if (isNoble)
+                        jsonData.Nobles.Add(command.CommandId);
                 }
             });
 

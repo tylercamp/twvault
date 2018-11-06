@@ -1,7 +1,5 @@
 ﻿function displayMainVaultUI($doc) {
 
-    //# REQUIRE ui/vault/ui-lib.js
-
     //# REQUIRE ui/vault/admin.js
     //# REQUIRE ui/vault/sms.js
     //# REQUIRE ui/vault/terms.js

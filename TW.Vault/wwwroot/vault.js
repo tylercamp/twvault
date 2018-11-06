@@ -19,6 +19,7 @@
     //# REQUIRE pages/view-report.js
 
     /*** UI ***/
+    //# REQUIRE ui/ui-lib.js
     //# REQUIRE ui/map.js
     //# REQUIRE ui/vault.js
     //# REQUIRE ui/tag-incomings.js
