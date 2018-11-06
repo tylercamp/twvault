@@ -14,18 +14,21 @@ namespace TW.Vault.Controllers
     //  (Don't rely on user's UTC time on their machine, TW server time can have variable
     //  offsets from UTC time depending on server)
     [Produces("application/json")]
-    [Route("api/{worldName}/Time")]
+    [Route("api/{worldName}/Server")]
     [EnableCors("AllOrigins")]
-    public class TimeController : BaseController
+    public class ServerController : BaseController
     {
-        public TimeController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public ServerController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
         }
 
-        [HttpGet]
+        [HttpGet("utc")]
         public IActionResult GetCurrentUtcTime() => Ok(new { UtcTime = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds() });
 
-        [HttpGet("server")]
+        [HttpGet("time")]
         public IActionResult GetCurrentServerTime() => Ok(new { TwTime = CurrentServerTime });
+
+        [HttpGet("settings")]
+        public IActionResult GetCurrentServerSettings() => Ok(CurrentWorldSettings);
     }
 }

@@ -10,6 +10,7 @@ var lib = (() => {
     let twstats = getTwTroopStats();
     let localStoragePrefix = 'vls-';
     let cookiePrefix = 'vc-';
+    let serverSettings = null;
 
     var storedScriptHost = null;
 
@@ -17,7 +18,7 @@ var lib = (() => {
     var authUserId = null;
     var authTribeId = null;
     var wasPageHandled = false;
-    var utcTimeOffset = -1;
+    var utcTimeOffset = null;
     var isUnloading = false;
 
     window.addEventListener('unload', () => isUnloading = true);
@@ -55,7 +56,8 @@ var lib = (() => {
         messages: {
             TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again. Any uploads will continue where they left off.',
             IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\".",
-            FILTER_APPLIED: (type) => `You have filters set for your ${type}, please remove them before uploading.`
+            FILTER_APPLIED: (type) => `You have filters set for your ${type}, please remove them before uploading.`,
+            GENERIC: 'An error occurred...'
         },
 
         errorCodes: {
@@ -383,6 +385,10 @@ var lib = (() => {
 
         getCurrentServer: function getCurrentServer() {
             return location.hostname.split('.')[0];
+        },
+
+        getCurrentServerSettings: function getCurrentServerSettings() {
+            return serverSettings;
         },
 
         //  Make a local tribalwars server link, using sitter tag '&t=NNN'
@@ -795,13 +801,28 @@ var lib = (() => {
                 authUserId = playerId;
                 authTribeId = tribeId;
 
-                $.get(lib.makeApiUrl('time'))
+                function checkDone() {
+                    if (utcTimeOffset != null && serverSettings != null) {
+                        lib.twstats._updateWithSettings(
+                            serverSettings.archersEnabled,
+                            serverSettings.militiaEnabled,
+                            serverSettings.paladinEnabled
+                        );
+                        callback();
+                    }
+                }
+
+                $.get(lib.makeApiUrl('server/utc'))
                     .done((data) => {
                         let serverUtcTime = data.utcTime;
-                        //console.log('serverUtcTime = ' + serverUtcTime);
                         utcTimeOffset = serverUtcTime - Date.now();
-                        //console.log('utcTimeOffset = ' + utcTimeOffset);
-                        callback();
+                        checkDone();
+                    });
+
+                $.get(lib.makeApiUrl('server/settings'))
+                    .done((data) => {
+                        serverSettings = data;
+                        checkDone();
                     });
             });
         }

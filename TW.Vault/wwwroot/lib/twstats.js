@@ -2,6 +2,41 @@
 
     var troopStats = {
 
+        _updateWithSettings: function (archersEnabled, militiaEnabled, paladinEnabled) {
+            let removedTypes = [];
+            troopStats.unitTypes.forEach((type) => {
+                switch (type.canonicalName) {
+                    case 'militia':
+                        if (!militiaEnabled)
+                            removedTypes.push(type);
+                        break;
+
+                    case 'knight':
+                        if (!paladinEnabled)
+                            removedTypes.push(type);
+                        break;
+
+                    case 'archer':
+                    case 'marcher':
+                        if (!archersEnabled)
+                            removedTypes.push(type);
+                        break;
+                }
+            });
+
+            removedTypes.forEach((type) => {
+                troopStats.unitTypes.splice(troopStats.unitTypes.indexOf(type), 1);
+            });
+
+            troopStats.archersEnabled = archersEnabled;
+            troopStats.militiaEnabled = militiaEnabled;
+            troopStats.paladinEnabled = paladinEnabled;
+        },
+
+        archersEnabled: true,
+        militiaEnabled: true,
+        paladinEnabled: true,
+
         getUnit: function getUnitByCanonicalName(canonicalName) {
             var result = null;
 
