@@ -56,7 +56,7 @@ namespace TW.Testing
             int testWallLevel = 15;
 
             var simulator = new BattleSimulator();
-            var battleResults = simulator.SimulateAttack(attackingArmy, defendingArmy, testWallLevel);
+            var battleResults = simulator.SimulateAttackWithoutArchers(attackingArmy, defendingArmy, testWallLevel);
 
             Console.WriteLine("Attacker results:");
             PrintArmy(attackingArmy, battleResults.AttackingArmy);
@@ -71,7 +71,7 @@ namespace TW.Testing
             int wallLevel = testWallLevel;
             while (true)
             {
-                var partialResults = simulator.SimulateAttack(attackingArmy, defendingArmy, wallLevel);
+                var partialResults = simulator.SimulateAttackWithoutArchers(attackingArmy, defendingArmy, wallLevel);
                 wallLevel = partialResults.NewWallLevel;
                 defendingArmy = partialResults.DefendingArmy;
                 ++numNukes;

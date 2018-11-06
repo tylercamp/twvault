@@ -211,7 +211,24 @@
             return '<b>No data is available</b>';
         }
 
-        let troopNames = ['spear', 'sword', 'axe', 'spy', 'light', 'heavy', 'ram', 'catapult', 'snob', 'knight'];
+        let troopNames = [
+            'spear',
+            'sword',
+            'axe'
+        ];
+
+        if (lib.twstats.archersEnabled)
+            troopNames.push('archer');
+        
+        troopNames.push('spy', 'light');
+
+        if (lib.twstats.archersEnabled)
+            troopNames.push('marcher');
+
+        troopNames.push('heavy', 'ram', 'catapult', 'snob');
+
+        if (lib.twstats.paladinEnabled)
+            troopNames.push('knight');
 
         //  TODO - Make this work with archers
         return `

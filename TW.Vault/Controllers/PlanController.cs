@@ -144,7 +144,7 @@ namespace TW.Vault.Controllers
                     continue;
 
                 var backtimedArmy = (JSON.Army)backtimedCommand.Army;
-                var battleResult = battleSimulator.SimulateAttack(command.Army, backtimedArmy, 20);
+                var battleResult = battleSimulator.SimulateAttack(command.Army, backtimedArmy, 20, CurrentWorldSettings.ArchersEnabled);
                 var originalPopulation = (float)Model.Native.ArmyStats.CalculateTotalPopulation(backtimedArmy, offensiveTypes);
                 var newPopulation = (float)Model.Native.ArmyStats.CalculateTotalPopulation(battleResult.DefendingArmy, offensiveTypes);
 

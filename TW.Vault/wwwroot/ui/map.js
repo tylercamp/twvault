@@ -480,8 +480,7 @@
                     numNukes++;
             }
         });
-
-        //  NOTE - This assumes no archers!
+        
         $villageInfoContainer.html(`
                     ${ !settings.showCommands ? '' : `
                         <table class='vis' style="width:100%">
@@ -509,12 +508,20 @@
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_spear.png" title="" alt="" class=""></th>
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_sword.png" title="" alt="" class=""></th>
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_axe.png" title="" alt="" class=""></th>
+                            ${ !lib.twstats.archersEnabled ? '' : `
+                                <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_archer.png" title="" alt="" class=""></th>
+                            ` }
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_spy.png" title="" alt="" class=""></th>
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_light.png" title="" alt="" class=""></th>
+                            ${ !lib.twstats.archersEnabled ? '' : `
+                                <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_marcher.png" title="" alt="" class=""></th>
+                            ` }
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_heavy.png" title="" alt="" class=""></th>
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_ram.png" title="" alt="" class=""></th>
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_catapult.png" title="" alt="" class=""></th>
-                            <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_knight.png" title="" alt="" class=""></th>
+                            ${ !lib.twstats.paladinEnabled ? '' : `
+                                <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_knight.png" title="" alt="" class=""></th>
+                            ` }
                             <th><img src="https://dsen.innogamescdn.com/8.136/37951/graphic/unit/unit_snob.png" title="" alt="" class=""></th>
                         </tr>
                         ${ !data.atHomeArmy ? '' : `
@@ -658,12 +665,17 @@
         counts.push(troops['spear']);
         counts.push(troops['sword']);
         counts.push(troops['axe']);
+        if (lib.twstats.archersEnabled)
+            counts.push(troops['archer']);
         counts.push(troops['spy']);
         counts.push(troops['light']);
+        if (lib.twstats.archersEnabled)
+            counts.push(troops['marcher']);
         counts.push(troops['heavy']);
         counts.push(troops['ram']);
         counts.push(troops['catapult']);
-        counts.push(troops['knight']);
+        if (lib.twstats.paladinEnabled)
+            counts.push(troops['knight']);
         counts.push(troops['snob']);
 
         var parts = [];

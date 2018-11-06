@@ -125,7 +125,15 @@ namespace TW.Vault.Features.Simulation
                 return wallLevel;
         }
 
-        public BattleResult SimulateAttack(Army attackingArmy, Army defendingArmy, int wallLevel, int moralePercent = 100)
+        public BattleResult SimulateAttack(Army attackingArmy, Army defendingArmy, int wallLevel, bool useArchers, int moralePercent = 100)
+        {
+            if (useArchers)
+                return SimulateAttackWithArchers(attackingArmy, defendingArmy, wallLevel, moralePercent);
+            else
+                return SimulateAttackWithoutArchers(attackingArmy, defendingArmy, wallLevel, moralePercent);
+        }
+
+        public BattleResult SimulateAttackWithoutArchers(Army attackingArmy, Army defendingArmy, int wallLevel, int moralePercent = 100)
         {
             float morale = moralePercent / 100.0f;
 
@@ -247,14 +255,14 @@ namespace TW.Vault.Features.Simulation
             public float LastNukeLossesPercent;
         }
 
-        public NukeEstimationResult EstimateRequiredNukes(Army defendingArmy, int wallLevel, int moralePercent)
+        public NukeEstimationResult EstimateRequiredNukes(Army defendingArmy, int wallLevel, bool useArchers, int moralePercent)
         {
             var activeDefendingArmy = new Army(defendingArmy);
             int numNukes = 0;
             float lastNukeLossRatio = 0;
             while (!IsArmyEmpty(activeDefendingArmy) && numNukes < 50)
             {
-                var battleResult = SimulateAttack(DefaultNukeArmy, activeDefendingArmy, wallLevel, moralePercent);
+                var battleResult = SimulateAttack(DefaultNukeArmy, activeDefendingArmy, wallLevel, useArchers, moralePercent);
                 wallLevel = battleResult.NewWallLevel;
                 activeDefendingArmy = battleResult.DefendingArmy;
                 ++numNukes;

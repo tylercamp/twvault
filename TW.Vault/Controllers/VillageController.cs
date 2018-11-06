@@ -185,9 +185,7 @@ namespace TW.Vault.Controllers
                     if (currentVillage.CurrentBuilding != null)
                         wallLevel += new ConstructionCalculator().CalculateLevelsInTimeSpan(BuildingType.Wall, hqLevel, wallLevel, CurrentServerTime - currentVillage.CurrentBuilding.LastUpdated.Value);
 
-                    var nukeEstimation = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, morale ?? 100);
-                    if (CurrentWorldSettings.ArchersEnabled)
-                        throw new NotImplementedException(); // Need to add nuke estimate with archers whenever we get to it
+                    var nukeEstimation = battleSimulator.EstimateRequiredNukes(jsonData.StationedArmy, wallLevel, CurrentWorldSettings.ArchersEnabled, morale ?? 100);
 
                     jsonData.NukesRequired = nukeEstimation.NukesRequired;
                     jsonData.LastNukeLossPercent = (int)(nukeEstimation.LastNukeLossesPercent);
