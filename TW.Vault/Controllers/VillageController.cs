@@ -562,6 +562,9 @@ namespace TW.Vault.Controllers
                     tag.WallLevel = data.CurrentVillage.CurrentBuilding?.Wall;
                     tag.WallLevelSeenAt = data.CurrentVillage.CurrentBuilding?.LastUpdated;
 
+                    tag.WatchtowerLevel = data.CurrentVillage.CurrentBuilding?.Watchtower;
+                    tag.WatchtowerSeenAt = data.CurrentVillage.CurrentBuilding?.LastUpdated;
+
                     tag.ReturningTroopsPopulation = commandsByVillageId[data.CurrentVillage.VillageId].Sum((army) => ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(army)));
 
                     if (village.ArmyStationed?.LastUpdated != null)

@@ -64,7 +64,7 @@ namespace TW.Vault.Model.Native
             { BuildingType.Stone,       TimeSpan.FromSeconds(450) },
             { BuildingType.Storage,     TimeSpan.FromSeconds(510) },
             { BuildingType.Wall,        TimeSpan.FromSeconds(1800) },
-            { BuildingType.Watchtower,  TimeSpan.FromSeconds(0) }, // left at 0 since watchtowers disabled on en100
+            { BuildingType.Watchtower,  TimeSpan.FromSeconds(8800) },
             { BuildingType.Wood,        TimeSpan.FromSeconds(450) },
         };
 

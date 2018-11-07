@@ -190,9 +190,10 @@ function makeAdminUsersInterface($container, adminTab) {
         if (!username)
             return;
 
+        let isName = !!username.match(/[^\d]/);
         lib.postApi('admin/keys', {
-            playerId: isNaN(parseInt(username)) ? null : parseInt(username),
-            playerName: isNaN(parseInt(username)) ? username : null,
+            playerId: isName ? null : parseInt(username),
+            playerName: isName ? username : null,
             newUserIsAdmin: false
         })
             .done((data) => {

@@ -39,7 +39,8 @@
         NUKE: 'nuke',
         STACKED: 'stacked',
         WALL: 'wall',
-        RETURNING_TROOPS: 'returning'
+        RETURNING_TROOPS: 'returning',
+        WATCHTOWER: 'watchtower'
     };
 
     let tagIconTemplates = {};
@@ -70,6 +71,12 @@
     tagIconTemplates[TAG_TYPES.RETURNING_TROOPS] = `
         <span class="marker" style="background-color:white">
             <img src="https://dsen.innogamescdn.com/8.143/38747/graphic/command/return_attack_large.png" style="width:18px;height:18px;">
+        </span>
+    `.trim();
+
+    tagIconTemplates[TAG_TYPES.WATCHTOWER] = `
+        <span class="marker" style="background-color:white">
+            <img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/watchtower.png" style="width:18px;height:18px;">
         </span>
     `.trim();
     
@@ -321,7 +328,8 @@
                     (settings.overlayShowNukes  && isRecentIntel(tag.nukeSeenAt)) ||
                     (settings.overlayShowNobles && isRecentIntel(tag.noblesSeenAt)) ||
                     (settings.overlayShowWall && isRecentIntel(tag.wallLevelSeenAt) && tag.wallLevel < settings.wallMinLevel) ||
-                    (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop * 1000)
+                    (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop * 1000) ||
+                    (lib.getCurrentServerSettings().watchtowerEnabled && isRecentIntel(tag.watchtowerSeenAt) && tag.watchtowerLevel > settings.watchtowerMinLevel)
                 );
         }
     }
@@ -379,6 +387,11 @@
             let $returningIcon = $(tagIconTemplates[TAG_TYPES.RETURNING_TROOPS]);
             $returningIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.RETURNING_TROOPS}_${villageId}`);
             result.push($returningIcon);
+        }
+        if (lib.getCurrentServerSettings().watchtowerEnabled && settings.overlayShowWatchtower && isRecentIntel(tag.watchtowerSeenAt) && tag.watchtowerLevel > settings.watchtowerMinLevel) {
+            let $watchtowerIcon = $(tagIconTemplates[TAG_TYPES.WATCHTOWER]);
+            $watchtowerIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.WATCHTOWER}_${villageId}`);
+            result.push($watchtowerIcon);
         }
 
         return result;
@@ -589,6 +602,9 @@
                                 <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/smith.png" title="Smithy" alt="" class="bmain_list_img"></th>
                                 <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/farm.png" title="Farm" alt="" class="bmain_list_img"></th>
                                 <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/wall.png" title="Wall" alt="" class="bmain_list_img"></th>
+                                ${ !lib.getCurrentServerSettings().watchtowerEnabled ? '' : `
+                                    <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/watchtower.png" title="Watchtower" alt="" class="bmain_list_img"></th>
+                                ` }
                             </tr>
                             <tr>
                                 <td>Latest levels</td>
@@ -597,6 +613,9 @@
                                 <td>${data.lastBuildings ? data.lastBuildings['smith'] || '-' : '' }</td>
                                 <td>${data.lastBuildings ? data.lastBuildings['farm'] || '-' : '' }</td>
                                 <td>${data.lastBuildings ? data.lastBuildings['wall'] || '-' : '' }</td>
+                                ${ !lib.getCurrentServerSettings().watchtowerEnabled ? '' : `
+                                    <td>${data.lastBuildings ? data.lastBuildings['watchtower'] || '-' : ''}</td>
+                                ` }
                             </tr>
                             <tr>
                                 <td>Possible levels</td>
@@ -605,6 +624,9 @@
                                 <td>${data.possibleBuildings ? data.possibleBuildings['smith'] || '-' : ''}</td>
                                 <td>${data.possibleBuildings ? data.possibleBuildings['farm'] || '-' : ''}</td>
                                 <td>${data.possibleBuildings ? data.possibleBuildings['wall'] || '-' : '' }</td>
+                                ${ !lib.getCurrentServerSettings().watchtowerEnabled ? '' : `
+                                    <td>${data.possibleBuildings ? data.possibleBuildings['watchtower'] || '-' : ''}</td>
+                                ` }
                             </tr>
                         </table>
                         `}
@@ -735,6 +757,11 @@
 
                         <input type="checkbox" id="vault-overlay-show-returning">
                         <label for="vault-overlay-show-returning">Returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center">k pop</label>
+
+                        ${ !lib.getCurrentServerSettings().watchtowerEnabled ? '' : `
+                            <input type="checkbox" id="vault-overlay-show-watchtower">
+                            <label for="vault-overlay-show-watchtower">Watchtower over level <input id="vault-overlay-watchtower-min" type="text" style="width:1.5em;text-align:center;"></label>
+                        ` }
                     </p>
 
                     <p>
@@ -786,6 +813,7 @@
         uilib.syncProp('#vault-overlay-show-wall', settings, 'overlayShowWall', saveAndRefresh);
         uilib.syncProp('#vault-overlay-show-returning', settings, 'overlayShowReturning', saveAndRefresh);
         uilib.syncProp('#vault-overlay-highlight-method', settings, 'overlayHighlights', saveAndRefresh);
+        uilib.syncProp('#vault-overlay-show-watchtower', settings, 'overlayShowWatchtower', saveAndRefresh);
 
         function genericNumberFilter(newNumber, oldNumber) {
             if (typeof newNumber == 'string')
@@ -798,6 +826,7 @@
         uilib.syncProp('#vault-overlay-stack-max-dv', settings, 'stackMaxDV', saveAndRefresh, genericNumberFilter);
         uilib.syncProp('#vault-overlay-returning-min-pop', settings, 'returningMinPop', saveAndRefresh, genericNumberFilter);
         uilib.syncProp('#vault-overlay-wall-min', settings, 'wallMinLevel', saveAndRefresh, genericNumberFilter);
+        uilib.syncProp('#vault-overlay-watchtower-min', settings, 'watchtowerMinLevel', saveAndRefresh, genericNumberFilter);
 
         $container.find('#vault-overlay-highlight-tribe').change(() => {
             let selected = $container.find('#vault-overlay-highlight-tribe').val();
@@ -825,10 +854,12 @@
             overlayShowStacks: true,
             overlayShowWall: true,
             overlayShowReturning: true,
+            overlayShowWatchtower: true,
             stackMinDV: 1,
             stackMaxDV: 8,
             wallMinLevel: 15,
-            returningMinPop: 5
+            returningMinPop: 5,
+            watchtowerMinLevel: 10
         });
 
         saveSettings(settings);

@@ -378,9 +378,9 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = "You cannot change admin status of your own key." });
             }
 
-            if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System)
+            if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System && requestedUser.AdminAuthToken != CurrentUser.AuthToken)
             {
-                return BadRequest(new { error = "You cannot change admin status of an admin that you have not created key." });
+                return BadRequest(new { error = "You cannot change admin status of a user that you have not created." });
             }
 
             if (updateRequest.HasAdmin)

@@ -68,7 +68,11 @@
                     switch ($input.prop('type')) {
                         case 'number':
                         case 'text':
-                            $input.val(targetObject[targetProp] || '');
+                            if (typeof targetObject[targetProp] != 'undefined')
+                                $input.val(targetObject[targetProp]);
+                            else
+                                $input.val('');
+
                             $input.change(() => {
                                 let val = $input.val();
                                 if (transformer_) {
