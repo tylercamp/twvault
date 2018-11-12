@@ -129,9 +129,9 @@ function makeAdminLogTab() {
             <div style="max-height:500px; overflow-y:auto">
                 <table id="admin-logs-table" style="width:100%;font-size:11px">
                     <tr>
-                        <th style="width:200px">Admin</th>
+                        <th style="width:150px">Admin</th>
                         <th>Event</th>
-                        <th>Time</th>
+                        <th style="width:150px">Time</th>
                     </tr>
                 </table>
             </div>

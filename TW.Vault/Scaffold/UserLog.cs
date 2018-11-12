@@ -18,6 +18,7 @@ namespace TW.Vault.Scaffold
         public Guid? AdminAuthToken { get; set; }
         public long? AdminPlayerId { get; set; }
         public string OperationType { get; set; }
+        public bool IsReadOnly { get; set; }
         public long? TxId { get; set; }
 
         public World World { get; set; }

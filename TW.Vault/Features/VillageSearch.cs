@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TW.Vault.Model;
 
 namespace TW.Vault.Features
 {
@@ -14,6 +15,9 @@ namespace TW.Vault.Features
             public List<String> PlayerNames;
             public List<String> TribeNamesOrTags;
             public List<String> Continents;
+            public Coordinate? MinCoord, MaxCoord;
+            public Coordinate? CenterCoord;
+            public float? MaxDistance;
         }
 
         public static async Task<String> ListCoords(Scaffold.VaultContext context, Query query, bool randomize = true)
@@ -52,6 +56,26 @@ namespace TW.Vault.Features
                         coord.X >= xmin && coord.X < xmin + 100 &&
                         coord.Y >= ymin && coord.Y < ymin + 100;
                 })).ToList();
+            }
+
+            if (query.MinCoord != null)
+            {
+                var minCoord = query.MinCoord.Value;
+                villageCoords = villageCoords.Where(coord => coord.X >= minCoord.X && coord.Y >= minCoord.Y).ToList();
+            }
+
+            if (query.MaxCoord != null)
+            {
+                var maxCoord = query.MaxCoord.Value;
+                villageCoords = villageCoords.Where(coord => coord.X <= maxCoord.X && coord.Y <= maxCoord.Y).ToList();
+            }
+
+            if (query.CenterCoord != null && query.MaxDistance != null)
+            {
+                var centerCoord = query.CenterCoord.Value;
+                var maxDistance = query.MaxDistance.Value;
+
+                villageCoords = villageCoords.Where(coord => centerCoord.DistanceTo(coord.X, coord.Y) <= maxDistance).ToList();
             }
 
             if (randomize)

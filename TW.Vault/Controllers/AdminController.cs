@@ -42,7 +42,7 @@ namespace TW.Vault.Controllers
                 return Unauthorized();
             }
 
-            var userLogs = await context.UserLog.FromWorld(CurrentWorldId).Include(l => l.Tx).OrderByDescending(l => l.TransactionTime).ToListAsync();
+            var userLogs = await context.UserLog.FromWorld(CurrentWorldId).OrderByDescending(l => l.Id).Include(l => l.Tx).ToListAsync();
             var playerIds = userLogs
                 .Select(l => l.PlayerId)
                 .Concat(userLogs.Where(l => l.AdminPlayerId != null)
@@ -65,7 +65,7 @@ namespace TW.Vault.Controllers
             var playerNamesById = playerIds.ToDictionary(pid => pid, pid => WebUtility.UrlDecode(playerNames.SingleOrDefault(n => n.PlayerId == pid)?.PlayerName));
             var userNamesById = userNames.ToDictionary(u => u.Uid, u => WebUtility.UrlDecode(u.PlayerName));
 
-            var logsByPlayerId = playerIds.ToDictionary(pid => pid, pid => userLogs.Where(l => l.PlayerId == pid).ToList());
+            var logsByKey = userLogs.Select(l => l.AuthToken).Distinct().ToDictionary(t => t, t => userLogs.Where(l => l.AuthToken == t).ToList());
 
             var result = new List<JSON.UserLog>();
             foreach (var log in userLogs)
@@ -82,9 +82,9 @@ namespace TW.Vault.Controllers
                     json.AdminUserName = log.AdminPlayerId == null ? "System" : (playerNamesById[log.AdminPlayerId.Value] ?? "Unknown");
                 }
 
-                var logsForPlayer = logsByPlayerId[log.PlayerId].OrderBy(l => l.Tx?.OccurredAt ?? l.TransactionTime).ToList();
-                int logIdx = logsForPlayer.IndexOf(log);
-                var previousLog = logIdx > 0 ? logsForPlayer[logIdx - 1] : null;
+                var logsForKey = logsByKey[log.AuthToken].OrderBy(l => l.Id).ToList();
+                int logIdx = logsForKey.IndexOf(log);
+                var previousLog = logIdx > 0 ? logsForKey[logIdx - 1] : null;
 
                 var playerName = playerNamesById[log.PlayerId] ?? "Unknown";
 
@@ -95,31 +95,60 @@ namespace TW.Vault.Controllers
                         break;
 
                     case "UPDATE":
-                        if (previousLog == null)
-                        {
-                            json.EventDescription = $"Updated {playerName} (unknown change)";
-                        }
-                        else
+                        var description = new List<String>();
+
+                        if (previousLog != null)
                         {
                             if (log.PermissionsLevel != previousLog.PermissionsLevel)
                             {
                                 if (log.PermissionsLevel < (short)Security.PermissionLevel.Admin)
-                                    json.EventDescription = $"Revoked admin priveleges for {playerName}";
+                                    description.Add($"Revoked admin priveleges for {playerName}");
                                 else
-                                    json.EventDescription = $"Gave admin priveleges to {playerName}";
+                                    description.Add($"Gave admin priveleges to {playerName}");
                             }
-                            else if (log.Enabled != previousLog.Enabled)
+
+                            if (log.Enabled != previousLog.Enabled)
                             {
                                 if (log.Enabled)
-                                    json.EventDescription = $"Re-enabled key for {playerName}";
+                                    description.Add($"Re-enabled key for {playerName}");
                                 else
-                                    json.EventDescription = $"Disabled key for {playerName}";
+                                    description.Add($"Disabled key for {playerName}");
                             }
-                            else
+
+                            if (log.PlayerId != previousLog.PlayerId)
                             {
-                                json.EventDescription = $"Updated {playerName} (unknown change)";
+                                description.Add($"Changed key owner from {playerNamesById[previousLog.PlayerId]} to {playerNamesById[log.PlayerId]}");
+                            }
+
+                            if (log.IsReadOnly != previousLog.IsReadOnly)
+                            {
+                                if (log.IsReadOnly)
+                                    description.Add($"Set key for {playerNamesById[log.PlayerId]} as read-only");
+                                else
+                                    description.Add($"Key for {playerNamesById[log.PlayerId]} no longer read-only");
+                            }
+
+                            if (log.WorldId != previousLog.WorldId)
+                            {
+                                description.Add($"Changed server assigned for {playerNamesById[log.PlayerId]}");
+                            }
+
+                            if (log.AdminAuthToken != previousLog.AdminAuthToken)
+                            {
+                                if (previousLog.AdminAuthToken != null && log.AdminAuthToken == null)
+                                    description.Add($"Cleared administrator of {playerNamesById[previousLog.PlayerId]}");
+                                else if (previousLog.AdminAuthToken == null && log.AdminAuthToken != null)
+                                    description.Add($"Set {playerNamesById[log.AdminPlayerId.Value]} as administrator for {playerNamesById[log.PlayerId]}");
+                                else if (description.Count == 0)
+                                    description.Add($"Changed administrator of {playerNamesById[log.PlayerId]} from {playerNamesById[previousLog.AdminPlayerId.Value]} to {playerNamesById[log.AdminPlayerId.Value]}");
                             }
                         }
+
+                        if (description.Count == 0)
+                            json.EventDescription = $"Updated {playerName} (unknown change)";
+                        else
+                            json.EventDescription = String.Join("; ", description);
+
                         break;
 
                     case "DELETE":

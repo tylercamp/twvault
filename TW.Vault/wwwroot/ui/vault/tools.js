@@ -39,22 +39,64 @@ function makeFakeScriptTab() {
                 width: '100%'
             })
 
-            $container.find('#fake-make-script').click(() => {
+            $container.find('input[id^=fake-min], input[id^=fake-max], input[id^=fake-dist]').css({
+                width: '2em',
+                'text-align': 'center'
+            });
+
+            function makeCoordsQueryString() {
                 let players = $container.find('#fake-target-player').val().trim();
                 let tribes = $container.find('#fake-target-tribe').val().trim();
                 let continents = $container.find('#fake-target-continents').val().trim();
+                let minCoord = {
+                    x: $container.find('#fake-min-x').val().trim(),
+                    y: $container.find('#fake-min-y').val().trim()
+                };
+                let maxCoord = {
+                    x: $container.find('#fake-max-x').val().trim(),
+                    y: $container.find('#fake-max-y').val().trim()
+                };
+                let maxDist = {
+                    x: $container.find('#fake-dist-x').val().trim(),
+                    y: $container.find('#fake-dist-y').val().trim(),
+                    dist: $container.find('#fake-dist-max').val().trim()
+                };
 
-                let link = lib.makeVaultUrl(`script/fake.js?server=${window.location.hostname}`);
+                if (minCoord.x) minCoord.x = parseInt(minCoord.x);
+                if (minCoord.y) minCoord.y = parseInt(minCoord.y);
+                if (maxCoord.x) maxCoord.x = parseInt(maxCoord.x);
+                if (maxCoord.y) maxCoord.y = parseInt(maxCoord.y);
+                if (maxDist.x) maxDist.x = parseInt(maxDist.x);
+                if (maxDist.y) maxDist.y = parseInt(maxDist.y);
+                if (maxDist.dist) maxDist.dist = parseFloat(maxDist.dist);
 
-                if (players.length) {
-                    link += `&player=${encodeURIComponent(players)}`;
+                let query = [];
+                query.push(`player=${encodeURIComponent(players)}`);
+                query.push(`&tribe=${encodeURIComponent(tribes)}`);
+                query.push(`&k=${encodeURIComponent(continents)}`);
+
+                if (minCoord.x || minCoord.y) {
+                    if (!minCoord.x) minCoord.x = 0;
+                    if (!minCoord.y) minCoord.y = 0;
+                    query.push(`&min=${encodeURIComponent(minCoord.x + '|' + minCoord.y)}`);
                 }
-                if (tribes.length) {
-                    link += `&tribe=${encodeURIComponent(tribes)}`;
+
+                if (maxCoord.x || maxCoord.y) {
+                    if (!maxCoord.x) maxCoord.x = 1000;
+                    if (!maxCoord.y) maxCoord.y = 1000;
+                    query.push(`&max=${encodeURIComponent(maxCoord.x + '|' + maxCoord.y)}`);
                 }
-                if (continents.length) {
-                    link += `&k=${encodeURIComponent(continents)}`;
+
+                if (maxDist.x && maxDist.y && maxDist.dist) {
+                    query.push(`&center=${encodeURIComponent(maxDist.x + '|' + maxDist.y + '|' + maxDist.dist)}`);
                 }
+
+                return query.join('&');
+            }
+
+            $container.find('#fake-make-script').click(() => {
+
+                let link = lib.makeVaultUrl(`script/fake.js?server=${window.location.hostname}&${makeCoordsQueryString()}`);
 
                 let script = `
 javascript:
@@ -74,14 +116,7 @@ $.getScript("${link}");
             });
 
             $container.find('#fake-get-coords').click(() => {
-                let players = $container.find('#fake-target-player').val().trim();
-                let tribes = $container.find('#fake-target-tribe').val().trim();
-                let continents = $container.find('#fake-target-continents').val().trim();
-
-                let link = 'village/coords';
-                link += `?player=${encodeURIComponent(players)}`;
-                link += `&tribe=${encodeURIComponent(tribes)}`;
-                link += `&k=${encodeURIComponent(continents)}`;
+                let link = 'village/coords?' + makeCoordsQueryString();
 
                 lib.getApi(link)
                     .done((data) => {
@@ -124,6 +159,30 @@ $.getScript("${link}");
                         </td>
                         <td>
                             <input id="fake-target-continents" type="text" placeholder="44,45,etc.">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>Min Coord</label>
+                        </td>
+                        <td>
+                            <input id="fake-min-x" placeholder="X">|<input id="fake-min-y" placeholder="Y">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>Max Coord</label>
+                        </td>
+                        <td>
+                            <input id="fake-max-x" placeholder="X">|<input id="fake-max-y" placeholder="Y">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>Dist From Center</label>
+                        </td>
+                        <td>
+                            <input id="fake-dist-max"> fields from <input id="fake-dist-x" placeholder="X">|<input id="fake-dist-y" placeholder="Y">
                         </td>
                     </tr>
                 </table>

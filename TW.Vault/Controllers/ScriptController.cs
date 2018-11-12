@@ -42,11 +42,15 @@ namespace TW.Vault.Controllers
             var tribes = TrimAndFilter(Request.Query["tribe"].ToString().Split(',')).ToList();
             var continents = TrimAndFilter(Request.Query["k"].ToString().Split(',')).Where(k => k.Length == 2).ToList();
             var server = Request.Query["server"].ToString();
+            var minCoord = Request.Query["min"].ToString();
+            var maxCoord = Request.Query["max"].ToString();
+            var center = Request.Query["center"].ToString();
 
             players = players.Select(WebUtility.UrlEncode).ToList();
             tribes = tribes.Select(WebUtility.UrlEncode).ToList();
 
             var scriptId = $"player_{string.Join('_', players)}__tribe_{string.Join('_',tribes)}__k_{string.Join('_',continents)}__server_{server}";
+            scriptId += $"__min_{minCoord}__max_{maxCoord}__center_{center}";
 
             scriptId = Regex.Replace(scriptId, @"[^\w\d_]", "_");
 
@@ -60,13 +64,34 @@ namespace TW.Vault.Controllers
                 if (worldId == null)
                     return null;
 
-                var coordString = await Features.VillageSearch.ListCoords(context, new Features.VillageSearch.Query
+                var query = new Features.VillageSearch.Query
                 {
                     WorldId = worldId.Value,
                     PlayerNames = players,
                     TribeNamesOrTags = tribes,
                     Continents = continents
-                });
+                };
+
+                if (!string.IsNullOrWhiteSpace(minCoord))
+                {
+                    var minParts = minCoord.Split('|');
+                    query.MinCoord = new Model.Coordinate { X = int.Parse(minParts[0]), Y = int.Parse(minParts[1]) };
+                }
+
+                if (!string.IsNullOrWhiteSpace(maxCoord))
+                {
+                    var maxParts = maxCoord.Split('|');
+                    query.MaxCoord = new Model.Coordinate { X = int.Parse(maxParts[0]), Y = int.Parse(maxParts[1]) };
+                }
+
+                if (!string.IsNullOrWhiteSpace(center))
+                {
+                    var centerParts = center.Split('|');
+                    query.CenterCoord = new Model.Coordinate { X = int.Parse(centerParts[0]), Y = int.Parse(centerParts[1]) };
+                    query.MaxDistance = float.Parse(centerParts[2]);
+                }
+
+                var coordString = await Features.VillageSearch.ListCoords(context, query);
 
                 var baseScript = GetFileContents("fakes.js");
 
@@ -83,7 +108,7 @@ namespace TW.Vault.Controllers
                 return Content(fakeScript, "application/json");
         }
         
-        [HttpGet("{name}", Name = "GetCompiledObfuscatedScript")]
+        [HttpGet("{*name}", Name = "GetCompiledObfuscatedScript")]
         public IActionResult GetCompiledObfuscated(String name)
         {
             var allowedPublicScripts = Configuration.Security.PublicScripts;
@@ -109,7 +134,7 @@ namespace TW.Vault.Controllers
             return Content(scriptContents, "application/json");
         }
 
-        [HttpGet("real/{authToken}/{name}", Name = "GetCompiledUnobfuscatedScript")]
+        [HttpGet("real/{authToken}/{*name}", Name = "GetCompiledUnobfuscatedScript")]
         public async Task<IActionResult> GetCompiledUnobfuscated(String authToken, String name)
         {
             Guid authGuid;
@@ -163,7 +188,7 @@ namespace TW.Vault.Controllers
         }
         
         // GET: raw/scriptName.js
-        [HttpGet("raw/{authToken}/{name}", Name = "GetRawUnobfuscatedScript")]
+        [HttpGet("raw/{authToken}/{*name}", Name = "GetRawUnobfuscatedScript")]
         public IActionResult GetRaw(String authToken, String name)
         {
             String contents = ResolveFileContents(name);

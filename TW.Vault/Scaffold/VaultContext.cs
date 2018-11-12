@@ -1082,6 +1082,8 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
+                entity.Property(e => e.IsReadOnly).HasColumnName("is_read_only");
+
                 entity.Property(e => e.TxId).HasColumnName("tx_id");
 
                 entity.HasOne(d => d.World)

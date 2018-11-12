@@ -638,7 +638,7 @@ namespace TW.Vault.Controllers
         }
 
         [HttpGet("coords")]
-        public async Task<IActionResult> QueryCoords(String player = null, String tribe = null, String k = null)
+        public async Task<IActionResult> QueryCoords(String player = null, String tribe = null, String k = null, String min = null, String max = null, String center = null)
         {
             player = player ?? "";
             tribe = tribe ?? "";
@@ -650,13 +650,47 @@ namespace TW.Vault.Controllers
             var tribes = TrimAndFilter(tribe.Split(',')).ToList();
             var continents = TrimAndFilter(k.Split(',')).ToList();
 
-            var coords = await Features.VillageSearch.ListCoords(context, new Features.VillageSearch.Query
+            var query = new Features.VillageSearch.Query
             {
                 WorldId = CurrentWorldId,
                 PlayerNames = players,
                 TribeNamesOrTags = tribes,
                 Continents = continents
-            });
+            };
+
+            if (min != null)
+            {
+                var minParts = min.Split('|');
+                query.MinCoord = new Coordinate
+                {
+                    X = int.Parse(minParts[0]),
+                    Y = int.Parse(minParts[1])
+                };
+            }
+
+            if (max != null)
+            {
+                var maxParts = max.Split('|');
+                query.MaxCoord = new Coordinate
+                {
+                    X = int.Parse(maxParts[0]),
+                    Y = int.Parse(maxParts[1])
+                };
+            }
+
+            if (center != null)
+            {
+                var centerParts = center.Split('|');
+                query.CenterCoord = new Coordinate
+                {
+                    X = int.Parse(centerParts[0]),
+                    Y = int.Parse(centerParts[1])
+                };
+
+                query.MaxDistance = float.Parse(centerParts[2]);
+            }
+
+            var coords = await Features.VillageSearch.ListCoords(context, query);
 
             return Ok(new { coords });
         }
