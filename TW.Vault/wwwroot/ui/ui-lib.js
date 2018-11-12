@@ -62,6 +62,11 @@
             }
 
             $input = $($input);
+
+            if (!$input[0]) {
+                return;
+            }
+
             const tag = $input[0].tagName.toLowerCase(); 
             switch (tag) {
                 case 'input':

@@ -711,56 +711,84 @@
             <div>
                 <h4>Hover Settings</h4>
                 <p>
-                    <input type="checkbox" id="vault-show-commands">
-                    <label for="vault-show-commands">Commands</label>
+                    <span style="display:inline-block">
+                        <input type="checkbox" id="vault-show-commands">
+                        <label for="vault-show-commands">Commands</label>
+                    </span>
 
-                    <input type="checkbox" id="vault-show-recruits">
-                    <label for="vault-show-recruits">Possible recruits</label>
+                    <span style="display:inline-block">
+                        <input type="checkbox" id="vault-show-recruits">
+                        <label for="vault-show-recruits">Possible recruits</label>
+                    </span>
 
-                    <input type="checkbox" id="vault-show-buildings">
-                    <label for="vault-show-buildings">Buildings</label>
+                    <span style="display:inline-block">
+                        <input type="checkbox" id="vault-show-buildings">
+                        <label for="vault-show-buildings">Buildings</label>
+                    </span>
 
-                    <input type="checkbox" id="vault-show-nukes">
-                    <label for="vault-show-nukes">Nukes required</label>
+                    <span style="display:inline-block">
+                        <input type="checkbox" id="vault-show-nukes">
+                        <label for="vault-show-nukes">Nukes required</label>
+                    </span>
 
-                    <input type="checkbox" id="vault-show-loyalty">
-                    <label for="vault-show-loyalty">Loyalty</label>
+                    <span style="display:inline-block">
+                        <input type="checkbox" id="vault-show-loyalty">
+                        <label for="vault-show-loyalty">Loyalty</label>
+                    </span>
                 </p>
                 <h4>Overlay Settings</h4>
                 <p>
                     <p>
-                        <input type="checkbox" id="vault-show-overlay">
-                        <label for="vault-show-overlay">Show overlay</label>
+                        <span style="display:inline-block">
+                            <input type="checkbox" id="vault-show-overlay">
+                            <label for="vault-show-overlay">Show overlay</label>
+                        </span>
 
-                        <label for="vault-overlay-max-age">Ignore intel over </label>
-                        <input id="vault-overlay-max-age" style="text-align:center;width:1.75em">
-                        <label for="vault-overlay-max-age"> days old</label>
+                        <span style="display:inline-block">
+                            <label for="vault-overlay-max-age">Ignore intel over </label>
+                            <input id="vault-overlay-max-age" style="text-align:center;width:1.75em">
+                            <label for="vault-overlay-max-age"> days old</label>
+                        </span>
 
-                        <select id="vault-overlay-highlight-method" style="margin-left:1.5em">
-                            <option value="none">None</option>
-                            <option value="limited">Has group</option>
-                            <option value="all">Has intel</option>
-                        </select>
-                        <label for="vault-overlay-highlight-method">Highlights</label>
+                        <span style="display:inline-block">
+                            <select id="vault-overlay-highlight-method" style="margin-left:1.5em">
+                                <option value="none">None</option>
+                                <option value="limited">Has group</option>
+                                <option value="all">Has intel</option>
+                            </select>
+                            <label for="vault-overlay-highlight-method">Highlights</label>
+                        </span>
 
-                        <input type="checkbox" id="vault-overlay-show-nukes">
-                        <label for="vault-overlay-show-nukes">Nukes</label>
+                        <span style="display:inline-block">
+                            <input type="checkbox" id="vault-overlay-show-nukes">
+                            <label for="vault-overlay-show-nukes">Nukes</label>
+                        </span>
 
-                        <input type="checkbox" id="vault-overlay-show-nobles">
-                        <label for="vault-overlay-show-nobles">Nobles</label>
+                        <span style="display:inline-block">
+                            <input type="checkbox" id="vault-overlay-show-nobles">
+                            <label for="vault-overlay-show-nobles">Nobles</label>
+                        </span>
 
-                        <input type="checkbox" id="vault-overlay-show-stacks">
-                        <label for="vault-overlay-show-stacks">Stacks</label>
+                        <span style="display:inline-block">
+                            <input type="checkbox" id="vault-overlay-show-stacks">
+                            <label for="vault-overlay-show-stacks">Stacks</label>
+                        </span>
 
-                        <input type="checkbox" id="vault-overlay-show-wall">
-                        <label for="vault-overlay-show-wall">Wall under level <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center"></label>
+                        <span style="display:inline-block">
+                            <input type="checkbox" id="vault-overlay-show-wall">
+                            <label for="vault-overlay-show-wall">Wall under level <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center"></label>
+                        </span>
 
-                        <input type="checkbox" id="vault-overlay-show-returning">
-                        <label for="vault-overlay-show-returning">Returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center">k pop</label>
+                        <span style="display:inline-block">
+                            <input type="checkbox" id="vault-overlay-show-returning">
+                            <label for="vault-overlay-show-returning">Returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center">k pop</label>
+                        </span>
 
                         ${ !lib.getCurrentServerSettings().watchtowerEnabled ? '' : `
-                            <input type="checkbox" id="vault-overlay-show-watchtower">
-                            <label for="vault-overlay-show-watchtower">Watchtower over level <input id="vault-overlay-watchtower-min" type="text" style="width:1.5em;text-align:center;"></label>
+                            <span style="display:inline-block">
+                                <input type="checkbox" id="vault-overlay-show-watchtower">
+                                <label for="vault-overlay-show-watchtower">Watchtower over level <input id="vault-overlay-watchtower-min" type="text" style="width:1.5em;text-align:center;"></label>
+                            </span>
                         ` }
                     </p>
 
