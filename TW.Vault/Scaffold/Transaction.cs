@@ -35,5 +35,6 @@ namespace TW.Vault.Scaffold
         public ICollection<CurrentVillageSupport> CurrentVillageSupport { get; set; }
         public ICollection<User> User { get; set; }
         public ICollection<UserLog> UserLog { get; set; }
+        public ICollection<EnemyTribe> EnemyTribe { get; set; }
     }
 }

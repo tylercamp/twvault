@@ -132,6 +132,10 @@ namespace TW.Vault
             transactionQuery
                 .Where(q => q.WorldId == worldId);
 
+        public static IQueryable<EnemyTribe> FromWorld(this IQueryable<EnemyTribe> enemyTribeQuery, long worldId) =>
+            enemyTribeQuery
+                .Where(q => q.WorldId == worldId);
+
         #endregion
 
     }

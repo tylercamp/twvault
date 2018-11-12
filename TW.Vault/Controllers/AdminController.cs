@@ -442,7 +442,7 @@ namespace TW.Vault.Controllers
 
             //  This is a mess because of different classes for Player, CurrentPlayer, etc
 
-            var (tribeVillages, currentPlayers, uploadHistory) = await ManyTasks.RunToList(
+            var (tribeVillages, currentPlayers, uploadHistory, enemyVillages) = await ManyTasks.RunToList(
                 //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
                 //  (This returns a lot of data and will be slow)
                 from player in context.Player.FromWorld(CurrentWorldId)
@@ -455,7 +455,7 @@ namespace TW.Vault.Controllers
                                     on village.VillageId equals currentVillage.VillageId
                 where user.Enabled && !user.IsReadOnly
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
-                select new { player, currentVillage }
+                select new { player, currentVillage, X = village.X.Value, Y = village.Y.Value }
 
                 ,
 
@@ -477,6 +477,15 @@ namespace TW.Vault.Controllers
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 where user.Enabled && !user.IsReadOnly
                 select new { playerId = player.PlayerId, history }
+
+                ,
+
+                //  Get enemy villages
+                from tribe in context.EnemyTribe.FromWorld(CurrentWorldId)
+                join player in context.Player.FromWorld(CurrentWorldId) on tribe.EnemyTribeId equals player.TribeId
+                join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.VillageId
+                select new { village.VillageId, X = village.X.Value, Y = village.Y.Value }
+
             );
 
             var villageIds = tribeVillages.Select(v => v.currentVillage.VillageId).Distinct().ToList();
@@ -604,6 +613,19 @@ namespace TW.Vault.Controllers
                     numAttacksByPlayer[playerId] = 0;
                 numAttacksByPlayer[playerId]++;
             }
+
+            var villagesNearEnemy = new HashSet<long>();
+            foreach (var village in tribeVillages)
+            {
+                var nearbyEnemyVillage = enemyVillages.FirstOrDefault(v =>
+                {
+                    var distance = Model.Coordinate.Distance(v.X, v.Y, village.X, village.Y);
+                    return distance < 5;
+                });
+
+                if (nearbyEnemyVillage != null)
+                    villagesNearEnemy.Add(village.currentVillage.VillageId);
+            }
             
             var maxNoblesByPlayer = currentPlayers.ToDictionary(p => p.PlayerId, p => p.CurrentPossibleNobles);
 
@@ -644,9 +666,6 @@ namespace TW.Vault.Controllers
                 if (maxNoblesByPlayer.ContainsKey(player.PlayerId))
                     playerSummary.MaxPossibleNobles = maxNoblesByPlayer[player.PlayerId];
 
-                var oneNukePower = 500000.0f;
-                var oneDvPower = 1850000.0f;
-
                 //  General army data
                 foreach (var village in playerVillages.Where(v => v.ArmyOwned != null && v.ArmyTraveling != null && v.ArmyAtHome != null))
                 {
@@ -654,19 +673,18 @@ namespace TW.Vault.Controllers
                     var armyTraveling = ArmyConvert.ArmyToJson(village.ArmyTraveling);
                     var armyAtHome = ArmyConvert.ArmyToJson(village.ArmyAtHome);
 
-                    var armyPopSize = ArmyStats.CalculateTotalPopulation(armyOwned) / 20000.0f;
+                    var armyPopSize = ArmyStats.CalculateTotalPopulation(armyOwned) / (float)ArmyStats.FullVillageArmy;
                     armyPopSize = Math.Clamp(armyPopSize, 0, 1);
 
-                    bool isOffensive = village.ArmyOwned.Axe > 100;
-                    if (isOffensive)
+                    if (ArmyStats.IsOffensive(village.ArmyOwned))
                     {
                         playerSummary.NumOffensiveVillages++;
 
                         var offensivePower = BattleSimulator.TotalAttackPower(armyOwned);
 
-                        if (BattleSimulator.TotalAttackPower(armyOwned) >= oneNukePower)
+                        if (ArmyStats.IsNuke(armyOwned))
                             playerSummary.NukesOwned++;
-                        if (BattleSimulator.TotalAttackPower(armyTraveling) >= oneNukePower)
+                        if (ArmyStats.IsNuke(armyTraveling))
                             playerSummary.NukesTraveling++;
                     }
                     else
@@ -677,9 +695,12 @@ namespace TW.Vault.Controllers
                         var atHomeDefensivePower = BattleSimulator.TotalDefensePower(armyAtHome);
                         var travelingDefensivePower = BattleSimulator.TotalDefensePower(armyTraveling);
 
-                        playerSummary.DVsAtHome += atHomeDefensivePower / oneDvPower;
-                        playerSummary.DVsOwned += ownedDefensivePower / oneDvPower;
-                        playerSummary.DVsTraveling += travelingDefensivePower / oneDvPower;
+                        playerSummary.DVsAtHome += atHomeDefensivePower / (float)ArmyStats.FullDVDefensivePower;
+                        if (!villagesNearEnemy.Contains(village.VillageId))
+                            playerSummary.DVsAtHomeBackline += atHomeDefensivePower / (float)ArmyStats.FullDVDefensivePower;
+
+                        playerSummary.DVsOwned += ownedDefensivePower / (float)ArmyStats.FullDVDefensivePower;
+                        playerSummary.DVsTraveling += travelingDefensivePower / (float)ArmyStats.FullDVDefensivePower;
                     }
                 }
 
@@ -689,11 +710,11 @@ namespace TW.Vault.Controllers
                 {
                     //  Support where the target is one of the players' own villages
                     foreach (var support in playerSupport.Where(s => playerVillages.Any(v => v.VillageId == s.TargetVillageId)))
-                        playerSummary.DVsSupportingSelf += BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(support.SupportingArmy)) / oneDvPower;
+                        playerSummary.DVsSupportingSelf += BattleSimulator.TotalDefensePower(support.SupportingArmy) / (float)ArmyStats.FullDVDefensivePower;
 
                     //  Support where the target isn't any of the players' own villages
                     foreach (var support in playerSupport.Where(s => playerVillages.All(v => v.VillageId != s.TargetVillageId)))
-                        playerSummary.DVsSupportingOthers += BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(support.SupportingArmy)) / oneDvPower;
+                        playerSummary.DVsSupportingOthers += BattleSimulator.TotalDefensePower(support.SupportingArmy) / (float)ArmyStats.FullDVDefensivePower;
 
                     playerSummary.SupportPopulationByTargetTribe = new Dictionary<string, int>();
 
@@ -727,6 +748,106 @@ namespace TW.Vault.Controllers
 
             //  TODO
             return NotFound();
+        }
+
+        [HttpGet("enemies")]
+        public async Task<IActionResult> GetEnemyTribes()
+        {
+            if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
+                return Unauthorized();
+            }
+
+            var result = await (
+                    from enemy in context.EnemyTribe.FromWorld(CurrentWorldId)
+                    join tribe in context.Ally.FromWorld(CurrentWorldId) on enemy.EnemyTribeId equals tribe.TribeId
+                    select new { tribe.TribeId, tribe.Tag, tribe.TribeName }
+                ).ToListAsync();
+
+            return Ok(result);
+        }
+
+        [HttpPost("enemies/{nameOrTag}")]
+        public async Task<IActionResult> AddEnemyTribe(String nameOrTag)
+        {
+            if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
+                return Unauthorized();
+            }
+
+            nameOrTag = WebUtility.UrlEncode(nameOrTag);
+
+            var discoveredTribe = await (
+                    from tribe in context.Ally.FromWorld(CurrentWorldId)
+                    where tribe.Tag == nameOrTag || tribe.TribeName == nameOrTag
+                    select tribe
+                ).FirstOrDefaultAsync();
+
+            if (discoveredTribe == null)
+                return NotFound();
+
+            var existingEnemy = await (
+                    from enemy in context.EnemyTribe.FromWorld(CurrentWorldId)
+                    where enemy.EnemyTribeId == discoveredTribe.TribeId
+                    select enemy
+                ).FirstOrDefaultAsync();
+
+            if (existingEnemy != null)
+                return Conflict();
+
+            var newEnemy = new Scaffold.EnemyTribe
+            {
+                EnemyTribeId = discoveredTribe.TribeId,
+                WorldId = CurrentWorldId,
+                Tx = BuildTransaction()
+            };
+
+            context.Add(newEnemy);
+
+            await context.SaveChangesAsync();
+
+            return Ok(new { discoveredTribe.TribeId, discoveredTribe.Tag, discoveredTribe.TribeName });
+        }
+
+        [HttpDelete("enemies/{nameOrTag}")]
+        public async Task<IActionResult> RemoveEnemyTribe(String nameOrTag)
+        {
+            if (!CurrentUserIsAdmin)
+            {
+                var authRecord = MakeFailedAuthRecord("User is not admin");
+                context.Add(authRecord);
+                await context.SaveChangesAsync();
+                return Unauthorized();
+            }
+
+            nameOrTag = WebUtility.UrlEncode(nameOrTag);
+
+            var discoveredTribe = context.Ally
+                                         .FromWorld(CurrentWorldId)
+                                         .Where(a => a.TribeName == nameOrTag || a.Tag == nameOrTag)
+                                         .FirstOrDefault();
+
+            if (discoveredTribe == null)
+                return NotFound();
+
+            var enemyEntry = context.EnemyTribe
+                                    .FromWorld(CurrentWorldId)
+                                    .Where(e => e.EnemyTribeId == discoveredTribe.TribeId)
+                                    .FirstOrDefault();
+
+            if (enemyEntry == null)
+                return NotFound();
+
+            context.Remove(enemyEntry);
+            context.SaveChanges();
+
+            return Ok();
         }
     }
 }

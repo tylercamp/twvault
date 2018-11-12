@@ -63,6 +63,22 @@ namespace TW.Vault.Model.JSON
             return result;
         }
 
+        public new int this[TroopType type]
+        {
+            get
+            {
+                if (this.ContainsKey(type))
+                    return base[type];
+                else
+                    return 0;
+            }
+
+            set
+            {
+                base[type] = value;
+            }
+        }
+
         public static Army operator +(Army a, Army b)
         {
             if (a == null && b == null)

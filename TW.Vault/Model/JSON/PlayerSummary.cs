@@ -35,6 +35,7 @@ namespace TW.Vault.Model.JSON
         public Dictionary<String, int> SupportPopulationByTargetTribe { get; set; }
 
         public float DVsAtHome { get; set; }
+        public float DVsAtHomeBackline { get; set; }
         public float DVsOwned { get; set; }
         public float DVsSupportingSelf { get; set; }
         public float DVsSupportingOthers { get; set; }

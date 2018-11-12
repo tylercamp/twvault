@@ -1,16 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Model.Convert;
-using Scaffold = TW.Vault.Scaffold;
-using JSON = TW.Vault.Model.JSON;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using TW.Vault.Features.Simulation;
+using TW.Vault.Model;
+using TW.Vault.Model.Convert;
+using TW.Vault.Model.Native;
+using JSON = TW.Vault.Model.JSON;
 
 namespace TW.Vault.Controllers
 {
@@ -135,15 +136,17 @@ namespace TW.Vault.Controllers
         {
             LoadWorldData();
 
-            (var ownVillas, var ownSupport, var ownCommands, var ownReports) = await ManyTasks.RunToList(
+            var lastWeek = CurrentServerTime - TimeSpan.FromDays(7);
+
+            (var ownVillas, var ownSupport, var ownCommands, var ownReports, var enemyVillas) = await ManyTasks.RunToList(
 
                 // At-home armies
                 from village in context.Village.FromWorld(CurrentWorldId)
                 join currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId)
                                                              .Include(cv => cv.ArmyAtHome)
-                    on village.VillageId equals currentVillage.WorldId
+                    on village.VillageId equals currentVillage.VillageId
                 where village.PlayerId == CurrentPlayerId
-                select new { village.X, village.Y, currentVillage.ArmyAtHome }
+                select new { X = village.X.Value, Y = village.Y.Value, currentVillage.ArmyAtHome }
 
                 ,
 
@@ -161,7 +164,7 @@ namespace TW.Vault.Controllers
                 from command in context.Command.FromWorld(CurrentWorldId).Include(c => c.Army)
                 where command.SourcePlayerId == CurrentPlayerId
                 where command.Army != null
-                where command.LandsAt > CurrentServerTime - TimeSpan.FromDays(7)
+                where command.LandsAt > lastWeek
                 where command.IsAttack
                 select command
 
@@ -170,8 +173,16 @@ namespace TW.Vault.Controllers
                 // Reports in last week
                 from report in context.Report.FromWorld(CurrentWorldId).Include(r => r.AttackerArmy)
                 where report.AttackerPlayerId == CurrentPlayerId
-                where report.OccuredAt > CurrentServerTime - TimeSpan.FromDays(7)
+                where report.OccuredAt > lastWeek
                 select report
+
+                ,
+
+                // Enemy villas (to determine what's "backline")
+                from enemy in context.EnemyTribe.FromWorld(CurrentWorldId)
+                join player in context.Player.FromWorld(CurrentWorldId) on enemy.EnemyTribeId equals player.TribeId
+                join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
+                select new { X = village.X.Value, Y = village.Y.Value }
 
             );
 
@@ -199,7 +210,7 @@ namespace TW.Vault.Controllers
             var reportsBySourceVillage = ownReports.GroupBy(r => r.AttackerVillageId).ToDictionary(g => g.Key, g => g.ToList());
             var commandsWithReports = new Dictionary<Scaffold.Command, Scaffold.Report>();
 
-            foreach (var command in ownCommands)
+            foreach (var command in ownCommands.Where(cmd => reportsBySourceVillage.ContainsKey(cmd.SourceVillageId)))
             {
                 var matchingReport = reportsBySourceVillage[command.SourceVillageId].Where(r => r.OccuredAt == command.LandsAt && r.DefenderVillageId == command.TargetVillageId).FirstOrDefault();
                 if (matchingReport != null)
@@ -209,19 +220,32 @@ namespace TW.Vault.Controllers
             var reportsWithoutCommands = ownReports.Except(commandsWithReports.Values).ToList();
 
             var usedAttackArmies = ownCommands
-                .Select(c => c.Army).Cast<JSON.Army>()
-                .Concat(reportsWithoutCommands.Select(r => r.AttackerArmy).Cast<JSON.Army>())
+                .Select(c => (JSON.Army)c.Army)
+                .Concat(reportsWithoutCommands.Select(r => (JSON.Army)r.AttackerArmy))
                 .ToList();
 
+            var armiesNearEnemy = new HashSet<long>();
+            foreach (var village in ownVillas)
+            {
+                var nearbyEnemyVilla = enemyVillas.FirstOrDefault(v => Coordinate.Distance(village.X, village.Y, v.X, v.Y) < 10);
+                if (nearbyEnemyVilla != null)
+                    armiesNearEnemy.Add(village.ArmyAtHome.ArmyId);
+            }
 
-            // Helpers
-            bool IsFake(Scaffold.CurrentArmy army) => Model.Native.ArmyStats.CalculateTotalPopulation(army) < 100;
-            bool IsFang(Scaffold.CurrentArmy army) => army.Catapult > 100 && (army.Axe == null || army.Axe < 100);
-            bool IsNuke(Scaffold.CurrentArmy army) => Features.Simulation.BattleSimulator.TotalAttackPower(army) >= 450000;
+            var result = new JSON.UserStats
+            {
+                FangsInPastWeek = usedAttackArmies.Count(ArmyStats.IsFang),
+                NukesInPastWeek = usedAttackArmies.Count(ArmyStats.IsNuke),
+                FakesInPastWeek = usedAttackArmies.Count(ArmyStats.IsFake),
+                BacklineDVsAtHome = ownVillas.Where(v => !armiesNearEnemy.Contains(v.ArmyAtHome.ArmyId)).Sum(v => BattleSimulator.TotalDefensePower(v.ArmyAtHome) / (float)ArmyStats.FullDVDefensivePower),
+                DVsAtHome = ownVillas.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyAtHome) / (float)ArmyStats.FullDVDefensivePower),
+                PopPerTribe = supportByTargetTribe.ToDictionary(
+                    kvp => tribeInfo[kvp.Key].Tag,
+                    kvp => kvp.Value.Sum(a => BattleSimulator.TotalDefensePower(a) / (float)ArmyStats.FullDVDefensivePower)
+                )
+            };
 
-            var result = new JSON.UserStats();
-            //result.dv
-            throw new NotImplementedException();
+            return Ok(result);
         }
     }
 }

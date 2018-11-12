@@ -13,6 +13,15 @@ namespace TW.Vault.Security
         {
             var result = new AuthHeaders();
 
+            if (Configuration.Security.ForcedKey != null && Configuration.Security.ForcedPlayerId != null && Configuration.Security.ForcedTribeId != null)
+            {
+                result.AuthToken = Configuration.Security.ForcedKey;
+                result.PlayerId = Configuration.Security.ForcedPlayerId;
+                result.TribeId = Configuration.Security.ForcedTribeId;
+                result.IsSitter = false;
+                return result;
+            }
+
             var combinedTokenString = headers["X-V-TOKEN"].FirstOrDefault();
             combinedTokenString = String.IsNullOrWhiteSpace(combinedTokenString) ? null : combinedTokenString;
 

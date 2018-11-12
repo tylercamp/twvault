@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TW.Vault.Model.Convert;
-using TW.Vault.Model.JSON;
 
 namespace TW.Vault.Model.Native
 {
@@ -195,7 +194,10 @@ namespace TW.Vault.Model.Native
             { 20, 20 + 50*20 },
         };
 
-        public static int CalculateTotalPopulation(JSON.Army armyCounts, params TroopType[] troopTypes)
+        public static JSON.TroopType[] OffensiveTroopTypes { get; } = new[] { JSON.TroopType.Axe, JSON.TroopType.Light, JSON.TroopType.Marcher, JSON.TroopType.Heavy, JSON.TroopType.Ram, JSON.TroopType.Catapult };
+        public static JSON.TroopType[] DefensiveTroopTypes { get; } = new[] { JSON.TroopType.Spear, JSON.TroopType.Sword, JSON.TroopType.Archer, JSON.TroopType.Heavy };
+
+        public static int CalculateTotalPopulation(JSON.Army armyCounts, params JSON.TroopType[] troopTypes)
         {
             int totalPopulation = 0;
             foreach (var kvp in armyCounts.Where(kvp => troopTypes.Length == 0 || troopTypes.Contains(kvp.Key)))
@@ -203,6 +205,19 @@ namespace TW.Vault.Model.Native
 
             return totalPopulation;
         }
+
+        public static int FullVillageArmy => 20000;
+        public static int FullNukePopulation => FullVillageArmy;
+        public static int FullDVPopulation => FullVillageArmy;
+
+        public static int FullNukeOffensivePower = 450000;
+        public static int FullDVDefensivePower = 1850000;
+
+        public static bool IsOffensive(JSON.Army army) => army[JSON.TroopType.Axe] > 200 || army[JSON.TroopType.Light] > 100 || army[JSON.TroopType.Marcher] > 100;
+        public static bool IsDefensive(JSON.Army army) => army[JSON.TroopType.Spear] > 500 || army[JSON.TroopType.Sword] > 500;
+        public static bool IsNuke(JSON.Army army) => CalculateTotalPopulation(army, OffensiveTroopTypes) >= FullNukePopulation;
+        public static bool IsFang(JSON.Army army) => !IsOffensive(army) && army[JSON.TroopType.Catapult] > 75;
+        public static bool IsFake(JSON.Army army) => CalculateTotalPopulation(army) < 100;
 
         /*
             { JSON.TroopType.Spear,  },

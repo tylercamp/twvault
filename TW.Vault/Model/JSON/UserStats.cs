@@ -12,6 +12,6 @@ namespace TW.Vault.Model.JSON
         public int NukesInPastWeek { get; set; }
         public int FangsInPastWeek { get; set; }
         public int FakesInPastWeek { get; set; }
-        public Dictionary<String, long> PopPerTribe { get; set; }
+        public Dictionary<String, float> PopPerTribe { get; set; }
     }
 }

@@ -78,6 +78,10 @@ namespace TW.Vault
 
         public bool EnableScriptFilter { get; set; }
         public List<String> PublicScripts { get; set; }
+
+        public Guid? ForcedKey { get; set; }
+        public long? ForcedPlayerId { get; set; }
+        public long? ForcedTribeId { get; set; }
     }
 
     public class BehaviorConfiguration

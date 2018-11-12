@@ -338,6 +338,7 @@ function makeArmySummaryCsv(armyData) {
 
             numOwnedDVs: round(ad.dVsOwned),
             numDVsAtHome: round(ad.dVsAtHome),
+            numDVsAtHomeBackline: round(ad.dVsAtHomeBackline),
             numDVsTraveling: round(ad.dVsTraveling),
             numDVsSupportingOthers: round(ad.dVsSupportingOthers),
             numDVsSupportingSelf: round(ad.dVsSupportingSelf),
@@ -390,7 +391,7 @@ function makeArmySummaryCsv(armyData) {
     csvBuilder.addRow(
         'Time', 'Needs upload?', 'Tribe', 'Player', 'Nukes',
         'Nukes traveling', 'Nobles', 'Possible nobles', 
-        'Owned DVs', 'DVs at Home', 'DVs Traveling', 'DVs Supporting Self', 'DVs Supporting Others',
+        'Owned DVs', 'DVs at Home', 'Backline DVs at Home', 'DVs Traveling', 'DVs Supporting Self', 'DVs Supporting Others',
         'Est. Off. Villas', 'Est. Def. Villas', '# Incs', '# Attacks',
         '',
         ...supportedTribeNames.map((tn) => `DVs to ${tn}`)
@@ -400,7 +401,7 @@ function makeArmySummaryCsv(armyData) {
         csvBuilder.addRow(
             s.uploadedAt, s.needsUpload ? 'YES' : '', s.tribeName, s.playerName, s.numNukes,
             s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
-            s.numOwnedDVs, s.numDVsAtHome, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,
+            s.numOwnedDVs, s.numDVsAtHome, s.numDVsAtHomeBackline, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,
             s.numOffensiveVillas, s.numDefensiveVillas, s.numIncomings, s.numAttacks, '', ...supportedTribeNames.map((tn) => s.numDVsSupportingTribes[tn] || '0')
         );
     });

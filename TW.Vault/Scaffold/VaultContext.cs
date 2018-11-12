@@ -26,6 +26,7 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<CurrentVillage> CurrentVillage { get; set; }
         public virtual DbSet<CurrentVillageSupport> CurrentVillageSupport { get; set; }
         public virtual DbSet<CustomInfo> CustomInfo { get; set; }
+        public virtual DbSet<EnemyTribe> EnemyTribe { get; set; }
         public virtual DbSet<FailedAuthorizationRecord> FailedAuthorizationRecord { get; set; }
         public virtual DbSet<InvalidDataRecord> InvalidDataRecord { get; set; }
         public virtual DbSet<NotificationPhoneNumber> NotificationPhoneNumber { get; set; }
@@ -539,6 +540,30 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.Data)
                     .IsRequired()
                     .HasColumnName("data");
+            });
+
+            modelBuilder.Entity<EnemyTribe>(entity =>
+            {
+                entity.ToTable("enemy_tribe", "tw");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('tw.enemy_tribe_id_seq'::regclass)");
+
+                entity.Property(e => e.WorldId)
+                    .HasColumnName("world_id");
+
+                entity.Property(e => e.EnemyTribeId)
+                    .HasColumnName("enemy_tribe_id");
+
+                entity.Property(e => e.TxId)
+                    .HasColumnName("tx_id");
+
+                entity.HasOne(e => e.Tx)
+                    .WithMany(tx => tx.EnemyTribe)
+                    .HasForeignKey(e => e.TxId);
             });
 
             modelBuilder.Entity<FailedAuthorizationRecord>(entity =>
@@ -1270,6 +1295,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.HasSequence<int>("conquers_vault_id_seq");
 
             modelBuilder.HasSequence<short>("world_id_seq");
+
+            modelBuilder.HasSequence("enemy_tribe_id_seq");
         }
     }
 }

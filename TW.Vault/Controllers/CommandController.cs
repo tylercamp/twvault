@@ -18,6 +18,7 @@ using TW.Vault.Features.Planning.Requirements;
 using TW.Vault.Features.Planning;
 using System.Net;
 using TW.Vault.Features.Simulation;
+using TW.Vault.Model.Native;
 
 namespace TW.Vault.Controllers
 {
@@ -516,10 +517,7 @@ namespace TW.Vault.Controllers
                     if (effectiveArmy != null)
                     {
                         //  TODO - Make this a setting
-                        bool isOffense = (
-                                (effectiveArmy.Axe.HasValue && effectiveArmy.Axe.Value > 500) ||
-                                (effectiveArmy.Light.HasValue && effectiveArmy.Light.Value > 250)
-                            );
+                        bool isOffense = ArmyStats.IsOffensive(effectiveArmy);
 
                         tag.VillageType = isOffense ? "Offense" : "Defense";
 
