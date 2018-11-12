@@ -10,4 +10,10 @@
     <ProjectReference Include="..\TW.Vault\TW.Vault.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="sim-test-data.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

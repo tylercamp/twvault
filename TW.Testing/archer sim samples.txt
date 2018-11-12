@@ -1,0 +1,65 @@
+(all 20 wall)
+
+=== 7k axe 3k lc
+
+vs 10k/10k sp/sw:
+attacker: full loss
+defender:
+- 10k sp -> 3775 losses
+- 10k sw -> 3775 losses
+
+vs 10k/8k sp/ar:
+attacker: full loss
+defender:
+- 10k sp -> 3474 losses
+- 8k ar -> 2779 losses
+
+
+
+
+=== 7k axe 3k lc 200 ram
+
+vs 10k/10k sp/sw:
+attacker: full loss
+defender:
+- 10k sp -> 6171 losses
+- 10k sw -> 6171 losses
+wall: 20 -> 14 (20 -> 18 with 100 ram)
+
+vs 10k/8k sp/ar:
+attacker: full loss
+defender:
+- 10k sp -> 5679 losses
+- 8k ar -> 4544 losses
+wall: 20 -> 15 (20 -> 18 with 100 ram)
+
+
+
+=== 7k axe 1k lc 2k ma 200 ram
+
+vs 10k/10k sp/sw:
+attacker: full loss
+defender:
+- 10k sp -> 5888 losses
+- 8k ar -> 5888 losses
+wall: 20 -> 15 (20 -> 18 with 100 ram)
+
+vs 10k/8k sp/ar:
+attacker:
+- 7k axe -> 7000 losses
+- 1k lc -> 1000 losses
+- 2k ma -> 1383 losses
+- 200 ram -> 200 losses
+defender: full losses
+wall: 20 -> 11 (20 -> 16 with 100 ram)
+
+=== 6k axe, 3k lc, 245 ram
+
+vs 1ksp 500sw 100hc 25sc
+attacker:
+- 6k axe -> 304 losses
+- 3k lc -> 154 losses
+- 245 ram -> 12 losses
+- 50 cat -> 3 losses:
+defender: full losses
+wall: 20 -> 0 (20 -> 11 with 100 ram)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using TW.Vault.Features.Simulation;
 using TW.Vault.Model.JSON;
 
@@ -10,13 +11,53 @@ namespace TW.Testing
         static void Main(string[] args)
         {
             //TestBattleSimulation();
-            TestRecruitment();
+            //TestRecruitment();
+            TestUsingBattleTester();
 
             Console.ReadLine();
         }
 
 
+        static void TestUsingBattleTester()
+        {
+            var tester = new BattleTester("sim-test-data.json");
+            var results = tester.Test();
 
+            foreach (var result in results)
+            {
+                Console.WriteLine("{0}: {1} - {2:N2}% error {3}", result.Index, result.Passed ? "Passed" : "Failed", result.ErrorPercent * 100, result.Sample.Label ?? "");
+                if (!result.Passed)
+                {
+                    var baseAttacker = result.Sample.Start.Attacker;
+                    var expectedAttacker = result.Sample.Expect.Attacker;
+                    var actualAttacker = result.ActualResult.Attacker;
+
+                    var baseDefender = result.Sample.Start.Defender;
+                    var expectedDefender = result.Sample.Expect.Defender;
+                    var actualDefender = result.ActualResult.Defender;
+
+                    var baseWall = result.Sample.Start.Wall;
+                    var expectedWall = result.Sample.Expect.Wall;
+                    var actualWall = result.ActualResult.Wall;
+
+                    NormalizeArmies(baseAttacker, expectedAttacker, actualAttacker);
+                    NormalizeArmies(baseDefender, expectedDefender, actualDefender);
+
+                    Console.WriteLine("Attacker");
+                    foreach (var troop in baseAttacker.Keys)
+                        Console.WriteLine("--- {0} {1}: {2} (expected {3})", baseAttacker[troop], troop, actualAttacker[troop], expectedAttacker[troop]);
+
+                    Console.WriteLine("Defender");
+                    foreach (var troop in baseDefender.Keys)
+                        Console.WriteLine("--- {0} {1}: {2} (expected {3})", baseDefender[troop], troop, actualDefender[troop], expectedDefender[troop]);
+
+                    Console.WriteLine("Wall {0}: {1} (expected {2})", baseWall, actualWall, expectedWall);
+
+                    Console.WriteLine();
+                    Console.ReadLine();
+                }
+            }
+        }
 
         static void TestRecruitment()
         {
@@ -101,6 +142,16 @@ namespace TW.Testing
                 int newCount = newArmy.GetValueOrDefault(troop, 0);
 
                 Console.WriteLine("--- {0}: {1} - {2} = {3}", troop, originalCount, originalCount - newCount, newCount);
+            }
+        }
+
+        static void NormalizeArmies(params Army[] armies)
+        {
+            var allKeys = armies.SelectMany(a => a.Keys.Where(k => a[k] > 0)).Distinct().ToList();
+            foreach (var army in armies)
+            {
+                foreach (var key in allKeys.Where(k => !army.ContainsKey(k)))
+                    army.Add(key, 0);
             }
         }
     }

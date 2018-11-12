@@ -1,0 +1,228 @@
+[
+  {
+    "label": "Forum reference",
+    "archersEnabled": true,
+    "start": {
+      "defender": {
+        "sword": 10000
+      },
+      "attacker": {
+        "axe": 10000,
+        "light": 1000
+      },
+      "wall": 0
+    },
+    "expect": {
+      "defender": {
+        "sword": 0
+      },
+      "attacker": {
+        "axe": 836,
+        "light": 849
+      },
+      "wall": 0
+    }
+  },
+
+  {
+    "archersEnabled": true,
+    "start": {
+      "defender": {
+        "spear": 10000,
+        "sword": 10000
+      },
+      "attacker": {
+        "axe": 7000,
+        "light": 3000
+      },
+      "wall": 20
+    },
+    "expect": {
+      "defender": {
+        "spear": 6225,
+        "sword": 6225
+      },
+      "attacker": {
+        "axe": 0,
+        "light": 0
+      },
+      "wall": 20
+    }
+  },
+
+  {
+    "archersEnabled": true,
+    "start": {
+      "defender": {
+        "spear": 10000,
+        "archer": 8000
+      },
+      "attacker": {
+        "axe": 7000,
+        "light": 3000
+      },
+      "wall": 20
+    },
+    "expect": {
+      "defender": {
+        "spear": 6526,
+        "archer": 5221
+      },
+      "attacker": {
+        "axe": 0,
+        "light": 0
+      },
+      "wall": 20
+    }
+  },
+
+  {
+    "archersEnabled": true,
+    "start": {
+      "defender": {
+        "spear": 10000,
+        "sword": 10000
+      },
+      "attacker": {
+        "axe": 7000,
+        "light": 3000,
+        "ram": 200
+      },
+      "wall": 20
+    },
+    "expect": {
+      "defender": {
+        "spear": 3829,
+        "sword": 3829
+      },
+      "attacker": {
+        "axe": 0,
+        "light": 0,
+        "ram": 0
+      },
+      "wall": 14
+    }
+  },
+
+  {
+    "archersEnabled": true,
+    "start": {
+      "defender": {
+        "spear": 10000,
+        "archer": 8000
+      },
+      "attacker": {
+        "axe": 7000,
+        "light": 3000,
+        "ram": 200
+      },
+      "wall": 20
+    },
+    "expect": {
+      "defender": {
+        "spear": 4321,
+        "archer": 3456
+      },
+      "attacker": {
+        "axe": 0,
+        "light": 0,
+        "ram": 0
+      },
+      "wall": 15
+    }
+  },
+
+  {
+    "archersEnabled": true,
+    "start": {
+      "defender": {
+        "spear": 10000,
+        "sword": 10000
+      },
+      "attacker": {
+        "axe": 7000,
+        "light": 1000,
+        "marcher": 2000,
+        "ram": 200
+      },
+      "wall": 20
+    },
+    "expect": {
+      "defender": {
+        "spear": 4112,
+        "sword": 4112
+      },
+      "attacker": {
+        "axe": 0,
+        "light": 0,
+        "marcher": 0,
+        "ram": 0
+      },
+      "wall": 15
+    }
+  },
+
+  {
+    "archersEnabled": true,
+    "start": {
+      "defender": {
+        "spear": 10000,
+        "archer": 8000
+      },
+      "attacker": {
+        "axe": 7000,
+        "light": 1000,
+        "marcher": 2000,
+        "ram": 200
+      },
+      "wall": 20
+    },
+    "expect": {
+      "defender": {
+        "spear": 0,
+        "archer": 0
+      },
+      "attacker": {
+        "axe": 0,
+        "light": 0,
+        "marcher": 617,
+        "ram": 0
+      },
+      "wall": 11
+    }
+  },
+
+  {
+    "archersEnabled": true,
+    "start": {
+      "defender": {
+        "spear": 1000,
+        "sword": 500,
+        "heavy": 100,
+        "spy": 25
+      },
+      "attacker": {
+        "axe": 6000,
+        "light": 3000,
+        "ram": 245,
+        "catapult": 50
+      },
+      "wall": 20
+    },
+    "expect": {
+      "defender": {
+        "spear": 0,
+        "sword": 0,
+        "heavy": 0,
+        "spy": 0
+      },
+      "attacker": {
+        "axe": 5696,
+        "light": 2846,
+        "ram": 233,
+        "catapult": 47
+      },
+      "wall": 0
+    }
+  }
+]

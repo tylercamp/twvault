@@ -12,7 +12,7 @@ namespace TW.Vault.Model.JSON
 
         }
 
-        public Army(Army other)
+        public Army(Dictionary<TroopType, int> other)
         {
             foreach (var kvp in other)
                 this.Add(kvp.Key, kvp.Value);
@@ -23,11 +23,26 @@ namespace TW.Vault.Model.JSON
             return this.Count == 0 || this.All(kvp => kvp.Value == 0);
         }
 
+        public static Army Empty => new Army {
+            { TroopType.Spear, 0 }, { TroopType.Sword, 0 }, { TroopType.Axe, 0 }, { TroopType.Archer, 0 },
+            { TroopType.Spy, 0 }, { TroopType.Light, 0 }, { TroopType.Marcher, 0 }, { TroopType.Heavy, 0 },
+            { TroopType.Ram, 0 }, { TroopType.Catapult, 0 }, { TroopType.Snob, 0 }, { TroopType.Knight, 0 },
+            { TroopType.Militia, 0 }
+        };
+
         public Army BasedOn(TroopType troopType)
         {
             var maxSpeed = Native.ArmyStats.TravelSpeed[troopType];
             var result = new Army();
             foreach (var type in this.Keys.Where(type => Native.ArmyStats.TravelSpeed[type] <= maxSpeed))
+                result.Add(type, this[type]);
+            return result;
+        }
+
+        public Army OfType(UnitType unitType)
+        {
+            var result = new Army();
+            foreach (var type in this.Keys.Where((t) => Native.ArmyStats.UnitType[t] == unitType))
                 result.Add(type, this[type]);
             return result;
         }
@@ -93,9 +108,9 @@ namespace TW.Vault.Model.JSON
             foreach (var kvp in a)
             {
                 if (!b.ContainsKey(kvp.Key))
-                    continue;
-
-                result.Add(kvp.Key, a[kvp.Key] - b[kvp.Key]);
+                    result.Add(kvp.Key, a[kvp.Key]); // basically a - 0
+                else
+                    result.Add(kvp.Key, a[kvp.Key] - b[kvp.Key]);
             }
             return result;
         }
@@ -124,7 +139,7 @@ namespace TW.Vault.Model.JSON
         }
 
         public static bool operator !=(Army a, Army b) => !(a == b);
-
+        
         public static implicit operator Army(Scaffold.ReportArmy reportArmy) => Convert.ArmyConvert.ArmyToJson(reportArmy);
         public static implicit operator Army(Scaffold.CurrentArmy currentArmy) => Convert.ArmyConvert.ArmyToJson(currentArmy);
         public static implicit operator Army(Scaffold.CommandArmy commandArmy) => Convert.ArmyConvert.ArmyToJson(commandArmy);

@@ -161,7 +161,7 @@ namespace TW.Vault.Features.Simulation
                 return new BattleResult
                 {
                     AttackingArmy = attackingArmy * (1 - winnerLossRatio),
-                    DefendingArmy = new Army(),
+                    DefendingArmy = Army.Empty,
                     NewWallLevel = WallLevelAfterDowngradeAttackerWon((int)(numRams * winnerLossRatio), (int)(numRams * (1 - winnerLossRatio)), wallLevel)
                 };
             }
@@ -170,7 +170,7 @@ namespace TW.Vault.Features.Simulation
                 float defenderLossRatio = TotalDefensePower(defendingArmy * winnerLossRatio) / (float)TotalDefensePower(defendingArmy);
                 return new BattleResult
                 {
-                    AttackingArmy = new Army(),
+                    AttackingArmy = Army.Empty,
                     DefendingArmy = defendingArmy * (1 - winnerLossRatio),
                     NewWallLevel = WallLevelAfterDowngradeAttackerLost(numRams, wallLevel, defenderLossRatio)
                 };
@@ -191,19 +191,32 @@ namespace TW.Vault.Features.Simulation
             if (!DoRamsLowerWallPreemptively(numRams, wallLevel))
                 effectiveWallLevel = wallLevel;
 
+            var unitTypes = Enum.GetValues(typeof(UnitType)).Cast<UnitType>().ToArray();
+
             while (!IsArmyEmpty(attackingArmy) && !IsArmyEmpty(defendingArmy))
             {
                 var attackPerTroopType = attackingArmy.ToDictionary(kvp => kvp.Key, kvp => morale * kvp.Value * ArmyStats.AttackPower[kvp.Key]);
+                var attackByUnitType = unitTypes.ToDictionary(t => t, t => morale * attackingArmy.Where(kvp => ArmyStats.UnitType[kvp.Key] == t).Sum((kvp) => kvp.Value * ArmyStats.AttackPower[kvp.Key]));
+
                 var totalAttack = attackPerTroopType.Values.Sum();
 
                 var percentPerTroopType = attackPerTroopType.ToDictionary(kvp => kvp.Key, kvp => kvp.Value / totalAttack);
-                foreach (var attackingTroopType in attackingArmy.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key).ToList())
-                {
-                    float defenderPercent = percentPerTroopType[attackingTroopType];
-                    var currentArmy = defendingArmy * defenderPercent;
+                var percentPerBuildType = attackByUnitType.ToDictionary(kvp => kvp.Key, kvp => kvp.Value / totalAttack);
 
-                    float attackerPower = attackingArmy[attackingTroopType] * ArmyStats.AttackPower[attackingTroopType];
-                    float defenderPower = TotalDefensePower(currentArmy, ArmyStats.UnitType[attackingTroopType]);
+                var attackerLosses = new List<Army>();
+                var defenderLosses = new List<Army>();
+
+                foreach (var unitType in unitTypes)
+                {
+                    float defenderPercent = percentPerBuildType[unitType];
+                    var currentDefender = defendingArmy * defenderPercent;
+                    var currentAttacker = attackingArmy.OfType(unitType);
+
+                    float attackerPower = TotalAttackPower(currentAttacker);
+                    if (attackerPower <= 0)
+                        continue;
+
+                    float defenderPower = TotalDefensePower(currentDefender, unitType);
                     defenderPower *= ArmyStats.WallDefenseBuff[effectiveWallLevel];
                     defenderPower += ArmyStats.WallBonusDefense[effectiveWallLevel] * defenderPercent;
 
@@ -214,15 +227,21 @@ namespace TW.Vault.Features.Simulation
 
                     if (attackerPower > defenderPower)
                     {
-                        defendingArmy -= currentArmy;
-                        attackingArmy[attackingTroopType] -= (int)Math.Round(attackingArmy[attackingTroopType] * winnerLossRatio);
+                        defenderLosses.Add(currentDefender);
+                        attackerLosses.Add(currentAttacker * winnerLossRatio);
                     }
                     else
                     {
-                        attackingArmy[attackingTroopType] = 0;
-                        defendingArmy -= currentArmy * winnerLossRatio;
+                        attackerLosses.Add(currentAttacker);
+                        defenderLosses.Add(currentDefender * winnerLossRatio);
                     }
                 }
+
+                foreach (var loss in attackerLosses)
+                    attackingArmy -= loss;
+
+                foreach (var loss in defenderLosses)
+                    defendingArmy -= loss;
             }
 
             if (TotalAttackPower(attackingArmy) < TotalDefensePower(defendingArmy))
