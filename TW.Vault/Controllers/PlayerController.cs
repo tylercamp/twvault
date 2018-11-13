@@ -144,9 +144,10 @@ namespace TW.Vault.Controllers
                 from village in context.Village.FromWorld(CurrentWorldId)
                 join currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId)
                                                              .Include(cv => cv.ArmyAtHome)
+                                                             .Include(cv => cv.ArmyTraveling)
                     on village.VillageId equals currentVillage.VillageId
                 where village.PlayerId == CurrentPlayerId
-                select new { X = village.X.Value, Y = village.Y.Value, currentVillage.ArmyAtHome }
+                select new { X = village.X.Value, Y = village.Y.Value, village.VillageId, currentVillage.ArmyAtHome, currentVillage.ArmyTraveling }
 
                 ,
 
@@ -186,6 +187,8 @@ namespace TW.Vault.Controllers
 
             );
 
+            var ownVillageIds = ownVillas.Select(v => v.VillageId).ToList();
+
             var supportedVillageIds = ownSupport.Select(s => s.TargetVillageId).Distinct().ToList();
             var villageTribeIds = await (
                     from village in context.Village.FromWorld(CurrentWorldId)
@@ -203,7 +206,7 @@ namespace TW.Vault.Controllers
                 ).ToDictionaryAsync(d => d.TribeId, d => new { Name = d.TribeName, d.Tag });
 
             var supportByTargetTribe = supportedTribeIds.ToDictionary(tid => tid, tid => new List<Scaffold.CurrentArmy>());
-            foreach (var support in ownSupport.Where(s => villageTribeIds.ContainsKey(s.TargetVillageId)))
+            foreach (var support in ownSupport.Where(s => villageTribeIds.ContainsKey(s.TargetVillageId) && !ownVillageIds.Contains(s.TargetVillageId)))
                 supportByTargetTribe[villageTribeIds[support.TargetVillageId]].Add(support.SupportingArmy);
 
 
@@ -239,7 +242,8 @@ namespace TW.Vault.Controllers
                 FakesInPastWeek = usedAttackArmies.Count(ArmyStats.IsFake),
                 BacklineDVsAtHome = ownVillas.Where(v => !armiesNearEnemy.Contains(v.ArmyAtHome.ArmyId)).Sum(v => BattleSimulator.TotalDefensePower(v.ArmyAtHome) / (float)ArmyStats.FullDVDefensivePower),
                 DVsAtHome = ownVillas.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyAtHome) / (float)ArmyStats.FullDVDefensivePower),
-                PopPerTribe = supportByTargetTribe.ToDictionary(
+                DVsTraveling = ownVillas.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyTraveling) / (float)ArmyStats.FullDVDefensivePower),
+                PopPerTribe = supportByTargetTribe.Where(kvp => kvp.Value.Count > 0).ToDictionary(
                     kvp => tribeInfo[kvp.Key].Tag,
                     kvp => kvp.Value.Sum(a => BattleSimulator.TotalDefensePower(a) / (float)ArmyStats.FullDVDefensivePower)
                 )

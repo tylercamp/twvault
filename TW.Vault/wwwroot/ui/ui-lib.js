@@ -25,7 +25,7 @@
                 c.forEach((tabInfo) => {
                     $ui.find('#' + tabInfo.btnId).click(() => selectTab($ui, tabInfo.tabId, tabIds));
                     tabInfo.tab.btnId = tabInfo.btnId;
-                    tabInfo.tab.init && tabInfo.tab.init($ui.find('#' + tabInfo.tabId));
+                    tabInfo.tab.init && tabInfo.tab.init.call(tabInfo.tab, $ui.find('#' + tabInfo.tabId));
                 });
             });
         },
@@ -49,7 +49,7 @@
                 ${containerInfo.map((i) => uilib.mkBtn(i.btnId, i.tab.label, i.tabId == defaultTab ? 'font-weight:bold;' : 'font-weight:normal;' + (i.tab.btnCss ? i.tab.btnCss : ''))).join("\n")}
 
                 <div style="padding:1em">
-                    ${containerInfo.map((i) => `<div style="display:${i.tabId == defaultTab ? 'block' : 'none'}" id="${i.tabId}">${i.tab.getContent()}</div>`).join('\n')}
+                    ${containerInfo.map((i) => `<div style="display:${i.tabId == defaultTab ? 'block' : 'none'}" id="${i.tabId}">${i.tab.getContent.call(i.tab)}</div>`).join('\n')}
                 </div>
             `.trim();
         },

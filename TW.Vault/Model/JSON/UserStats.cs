@@ -9,6 +9,7 @@ namespace TW.Vault.Model.JSON
     {
         public float DVsAtHome { get; set; }
         public float BacklineDVsAtHome { get; set; }
+        public float DVsTraveling { get; set; }
         public int NukesInPastWeek { get; set; }
         public int FangsInPastWeek { get; set; }
         public int FakesInPastWeek { get; set; }

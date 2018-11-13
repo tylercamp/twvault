@@ -483,7 +483,7 @@ namespace TW.Vault.Controllers
                 //  Get enemy villages
                 from tribe in context.EnemyTribe.FromWorld(CurrentWorldId)
                 join player in context.Player.FromWorld(CurrentWorldId) on tribe.EnemyTribeId equals player.TribeId
-                join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.VillageId
+                join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
                 select new { village.VillageId, X = village.X.Value, Y = village.Y.Value }
 
             );
@@ -620,7 +620,7 @@ namespace TW.Vault.Controllers
                 var nearbyEnemyVillage = enemyVillages.FirstOrDefault(v =>
                 {
                     var distance = Model.Coordinate.Distance(v.X, v.Y, village.X, village.Y);
-                    return distance < 5;
+                    return distance < 10;
                 });
 
                 if (nearbyEnemyVillage != null)
