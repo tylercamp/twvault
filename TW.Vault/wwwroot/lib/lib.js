@@ -956,7 +956,12 @@ var lib = (() => {
     //  Utility additions to Math
     Math.roundTo = function roundTo(val, precision) {
         var divisor = Math.pow(10, precision);
-        return Math.round(val * divisor) / divisor;
+        var result;
+        do {
+            result = Math.round(val * divisor) / divisor;
+            precision++;
+        } while (val != 0 && result == 0 && precision < 20);
+        return result;
     };
 
     //  Set values of page types to their names
