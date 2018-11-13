@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using TW.Vault.Features.Simulation;
 using TW.Vault.Model;
@@ -175,6 +176,7 @@ namespace TW.Vault.Controllers
                 from report in context.Report.FromWorld(CurrentWorldId).Include(r => r.AttackerArmy)
                 where report.AttackerPlayerId == CurrentPlayerId
                 where report.OccuredAt > lastWeek
+                where report.AttackerArmy != null
                 select report
 
                 ,
@@ -244,10 +246,158 @@ namespace TW.Vault.Controllers
                 DVsAtHome = ownVillas.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyAtHome) / (float)ArmyStats.FullDVDefensivePower),
                 DVsTraveling = ownVillas.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyTraveling) / (float)ArmyStats.FullDVDefensivePower),
                 PopPerTribe = supportByTargetTribe.Where(kvp => kvp.Value.Count > 0).ToDictionary(
-                    kvp => tribeInfo[kvp.Key].Tag,
+                    kvp => WebUtility.UrlDecode(tribeInfo[kvp.Key].Tag),
                     kvp => kvp.Value.Sum(a => BattleSimulator.TotalDefensePower(a) / (float)ArmyStats.FullDVDefensivePower)
                 )
             };
+
+            return Ok(result);
+        }
+
+        [HttpGet("high-scores")]
+        public async Task<IActionResult> GetTribeHighScores()
+        {
+            context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+            LoadWorldData();
+
+            var lastWeek = CurrentServerTime - TimeSpan.FromDays(7);
+
+            (var tribePlayers, var tribeVillas, var tribeSupport, var tribeCommands, var tribeReports, var enemyVillas) = await ManyTasks.RunToList(
+
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                select new { player.PlayerName, player.PlayerId }
+
+                ,
+
+                // At-home armies
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+                join currentVillage in CurrentSets.CurrentVillage
+                                                  .Include(cv => cv.ArmyAtHome)
+                                                  .Include(cv => cv.ArmyTraveling)
+                    on village.VillageId equals currentVillage.VillageId
+                where currentVillage.ArmyAtHomeId != null && currentVillage.ArmyTravelingId != null
+                select new { X = village.X.Value, Y = village.Y.Value, player.PlayerId, village.VillageId, currentVillage.ArmyAtHome, currentVillage.ArmyTraveling }
+
+                ,
+
+                // Support
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+                join support in CurrentSets.CurrentVillageSupport.Include(s => s.SupportingArmy)
+                    on village.VillageId equals support.SourceVillageId
+                select new { player.PlayerId, support.TargetVillageId, support.SupportingArmy }
+
+                ,
+
+                // Commands in last week
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join command in CurrentSets.Command.Include(c => c.Army) on player.PlayerId equals command.SourcePlayerId
+                where command.ArmyId != null
+                where command.LandsAt > lastWeek
+                where command.IsAttack
+                select command
+
+                ,
+
+                // Reports in last week
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join report in CurrentSets.Report.Include(r => r.AttackerArmy) on player.PlayerId equals report.AttackerPlayerId
+                where report.OccuredAt > lastWeek
+                where report.AttackerArmy != null
+                select report
+
+                ,
+
+                // Enemy villas (to determine what's "backline")
+                from enemy in CurrentSets.EnemyTribe
+                join player in CurrentSets.Player on enemy.EnemyTribeId equals player.TribeId
+                join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+                select new { X = village.X.Value, Y = village.Y.Value }
+
+            );
+
+            var tribeVillageIds = tribeVillas.Select(v => v.VillageId).ToList();
+
+            var supportedVillageIds = tribeSupport.Select(s => s.TargetVillageId).Distinct().ToList();
+            var villageTribeIds = await (
+                    from village in context.Village.FromWorld(CurrentWorldId)
+                    join player in context.Player.FromWorld(CurrentWorldId) on village.PlayerId equals player.PlayerId
+                    join tribe in context.Ally.FromWorld(CurrentWorldId) on player.TribeId equals tribe.TribeId
+                    where supportedVillageIds.Contains(village.VillageId)
+                    select new { village.VillageId, tribe.TribeId }
+                ).ToDictionaryAsync(d => d.VillageId, d => d.TribeId);
+
+            var supportedTribeIds = villageTribeIds.Values.Distinct().ToList();
+            var tribeInfo = await (
+                    from tribe in context.Ally.FromWorld(CurrentWorldId)
+                    where supportedTribeIds.Contains(tribe.TribeId)
+                    select new { tribe.TribeId, tribe.TribeName, tribe.Tag }
+                ).ToDictionaryAsync(d => d.TribeId, d => new { Name = d.TribeName, d.Tag });
+
+            var supportByTargetTribe = tribePlayers.ToDictionary(p => p.PlayerId, p => supportedTribeIds.ToDictionary(t => t, t => new List<Scaffold.CurrentArmy>()));
+            foreach (var support in tribeSupport.Where(s => villageTribeIds.ContainsKey(s.TargetVillageId) && !tribeVillageIds.Contains(s.TargetVillageId)))
+                supportByTargetTribe[support.PlayerId][villageTribeIds[support.TargetVillageId]].Add(support.SupportingArmy);
+
+
+            var reportsBySourceVillage = tribeReports.GroupBy(r => r.AttackerVillageId).ToDictionary(g => g.Key, g => g.ToList());
+            var commandsWithReports = new Dictionary<Scaffold.Command, Scaffold.Report>();
+
+            foreach (var command in tribeCommands.Where(cmd => reportsBySourceVillage.ContainsKey(cmd.SourceVillageId)))
+            {
+                var matchingReport = reportsBySourceVillage[command.SourceVillageId].Where(r => r.OccuredAt == command.LandsAt && r.DefenderVillageId == command.TargetVillageId).FirstOrDefault();
+                if (matchingReport != null)
+                    commandsWithReports.Add(command, matchingReport);
+            }
+
+            var reportsWithoutCommands = tribeReports.Except(commandsWithReports.Values).ToList();
+
+            var usedAttackArmies = tribeCommands
+                .Select(c => new { c.SourcePlayerId, Army = (JSON.Army)c.Army })
+                .Concat(reportsWithoutCommands.Select(r => new { SourcePlayerId = r.AttackerPlayerId.Value, Army = (JSON.Army)r.AttackerArmy }))
+                .ToList();
+
+            var usedAttackArmiesByPlayer = tribePlayers.ToDictionary(p => p.PlayerId, p => new List<JSON.Army>());
+            foreach (var army in usedAttackArmies)
+                usedAttackArmiesByPlayer[army.SourcePlayerId].Add(army.Army);
+
+            var villagesByPlayer = tribeVillas.GroupBy(v => v.PlayerId).ToDictionary(g => g.Key, g => g.ToList());
+
+            var armiesNearEnemy = new HashSet<long>();
+            foreach (var village in tribeVillas)
+            {
+                var nearbyEnemyVilla = enemyVillas.FirstOrDefault(v => Coordinate.Distance(village.X, village.Y, v.X, v.Y) < 10);
+                if (nearbyEnemyVilla != null)
+                    armiesNearEnemy.Add(village.ArmyAtHome.ArmyId);
+            }
+
+            var result = new Dictionary<String, JSON.UserStats>();
+            foreach (var player in tribePlayers)
+            {
+                var playerVillages = villagesByPlayer.GetValueOrDefault(player.PlayerId);
+                var playerArmies = usedAttackArmiesByPlayer[player.PlayerId];
+
+                var playerResult = new JSON.UserStats
+                {
+                    FangsInPastWeek = playerArmies.Count(ArmyStats.IsFang),
+                    NukesInPastWeek = playerArmies.Count(ArmyStats.IsNuke),
+                    FakesInPastWeek = playerArmies.Count(ArmyStats.IsFake),
+                    BacklineDVsAtHome = playerVillages?.Where(v => !armiesNearEnemy.Contains(v.ArmyAtHome.ArmyId)).Sum(v => BattleSimulator.TotalDefensePower(v.ArmyAtHome) / (float)ArmyStats.FullDVDefensivePower) ?? 0,
+                    DVsAtHome = playerVillages?.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyAtHome) / (float)ArmyStats.FullDVDefensivePower) ?? 0,
+                    DVsTraveling = playerVillages?.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyTraveling) / (float)ArmyStats.FullDVDefensivePower) ?? 0,
+                    PopPerTribe = supportByTargetTribe[player.PlayerId].Where(kvp => kvp.Value.Count > 0).ToDictionary(
+                        kvp => WebUtility.UrlDecode(tribeInfo[kvp.Key].Tag),
+                        kvp => kvp.Value.Sum(a => BattleSimulator.TotalDefensePower(a) / (float)ArmyStats.FullDVDefensivePower)
+                    )
+                };
+
+                result.Add(WebUtility.UrlDecode(player.PlayerName), playerResult);
+            }
 
             return Ok(result);
         }

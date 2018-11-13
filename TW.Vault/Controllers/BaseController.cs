@@ -64,6 +64,51 @@ namespace TW.Vault.Controllers
                 return Ok(selector(entity));
         }
 
+        protected class CurrentContextDbSets
+        {
+            int worldId;
+            VaultContext context;
+            public CurrentContextDbSets(VaultContext context, int worldId)
+            {
+                this.worldId = worldId;
+                this.context = context;
+            }
+
+            public IQueryable<Ally> Ally => context.Ally.FromWorld(worldId);
+            public IQueryable<Command> Command => context.Command.FromWorld(worldId);
+            public IQueryable<CommandArmy> CommandArmy => context.CommandArmy.FromWorld(worldId);
+            public IQueryable<Conquer> Conquer => context.Conquer.FromWorld(worldId);
+            public IQueryable<CurrentArmy> CurrentArmy => context.CurrentArmy.FromWorld(worldId);
+            public IQueryable<CurrentBuilding> CurrentBuilding => context.CurrentBuilding.FromWorld(worldId);
+            public IQueryable<CurrentPlayer> CurrentPlayer => context.CurrentPlayer.FromWorld(worldId);
+            public IQueryable<CurrentVillage> CurrentVillage => context.CurrentVillage.FromWorld(worldId);
+            public IQueryable<CurrentVillageSupport> CurrentVillageSupport => context.CurrentVillageSupport.FromWorld(worldId);
+            public IQueryable<EnemyTribe> EnemyTribe => context.EnemyTribe.FromWorld(worldId);
+            public IQueryable<Player> Player => context.Player.FromWorld(worldId);
+            public IQueryable<Report> Report => context.Report.FromWorld(worldId);
+            public IQueryable<ReportArmy> ReportArmy => context.ReportArmy.FromWorld(worldId);
+            public IQueryable<ReportBuilding> ReportBuilding => context.ReportBuilding.FromWorld(worldId);
+            public IQueryable<Transaction> Transaction => context.Transaction.FromWorld(worldId);
+            public IQueryable<User> User => context.User.FromWorld(worldId);
+            public IQueryable<UserLog> UserLog => context.UserLog.FromWorld(worldId);
+            public IQueryable<Village> Village => context.Village.FromWorld(worldId);
+
+
+
+            public IQueryable<User> ActiveUser => User.Where(u => u.Enabled && !u.IsReadOnly);
+        }
+
+        CurrentContextDbSets _currentSets = null;
+        protected CurrentContextDbSets CurrentSets
+        {
+            get
+            {
+                if (_currentSets == null)
+                    _currentSets = new CurrentContextDbSets(context, CurrentWorldId);
+                return _currentSets;
+            }
+        }
+
 
 
         //  Security helpers
