@@ -574,7 +574,8 @@ namespace TW.Vault.Controllers
             var villagesSupportByPlayerIdByTargetTribeId = new Dictionary<long, Dictionary<long, List<Scaffold.CurrentVillageSupport>>>();
 
 
-            foreach (var player in currentPlayers)
+            //  Only check support with players that have registered villas
+            foreach (var player in currentPlayers.Where(p => playersById.ContainsKey(p.PlayerId)))
             {
                 var supportFromPlayer = villagesSupport.Where(
                     s => villageIdsByPlayer[playersById[player.PlayerId]].Contains(s.SourceVillageId)
