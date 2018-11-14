@@ -165,7 +165,7 @@ namespace TW.Vault.Controllers
                 // Commands in last week
                 from command in context.Command.FromWorld(CurrentWorldId).Include(c => c.Army)
                 where command.SourcePlayerId == CurrentPlayerId
-                where command.Army != null
+                where command.ArmyId != null
                 where command.LandsAt > lastWeek
                 where command.IsAttack
                 select command

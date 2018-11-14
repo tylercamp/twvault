@@ -15,7 +15,8 @@
                     $container.find('#stats-dvs-traveling').text(Math.roundTo(data.dVsTraveling, 1));
 
                     $container.find('table:not(.vis) td').css({
-                        padding: '0 0.25em'
+                        padding: '0 0.25em',
+                        width: '50%'
                     });
 
                     var $supportTable = $container.find('table.vis');
@@ -51,9 +52,9 @@
 
         getContent: () => `
             <h3 style="margin-bottom:0">Last 7 Days</h3>
-            <div style="width:50%; display:inline-block">
+            <div style="display:inline-block">
                 <i style="font-size:0.8em;margin:0">(Traveling and landed)</i>
-                <table style="margin-top:0.5em;width:100%">
+                <table style="margin-top:0.5em;">
                     <tr><td><b id="stats-nukes-this-week">-</b></td><td>Nukes</td>
                     <tr><td><b id="stats-fangs-this-week">-</b></td><td>Fangs</td>
                     <tr><td><b id="stats-fakes-this-week">-</b></td><td>Fakes</td>
