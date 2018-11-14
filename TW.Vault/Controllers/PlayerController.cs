@@ -262,15 +262,14 @@ namespace TW.Vault.Controllers
 
             var lastWeek = CurrentServerTime - TimeSpan.FromDays(7);
 
-            (var tribePlayers, var tribeVillas, var tribeSupport, var tribeCommands, var tribeReports, var enemyVillas) = await ManyTasks.RunToList(
-
+            var tribePlayers = await (
                 from user in CurrentSets.ActiveUser
                 join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                 select new { player.PlayerName, player.PlayerId }
+            ).ToListAsync();
 
-                ,
-
-                // At-home armies
+            // At-home armies
+            var tribeVillas = await Profile("Get village armies", () => (
                 from user in CurrentSets.ActiveUser
                 join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                 join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
@@ -280,20 +279,20 @@ namespace TW.Vault.Controllers
                     on village.VillageId equals currentVillage.VillageId
                 where currentVillage.ArmyAtHomeId != null && currentVillage.ArmyTravelingId != null
                 select new { X = village.X.Value, Y = village.Y.Value, player.PlayerId, village.VillageId, currentVillage.ArmyAtHome, currentVillage.ArmyTraveling }
+            ).ToListAsync());
 
-                ,
-
-                // Support
+            // Support
+            var tribeSupport = await Profile("Get support info", () => (
                 from user in CurrentSets.ActiveUser
                 join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                 join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                 join support in CurrentSets.CurrentVillageSupport.Include(s => s.SupportingArmy)
                     on village.VillageId equals support.SourceVillageId
                 select new { player.PlayerId, support.TargetVillageId, support.SupportingArmy }
+            ).ToListAsync());
 
-                ,
-
-                // Commands in last week
+            // Commands in last week
+            var tribeCommands = await Profile("Get commands in last week", () => (
                 from user in CurrentSets.ActiveUser
                 join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                 join command in CurrentSets.Command.Include(c => c.Army) on player.PlayerId equals command.SourcePlayerId
@@ -301,37 +300,130 @@ namespace TW.Vault.Controllers
                 where command.LandsAt > lastWeek
                 where command.IsAttack
                 select command
+            ).ToListAsync());
 
-                ,
+            // SLIM
+            var slimTribeCommands = await Profile("Get SLIM commands in last week", () => (
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join command in CurrentSets.Command.Include(c => c.Army) on player.PlayerId equals command.SourcePlayerId
+                where command.ArmyId != null
+                where command.LandsAt > lastWeek
+                where command.IsAttack
+                select new { command.CommandId, command.SourceVillageId, command.TargetVillageId, command.Army }
+            ).ToListAsync());
 
-                // Reports in last week
+            // Reports in last week
+            var tribeReports = await Profile("Reports in last week", () => (
                 from user in CurrentSets.ActiveUser
                 join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                 join report in CurrentSets.Report.Include(r => r.AttackerArmy) on player.PlayerId equals report.AttackerPlayerId
                 where report.OccuredAt > lastWeek
                 where report.AttackerArmy != null
                 select report
+            ).ToListAsync());
 
-                ,
+            // SLIM
+            var slimTribeReports = await Profile("SLIM Reports in last week", () => (
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join report in CurrentSets.Report.Include(r => r.AttackerArmy) on player.PlayerId equals report.AttackerPlayerId
+                where report.OccuredAt > lastWeek
+                where report.AttackerArmy != null
+                select new { report.AttackerArmy, report.ReportId, report.OccuredAt, report.AttackerVillageId }
+            ).ToListAsync());
 
-                // Enemy villas (to determine what's "backline")
+            // Enemy villas (to determine what's "backline")
+            var enemyVillas = await Profile("Get enemy villages", () => (
                 from enemy in CurrentSets.EnemyTribe
                 join player in CurrentSets.Player on enemy.EnemyTribeId equals player.TribeId
                 join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                 select new { X = village.X.Value, Y = village.Y.Value }
+            ).ToListAsync());
 
-            );
+            //(var tribePlayers, var tribeVillas, var tribeSupport, var tribeCommands, var tribeReports, var enemyVillas) = await ManyTasks.Run(
+
+            //    (
+            //        from user in CurrentSets.ActiveUser
+            //        join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+            //        select new { player.PlayerName, player.PlayerId }
+            //    ).ToListAsync()
+
+            //    ,
+
+            //    // At-home armies
+            //    Profile("Get village armies", () => (
+            //        from user in CurrentSets.ActiveUser
+            //        join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+            //        join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+            //        join currentVillage in CurrentSets.CurrentVillage
+            //                                          .Include(cv => cv.ArmyAtHome)
+            //                                          .Include(cv => cv.ArmyTraveling)
+            //            on village.VillageId equals currentVillage.VillageId
+            //        where currentVillage.ArmyAtHomeId != null && currentVillage.ArmyTravelingId != null
+            //        select new { X = village.X.Value, Y = village.Y.Value, player.PlayerId, village.VillageId, currentVillage.ArmyAtHome, currentVillage.ArmyTraveling }
+            //    ).ToListAsync())
+
+            //    ,
+
+            //    // Support
+            //    Profile("Get support info", () => (
+            //        from user in CurrentSets.ActiveUser
+            //        join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+            //        join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+            //        join support in CurrentSets.CurrentVillageSupport.Include(s => s.SupportingArmy)
+            //            on village.VillageId equals support.SourceVillageId
+            //        select new { player.PlayerId, support.TargetVillageId, support.SupportingArmy }
+            //    ).ToListAsync())
+
+            //    ,
+
+            //    // Commands in last week
+            //    Profile("Get commands in last week", () => (
+            //        from user in CurrentSets.ActiveUser
+            //        join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+            //        join command in CurrentSets.Command.Include(c => c.Army) on player.PlayerId equals command.SourcePlayerId
+            //        where command.ArmyId != null
+            //        where command.LandsAt > lastWeek
+            //        where command.IsAttack
+            //        select command
+            //    ).ToListAsync())
+
+            //    ,
+
+            //    // Reports in last week
+            //    Profile("Reports in last week", () => (
+            //        from user in CurrentSets.ActiveUser
+            //        join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+            //        join report in CurrentSets.Report.Include(r => r.AttackerArmy) on player.PlayerId equals report.AttackerPlayerId
+            //        where report.OccuredAt > lastWeek
+            //        where report.AttackerArmy != null
+            //        select report
+            //    ).ToListAsync())
+
+            //    ,
+
+            //    // Enemy villas (to determine what's "backline")
+            //    Profile("Get enemy villages", () => (
+            //        from enemy in CurrentSets.EnemyTribe
+            //        join player in CurrentSets.Player on enemy.EnemyTribeId equals player.TribeId
+            //        join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+            //        select new { X = village.X.Value, Y = village.Y.Value }
+            //    ).ToListAsync())
+
+            //);
 
             var tribeVillageIds = tribeVillas.Select(v => v.VillageId).ToList();
 
             var supportedVillageIds = tribeSupport.Select(s => s.TargetVillageId).Distinct().ToList();
-            var villageTribeIds = await (
+            var villageTribeIds = await Profile("Get supported tribe village IDs", () => (
                     from village in context.Village.FromWorld(CurrentWorldId)
                     join player in context.Player.FromWorld(CurrentWorldId) on village.PlayerId equals player.PlayerId
                     join tribe in context.Ally.FromWorld(CurrentWorldId) on player.TribeId equals tribe.TribeId
                     where supportedVillageIds.Contains(village.VillageId)
                     select new { village.VillageId, tribe.TribeId }
-                ).ToDictionaryAsync(d => d.VillageId, d => d.TribeId);
+                ).ToDictionaryAsync(d => d.VillageId, d => d.TribeId)
+            );
 
             var supportedTribeIds = villageTribeIds.Values.Distinct().ToList();
             var tribeInfo = await (

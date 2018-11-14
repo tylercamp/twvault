@@ -20,6 +20,8 @@ namespace TW.Vault.Controllers
         protected readonly VaultContext context;
         protected readonly ILogger logger;
 
+        protected ConcurrentDictionary<String, TimeSpan> ProfilingEntries { get; } = new ConcurrentDictionary<string, TimeSpan>();
+
         public BaseController(VaultContext context, ILoggerFactory loggerFactory)
         {
             this.context = context;
@@ -226,6 +228,7 @@ namespace TW.Vault.Controllers
             action();
             var duration = DateTime.UtcNow - start;
             Profiling.AddRecord(label, duration);
+            ProfilingEntries.TryAdd(label, duration);
 
             logger.LogDebug("{0} took {1}ms", label, (int)duration.TotalMilliseconds);
         }
@@ -238,6 +241,7 @@ namespace TW.Vault.Controllers
             T result = func();
             var duration = DateTime.UtcNow - start;
             Profiling.AddRecord(label, duration);
+            ProfilingEntries.TryAdd(label, duration);
 
             logger.LogDebug("{0} took {1}ms", label, (int)duration.TotalMilliseconds);
             return result;
@@ -251,6 +255,7 @@ namespace TW.Vault.Controllers
             await func();
             var duration = DateTime.UtcNow - start;
             Profiling.AddRecord(label, duration);
+            ProfilingEntries.TryAdd(label, duration);
 
             logger.LogDebug("{0} took {1}ms", label, (int)duration.TotalMilliseconds);
         }
@@ -263,6 +268,7 @@ namespace TW.Vault.Controllers
             T result = await func();
             var duration = DateTime.UtcNow - start;
             Profiling.AddRecord(label, duration);
+            ProfilingEntries.TryAdd(label, duration);
 
             logger.LogDebug("{0} took {1}ms", label, (int)duration.TotalMilliseconds);
             return result;
