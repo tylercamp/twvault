@@ -11,7 +11,10 @@ try {
     } else if (!window.MutationObserver) {
         alertInvalidBrowser();
     } else {
-        $.getScript(getScriptBase() + "/vault.js?_=" + Math.round(Math.random() * 1000000));
+        $.ajax({
+            url: getScriptBase() + "/vault.js?_=" + Math.round(Math.random() * 1000000),
+            dataType: 'script'
+        });
     }
 
 } catch (e) {
@@ -30,7 +33,7 @@ function getScriptBase() {
     for (var i = 0; i < stack.length; i++)
         stack[i] = stack[i].trim();
     var firstScope = stack[stack.length - 1];
-    var sourceUrl = firstScope.match(/(https:\/\/.+\.js)/);
+    var sourceUrl = firstScope.match(/(https?:\/\/.+\.js)/);
     if (sourceUrl)
         sourceUrl = sourceUrl[1];
 
