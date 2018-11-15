@@ -1,7 +1,30 @@
 ﻿function makeStatsTab() {
+    let userStatsTab = makeUserStatsTab();
+    let highScoresTab = makeHighScoresTab();
+
+    let tabs = [
+        userStatsTab,
+        highScoresTab
+    ];
+
     return {
         label: 'Stats',
         containerId: 'vault-stats-container',
+
+        init: function ($container) {
+
+        },
+
+        getContent: function () {
+            return uilib.mkTabbedContainer(userStatsTab.containerId, tabs);
+        }
+    };
+}
+
+function makeUserStatsTab() {
+    return {
+        label: 'Me',
+        containerId: 'vault-user-stats-container',
 
         init: function ($container) {
             lib.getApi('player/stats')
@@ -84,4 +107,92 @@
             </div>
         `
     };
+}
+
+function makeHighScoresTab() {
+    var rankings = [
+        { label: '# Fakes', property: 'numFakes' },
+        { label: '# Fangs', property: 'numFangs' },
+        { label: '# Nukes', property: 'numNukes' }
+    ];
+
+    return {
+        label: 'High Scores',
+        containerId: 'vault-stats-high-scores-container',
+
+        init: function ($container) {
+            lib.getApi('player/high-scores')
+                .done((data) => {
+                    let rankingTabs = [];
+
+                    rankings.forEach((ranking) => {
+                        $container.find('#high-scores-overview-container').append(
+                            makeTopRankedList(data, ranking.label, ranking.property, ranking.suffix).trim()
+                        );
+
+                        rankingTabs.push({
+                            label: ranking.label,
+                            containerId: `vault-stats-high-scores-rankings-${ranking.property.toLowerCase()}`,
+                            init: () => { },
+                            getContent: () => makeRankingTab(data, ranking.label, ranking.property, ranking.suffix)
+                        });
+                    });
+
+                    let defaultTab = rankingTabs[0].containerId;
+                    $container.find('#high-scores-rankings-container').append(uilib.mkTabbedContainer(defaultTab, rankingTabs));
+                })
+                .error(() => {
+                    alert('An error occurred while getting rankings');
+                });
+        },
+
+        //  Top of the tab has overview of top 3 players for a few different categories
+        //  Full listings are available below that overview in different tabs
+        getContent: () => `
+            <h3>High Scores</h3>
+            <div id="high-scores-overview-container"></div>
+
+            <h3>Rankings</h3>
+            <div id="high-scores-rankings-container"></div>
+        `
+    };
+}
+
+function rowClass(idx) {
+    return idx % 0 ? 'row_b' : 'row_a';
+}
+
+function makeTopRankedList(scoreData, label, property, suffix) {
+    var mapSort =
+        lib.objectToArray(scoreData, (prop, value) => ({ name: prop, value: value[property] }))
+            .sort((a, b) => a.value - b.value);
+
+    return `
+        <div style="inline-block">
+            <h4>${label}</h4>
+            <table>
+                ${mapSort.map((entry, i) => `
+                    <tr class="${rowClass(i)}">
+                        <td>${entry.name}</td>
+                        <td>${entry.value} ${suffix}</td>
+                    </tr>
+                `).join('\n')}
+            </table>
+        </div>
+    `;
+}
+
+function makeRankingTab(scoreData, label, property, suffix) {
+    return `
+        <table class="vis" style="width:100%">
+            <tr>
+                <th>Player</th>
+                <th>${label}</th>
+            </tr>
+            ${ lib.objectToArray(scoreData, (prop, value) => ({ name: prop, value: value[property] }))
+                .sort((a, b) => a.value - b.value)
+                .map((entry, i) => `<tr class="${rowClass(i)}"><td>${entry.name}</td><td>${entry.value || 0} ${suffix || ''}</td></tr>`)
+                .join('\n') }
+        </table>
+    `;
 }
