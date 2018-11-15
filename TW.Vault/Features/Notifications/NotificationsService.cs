@@ -13,15 +13,10 @@ namespace TW.Vault.Features.Notifications
 {
     public class NotificationsService : BackgroundService
     {
-        private ILogger logger;
-        private IServiceScopeFactory scopeFactory;
-
         private int refreshDelay = Configuration.Behavior.Notifications.NotificationCheckInterval;
 
-        public NotificationsService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory)
+        public NotificationsService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(scopeFactory, loggerFactory)
         {
-            this.scopeFactory = scopeFactory;
-            this.logger = loggerFactory.CreateLogger<NotificationsService>();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -185,17 +180,6 @@ namespace TW.Vault.Features.Notifications
             }
 
             return notificationMessage.ToString();
-        }
-
-        private async Task WithVaultContext(Func<Scaffold.VaultContext, Task> action)
-        {
-            using (var scope = scopeFactory.CreateScope())
-            {
-                using (var context = scope.ServiceProvider.GetRequiredService<Scaffold.VaultContext>())
-                {
-                    await action(context);
-                }
-            }
         }
 
         private async Task ClearExpiredNotifications(Scaffold.VaultContext context)

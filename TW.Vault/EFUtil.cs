@@ -57,6 +57,8 @@ namespace TW.Vault
                 .Include(v => v.ArmySupporting)
                 .Include(v => v.CurrentBuilding);
 
+        public static IQueryable<User> Active(this IQueryable<User> userQuery) =>
+            userQuery.Where(u => u.Enabled && !u.IsReadOnly);
 
         #region FromWorld
 

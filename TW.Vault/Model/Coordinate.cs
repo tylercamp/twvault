@@ -10,6 +10,8 @@ namespace TW.Vault.Model
         public int X;
         public int Y;
 
+        public override string ToString() => $"{X}|{Y}";
+
         public float DistanceTo(int x, int y) => MathF.Sqrt((X - x) * (X - x) + (Y - y) * (Y - y));
         public float DistanceTo(Coordinate other) => DistanceTo(other.X, other.Y);
 

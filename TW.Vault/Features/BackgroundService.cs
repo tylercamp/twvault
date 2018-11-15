@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,15 @@ namespace TW.Vault.Features
         private Task _executingTask;
         private readonly CancellationTokenSource _stoppingCts =
                                                        new CancellationTokenSource();
+
+        protected ILogger logger;
+        private IServiceScopeFactory scopeFactory;
+
+        public BackgroundService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory)
+        {
+            this.logger = loggerFactory.CreateLogger(this.GetType());
+            this.scopeFactory = scopeFactory;
+        }
 
         protected abstract Task ExecuteAsync(CancellationToken stoppingToken);
 
@@ -59,6 +70,17 @@ namespace TW.Vault.Features
         public virtual void Dispose()
         {
             _stoppingCts.Cancel();
+        }
+
+        protected async Task WithVaultContext(Func<Scaffold.VaultContext, Task> action)
+        {
+            using (var scope = scopeFactory.CreateScope())
+            {
+                using (var context = scope.ServiceProvider.GetRequiredService<Scaffold.VaultContext>())
+                {
+                    await action(context);
+                }
+            }
         }
     }
 

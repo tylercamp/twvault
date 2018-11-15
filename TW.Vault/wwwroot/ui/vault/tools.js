@@ -213,6 +213,7 @@ function makeBacktimeListTab() {
         maxInstructionsCount: 100,
         hideBacktimedNukes: true,
         ignoreStacked: true,
+        onlyFirstPermutation: false,
         ignoredTroopTypes: []
     });
 
@@ -253,6 +254,12 @@ function makeBacktimeListTab() {
         });
 
         allCommands.sort((a, b) => a.launchAt.valueOf() - b.launchAt.valueOf());
+
+        if (settings.onlyFirstPermutation) {
+            let mappedTimings = {};
+            let unfilteredCommands = allCommands;
+            allCommands = [];
+        }
 
         console.log('Made full plan list: ', allCommands);
 
@@ -328,6 +335,7 @@ function makeBacktimeListTab() {
             uilib.syncProp('#backtime-list-settings-max-instructions', settings, 'maxInstructionsCount', updateSettings);
             uilib.syncProp('#backtime-list-settings-hide-existing-backtimes', settings, 'hideBacktimedNukes', updateSettings);
             uilib.syncProp('#backtime-list-settings-hide-stacked-backtimes', settings, 'ignoreStacked', updateSettings);
+            uilib.syncProp('#backtime-list-settings-first-permutation', settings, 'onlyFirstPermutation', updateSettings);
         },
 
         getContent: function () {
@@ -417,6 +425,14 @@ function makeBacktimeListTab() {
                             </td>
                         </tr>
                         <!--
+                        <tr>
+                            <td>
+                                <label for="backtime-list-settings-first-permutation">Only first timing:</label>
+                            </td>
+                            <td>
+                                <input id="backtime-list-settings-first-permutation" type="checkbox"> (Don't list multiple timings for the same village, ie ram, axe, etc)
+                            </td>
+                        </tr>
                         <tr>
                             <td>
                                 <label>

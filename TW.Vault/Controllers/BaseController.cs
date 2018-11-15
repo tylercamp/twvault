@@ -97,7 +97,7 @@ namespace TW.Vault.Controllers
 
 
 
-            public IQueryable<User> ActiveUser => User.Where(u => u.Enabled && !u.IsReadOnly);
+            public IQueryable<User> ActiveUser => User.Active();
         }
 
         CurrentContextDbSets _currentSets = null;
