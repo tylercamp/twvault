@@ -32,38 +32,38 @@ namespace TW.Vault.Controllers
             var serverTime = CurrentServerTime;
 
             var invalidTribeIds = await (
-                    from tribe in context.Ally.FromWorld(CurrentWorldId)
-                    join player in context.Player.FromWorld(CurrentWorldId) on tribe.TribeId equals player.TribeId
-                    join user in context.User on player.PlayerId equals user.PlayerId
+                    from tribe in CurrentSets.Ally
+                    join player in CurrentSets.Player on tribe.TribeId equals player.TribeId
+                    join user in CurrentSets.User on player.PlayerId equals user.PlayerId
                     where user.Enabled
                     select tribe.TribeId
                 ).Distinct().ToListAsync();
 
             var invalidPlayerIds = await (
-                    from player in context.Player.FromWorld(CurrentWorldId)
-                    join user in context.User on player.PlayerId equals user.PlayerId into user
+                    from player in CurrentSets.Player
+                    join user in CurrentSets.User on player.PlayerId equals user.PlayerId into user
                     where user.Any(u => u.Enabled) || (player.TribeId != null && invalidTribeIds.Contains(player.TribeId.Value))
                     select player.PlayerId
                 ).ToListAsync();
 
             var invalidVillageIds = await (
-                    from village in context.Village.FromWorld(CurrentWorldId)
+                    from village in CurrentSets.Village
                     where village.PlayerId != null && invalidPlayerIds.Contains(village.PlayerId.Value)
                     select village.VillageId
                 ).ToListAsync();
 
             var ownVillages = await (
-                    from village in context.Village.FromWorld(CurrentWorldId)
-                    join currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId).Include(cv => cv.ArmyAtHome) on village.VillageId equals currentVillage.VillageId
+                    from village in CurrentSets.Village
+                    join currentVillage in CurrentSets.CurrentVillage.Include(cv => cv.ArmyAtHome) on village.VillageId equals currentVillage.VillageId
                     where currentVillage.ArmyAtHome != null
                     where village.PlayerId == CurrentPlayerId
                     select new { village, currentVillage }
                 ).ToDictionaryAsync(d => d.village, d => d.currentVillage);
 
             var possibleCommands = await (
-                    from command in context.Command.FromWorld(CurrentWorldId)
-                                                   .Include(c => c.Army)
-                                                   .Include(c => c.SourceVillage)
+                    from command in CurrentSets.Command
+                                               .Include(c => c.Army)
+                                               .Include(c => c.SourceVillage)
                     where command.Army != null
                     where command.ReturnsAt > serverTime
                     where !invalidVillageIds.Contains(command.SourceVillageId)
@@ -115,7 +115,7 @@ namespace TW.Vault.Controllers
             //  Find existing backtimes for commands that had plans generated
             var backtimedVillageIds = allInstructions.Keys.Select(c => c.SourceVillageId).ToList();
             var commandsToBacktimedVillages = await (
-                    from command in context.Command.FromWorld(CurrentWorldId)
+                    from command in CurrentSets.Command
                     where backtimedVillageIds.Contains(command.TargetVillageId)
                     where command.Army != null
                     where command.LandsAt > serverTime
@@ -123,7 +123,7 @@ namespace TW.Vault.Controllers
                 ).ToListAsync();
 
             var troopsAtBacktimedVillages = await (
-                    from village in context.CurrentVillage.FromWorld(CurrentWorldId).Include(v => v.ArmyStationed)
+                    from village in CurrentSets.CurrentVillage.Include(v => v.ArmyStationed)
                     where backtimedVillageIds.Contains(village.VillageId)
                     select new { village.VillageId, village.ArmyStationed }
                 ).ToDictionaryAsync(v => v.VillageId, v => v.ArmyStationed);
@@ -156,14 +156,14 @@ namespace TW.Vault.Controllers
             var targetPlayerIds = targetPlayerIdsTmp.Keys.ToList();
 
             var playerInfoById = await (
-                    from player in context.Player.FromWorld(CurrentWorldId)
+                    from player in CurrentSets.Player
                     where targetPlayerIds.Contains(player.PlayerId)
                     select new { player.PlayerId, player.TribeId, player.PlayerName }
                 ).ToDictionaryAsync(i => i.PlayerId, i => i);
 
             var tribeIds = playerInfoById.Values.Select(i => i.TribeId).Where(t => t != null).Distinct();
             var tribeInfoById = await (
-                    from tribe in context.Ally.FromWorld(CurrentWorldId)
+                    from tribe in CurrentSets.Ally
                     where tribeIds.Contains(tribe.TribeId)
                     select new { tribe.TribeId, tribe.Tag, tribe.TribeName }
                 ).ToDictionaryAsync(i => i.TribeId, i => i);

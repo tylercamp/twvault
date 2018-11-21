@@ -63,6 +63,16 @@ namespace TW.Vault
                 return cfg;
             }
         }
+
+        public static RankingsConfiguration Rankings
+        {
+            get
+            {
+                RankingsConfiguration cfg = new RankingsConfiguration();
+                Instance.GetSection("Rankings").Bind(cfg);
+                return cfg;
+            }
+        }
     }
 
     public class SecurityConfiguration
@@ -123,5 +133,11 @@ namespace TW.Vault
     {
         public bool EnableRequiredFiles { get; set; }
         public List<String> RequiredFiles { get; set; }
+    }
+
+    public class RankingsConfiguration
+    {
+        public bool EnableRankingsService { get; set; } = true;
+        public int RefreshCheckIntervalSeconds { get; set; } = 300;
     }
 }

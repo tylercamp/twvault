@@ -42,7 +42,17 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
         reportInfo.attackingPlayerId = parseInt(attackingPlayer.prop('href').match(/id=(\w+)/)[1]);
 
     //  Get attacker village
-    reportInfo.attackingVillageId = parseInt($attackInfo.find('a[href*=info_village]').prop('href').match(/id=(\w+)/)[1])
+    reportInfo.attackingVillageId = $attackInfo.find('a[href*=info_village]').prop('href');
+    if (reportInfo.attackingVillageId) {
+        reportInfo.attackingVillageId = parseInt(reportInfo.attackingVillageId.match(/id=(\w+)/)[1]);
+    } else {
+        // Village was deleted, can happen for guests that quit
+        ignoreReport();
+        if (showNotice_)
+            alert("This report doesn't have an attacking village!");
+        console.warn('Ignoring report with missing attacker village');
+        return;
+    }
 
     //  Get attacker units
     reportInfo.attackingArmy = $attackInfo.find('#attack_info_att_units tr:nth-of-type(2) .unit-item').get().map((el) => { return { type: $(el).prop('class').match(/unit-item-([\w\-]+)/)[1], count: parseInt($(el).text().trim()) } })
@@ -55,7 +65,17 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
         reportInfo.defendingPlayerId = parseInt(defendingPlayer.prop('href').match(/id=(\w+)/)[1]);
 
     //  Get defender village
-    reportInfo.defendingVillageId = parseInt($defenseInfo.find('a[href*=info_village]').prop('href').match(/id=(\w+)/)[1])
+    reportInfo.defendingVillageId = $defenseInfo.find('a[href*=info_village]').prop('href')
+    if (reportInfo.defenderVillageId) {
+        reportInfo.defendingVillageId = parseInt(reportInfo.defendingVillageId.match(/id=(\w+)/)[1]);
+    } else {
+        // Village was deleted, can happen for guests that quit
+        ignoreReport();
+        if (showNotice_)
+            alert("This report doesn't have a defending village!");
+        console.warn('Ignoring report with missing defender village');
+        return;
+    }
 
     //  Get defender units
     reportInfo.defendingArmy = $defenseInfo.find('#attack_info_def_units tr:nth-of-type(2) .unit-item').get().map((el) => { return { type: $(el).prop('class').match(/unit-item-([\w\-]+)/)[1], count: parseInt($(el).text().trim()) } })
@@ -119,10 +139,10 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     if (reportInfo.defendingPlayerId == lib.getCurrentPlayerId()) {
         let attackerPop = lib.twcalc.totalPopulation(reportInfo.attackingArmy);
         if (attackerPop < minAttackerPopAsDefender) {
-            markReportAsSaved();
+            ignoreReport();
             if (showNotice_)
                 alert("There's no useful info here!");
-            console.warn('Skipping incoming that was a fake');
+            console.warn('Ignoring incoming that was a fake');
             return;
         }
     }
@@ -131,10 +151,10 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     if (reportInfo.defendingPlayerId == null) {
         let defenderPop = lib.twcalc.totalPopulation(reportInfo.defendingArmy);
         if (defenderPop < 100) {
-            markReportAsSaved();
+            ignoreReport();
             if (showNotice_)
                 alert("There's no useful info here!");
-            console.warn('Skipping report for empty barb');
+            console.warn('Ignoring report for empty barb');
             return;
         }
     }
@@ -143,6 +163,21 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
         let reportsHistory = lib.getLocalStorage('reports-history', []);
         reportsHistory.push(reportInfo.reportId);
         lib.setLocalStorage('reports-history', reportsHistory);
+    }
+
+    function ignoreReport() {
+        let id = reportInfo.reportId;
+        lib.postApi('report/ignore', [id])
+            .done(markReportAsSaved)
+            .fail(() => {
+                if (lib.isUnloading())
+                    return;
+
+                if (showNotice_)
+                    alert('An error occurred...');
+                if (onError_)
+                    onError_();
+            });
     }
 
     lib.postApi('report', reportInfo)

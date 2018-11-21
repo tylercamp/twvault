@@ -20,6 +20,7 @@ namespace TW.Vault.Scaffold
         public short WorldId { get; set; }
         public string UserLabel { get; set; }
         public DateTime? ReturnsAt { get; set; }
+        public int AccessGroupId { get; set; }
 
         public CommandArmy Army { get; set; }
         public Player SourcePlayer { get; set; }

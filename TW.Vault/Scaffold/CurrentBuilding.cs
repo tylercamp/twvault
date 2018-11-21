@@ -27,6 +27,7 @@ namespace TW.Vault.Scaffold
         public short WorldId { get; set; }
         public DateTime? LastUpdated { get; set; }
         public short? Snob { get; set; }
+        public int AccessGroupId { get; set; }
 
         public CurrentVillage Village { get; set; }
         public World World { get; set; }

@@ -28,7 +28,7 @@ namespace TW.Vault.Controllers
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
-            return Ok(await context.Report.FromWorld(CurrentWorldId).CountAsync());
+            return Ok(await CurrentSets.Report.CountAsync());
         }
         
         [HttpGet("{reportId}", Name = "GetReport")]
@@ -44,7 +44,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetByVillage(long villageId)
         {
             var reports = await Profile("Get reports by village", () => Paginated(
-                    from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
+                    from report in CurrentSets.Report.IncludeReportData()
                     where report.DefenderVillageId == villageId || report.AttackerVillageId == villageId
                     orderby report.OccuredAt descending
                     select report
@@ -59,7 +59,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetByDefendingVillage(long villageId)
         {
             var reports = await Profile("Get reports by defending village", () => Paginated(
-                    from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
+                    from report in CurrentSets.Report.IncludeReportData()
                     where report.DefenderVillageId == villageId
                     orderby report.OccuredAt descending
                     select report
@@ -74,7 +74,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetByAttackingVillage(long villageId)
         {
             var reports = await Profile("Get reports by attacking village", () => Paginated(
-                    from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
+                    from report in CurrentSets.Report.IncludeReportData()
                     where report.AttackerVillageId == villageId
                     orderby report.OccuredAt descending
                     select report
@@ -101,13 +101,13 @@ namespace TW.Vault.Controllers
                     currentBatchSize = maxBatchSize;
 
                 var currentBatch = reportIds.Skip(i * maxBatchSize).Take(currentBatchSize).ToList();
-                var existingBatchReports = await (
-                        from report in context.Report.FromWorld(CurrentWorldId)
-                        where currentBatch.Contains(report.ReportId)
-                        select report.ReportId
-                    ).ToListAsync();
+                (var existingBatchReports, var existingIgnoredBatchReports) = await ManyTasks.RunToList(
+                        CurrentSets.Report.Where(r => currentBatch.Contains(r.ReportId)).Select(r => r.ReportId),
+                        CurrentSets.IgnoredReport.Where(r => currentBatch.Contains(r.ReportId)).Select(r => r.ReportId)
+                    );
 
                 existingReports.AddRange(existingBatchReports);
+                existingReports.AddRange(existingIgnoredBatchReports);
             }
 
             return Ok(existingReports.ToArray());
@@ -119,6 +119,42 @@ namespace TW.Vault.Controllers
             var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
             history.LastUploadedReportsAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("ignore")]
+        public async Task<IActionResult> IgnoreReports([FromBody]List<long> reportIds)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            (var previousIgnoredReports, var previousReports) = await ManyTasks.RunToList(
+                    CurrentSets.IgnoredReport.Where(r => reportIds.Contains(r.ReportId)).Select(r => r.ReportId),
+                    CurrentSets.Report.Where(r => reportIds.Contains(r.ReportId)).Select(r => r.ReportId)
+                );
+
+            var reportsToIgnore = reportIds
+                .Except(previousIgnoredReports)
+                .Except(previousReports);
+
+            foreach (var id in reportsToIgnore)
+            {
+                var newRecord = new Scaffold.IgnoredReport
+                {
+                    ReportId = id,
+                    WorldId = CurrentWorldId,
+                    AccessGroupId = CurrentAccessGroupId
+                };
+
+                context.Add(newRecord);
+            }
+
+            await context.SaveChangesAsync();
+
+            var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
+            history.LastUploadedReportsAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+
             return Ok();
         }
 
@@ -157,7 +193,7 @@ namespace TW.Vault.Controllers
                 }
 
                 var scaffoldReport = await Profile("Find existing report", () => (
-                        from report in context.Report.IncludeReportData().FromWorld(CurrentWorldId)
+                        from report in CurrentSets.Report.IncludeReportData()
                         where report.ReportId == jsonReport.ReportId.Value
                         select report
                     ).FirstOrDefaultAsync()
@@ -172,6 +208,7 @@ namespace TW.Vault.Controllers
                     {
                         scaffoldReport = new Scaffold.Report();
                         scaffoldReport.WorldId = CurrentWorldId;
+                        scaffoldReport.AccessGroupId = CurrentAccessGroupId;
                         context.Report.Add(scaffoldReport);
                     }
                     else
@@ -206,11 +243,19 @@ namespace TW.Vault.Controllers
                             //  WARNING - This will auto-generate a command with a random ID,
                             //      if a new TW command is uploaded with the given ID any backtime
                             //      calculations for this old command will get screwy
-                            await context.SaveChangesAsync();
+                            try
+                            {
+                                await context.SaveChangesAsync();
+                            }
+                            catch (Exception e)
+                            {
+                                throw e;
+                            }
 
                             command = new Scaffold.Command();
                             command.Tx = tx;
                             command.WorldId = CurrentWorldId;
+                            command.AccessGroupId = CurrentAccessGroupId;
                             command.IsReturning = true;
                             command.FirstSeenAt = DateTime.UtcNow;
                             command.IsAttack = true;
@@ -253,15 +298,15 @@ namespace TW.Vault.Controllers
                                 }
                             }
 
-                            var attackingVillage = await context.Village
-                                                                .FromWorld(CurrentWorldId)
-                                                                .Where(v => v.VillageId == jsonReport.AttackingVillageId)
-                                                                .FirstOrDefaultAsync();
+                            var attackingVillage = await CurrentSets.Village
+                                                                    .FromWorld(CurrentWorldId)
+                                                                    .Where(v => v.VillageId == jsonReport.AttackingVillageId)
+                                                                    .FirstOrDefaultAsync();
 
-                            var defendingVillage = await context.Village
-                                                                .FromWorld(CurrentWorldId)
-                                                                .Where(v => v.VillageId == jsonReport.DefendingVillageId)
-                                                                .FirstOrDefaultAsync();
+                            var defendingVillage = await CurrentSets.Village
+                                                                    .FromWorld(CurrentWorldId)
+                                                                    .Where(v => v.VillageId == jsonReport.DefendingVillageId)
+                                                                    .FirstOrDefaultAsync();
 
                             var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
                             var travelTime = travelCalculator.CalculateTravelTime(slowestType.Value, attackingVillage, defendingVillage);

@@ -8,13 +8,13 @@ namespace TW.Vault.Model.Convert
 {
     public static class CommandConvert
     {
-        public static Scaffold.Command ToModel(this JSON.Command command, short worldId, Scaffold.Command existingCommand, Scaffold.VaultContext context = null) =>
-            JsonToModel(command, worldId, existingCommand, context);
+        public static Scaffold.Command ToModel(this JSON.Command command, short worldId, int accessGroupId, Scaffold.Command existingCommand, Scaffold.VaultContext context = null) =>
+            JsonToModel(command, worldId, accessGroupId, existingCommand, context);
 
         public static JSON.Command ToJson(this Scaffold.Command command) =>
             ModelToJson(command);
 
-        public static Scaffold.Command JsonToModel(JSON.Command command, short worldId, Scaffold.Command existingCommand, Scaffold.VaultContext context = null)
+        public static Scaffold.Command JsonToModel(JSON.Command command, short worldId, int accessGroupId, Scaffold.Command existingCommand, Scaffold.VaultContext context = null)
         {
             if (command == null)
             {
@@ -34,6 +34,7 @@ namespace TW.Vault.Model.Convert
                 result = new Scaffold.Command();
                 result.CommandId = command.CommandId.Value;
                 result.WorldId = worldId;
+                result.AccessGroupId = accessGroupId;
                 if (context != null)
                     context.Add(result);
             }

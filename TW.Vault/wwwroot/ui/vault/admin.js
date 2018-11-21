@@ -3,11 +3,13 @@
 function makeAdminTab() {
 
     let usersTab = makeAdminUsersTab();
+    let enemiesTab = makeEnemyTribesTab();
     let statsTab = makeAdminStatsTab();
     let logTab = makeAdminLogTab();
 
     let tabs = [
         statsTab,
+        enemiesTab,
         usersTab,
         logTab
     ];
@@ -27,7 +29,10 @@ function makeAdminTab() {
 
                     if (data.isAdmin) {
                         $('#' + adminTab.btnId).css('display', 'inline-block');
-                        makeAdminUsersInterface($container, adminTab);
+                        makeAdminUsersInterface($container);
+
+                        enemiesTab.isAdmin = true;
+                        enemiesTab.init.call(enemiesTab, $(`#${enemiesTab.containerId}`));
                     }
                 });
         },
@@ -38,6 +43,95 @@ function makeAdminTab() {
     };
 
     return adminTab;
+}
+
+function makeEnemyTribesTab() {
+
+    function insertEnemyTribe($target, tribe) {
+        let $row = $(`
+            <tr>
+                <td style="text-align:right;width:50%;padding-right:0.5em">${tribe.tag}</td>
+                <td style="text-align:left;width:50%;padding-left:0.5em"><input type="button" class="delete-enemy" value="Delete"></td>
+            </tr>
+        `.trim());
+
+        $row.find('.delete-enemy').click(() => {
+            if (!confirm(tribe.tag + ' will no longer be considered an enemy.'))
+                return;
+
+            lib.deleteApi(`admin/enemies/${tribe.tag}`)
+                .done(() => {
+                    $row.remove();
+                })
+                .error(() => {
+                    if (!lib.isUnloading())
+                        alert('An error occurred...');
+                });
+        });
+
+        $target.append($row);
+    }
+
+    return {
+        label: 'Enemy Tribes',
+        containerId: 'vault-admin-enemy-tribes',
+
+        isAdmin: false,
+
+        init: function ($container) {
+            if (!this.isAdmin)
+                return;
+
+            lib.getApi('admin/enemies')
+                .done((data) => {
+                    data.forEach((tribe) => {
+                        insertEnemyTribe($container.find('#enemies-table'), tribe);
+                    });
+                })
+                .error(() => {
+                    if (!lib.isUnloading()) {
+                        alert('An error occurred while listing enemy tribes...');
+                    }
+                });
+
+            $container.find('#new-enemy-button').click(() => {
+                let nameOrTag = prompt('Enter the name or tag of the tribe.');
+                if (!nameOrTag)
+                    return;
+
+                lib.postApi(`admin/enemies/${nameOrTag}`)
+                    .done((tribe) => insertEnemyTribe($container.find('#enemies-table'), tribe))
+                    .error((xhr) => {
+                        if (!lib.isUnloading()) {
+                            switch (xhr.status) {
+                                case 401: break;
+                                case 404:
+                                    alert('No tribe exists with that tag or name.');
+                                    break;
+                                case 409:
+                                    alert('That tribe is already registered as an enemy.')
+                                    break;
+                                default:
+                                    alert('An error occurred...');
+                                    break;
+                            }
+                        }
+                    })
+            });
+        },
+
+        getContent: () => `
+            <h4>Enemy Tribes</h4>
+            <p>
+                Tell the Vault which tribes to consider as "enemies" when determining which villages are back-line.
+            </p>
+
+            <input type="button" id="new-enemy-button" value="Add Enemy Tribe">
+
+            <table id="enemies-table" style="width:100%;margin-top:1em">
+            </table>
+        `
+    };
 }
 
 function makeAdminUsersTab() {
@@ -69,11 +163,22 @@ function makeAdminUsersTab() {
 }
 
 function makeAdminStatsTab() {
+
+    var options = lib.getLocalStorage('admin-stats-options', {
+        includeNukeBreakdown: false
+    });
+
+    function saveChanges() {
+        lib.setLocalStorage('admin-stats-options', options);
+    }
+
     return {
         label: 'Tribe Stats',
         containerId: 'vault-admin-stats-container',
 
         init: function ($container) {
+            uilib.syncProp($container.find('#vault-admin-stats-nuke-breakdown'), options, 'includeNukeBreakdown', saveChanges);
+
             $container.find('#download-army-stats').click(() => {
                 let $downloadButton = $container.find('#download-army-stats');
                 let originalText = $downloadButton.val();
@@ -97,7 +202,7 @@ function makeAdminStatsTab() {
                         console.log('Got data: ', data);
 
                         try {
-                            let csvText = makeArmySummaryCsv(data);
+                            let csvText = makeArmySummaryCsv(data, options);
                             let filename = `army-summary.csv`;
 
                             lib.saveAsFile(filename, csvText);
@@ -113,7 +218,10 @@ function makeAdminStatsTab() {
         },
 
         getContent: () => `
-            Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download">
+            <p>Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download"></p>
+            <p>
+                <input type="checkbox" id="vault-admin-stats-nuke-breakdown"> <label for="vault-admin-stats-nuke-breakdown">Include stats for 1/4, 1/2, and 3/4 nukes</label>
+            </p>
         `
     };
 }
@@ -140,7 +248,7 @@ function makeAdminLogTab() {
 }
 
 
-function makeAdminUsersInterface($container, adminTab) {
+function makeAdminUsersInterface($container) {
 
     lib.getApi('admin/logs')
         .done((logs) => {
@@ -304,7 +412,7 @@ function makeAdminUsersInterface($container, adminTab) {
     }
 }
 
-function makeArmySummaryCsv(armyData) {
+function makeArmySummaryCsv(armyData, options) {
     let nukePower = 400000;
     let nukePop = 15000;
     let fullDVPop = 20000;
@@ -331,6 +439,9 @@ function makeArmySummaryCsv(armyData) {
             playerId: playerId,
             playerName: playerName,
             tribeName: ad.tribeName,
+            nukeBreakdown: options.includeNukeBreakdown ? [
+                ad.quarterNukesOwned, ad.halfNukesOwned, ad.threeQuarterNukesOwned
+            ] : [],
             numNukes: ad.nukesOwned,
             numNukesTraveling: ad.nukesTraveling,
             numNobles: ad.numNobles,
@@ -383,13 +494,17 @@ function makeArmySummaryCsv(armyData) {
     var csvBuilder = new CsvBuilder();
     supportedTribeNames.sort();
 
-    csvBuilder.addRow('', '', '', '', 'Total nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs', 'Total Incs', 'Total Attacks');
+    let nukeBreakdownHeaders = ['1/4 Nukes', '1/2 Nukes', '3/4 Nukes'];
+    if (!options.includeNukeBreakdown)
+        nukeBreakdownHeaders = [];
+
+    csvBuilder.addRow('', '', '', '', 'Total full nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs', 'Total Incs', 'Total Attacks');
     csvBuilder.addRow('', '', '', '', totalNukes, totalNobles, totalPossibleNobles, totalDVs, totalIncomings, totalAttacks);
 
     csvBuilder.addBlank(2);
 
     csvBuilder.addRow(
-        'Time', 'Needs upload?', 'Tribe', 'Player', 'Nukes',
+        'Time', 'Needs upload?', 'Tribe', 'Player', ...nukeBreakdownHeaders, 'Full Nukes',
         'Nukes traveling', 'Nobles', 'Possible nobles', 
         'Owned DVs', 'DVs at Home', 'Backline DVs at Home', 'DVs Traveling', 'DVs Supporting Self', 'DVs Supporting Others',
         'Est. Off. Villas', 'Est. Def. Villas', '# Incs', '# Attacks',
@@ -399,7 +514,7 @@ function makeArmySummaryCsv(armyData) {
 
     playerSummaries.forEach((s) => {
         csvBuilder.addRow(
-            s.uploadedAt, s.needsUpload ? 'YES' : '', s.tribeName, s.playerName, s.numNukes,
+            s.uploadedAt, s.needsUpload ? 'YES' : '', s.tribeName, s.playerName, ...s.nukeBreakdown, s.numNukes,
             s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
             s.numOwnedDVs, s.numDVsAtHome, s.numDVsAtHomeBackline, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,
             s.numOffensiveVillas, s.numDefensiveVillas, s.numIncomings, s.numAttacks, '', ...supportedTribeNames.map((tn) => s.numDVsSupportingTribes[tn] || '0')

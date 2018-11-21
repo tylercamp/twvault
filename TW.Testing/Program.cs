@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using TW.Vault.Features.Simulation;
 using TW.Vault.Model.JSON;
 
@@ -12,10 +13,32 @@ namespace TW.Testing
         {
             //TestBattleSimulation();
             //TestRecruitment();
-            TestUsingBattleTester();
+            //TestUsingBattleTester();
+
+            for (int i = 0; i < 10; i++)
+                TestHighScores();
 
             Console.ReadLine();
         }
+
+        static void TestHighScores()
+        {
+            Console.WriteLine("Making high-scores service");
+            var highScoresService = new Vault.Features.HighScoresService(new Shim.ServiceScopeFactory(), new Shim.LoggerFactory());
+
+            Dictionary<String, UserStats> generatedStats;
+
+            Console.WriteLine("Starting");
+            var start = DateTime.Now;
+            highScoresService.WithVaultContext(async (ctx) =>
+            {
+                generatedStats = await highScoresService.GenerateHighScores(ctx, 1, 1, new CancellationToken());
+            }).Wait();
+            var time = DateTime.Now - start;
+
+            Console.WriteLine("Done, took {0:N2} seconds", time.TotalSeconds);
+        }
+
 
 
         static void TestUsingBattleTester()

@@ -51,7 +51,7 @@
             if (villageId < 0) {
                 if (onProgress_) {
                     onProgress_ && onProgress_('(No village with academy found)');
-                    setTimeout(() => uploadToVault(0), 3000);
+                    setTimeout(() => uploadToVault(0), 1500);
                 } else {
                     uploadToVault(0);
                 }

@@ -26,14 +26,14 @@ namespace TW.Vault.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var result = await Paginated(context.Ally).FromWorld(CurrentWorldId).ToListAsync();
+            var result = await Paginated(CurrentSets.Ally).ToListAsync();
             return Ok(result.Select(r => AllyConvert.ModelToJson(r)));
         }
 
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
-            return Ok(await context.Ally.FromWorld(CurrentWorldId).CountAsync());
+            return Ok(await CurrentSets.Ally.CountAsync());
         }
         
         [HttpGet("{id}", Name = "GetAlly")]
@@ -46,7 +46,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetMembers(int id)
         {
             var players = await (
-                from player in context.Player.FromWorld(CurrentWorldId)
+                from player in CurrentSets.Player
                 where player.TribeId.Value == id
                 select player
             ).ToListAsync();
@@ -61,9 +61,9 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetVillages(int id)
         {
             var villages = await Profile("GetTribeVillages", () => Paginated (
-                    from player in context.Player.FromWorld(CurrentWorldId)
+                    from player in CurrentSets.Player
                     where player.TribeId.HasValue && player.TribeId.Value == id
-                    join village in context.Village on player.PlayerId equals village.PlayerId.Value
+                    join village in CurrentSets.Village on player.PlayerId equals village.PlayerId.Value
                     select village
                 ).ToListAsync()
             );

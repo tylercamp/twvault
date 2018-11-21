@@ -22,6 +22,7 @@ namespace TW.Vault.Scaffold
         public short WorldId { get; set; }
         public short? Loyalty { get; set; }
         public long? BuildingId { get; set; }
+        public int AccessGroupId { get; set; }
 
         public ReportArmy AttackerArmy { get; set; }
         public ReportArmy AttackerLossesArmy { get; set; }

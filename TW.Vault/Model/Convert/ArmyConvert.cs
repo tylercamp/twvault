@@ -70,32 +70,26 @@ namespace TW.Vault.Model.Convert
             return result;
         }
 
-        public static JSON.Army ArmyToJson<T>(T army) where T : class
+        public static JSON.Army ArmyToJson(Scaffold.IScaffoldArmy army)
         {
             if (army == null)
                 return null;
 
             var result = new JSON.Army();
 
-            var scaffoldArmyType = army.GetType();
-            foreach (var troopType in Enum.GetValues(typeof(JSON.TroopType)).Cast<JSON.TroopType>())
-            {
-                String name = troopType.ToString();
-
-                var troopProperty = scaffoldArmyType.GetProperty(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                var nullableTroopCount = troopProperty.GetValue(army);
-
-                if (nullableTroopCount != null)
-                {
-                    int troopCount;
-                    if (typeof(short?).IsAssignableFrom(troopProperty.PropertyType))
-                        troopCount = ((short?)troopProperty.GetValue(army)).Value;
-                    else
-                        troopCount = ((int?)troopProperty.GetValue(army)).Value;
-
-                    result.Add(troopType, troopCount);
-                }
-            }
+            if (army.Spear != null) result[JSON.TroopType.Spear] = army.Spear.Value;
+            if (army.Sword != null) result[JSON.TroopType.Sword] = army.Sword.Value;
+            if (army.Axe != null) result[JSON.TroopType.Axe] = army.Axe.Value;
+            if (army.Archer != null) result[JSON.TroopType.Archer] = army.Archer.Value;
+            if (army.Spy != null) result[JSON.TroopType.Spy] = army.Spy.Value;
+            if (army.Light != null) result[JSON.TroopType.Light] = army.Light.Value;
+            if (army.Marcher != null) result[JSON.TroopType.Marcher] = army.Marcher.Value;
+            if (army.Heavy != null) result[JSON.TroopType.Heavy] = army.Heavy.Value;
+            if (army.Ram != null) result[JSON.TroopType.Ram] = army.Ram.Value;
+            if (army.Catapult != null) result[JSON.TroopType.Catapult] = army.Catapult.Value;
+            if (army.Knight != null) result[JSON.TroopType.Knight] = army.Knight.Value;
+            if (army.Snob != null) result[JSON.TroopType.Snob] = army.Snob.Value;
+            if (army.Militia != null) result[JSON.TroopType.Militia] = army.Militia.Value;
 
             return result;
         }

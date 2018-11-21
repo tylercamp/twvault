@@ -68,31 +68,33 @@ namespace TW.Vault.Controllers
 
         protected class CurrentContextDbSets
         {
-            int worldId;
+            int worldId, accessGroupId;
             VaultContext context;
-            public CurrentContextDbSets(VaultContext context, int worldId)
+            public CurrentContextDbSets(VaultContext context, int worldId, int accessGroupId)
             {
                 this.worldId = worldId;
+                this.accessGroupId = accessGroupId;
                 this.context = context;
             }
 
             public IQueryable<Ally> Ally => context.Ally.FromWorld(worldId);
-            public IQueryable<Command> Command => context.Command.FromWorld(worldId);
+            public IQueryable<Command> Command => context.Command.FromWorld(worldId).FromAccessGroup(accessGroupId);
             public IQueryable<CommandArmy> CommandArmy => context.CommandArmy.FromWorld(worldId);
             public IQueryable<Conquer> Conquer => context.Conquer.FromWorld(worldId);
             public IQueryable<CurrentArmy> CurrentArmy => context.CurrentArmy.FromWorld(worldId);
-            public IQueryable<CurrentBuilding> CurrentBuilding => context.CurrentBuilding.FromWorld(worldId);
-            public IQueryable<CurrentPlayer> CurrentPlayer => context.CurrentPlayer.FromWorld(worldId);
-            public IQueryable<CurrentVillage> CurrentVillage => context.CurrentVillage.FromWorld(worldId);
-            public IQueryable<CurrentVillageSupport> CurrentVillageSupport => context.CurrentVillageSupport.FromWorld(worldId);
-            public IQueryable<EnemyTribe> EnemyTribe => context.EnemyTribe.FromWorld(worldId);
+            public IQueryable<CurrentBuilding> CurrentBuilding => context.CurrentBuilding.FromWorld(worldId).FromAccessGroup(accessGroupId);
+            public IQueryable<CurrentPlayer> CurrentPlayer => context.CurrentPlayer.FromWorld(worldId).FromAccessGroup(accessGroupId);
+            public IQueryable<CurrentVillage> CurrentVillage => context.CurrentVillage.FromWorld(worldId).FromAccessGroup(accessGroupId);
+            public IQueryable<CurrentVillageSupport> CurrentVillageSupport => context.CurrentVillageSupport.FromWorld(worldId).FromAccessGroup(accessGroupId);
+            public IQueryable<EnemyTribe> EnemyTribe => context.EnemyTribe.FromWorld(worldId).FromAccessGroup(accessGroupId);
             public IQueryable<Player> Player => context.Player.FromWorld(worldId);
-            public IQueryable<Report> Report => context.Report.FromWorld(worldId);
+            public IQueryable<Report> Report => context.Report.FromWorld(worldId).FromAccessGroup(accessGroupId);
+            public IQueryable<IgnoredReport> IgnoredReport => context.IgnoredReport.FromWorld(worldId).FromAccessGroup(accessGroupId);
             public IQueryable<ReportArmy> ReportArmy => context.ReportArmy.FromWorld(worldId);
             public IQueryable<ReportBuilding> ReportBuilding => context.ReportBuilding.FromWorld(worldId);
             public IQueryable<Transaction> Transaction => context.Transaction.FromWorld(worldId);
-            public IQueryable<User> User => context.User.FromWorld(worldId);
-            public IQueryable<UserLog> UserLog => context.UserLog.FromWorld(worldId);
+            public IQueryable<User> User => context.User.FromWorld(worldId).FromAccessGroup(accessGroupId);
+            public IQueryable<UserLog> UserLog => context.UserLog.FromWorld(worldId).FromAccessGroup(accessGroupId);
             public IQueryable<Village> Village => context.Village.FromWorld(worldId);
 
 
@@ -106,7 +108,7 @@ namespace TW.Vault.Controllers
             get
             {
                 if (_currentSets == null)
-                    _currentSets = new CurrentContextDbSets(context, CurrentWorldId);
+                    _currentSets = new CurrentContextDbSets(context, CurrentWorldId, CurrentAccessGroupId);
                 return _currentSets;
             }
         }
@@ -121,6 +123,7 @@ namespace TW.Vault.Controllers
         protected bool IsSitter => (bool)HttpContext.Items["UserIsSitter"];
         protected long CurrentTribeId => (long)HttpContext.Items["TribeId"];
         protected Guid CurrentAuthToken => (Guid)HttpContext.Items["AuthToken"];
+        protected int CurrentAccessGroupId => (int)HttpContext.Items["AccessGroupId"];
 
         /// <summary>
         /// Warning - Try not to use this directly, as it won't include permissions based on whether the

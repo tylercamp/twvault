@@ -11,6 +11,7 @@ namespace TW.Vault.Scaffold
         public short WorldId { get; set; }
         public long EnemyTribeId { get; set; }
         public long TxId { get; set; }
+        public int AccessGroupId { get; set; }
 
         public Transaction Tx { get; set; }
     }

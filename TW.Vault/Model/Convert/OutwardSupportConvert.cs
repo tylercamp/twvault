@@ -11,6 +11,7 @@ namespace TW.Vault.Model.Convert
         public static Scaffold.CurrentVillageSupport ToModel(
                 long sourceVillageId,
                 short worldId,
+                int accessGroupId,
                 JSON.PlayerOutwardSupport.SupportedVillage villageData,
                 Scaffold.CurrentVillageSupport existingSupport = null,
                 Scaffold.VaultContext context = null
@@ -20,6 +21,7 @@ namespace TW.Vault.Model.Convert
             {
                 existingSupport = new Scaffold.CurrentVillageSupport();
                 existingSupport.WorldId = worldId;
+                existingSupport.AccessGroupId = accessGroupId;
                 if (context != null)
                     context.CurrentVillageSupport.Add(existingSupport);
             }

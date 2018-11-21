@@ -12,6 +12,7 @@ namespace TW.Vault.Scaffold
         public long SupportingArmyId { get; set; }
         public long Id { get; set; }
         public long? TxId { get; set; }
+        public int AccessGroupId { get; set; }
 
         public Village SourceVillage { get; set; }
         public CurrentArmy SupportingArmy { get; set; }

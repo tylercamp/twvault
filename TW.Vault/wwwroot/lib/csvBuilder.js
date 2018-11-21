@@ -16,7 +16,8 @@ CsvBuilder.prototype.makeCsvString = function makeCsvString() {
     var numColumns = 0;
     this.rows.forEach((r) => numColumns = Math.max(numColumns, r.length));
 
-    var csvRows = [];
+    // Specify the column separator explicitly so excel isn't dumb
+    var csvRows = ['sep=,'];
     this.rows.forEach((row) => {
         row = row.slice();
         for (var i = 0; i < row.length - numColumns; i++)

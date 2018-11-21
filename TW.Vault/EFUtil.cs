@@ -21,14 +21,15 @@ namespace TW.Vault
             return userUploadHistory;
         }
 
-        public static async Task<CurrentPlayer> GetOrCreateCurrentPlayer(VaultContext context, long playerId, short worldId)
+        public static async Task<CurrentPlayer> GetOrCreateCurrentPlayer(VaultContext context, long playerId, short worldId, int accessGroupId)
         {
-            var currentPlayer = await context.CurrentPlayer.FromWorld(worldId).Where(p => p.PlayerId == playerId).FirstOrDefaultAsync();
+            var currentPlayer = await context.CurrentPlayer.FromAccessGroup(accessGroupId).FromWorld(worldId).Where(p => p.PlayerId == playerId).FirstOrDefaultAsync();
             if (currentPlayer == null)
             {
                 currentPlayer = new CurrentPlayer();
                 currentPlayer.PlayerId = playerId;
                 currentPlayer.WorldId = worldId;
+                currentPlayer.AccessGroupId = accessGroupId;
                 context.Add(currentPlayer);
             }
             return currentPlayer;
@@ -64,6 +65,10 @@ namespace TW.Vault
 
         public static IQueryable<Report> FromWorld(this IQueryable<Report> reportsQuery, long worldId) =>
             reportsQuery
+                .Where(q => q.WorldId == worldId);
+
+        public static IQueryable<IgnoredReport> FromWorld(this IQueryable<IgnoredReport> ignoredReportsQuery, long worldId) =>
+            ignoredReportsQuery
                 .Where(q => q.WorldId == worldId);
 
         public static IQueryable<Command> FromWorld(this IQueryable<Command> commandsQuery, long worldId) =>
@@ -137,6 +142,40 @@ namespace TW.Vault
         public static IQueryable<EnemyTribe> FromWorld(this IQueryable<EnemyTribe> enemyTribeQuery, long worldId) =>
             enemyTribeQuery
                 .Where(q => q.WorldId == worldId);
+
+        #endregion
+
+        #region FromAccessGroup
+
+        public static IQueryable<User> FromAccessGroup(this IQueryable<User> userQuery, int accessGroupId) =>
+            userQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<Command> FromAccessGroup(this IQueryable<Command> commandQuery, int accessGroupId) =>
+            commandQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<CurrentBuilding> FromAccessGroup(this IQueryable<CurrentBuilding> buildingQuery, int accessGroupId) =>
+            buildingQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<CurrentPlayer> FromAccessGroup(this IQueryable<CurrentPlayer> playerQuery, int accessGroupId) =>
+            playerQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<CurrentVillage> FromAccessGroup(this IQueryable<CurrentVillage> villageQuery, int accessGroupId) =>
+            villageQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<CurrentVillageSupport> FromAccessGroup(this IQueryable<CurrentVillageSupport> supportQuery, int accessGroupId) =>
+            supportQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<EnemyTribe> FromAccessGroup(this IQueryable<EnemyTribe> enemyTribeQuery, int accessGroupId) =>
+            enemyTribeQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<Report> FromAccessGroup(this IQueryable<Report> reportQuery, int accessGroupId) =>
+            reportQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<IgnoredReport> FromAccessGroup(this IQueryable<IgnoredReport> ignoredReportsQuery, int accessGroupId) =>
+            ignoredReportsQuery.Where(u => u.AccessGroupId == accessGroupId);
+
+        public static IQueryable<UserLog> FromAccessGroup(this IQueryable<UserLog> userLogQuery, int accessGroupId) =>
+            userLogQuery.Where(u => u.AccessGroupId == accessGroupId);
 
         #endregion
 

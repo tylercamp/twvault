@@ -15,6 +15,7 @@ namespace TW.Vault.Scaffold
         public DateTime? LoyaltyLastUpdated { get; set; }
         public long? ArmyAtHomeId { get; set; }
         public long? ArmySupportingId { get; set; }
+        public int AccessGroupId { get; set; }
 
         public CurrentArmy ArmyAtHome { get; set; }
         public CurrentArmy ArmyOwned { get; set; }

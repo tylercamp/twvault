@@ -111,9 +111,9 @@ function makeUserStatsTab() {
 
 function makeHighScoresTab() {
     var rankings = [
-        { label: '# Fakes', property: 'numFakes' },
-        { label: '# Fangs', property: 'numFangs' },
-        { label: '# Nukes', property: 'numNukes' }
+        { label: '# Fakes', property: 'fakesInPastWeek' },
+        { label: '# Fangs', property: 'fangsInPastWeek' },
+        { label: '# Nukes', property: 'nukesInPastWeek' }
     ];
 
     return {
@@ -123,6 +123,8 @@ function makeHighScoresTab() {
         init: function ($container) {
             lib.getApi('player/high-scores')
                 .done((data) => {
+                    console.log('Got high scores: ', data);
+
                     let rankingTabs = [];
 
                     rankings.forEach((ranking) => {
@@ -140,6 +142,10 @@ function makeHighScoresTab() {
 
                     let defaultTab = rankingTabs[0].containerId;
                     $container.find('#high-scores-rankings-container').append(uilib.mkTabbedContainer(defaultTab, rankingTabs));
+                    $container.find('#high-scores-rankings-container > .vault-tab-container').css({
+                        'max-height': '30em',
+                        'overflow-y': 'scroll'
+                    });
                 })
                 .error(() => {
                     alert('An error occurred while getting rankings');
@@ -149,10 +155,12 @@ function makeHighScoresTab() {
         //  Top of the tab has overview of top 3 players for a few different categories
         //  Full listings are available below that overview in different tabs
         getContent: () => `
-            <h3>High Scores</h3>
+            <h3 style="margin-bottom:0">High Scores</h3>
+            <em style="font-size:0.75em;margin-bottom:1em">Over the last 7 days</em>
+
             <div id="high-scores-overview-container"></div>
 
-            <h3>Rankings</h3>
+            <h3 style="margin-top:1.5em">Rankings</h3>
             <div id="high-scores-rankings-container"></div>
         `
     };
@@ -165,16 +173,21 @@ function rowClass(idx) {
 function makeTopRankedList(scoreData, label, property, suffix) {
     var mapSort =
         lib.objectToArray(scoreData, (prop, value) => ({ name: prop, value: value[property] }))
-            .sort((a, b) => a.value - b.value);
+            .sort((a, b) => b.value - a.value);
+
+    var limit = 5;
+    var result = [];
+    for (var i = 0; i < limit && i < mapSort.length; i++)
+        result.push(mapSort[i]);
 
     return `
-        <div style="inline-block">
-            <h4>${label}</h4>
+        <div style="display:inline-block; margin: 0.5em">
+            <h4 style="display:inline-block">${label}</h4>
             <table>
-                ${mapSort.map((entry, i) => `
+                ${result.map((entry, i) => `
                     <tr class="${rowClass(i)}">
-                        <td>${entry.name}</td>
-                        <td>${entry.value} ${suffix}</td>
+                        <td style="padding:0.25em 0.5em">${entry.name}</td>
+                        <td style="padding:0.25em 0.5em">${entry.value} ${suffix || ''}</td>
                     </tr>
                 `).join('\n')}
             </table>
@@ -190,7 +203,7 @@ function makeRankingTab(scoreData, label, property, suffix) {
                 <th>${label}</th>
             </tr>
             ${ lib.objectToArray(scoreData, (prop, value) => ({ name: prop, value: value[property] }))
-                .sort((a, b) => a.value - b.value)
+                .sort((a, b) => b.value - a.value)
                 .map((entry, i) => `<tr class="${rowClass(i)}"><td>${entry.name}</td><td>${entry.value || 0} ${suffix || ''}</td></tr>`)
                 .join('\n') }
         </table>

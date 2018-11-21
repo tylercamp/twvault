@@ -33,14 +33,14 @@ namespace TW.Vault.Controllers
         [HttpGet(Name = "GetVillages")]
         public async Task<IActionResult> Get()
         {
-            var villages = await Paginated(context.Village).FromWorld(CurrentWorldId).ToListAsync();
+            var villages = await Paginated(CurrentSets.Village).ToListAsync();
             return Ok(villages.Select(VillageConvert.ModelToJson));
         }
 
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
-            return Ok(await context.Village.FromWorld(CurrentWorldId).CountAsync());
+            return Ok(await CurrentSets.Village.CountAsync());
         }
         
         [HttpGet("{id}", Name = "GetVillage")]
@@ -53,8 +53,8 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetOwner(int id)
         {
             var owner = await Profile("Get village owner", () => (
-                    from village in context.Village.FromWorld(CurrentWorldId)
-                    join player in context.Player on village.PlayerId.Value equals player.PlayerId
+                    from village in CurrentSets.Village
+                    join player in CurrentSets.Player on village.PlayerId.Value equals player.PlayerId
                     where village.VillageId == id
                     select player
                 ).FirstOrDefaultAsync()
@@ -73,6 +73,8 @@ namespace TW.Vault.Controllers
             if (!await CanReadVillage(villageId))
                 return StatusCode(401);
 
+            LoadWorldData();
+
             var uploadHistory = await Profile("Get user upload history", () =>
                 context.UserUploadHistory.Where(h => h.Uid == CurrentUserId).FirstOrDefaultAsync()
             );
@@ -89,8 +91,7 @@ namespace TW.Vault.Controllers
 
             var (currentVillage, commandsToVillage, latestConquerTimestamp) = await ManyTasks.Run(
                 Profile("Get current village", () => (
-                    from cv in context.CurrentVillage
-                                        .FromWorld(CurrentWorldId)
+                    from cv in CurrentSets.CurrentVillage
                                         .Include(v => v.ArmyAtHome)
                                         .Include(v => v.ArmyOwned)
                                         .Include(v => v.ArmyStationed)
@@ -102,9 +103,8 @@ namespace TW.Vault.Controllers
                 ).FirstOrDefaultAsync()),
 
                 Profile("Get commands to village", () => (
-                    from command in context.Command
-                                           .FromWorld(CurrentWorldId)
-                                           .Include(c => c.Army)
+                    from command in CurrentSets.Command
+                                               .Include(c => c.Army)
                     where command.TargetVillageId == villageId
                     where !command.IsReturning
                     where command.LandsAt > CurrentServerTime
@@ -112,7 +112,7 @@ namespace TW.Vault.Controllers
                 ).ToListAsync()),
 
                 Profile("Get latest conquer", () => (
-                    from conquer in context.Conquer.FromWorld(CurrentWorldId)
+                    from conquer in CurrentSets.Conquer
                     where conquer.VillageId == villageId
                     orderby conquer.UnixTimestamp descending
                     select conquer.UnixTimestamp
@@ -314,19 +314,18 @@ namespace TW.Vault.Controllers
 
             var (scaffoldCurrentVillages, villagesWithPlayerIds) = await ManyTasks.Run(
                 Profile("Get existing scaffold current villages", () => (
-                    from cv in context.CurrentVillage
-                                      .FromWorld(CurrentWorldId)
-                                      .Include(v => v.ArmyOwned)
-                                      .Include(v => v.ArmyAtHome)
-                                      .Include(v => v.ArmyStationed)
-                                      .Include(v => v.ArmySupporting)
-                                      .Include(v => v.ArmyTraveling)
+                    from cv in CurrentSets.CurrentVillage
+                                          .Include(v => v.ArmyOwned)
+                                          .Include(v => v.ArmyAtHome)
+                                          .Include(v => v.ArmyStationed)
+                                          .Include(v => v.ArmySupporting)
+                                          .Include(v => v.ArmyTraveling)
                     where villageIds.Contains(cv.VillageId)
                     select cv
                 ).ToListAsync())
                 ,
                 Profile("Get village player IDs", () => (
-                    from v in context.Village.FromWorld(CurrentWorldId)
+                    from v in CurrentSets.Village
                     where villageIds.Contains(v.VillageId)
                     select new { v.PlayerId, v.VillageId }
                 ).ToListAsync())
@@ -340,7 +339,7 @@ namespace TW.Vault.Controllers
             var missingVillageData = mappedScaffoldVillages.Values.Count(v => v == null) == 0
                 ? new List<Scaffold.Village>()
                 : await Profile("Get missing village data", () => (
-                        from v in context.Village.FromWorld(CurrentWorldId)
+                        from v in CurrentSets.Village
                         where missingScaffoldVillageIds.Contains(v.VillageId)
                         select v
                     ).ToListAsync()
@@ -358,6 +357,7 @@ namespace TW.Vault.Controllers
                     var newCurrentVillage = new Scaffold.CurrentVillage();
                     newCurrentVillage.VillageId = missingVillageId;
                     newCurrentVillage.WorldId = CurrentWorldId;
+                    newCurrentVillage.AccessGroupId = CurrentAccessGroupId;
 
                     context.CurrentVillage.Add(newCurrentVillage);
 
@@ -397,7 +397,7 @@ namespace TW.Vault.Controllers
                 }
             });
 
-            var currentPlayer = await EFUtil.GetOrCreateCurrentPlayer(context, CurrentPlayerId, CurrentWorldId);
+            var currentPlayer = await EFUtil.GetOrCreateCurrentPlayer(context, CurrentPlayerId, CurrentWorldId, CurrentAccessGroupId);
             currentPlayer.CurrentPossibleNobles = currentArmySetJson.PossibleNobles;
 
             await Profile("Save changes", () => context.SaveChangesAsync());
@@ -427,9 +427,9 @@ namespace TW.Vault.Controllers
             }
 
             var commandsFromVillage = await Profile("Get commands from village", () => (
-                    from command in context.Command
-                                           .FromWorld(CurrentWorldId)
-                                           .Include(c => c.Army)
+                    from command in CurrentSets.Command
+                                               .FromWorld(CurrentWorldId)
+                                               .Include(c => c.Army)
                     where command.SourceVillageId == villageId
                     where command.ReturnsAt > CurrentServerTime
                     orderby command.ReturnsAt ascending
@@ -447,7 +447,7 @@ namespace TW.Vault.Controllers
 
             var targetVillageIds = commandsFromVillage.Select(c => c.TargetVillageId).Distinct();
             var targetVillages = await Profile("Get other villages", () => (
-                    from village in context.Village.FromWorld(CurrentWorldId)
+                    from village in CurrentSets.Village
                     where targetVillageIds.Contains(village.VillageId)
                     select village
                 ).ToListAsync());
@@ -496,22 +496,21 @@ namespace TW.Vault.Controllers
             }
 
             var vaultTribes = await Profile("Get tribe IDs", () => (
-                from user in context.User.FromWorld(CurrentWorldId)
-                join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                from user in CurrentSets.User
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                 where player.TribeId != null && user.Enabled
                 select player.TribeId.Value
             ).Distinct().ToListAsync());
 
             var villageData = await Profile("Get village data", () => (
-                from currentVillage in context.CurrentVillage
-                                                .FromWorld(CurrentWorldId)
-                                                .Include(cv => cv.ArmyOwned)
-                                                .Include(cv => cv.ArmyTraveling)
-                                                .Include(cv => cv.ArmyStationed)
-                                                .Include(cv => cv.CurrentBuilding)
+                from currentVillage in CurrentSets.CurrentVillage
+                                                  .Include(cv => cv.ArmyOwned)
+                                                  .Include(cv => cv.ArmyTraveling)
+                                                  .Include(cv => cv.ArmyStationed)
+                                                  .Include(cv => cv.CurrentBuilding)
 
-                join village in context.Village.FromWorld(CurrentWorldId) on currentVillage.VillageId equals village.VillageId
-                join player in context.Player.FromWorld(CurrentWorldId) on village.PlayerId equals player.PlayerId
+                join village in CurrentSets.Village on currentVillage.VillageId equals village.VillageId
+                join player in CurrentSets.Player on village.PlayerId equals player.PlayerId
                 where CurrentUserIsAdmin || player.TribeId == null || !vaultTribes.Contains(player.TribeId.Value)
 
                 where village.X >= x && village.Y >= y && village.X <= x + width && village.Y <= y + height
@@ -519,8 +518,8 @@ namespace TW.Vault.Controllers
             ).ToListAsync());
 
             var ownVillageData = await Profile("Get own village data", () => (
-                from village in context.Village.FromWorld(CurrentWorldId)
-                join currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId).Include(v => v.ArmyAtHome) on village.VillageId equals currentVillage.VillageId
+                from village in CurrentSets.Village
+                join currentVillage in CurrentSets.CurrentVillage.Include(v => v.ArmyAtHome) on village.VillageId equals currentVillage.VillageId
                 where village.PlayerId == CurrentPlayerId
                 select new { Village = village, currentVillage.ArmyAtHome }
             ).ToListAsync());
@@ -529,9 +528,9 @@ namespace TW.Vault.Controllers
             var validVillageIds = villageData.Select(d => d.CurrentVillage.VillageId).ToList();
 
             var commandData = await Profile("Get command data", () => (
-                from command in context.Command
-                                        .FromWorld(CurrentWorldId)
-                                        .Include(cmd => cmd.Army)
+                from command in CurrentSets.Command
+                                           .FromWorld(CurrentWorldId)
+                                           .Include(cmd => cmd.Army)
                 where command.IsReturning && command.ReturnsAt > CurrentServerTime && command.ArmyId != null
                 select new { command.SourceVillageId, command.Army }
             ).ToListAsync());
@@ -544,7 +543,7 @@ namespace TW.Vault.Controllers
 
             var tribeIds = validVillages.Select(vv => vv.TribeId).Where(t => t != null).Select(t => t.Value).Distinct();
             var tribeNames = await Profile("Get tribe names", () => (
-                from tribe in context.Ally.FromWorld(CurrentWorldId)
+                from tribe in CurrentSets.Ally
                 where tribeIds.Contains(tribe.TribeId)
                 select new { tribe.Tag, tribe.TribeId }
             ).ToListAsync());
@@ -699,13 +698,13 @@ namespace TW.Vault.Controllers
 
         private async Task<bool> CanReadVillage(long villageId, Scaffold.Village queriedVillage = null)
         {
-            var village = queriedVillage ?? await Profile("Find village", () => context.Village.Where(v => v.VillageId == villageId && v.WorldId == CurrentWorld.Id).FirstOrDefaultAsync());
+            var village = queriedVillage ?? await Profile("Find village", () => CurrentSets.Village.Where(v => v.VillageId == villageId).FirstOrDefaultAsync());
             if (village == null)
                 return false;
 
             var registeredTribeIds = await Profile("Get registered tribe IDs", () => (
-                    from user in context.User.FromWorld(CurrentWorldId)
-                    join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                    from user in CurrentSets.User
+                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                     where player.TribeId != null
                     where user.Enabled
                     select player.TribeId.Value
@@ -719,7 +718,7 @@ namespace TW.Vault.Controllers
             }
             else
             {
-                var owningPlayer = await Profile("Get owning player", () => context.Player.Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
+                var owningPlayer = await Profile("Get owning player", () => CurrentSets.Player.Where(p => p.PlayerId == village.PlayerId).FirstOrDefaultAsync());
                 bool canReadFromTribe = true;
                 if (owningPlayer.TribeId != null)
                 {

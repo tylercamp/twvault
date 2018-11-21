@@ -111,8 +111,6 @@ namespace TW.Vault.Security
                     select user
                 ).FirstOrDefault();
 
-            var allUsers = dbContext.User.ToList();
-
             if (discoveredUser == null || !discoveredUser.Enabled)
             {
                 var failedRequest = AuthenticationUtil.MakeFailedRecord(context.HttpContext, authHeaders);
@@ -162,6 +160,7 @@ namespace TW.Vault.Security
             context.HttpContext.Items["PlayerId"] = authHeaders.PlayerId.Value;
             context.HttpContext.Items["TribeId"] = authHeaders.TribeId.Value;
             context.HttpContext.Items["AuthToken"] = authHeaders.AuthToken.Value;
+            context.HttpContext.Items["AccessGroupId"] = discoveredUser.AccessGroupId;
 
             context.HttpContext.Items["User"] = discoveredUser;
         }

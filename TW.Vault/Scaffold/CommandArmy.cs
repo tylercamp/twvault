@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace TW.Vault.Scaffold
 {
-    public partial class CommandArmy
+    public partial class CommandArmy : IScaffoldArmy
     {
         public CommandArmy()
         {

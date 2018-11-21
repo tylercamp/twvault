@@ -50,6 +50,20 @@ namespace TW.Vault
             return new Tuple<T1, T2, T3, T4, T5, T6>(task1.Result, task2.Result, task3.Result, task4.Result, task5.Result, task6.Result);
         }
 
+        public static async Task<Tuple<T1, T2, T3, T4, T5, T6, T7>> Run<T1, T2, T3, T4, T5, T6, T7>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5, Task<T6> task6, Task<T7> task7)
+        {
+            var tasks = new Task[] { task1, task2, task3, task4, task5, task6, task7 };
+            await Task.WhenAll(tasks);
+            return new Tuple<T1, T2, T3, T4, T5, T6, T7>(task1.Result, task2.Result, task3.Result, task4.Result, task5.Result, task6.Result, task7.Result);
+        }
+
+        public static async Task<Tuple<T1, T2, T3, T4, T5, T6, T7, Tuple<T8>>> Run<T1, T2, T3, T4, T5, T6, T7, T8>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5, Task<T6> task6, Task<T7> task7, Task<T8> task8)
+        {
+            var tasks = new Task[] { task1, task2, task3, task4, task5, task6, task7, task8 };
+            await Task.WhenAll(tasks);
+            return new Tuple<T1, T2, T3, T4, T5, T6, T7, Tuple<T8>>(task1.Result, task2.Result, task3.Result, task4.Result, task5.Result, task6.Result, task7.Result, new Tuple<T8>(task8.Result));
+        }
+
 
 
         public static Task<Tuple<List<T1>>> RunToList<T1>(IQueryable<T1> q1) =>
@@ -69,5 +83,11 @@ namespace TW.Vault
 
         public static Task<Tuple<List<T1>, List<T2>, List<T3>, List<T4>, List<T5>, List<T6>>> RunToList<T1, T2, T3, T4, T5, T6>(IQueryable<T1> q1, IQueryable<T2> q2, IQueryable<T3> q3, IQueryable<T4> q4, IQueryable<T5> q5, IQueryable<T6> q6) =>
             Run(q1.ToListAsync(), q2.ToListAsync(), q3.ToListAsync(), q4.ToListAsync(), q5.ToListAsync(), q6.ToListAsync());
+
+        public static Task<Tuple<List<T1>, List<T2>, List<T3>, List<T4>, List<T5>, List<T6>, List<T7>>> RunToList<T1, T2, T3, T4, T5, T6, T7>(IQueryable<T1> q1, IQueryable<T2> q2, IQueryable<T3> q3, IQueryable<T4> q4, IQueryable<T5> q5, IQueryable<T6> q6, IQueryable<T7> q7) =>
+            Run(q1.ToListAsync(), q2.ToListAsync(), q3.ToListAsync(), q4.ToListAsync(), q5.ToListAsync(), q6.ToListAsync(), q7.ToListAsync());
+
+        public static Task<Tuple<List<T1>, List<T2>, List<T3>, List<T4>, List<T5>, List<T6>, List<T7>, Tuple<List<T8>>>> RunToList<T1, T2, T3, T4, T5, T6, T7, T8>(IQueryable<T1> q1, IQueryable<T2> q2, IQueryable<T3> q3, IQueryable<T4> q4, IQueryable<T5> q5, IQueryable<T6> q6, IQueryable<T7> q7, IQueryable<T8> q8) =>
+            Run(q1.ToListAsync(), q2.ToListAsync(), q3.ToListAsync(), q4.ToListAsync(), q5.ToListAsync(), q6.ToListAsync(), q7.ToListAsync(), q8.ToListAsync());
     }
 }

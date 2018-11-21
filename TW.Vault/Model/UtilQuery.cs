@@ -13,7 +13,7 @@ namespace TW.Vault.Model
         public static Task<Scaffold.Command> FindCommandForReport(Scaffold.Report report, Scaffold.VaultContext context)
         {
             return (
-                from command in context.Command.FromWorld(report.WorldId)
+                from command in context.Command.FromWorld(report.WorldId).FromAccessGroup(report.AccessGroupId)
                 where
                     command.TargetVillageId == report.DefenderVillageId &&
                     command.SourceVillageId == report.AttackerVillageId &&

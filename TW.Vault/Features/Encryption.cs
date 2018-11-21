@@ -42,7 +42,15 @@ namespace TW.Vault.Features
                 var seeds = EncryptionSeedProvider.AvailableSeeds;
                 foreach (var seed in seeds)
                 {
-                    result = DecryptWithSeed(text, seed);
+                    try
+                    {
+                        result = DecryptWithSeed(text, seed);
+                    }
+                    catch
+                    {
+                        result = null;
+                    }
+
                     if (!string.IsNullOrWhiteSpace(result) && result.StartsWith("vault:"))
                         break;
                     else

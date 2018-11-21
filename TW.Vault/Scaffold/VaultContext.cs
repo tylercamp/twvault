@@ -15,6 +15,7 @@ namespace TW.Vault.Scaffold
         {
         }
 
+        public virtual DbSet<AccessGroup> AccessGroup { get; set; }
         public virtual DbSet<Ally> Ally { get; set; }
         public virtual DbSet<Command> Command { get; set; }
         public virtual DbSet<CommandArmy> CommandArmy { get; set; }
@@ -28,6 +29,7 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<CustomInfo> CustomInfo { get; set; }
         public virtual DbSet<EnemyTribe> EnemyTribe { get; set; }
         public virtual DbSet<FailedAuthorizationRecord> FailedAuthorizationRecord { get; set; }
+        public virtual DbSet<IgnoredReport> IgnoredReport { get; set; }
         public virtual DbSet<InvalidDataRecord> InvalidDataRecord { get; set; }
         public virtual DbSet<NotificationPhoneNumber> NotificationPhoneNumber { get; set; }
         public virtual DbSet<NotificationRequest> NotificationRequest { get; set; }
@@ -48,6 +50,24 @@ namespace TW.Vault.Scaffold
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasPostgresExtension("postgis");
+
+            modelBuilder.Entity<AccessGroup>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.ToTable("access_group", "security");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('security.access_group_id_seq'::regclass)");
+
+                entity.Property(e => e.Label)
+                    .HasColumnName("label")
+                    .HasMaxLength(256);
+
+                entity.Property(e => e.WorldId)
+                    .HasColumnName("world_id");
+            });
 
             modelBuilder.Entity<Ally>(entity =>
             {
@@ -127,6 +147,8 @@ namespace TW.Vault.Scaffold
                     .HasMaxLength(512);
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.Property(e => e.AccessGroupId).HasColumnName("access_group_id");
 
                 entity.HasOne(d => d.Army)
                     .WithMany(p => p.Command)
@@ -308,7 +330,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentBuilding>(entity =>
             {
-                entity.HasKey(e => new { e.WorldId, e.VillageId });
+                entity.HasKey(e => new { e.WorldId, e.VillageId, e.AccessGroupId });
 
                 entity.ToTable("current_building", "tw");
 
@@ -358,9 +380,11 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
+                entity.Property(e => e.AccessGroupId).HasColumnName("access_group_id");
+
                 entity.HasOne(d => d.Village)
                     .WithOne(p => p.CurrentBuilding)
-                    .HasForeignKey<CurrentBuilding>(d => new { d.WorldId, d.VillageId })
+                    .HasForeignKey<CurrentBuilding>(d => new { d.WorldId, d.VillageId, d.AccessGroupId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("buildings_villages_fk");
 
@@ -373,7 +397,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentPlayer>(entity =>
             {
-                entity.HasKey(e => new { e.WorldId, e.PlayerId });
+                entity.HasKey(e => new { e.WorldId, e.PlayerId, e.AccessGroupId });
 
                 entity.ToTable("current_player", "tw");
 
@@ -385,6 +409,8 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
 
+                entity.Property(e => e.AccessGroupId).HasColumnName("access_group_id");
+
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.CurrentPlayer)
                     .HasForeignKey(d => d.WorldId)
@@ -394,7 +420,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentVillage>(entity =>
             {
-                entity.HasKey(e => new { e.WorldId, e.VillageId });
+                entity.HasKey(e => new { e.WorldId, e.VillageId, e.AccessGroupId });
 
                 entity.ToTable("current_village", "tw");
 
@@ -419,6 +445,8 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.LoyaltyLastUpdated).HasColumnName("loyalty_last_updated");
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.Property(e => e.AccessGroupId).HasColumnName("access_group_id");
 
                 entity.HasOne(d => d.ArmyAtHome)
                     .WithMany(p => p.CurrentVillageArmyAtHome)
@@ -455,8 +483,8 @@ namespace TW.Vault.Scaffold
                     .HasConstraintName("fk_traveling_army");
 
                 entity.HasOne(d => d.Village)
-                    .WithOne(p => p.CurrentVillage)
-                    .HasForeignKey<CurrentVillage>(d => new { d.WorldId, d.VillageId })
+                    .WithMany(p => p.CurrentVillage)
+                    .HasForeignKey(d => new { d.WorldId, d.VillageId })
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_village");
 
@@ -471,7 +499,7 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("current_village_support", "tw");
 
-                entity.HasKey(e => new { e.WorldId, e.Id });
+                entity.HasKey(e => new { e.WorldId, e.Id, e.AccessGroupId });
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
@@ -487,6 +515,8 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
                 entity.Property(e => e.TxId).HasColumnName("tx_id");
+
+                entity.Property(e => e.AccessGroupId).HasColumnName("access_group_id");
 
                 entity.HasOne(d => d.SourceVillage)
                     .WithMany(p => p.CurrentVillageSupportSourceVillage)
@@ -546,7 +576,7 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("enemy_tribe", "tw");
 
-                entity.HasKey(e => e.Id);
+                entity.HasKey(e => new { e.Id, e.AccessGroupId });
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
@@ -560,6 +590,9 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.TxId)
                     .HasColumnName("tx_id");
+
+                entity.Property(e => e.AccessGroupId)
+                    .HasColumnName("access_group_id");
 
                 entity.HasOne(e => e.Tx)
                     .WithMany(tx => tx.EnemyTribe)
@@ -597,6 +630,22 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.TribeId).HasColumnName("tribe_id");
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
+            });
+
+            modelBuilder.Entity<IgnoredReport>(entity =>
+            {
+                entity.ToTable("ignored_report", "tw");
+
+                entity.HasKey(e => new { e.ReportId, e.WorldId, e.AccessGroupId });
+
+                entity.Property(e => e.ReportId)
+                    .HasColumnName("report_id");
+
+                entity.Property(e => e.WorldId)
+                    .HasColumnName("world_id");
+
+                entity.Property(e => e.AccessGroupId)
+                    .HasColumnName("access_group_id");
             });
 
             modelBuilder.Entity<InvalidDataRecord>(entity =>
@@ -792,7 +841,7 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("report", "tw");
 
-                entity.HasKey(e => new { e.WorldId, e.ReportId });
+                entity.HasKey(e => new { e.WorldId, e.ReportId, e.AccessGroupId });
                 
                 entity.Property(e => e.ReportId)
                     .HasColumnName("report_id")
@@ -829,6 +878,8 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.TxId).HasColumnName("tx_id");
 
                 entity.Property(e => e.WorldId).HasColumnName("world_id");
+
+                entity.Property(e => e.AccessGroupId).HasColumnName("access_group_id");
 
                 entity.HasOne(d => d.AttackerArmy)
                     .WithMany(p => p.ReportAttackerArmy)
@@ -1061,6 +1112,8 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.TxId).HasColumnName("tx_id");
 
+                entity.Property(e => e.AccessGroupId).HasColumnName("access_group_id");
+
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.User)
                     .HasForeignKey(d => d.WorldId)
@@ -1110,6 +1163,8 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.IsReadOnly).HasColumnName("is_read_only");
 
                 entity.Property(e => e.TxId).HasColumnName("tx_id");
+
+                entity.Property(e => e.AccessGroupId).HasColumnName("access_group_id");
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.UserLog)
@@ -1297,6 +1352,8 @@ namespace TW.Vault.Scaffold
             modelBuilder.HasSequence<short>("world_id_seq");
 
             modelBuilder.HasSequence("enemy_tribe_id_seq");
+
+            modelBuilder.HasSequence("access_group_id_seq");
         }
     }
 }

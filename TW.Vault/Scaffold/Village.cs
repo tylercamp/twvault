@@ -26,7 +26,7 @@ namespace TW.Vault.Scaffold
 
         public Player Player { get; set; }
         public World World { get; set; }
-        public CurrentVillage CurrentVillage { get; set; }
+        public ICollection<CurrentVillage> CurrentVillage { get; set; }
         public ICollection<Command> CommandSourceVillage { get; set; }
         public ICollection<Command> CommandTargetVillage { get; set; }
         public ICollection<CurrentVillageSupport> CurrentVillageSupportSourceVillage { get; set; }

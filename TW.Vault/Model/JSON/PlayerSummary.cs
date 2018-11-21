@@ -28,6 +28,9 @@ namespace TW.Vault.Model.JSON
         public int NumDefensiveVillages { get; set; }
 
         /* Off stats */
+        public float QuarterNukesOwned { get; set; }
+        public float HalfNukesOwned { get; set; }
+        public float ThreeQuarterNukesOwned { get; set; }
         public float NukesOwned { get; set; }
         public float NukesTraveling { get; set; }
 

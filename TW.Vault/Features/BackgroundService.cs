@@ -72,7 +72,7 @@ namespace TW.Vault.Features
             _stoppingCts.Cancel();
         }
 
-        protected async Task WithVaultContext(Func<Scaffold.VaultContext, Task> action)
+        public async Task WithVaultContext(Func<Scaffold.VaultContext, Task> action)
         {
             using (var scope = scopeFactory.CreateScope())
             {

@@ -42,7 +42,7 @@ namespace TW.Vault.Controllers
                 return Unauthorized();
             }
 
-            var userLogs = await context.UserLog.FromWorld(CurrentWorldId).OrderByDescending(l => l.Id).Include(l => l.Tx).ToListAsync();
+            var userLogs = await CurrentSets.UserLog.OrderByDescending(l => l.Id).Include(l => l.Tx).ToListAsync();
             var playerIds = userLogs
                 .Select(l => l.PlayerId)
                 .Concat(userLogs.Where(l => l.AdminPlayerId != null)
@@ -51,14 +51,14 @@ namespace TW.Vault.Controllers
                 .ToList();
 
             var playerNames = await (
-                    from player in context.Player.FromWorld(CurrentWorldId)
+                    from player in CurrentSets.Player
                     where playerIds.Contains(player.PlayerId)
                     select new { player.PlayerId, player.PlayerName }
                 ).ToListAsync();
 
             var userNames = await (
-                    from user in context.User.FromWorld(CurrentWorldId)
-                    join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                    from user in CurrentSets.User
+                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                     select new { user.Uid, player.PlayerName }
                 ).ToListAsync();
 
@@ -174,13 +174,11 @@ namespace TW.Vault.Controllers
             }
 
             var users = await (
-                    from user in context.User.FromWorld(CurrentWorldId)
-                    join player in context.Player on user.PlayerId equals player.PlayerId
-                    join tribe in context.Ally on player.TribeId equals tribe.TribeId into maybeTribe
+                    from user in CurrentSets.ActiveUser
+                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                    join tribe in CurrentSets.Ally on player.TribeId equals tribe.TribeId into maybeTribe
                     from tribe in maybeTribe.DefaultIfEmpty()
                     where CurrentUser.KeySource == null || user.KeySource == CurrentUserId || !Configuration.Security.RestrictAccessWithinTribes
-                    where user.Enabled && !user.IsReadOnly
-                    where player.WorldId == CurrentWorldId
                     where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
                     orderby tribe.Tag, player.PlayerName
                     select new { user, playerName = player.PlayerName, tribe = tribe }
@@ -217,7 +215,7 @@ namespace TW.Vault.Controllers
             {
                 long playerId = keyRequest.PlayerId.Value;
                 var possiblePlayer = await (
-                        from p in context.Player.FromWorld(CurrentWorldId)
+                        from p in CurrentSets.Player
                         where p.PlayerId == playerId
                         select p
                     ).FirstOrDefaultAsync();
@@ -234,7 +232,7 @@ namespace TW.Vault.Controllers
                 var formattedPlayerName = WebUtility.UrlEncode(keyRequest.PlayerName);
 
                 var possiblePlayer = await (
-                        from p in context.Player.FromWorld(CurrentWorldId)
+                        from p in CurrentSets.Player
                         where p.PlayerName == formattedPlayerName
                         select p
                     ).FirstOrDefaultAsync();
@@ -257,7 +255,7 @@ namespace TW.Vault.Controllers
             }
 
             bool userExists = await (
-                    from user in context.User
+                    from user in CurrentSets.User
                     where user.PlayerId == player.PlayerId
                     where user.WorldId == null || user.WorldId == CurrentWorldId
                     where user.Enabled
@@ -272,6 +270,7 @@ namespace TW.Vault.Controllers
             var newAuthUser = new Scaffold.User();
             newAuthUser.WorldId = CurrentWorldId;
             newAuthUser.PlayerId = player.PlayerId;
+            newAuthUser.AccessGroupId = CurrentAccessGroupId;
             newAuthUser.AuthToken = Guid.NewGuid();
             newAuthUser.Enabled = true;
             newAuthUser.TransactionTime = DateTime.UtcNow;
@@ -293,7 +292,7 @@ namespace TW.Vault.Controllers
             jsonUser.PlayerName = WebUtility.UrlDecode(player.PlayerName);
 
             var playerTribe = await (
-                    from tribe in context.Ally.FromWorld(CurrentWorldId)
+                    from tribe in CurrentSets.Ally
                     where tribe.TribeId == player.TribeId
                     select tribe
                 ).FirstOrDefaultAsync();
@@ -445,10 +444,10 @@ namespace TW.Vault.Controllers
             var (tribeVillages, currentPlayers, uploadHistory, enemyVillages) = await ManyTasks.RunToList(
                 //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
                 //  (This returns a lot of data and will be slow)
-                from player in context.Player.FromWorld(CurrentWorldId)
-                join user in context.User.FromWorld(CurrentWorldId) on player.PlayerId equals user.PlayerId
-                join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
-                join currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId)
+                from player in CurrentSets.Player
+                join user in CurrentSets.User on player.PlayerId equals user.PlayerId
+                join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+                join currentVillage in CurrentSets.CurrentVillage
                                                              .Include(cv => cv.ArmyAtHome)
                                                              .Include(cv => cv.ArmyOwned)
                                                              .Include(cv => cv.ArmyTraveling)
@@ -461,9 +460,9 @@ namespace TW.Vault.Controllers
 
                 //  Get all CurrentPlayer data for the user's tribe (separate from global 'Player' table
                 //      so we can also output stats for players that haven't uploaded anything yet)
-                from currentPlayer in context.CurrentPlayer.FromWorld(CurrentWorldId)
-                join player in context.Player.FromWorld(CurrentWorldId) on currentPlayer.PlayerId equals player.PlayerId
-                join user in context.User.FromWorld(CurrentWorldId) on player.PlayerId equals user.PlayerId
+                from currentPlayer in CurrentSets.CurrentPlayer
+                join player in CurrentSets.Player on currentPlayer.PlayerId equals player.PlayerId
+                join user in CurrentSets.User on player.PlayerId equals user.PlayerId
                 where user.Enabled && !user.IsReadOnly
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 select currentPlayer
@@ -472,8 +471,8 @@ namespace TW.Vault.Controllers
 
                 //  Get user upload history
                 from history in context.UserUploadHistory
-                join user in context.User.FromWorld(CurrentWorldId) on history.Uid equals user.Uid
-                join player in context.Player.FromWorld(CurrentWorldId) on user.PlayerId equals player.PlayerId
+                join user in CurrentSets.User on history.Uid equals user.Uid
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 where user.Enabled && !user.IsReadOnly
                 select new { playerId = player.PlayerId, history }
@@ -481,23 +480,24 @@ namespace TW.Vault.Controllers
                 ,
 
                 //  Get enemy villages
-                from tribe in context.EnemyTribe.FromWorld(CurrentWorldId)
-                join player in context.Player.FromWorld(CurrentWorldId) on tribe.EnemyTribeId equals player.TribeId
-                join village in context.Village.FromWorld(CurrentWorldId) on player.PlayerId equals village.PlayerId
+                from tribe in CurrentSets.EnemyTribe
+                join player in CurrentSets.Player on tribe.EnemyTribeId equals player.TribeId
+                join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                 select new { village.VillageId, X = village.X.Value, Y = village.Y.Value }
 
             );
 
             var villageIds = tribeVillages.Select(v => v.currentVillage.VillageId).Distinct().ToList();
             var attackedVillageIds = await Profile("Get incomings", () => (
-                    from command in context.Command.FromWorld(CurrentWorldId)
+                    from command in CurrentSets.Command
                     where villageIds.Contains(command.TargetVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime
                     select command.TargetVillageId
                 ).ToListAsync());
 
             var attackingVillageIds = await Profile("Get attacks", () => (
-                    from command in context.Command.FromWorld(CurrentWorldId)
+                    from command in CurrentSets.Command
                     where villageIds.Contains(command.SourceVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime
+                    where command.TargetPlayerId != null
                     select command.SourceVillageId
                 ).ToListAsync());
 
@@ -537,8 +537,7 @@ namespace TW.Vault.Controllers
             var tribeVillageIds = tribeVillages.Select(v => v.currentVillage.VillageId).ToList();
             //  'tribeVillageIds' tends to be large, so this will be a slow query
             var villagesSupport = await (
-                    from support in context.CurrentVillageSupport
-                                           .FromWorld(CurrentWorldId)
+                    from support in CurrentSets.CurrentVillageSupport
                                            .Include(s => s.SupportingArmy)
                     where tribeVillageIds.Contains(support.SourceVillageId)
                     select support
@@ -558,9 +557,9 @@ namespace TW.Vault.Controllers
             var nonTribeVillageIds = villagesSupport.Select(s => s.TargetVillageId).Distinct().Except(tribeVillageIds).ToList();
 
             var nonTribeTargetTribesByVillageId = await (
-                    from village in context.Village.FromWorld(CurrentWorldId)
-                    join player in context.Player.FromWorld(CurrentWorldId) on village.PlayerId equals player.PlayerId
-                    join ally in context.Ally.FromWorld(CurrentWorldId) on player.TribeId equals ally.TribeId
+                    from village in CurrentSets.Village
+                    join player in CurrentSets.Player on village.PlayerId equals player.PlayerId
+                    join ally in CurrentSets.Ally on player.TribeId equals ally.TribeId
                     where nonTribeVillageIds.Contains(village.VillageId)
                     select new { village.VillageId, ally.TribeId }
                 ).ToDictionaryAsync(d => d.VillageId, d => d.TribeId);
@@ -632,7 +631,7 @@ namespace TW.Vault.Controllers
 
             //  Get tribe labels
             var tribeNames = await (
-                    from tribe in context.Ally.FromWorld(CurrentWorldId)
+                    from tribe in CurrentSets.Ally
                     where tribeIds.Contains(tribe.TribeId)
                     select new { tribe.Tag, tribe.TribeId }
                 ).ToListAsync();
@@ -685,6 +684,12 @@ namespace TW.Vault.Controllers
 
                         if (ArmyStats.IsNuke(armyOwned))
                             playerSummary.NukesOwned++;
+                        else if (ArmyStats.IsNuke(armyOwned, 0.75))
+                            playerSummary.ThreeQuarterNukesOwned++;
+                        else if (ArmyStats.IsNuke(armyOwned, 0.5))
+                            playerSummary.HalfNukesOwned++;
+                        else if (ArmyStats.IsNuke(armyOwned, 0.25))
+                            playerSummary.QuarterNukesOwned++;
                         if (ArmyStats.IsNuke(armyTraveling))
                             playerSummary.NukesTraveling++;
                     }
@@ -763,9 +768,9 @@ namespace TW.Vault.Controllers
             }
 
             var result = await (
-                    from enemy in context.EnemyTribe.FromWorld(CurrentWorldId)
-                    join tribe in context.Ally.FromWorld(CurrentWorldId) on enemy.EnemyTribeId equals tribe.TribeId
-                    select new { tribe.TribeId, tribe.Tag, tribe.TribeName }
+                    from enemy in CurrentSets.EnemyTribe
+                    join tribe in CurrentSets.Ally on enemy.EnemyTribeId equals tribe.TribeId
+                    select new { tribe.TribeId, Tag = WebUtility.UrlDecode(tribe.Tag), TribeName = WebUtility.UrlDecode(tribe.TribeName) }
                 ).ToListAsync();
 
             return Ok(result);
@@ -785,7 +790,7 @@ namespace TW.Vault.Controllers
             nameOrTag = WebUtility.UrlEncode(nameOrTag);
 
             var discoveredTribe = await (
-                    from tribe in context.Ally.FromWorld(CurrentWorldId)
+                    from tribe in CurrentSets.Ally
                     where tribe.Tag == nameOrTag || tribe.TribeName == nameOrTag
                     select tribe
                 ).FirstOrDefaultAsync();
@@ -794,7 +799,7 @@ namespace TW.Vault.Controllers
                 return NotFound();
 
             var existingEnemy = await (
-                    from enemy in context.EnemyTribe.FromWorld(CurrentWorldId)
+                    from enemy in CurrentSets.EnemyTribe
                     where enemy.EnemyTribeId == discoveredTribe.TribeId
                     select enemy
                 ).FirstOrDefaultAsync();
@@ -806,6 +811,7 @@ namespace TW.Vault.Controllers
             {
                 EnemyTribeId = discoveredTribe.TribeId,
                 WorldId = CurrentWorldId,
+                AccessGroupId = CurrentAccessGroupId,
                 Tx = BuildTransaction()
             };
 
@@ -813,7 +819,7 @@ namespace TW.Vault.Controllers
 
             await context.SaveChangesAsync();
 
-            return Ok(new { discoveredTribe.TribeId, discoveredTribe.Tag, discoveredTribe.TribeName });
+            return Ok(new { discoveredTribe.TribeId, Tag = WebUtility.UrlDecode(discoveredTribe.Tag), TribeName = WebUtility.UrlDecode(discoveredTribe.TribeName) });
         }
 
         [HttpDelete("enemies/{nameOrTag}")]
@@ -829,16 +835,14 @@ namespace TW.Vault.Controllers
 
             nameOrTag = WebUtility.UrlEncode(nameOrTag);
 
-            var discoveredTribe = context.Ally
-                                         .FromWorld(CurrentWorldId)
+            var discoveredTribe = CurrentSets.Ally
                                          .Where(a => a.TribeName == nameOrTag || a.Tag == nameOrTag)
                                          .FirstOrDefault();
 
             if (discoveredTribe == null)
                 return NotFound();
 
-            var enemyEntry = context.EnemyTribe
-                                    .FromWorld(CurrentWorldId)
+            var enemyEntry = CurrentSets.EnemyTribe
                                     .Where(e => e.EnemyTribeId == discoveredTribe.TribeId)
                                     .FirstOrDefault();
 

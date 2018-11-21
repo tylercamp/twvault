@@ -45,7 +45,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetByTargetVillage(long villageId)
         {
             var commands = await Paginated(
-                    from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
+                    from command in CurrentSets.Command.IncludeCommandData()
                     where command.TargetVillageId == villageId
                     select command
                 ).ToListAsync();
@@ -58,7 +58,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetBySourceVillage(long villageId)
         {
             var commands = await Paginated(
-                from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
+                from command in CurrentSets.Command.IncludeCommandData()
                 where command.SourceVillageId == villageId
                 select command
             ).ToListAsync();
@@ -71,7 +71,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetByTargetPlayer(long playerId)
         {
             var commands = await Paginated(
-                from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
+                from command in CurrentSets.Command.IncludeCommandData()
                 where command.TargetPlayerId == playerId
                 select command
             ).ToListAsync();
@@ -84,7 +84,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetBySourcePlayer(long playerId)
         {
             var commands = await Paginated(
-                from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
+                from command in CurrentSets.Command.IncludeCommandData()
                 where command.SourcePlayerId == playerId
                 select command
             ).ToListAsync();
@@ -97,7 +97,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetExistingCommands([FromBody]List<long> commandIds)
         {
             var existingIds = await (
-                    from command in context.Command.FromWorld(CurrentWorldId)
+                    from command in CurrentSets.Command
                     where command.ArmyId != null
                     where commandIds.Contains(command.CommandId)
                     select command.CommandId
@@ -146,7 +146,7 @@ namespace TW.Vault.Controllers
 
                 var (scaffoldCommands, villageIdsFromCommandsMissingTroopTypes, allVillages) = await ManyTasks.Run(
                     Profile("Get existing commands", () => (
-                        from command in context.Command.IncludeCommandData().FromWorld(CurrentWorldId)
+                        from command in CurrentSets.Command.IncludeCommandData()
                         where commandIds.Contains(command.CommandId)
                         select command
                     ).ToListAsync())
@@ -154,7 +154,7 @@ namespace TW.Vault.Controllers
                     ,
 
                     Profile("Get villages for commands missing troop type", () => (
-                        from village in context.Village.FromWorld(CurrentWorldId)
+                        from village in CurrentSets.Village
                         where villageIdsFromCommandsMissingTroopType.Contains(village.VillageId)
                         select village
                     ).ToListAsync())
@@ -162,7 +162,7 @@ namespace TW.Vault.Controllers
                     ,
 
                     Profile("Get all relevant villages", () => (
-                        from village in context.Village.FromWorld(CurrentWorldId)
+                        from village in CurrentSets.Village
                         where allVillageIds.Contains(village.VillageId)
                         select village
                     ).ToListAsync())
@@ -230,7 +230,8 @@ namespace TW.Vault.Controllers
                         {
                             scaffoldCommand = new Scaffold.Command();
                             scaffoldCommand.World = CurrentWorld;
-                            jsonCommand.ToModel(CurrentWorldId, scaffoldCommand, context);
+                            scaffoldCommand.AccessGroupId = CurrentAccessGroupId;
+                            jsonCommand.ToModel(CurrentWorldId, CurrentAccessGroupId, scaffoldCommand, context);
                             context.Command.Add(scaffoldCommand);
                         }
                         else
@@ -245,7 +246,7 @@ namespace TW.Vault.Controllers
                                 });
                             }
 
-                            jsonCommand.ToModel(CurrentWorldId, scaffoldCommand, context);
+                            jsonCommand.ToModel(CurrentWorldId, CurrentAccessGroupId, scaffoldCommand, context);
                         }
 
                         if (String.IsNullOrWhiteSpace(scaffoldCommand.UserLabel) || scaffoldCommand.UserLabel == "Attack")
@@ -290,20 +291,53 @@ namespace TW.Vault.Controllers
             //  for changes against all queried objects. Disable tracking by default and track explicitly if necessary
             context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
-            var incomings = await Profile("Get existing commands", () => (
-                    from command in context.Command.FromWorld(CurrentWorldId)
-                                                   .Include(c => c.SourceVillage)
-                                                   .Include(c => c.SourceVillage.CurrentVillage)
-                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyOwned)
-                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyStationed)
-                                                   .Include(c => c.SourceVillage.CurrentVillage.ArmyTraveling)
+            var incomingData = await Profile("Get existing commands", () => (
+                    from command in CurrentSets.Command
+                                               .Include(c => c.SourceVillage)
+                    join currentVillage in CurrentSets.CurrentVillage
+                                                      .Include(c => c.ArmyOwned)
+                                                      .Include(c => c.ArmyStationed)
+                                                      .Include(c => c.ArmyTraveling)
+                        on command.SourceVillageId equals currentVillage.VillageId into currentVillage
                     where incomingsIds.Contains(command.CommandId)
-                    select command
+                    select new { Command = command, CurrentVillage = currentVillage.FirstOrDefault() }
                 ).ToListAsync()
             );
 
-            if (incomings == null)
+            if (incomingData == null)
                 return NotFound();
+
+            //  Load in actual CurrentArmy data for incomings
+            //  (Didn't need this previously but EF Core can be dumb, .Include on a `join .. into` doesn't actually include the given properties)
+            {
+                IEnumerable<long> SelectCurrentArmyIds(Scaffold.CurrentVillage currentVillage)
+                {
+                    if (currentVillage == null)
+                        yield break;
+
+                    if (currentVillage.ArmyOwnedId != null)
+                        yield return currentVillage.ArmyOwnedId.Value;
+
+                    if (currentVillage.ArmyStationedId != null)
+                        yield return currentVillage.ArmyStationedId.Value;
+
+                    if (currentVillage.ArmyTravelingId != null)
+                        yield return currentVillage.ArmyTravelingId.Value;
+                }
+
+                var currentArmyIds = incomingData.SelectMany(d => SelectCurrentArmyIds(d.CurrentVillage)).ToList();
+                var currentArmies = await CurrentSets.CurrentArmy.Where(army => currentArmyIds.Contains(army.ArmyId)).ToDictionaryAsync(a => a.ArmyId, a => a);
+
+                foreach (var village in incomingData.Select(d => d.CurrentVillage).Where(v => v != null))
+                {
+                    if (village.ArmyOwnedId != null)
+                        village.ArmyOwned = currentArmies[village.ArmyOwnedId.Value];
+                    if (village.ArmyStationedId != null)
+                        village.ArmyStationed = currentArmies[village.ArmyStationedId.Value];
+                    if (village.ArmyTravelingId != null)
+                        village.ArmyTraveling = currentArmies[village.ArmyTravelingId.Value];
+                }
+            }
 
             var uploadHistory = await Profile("Get user upload history", () =>
                 context.UserUploadHistory.Where(h => h.Uid == CurrentUserId).FirstOrDefaultAsync()
@@ -319,11 +353,11 @@ namespace TW.Vault.Controllers
 
             //  NOTE - We pull data for all villas requested but only return data for villas not in vaultOwnedVillages,
             //  should stop querying that other data at some point
-            var commandSourceVillageIds = incomings.Select(inc => inc.SourceVillageId).Distinct().ToList();
-            var commandTargetVillageIds = incomings.Select(inc => inc.TargetVillageId).Distinct().ToList();
+            var commandSourceVillageIds = incomingData.Select(inc => inc.Command.SourceVillageId).Distinct().ToList();
+            var commandTargetVillageIds = incomingData.Select(inc => inc.Command.TargetVillageId).Distinct().ToList();
 
             var relevantVillages = await (
-                    from village in context.Village.FromWorld(CurrentWorldId)
+                    from village in CurrentSets.Village
                     where commandSourceVillageIds.Contains(village.VillageId) || commandTargetVillageIds.Contains(village.VillageId)
                     select new { village.PlayerId, village.VillageId, village.VillageName, X = village.X.Value, Y = village.Y.Value }
                 ).ToDictionaryAsync(v => v.VillageId, v => v);
@@ -334,8 +368,8 @@ namespace TW.Vault.Controllers
                 //  Don't do any tagging for villages owned by players registered with the vault (so players in other tribes
                 //  also using the vault can't infer villa builds)
                 Profile("Get villages owned by vault users", () => (
-                    from user in context.User
-                    join village in context.Village.FromWorld(CurrentWorldId) on user.PlayerId equals village.PlayerId
+                    from user in CurrentSets.User
+                    join village in CurrentSets.Village on user.PlayerId equals village.PlayerId
                     where user.Enabled
                     select village.VillageId
                 ).ToListAsync())
@@ -343,7 +377,7 @@ namespace TW.Vault.Controllers
                 ,
 
                 Profile("Get player names", () => (
-                    from player in context.Player.FromWorld(CurrentWorldId)
+                    from player in CurrentSets.Player
                     where sourcePlayerIds.Contains(player.PlayerId)
                     select new { player.PlayerId, player.PlayerName }
                 ).ToDictionaryAsync(p => p.PlayerId, p => p.PlayerName))
@@ -351,7 +385,7 @@ namespace TW.Vault.Controllers
                 ,
 
                 Profile("Get command counts", () => (
-                    from command in context.Command.FromWorld(CurrentWorldId)
+                    from command in CurrentSets.Command
                     where !command.IsReturning && command.LandsAt > CurrentServerTime
                     group command by command.SourceVillageId into villageCommands
                     select new { VillageId = villageCommands.Key, Count = villageCommands.Count() }
@@ -367,15 +401,14 @@ namespace TW.Vault.Controllers
                 relevantVillages[command.TargetVillageId].X, relevantVillages[command.TargetVillageId].Y
             );
 
-            var earliestLaunchTime = incomings.Select(CommandLaunchedAt).DefaultIfEmpty(DateTime.UtcNow).Min() - CurrentWorldSettings.UtcOffset;
+            var earliestLaunchTime = incomingData.Select(inc => CommandLaunchedAt(inc.Command)).DefaultIfEmpty(DateTime.UtcNow).Min() - CurrentWorldSettings.UtcOffset;
 
             var commandsReturningByVillageId = await Profile("Process returning commands for all source villages", async () =>
             {
                 var commandSeenThreshold = earliestLaunchTime - TimeSpan.FromDays(1);
 
                 var sentCommands = await Profile("Query returning commands for all source villages", () => (
-                    from command in context.Command.AsTracking()
-                                            .FromWorld(CurrentWorldId)
+                    from command in CurrentSets.Command.AsTracking()
                                             .Include(c => c.Army)
                     where command.FirstSeenAt > commandSeenThreshold
                     where command.Army != null
@@ -411,7 +444,7 @@ namespace TW.Vault.Controllers
 
             var otherTargetedVillageIds = commandsReturningByVillageId.SelectMany(kvp => kvp.Value).Select(c => c.TargetVillageId).Distinct().Except(relevantVillages.Keys);
             var otherTargetVillages = await Profile("Get other villages targeted by inc source villas", () =>
-                context.Village.FromWorld(CurrentWorldId).Where(v => otherTargetedVillageIds.Contains(v.VillageId)).ToListAsync()
+                CurrentSets.Village.Where(v => otherTargetedVillageIds.Contains(v.VillageId)).ToListAsync()
             );
 
             foreach (var id in otherTargetedVillageIds)
@@ -441,16 +474,19 @@ namespace TW.Vault.Controllers
                 return returningCommands.Where(cmd => cmd.ReturnsAt > launchTime || (launchTimesByCommandId.ContainsKey(cmd.CommandId) && launchTimesByCommandId[cmd.CommandId] > launchTime));
             }
 
+            var duplicates = incomingData.GroupBy(i => i.Command.CommandId).Where(g => g.Count() > 1).ToDictionary(g => g.Key, g => g.ToList());
+
             Dictionary<long, JSON.IncomingTag> resultTags = new Dictionary<long, JSON.IncomingTag>();
             Profile("Make incomings tags", () =>
             {
-                foreach (var incoming in incomings)
+                foreach (var data in incomingData)
                 {
+                    var incoming = data.Command;
                     var sourceVillageId = incoming.SourceVillageId;
                     if (vaultOwnedVillages.Contains(sourceVillageId))
                         continue;
 
-                    var sourceCurrentVillage = incoming.SourceVillage?.CurrentVillage;
+                    var sourceCurrentVillage = data.CurrentVillage;
                     var commandsReturning = RelevantCommandsForIncoming(incoming);
 
                     var armyOwned = sourceCurrentVillage?.ArmyOwned;
@@ -553,8 +589,7 @@ namespace TW.Vault.Controllers
         [HttpGet("{commandId}/backtime")]
         public async Task<IActionResult> MakeBacktimePlan(long commandId)
         {
-            var command = await context.Command
-                                       .FromWorld(CurrentWorldId)
+            var command = await CurrentSets.Command
                                        .Where(cmd => cmd.CommandId == commandId)
                                        .Include(cmd => cmd.SourceVillage)
                                        .FirstOrDefaultAsync();
@@ -570,10 +605,10 @@ namespace TW.Vault.Controllers
 
 
 
-            var targetVillage = await context.Village.FromWorld(CurrentWorldId).Where(v => v.VillageId == command.SourceVillageId).FirstOrDefaultAsync();
+            var targetVillage = await CurrentSets.Village.Where(v => v.VillageId == command.SourceVillageId).FirstOrDefaultAsync();
 
             var availableVillages = await Profile("Get available villages", () => (
-                from currentVillage in context.CurrentVillage.FromWorld(CurrentWorldId).Include(cv => cv.Village).Include(cv => cv.ArmyAtHome)
+                from currentVillage in CurrentSets.CurrentVillage.Include(cv => cv.Village).Include(cv => cv.ArmyAtHome)
                 where currentVillage.Village.PlayerId == CurrentPlayerId
                 select currentVillage
             ).ToListAsync());
