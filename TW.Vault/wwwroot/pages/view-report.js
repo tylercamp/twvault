@@ -66,7 +66,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
 
     //  Get defender village
     reportInfo.defendingVillageId = $defenseInfo.find('a[href*=info_village]').prop('href')
-    if (reportInfo.defenderVillageId) {
+    if (reportInfo.defendingVillageId) {
         reportInfo.defendingVillageId = parseInt(reportInfo.defendingVillageId.match(/id=(\w+)/)[1]);
     } else {
         // Village was deleted, can happen for guests that quit
