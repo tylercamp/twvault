@@ -13,7 +13,7 @@ function makeToolsTab() {
         containerId: 'vault-tools-container',
 
         getContent: function () {
-            return uilib.mkTabbedContainer(fakeTab.containerId, tabs);
+            return uilib.mkTabbedContainer(fakeTab, tabs);
         }
     };
 
@@ -133,70 +133,68 @@ $.getScript("${link}");
             });
         },
 
-        getContent: function () {
-            return `
-                <h3>Dynamic Fake Scripts</h3>
-                <table style="width:100%">
-                    <tr>
-                        <td>
-                            <label for="fake-target-player">Players</label>
-                        </td>
-                        <td>
-                            <input id="fake-target-player" type="text" placeholder="False Duke, Nefarious, etc.">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label for="fake-target-tribe">Tribes</label>
-                        </td>
-                        <td>
-                            <input id="fake-target-tribe" type="text" placeholder="Hundred Hungry Hippos, 100, ODZ, etc.">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label for="fake-target-continents">Continents</label>
-                        </td>
-                        <td>
-                            <input id="fake-target-continents" type="text" placeholder="44,45,etc.">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label>Min Coord</label>
-                        </td>
-                        <td>
-                            <input id="fake-min-x" placeholder="X">|<input id="fake-min-y" placeholder="Y">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label>Max Coord</label>
-                        </td>
-                        <td>
-                            <input id="fake-max-x" placeholder="X">|<input id="fake-max-y" placeholder="Y">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <label>Dist From Center</label>
-                        </td>
-                        <td>
-                            <input id="fake-dist-max"> fields from <input id="fake-dist-x" placeholder="X">|<input id="fake-dist-y" placeholder="Y">
-                        </td>
-                    </tr>
-                </table>
+        getContent: `
+            <h3>Dynamic Fake Scripts</h3>
+            <table style="width:100%">
+                <tr>
+                    <td>
+                        <label for="fake-target-player">Players</label>
+                    </td>
+                    <td>
+                        <input id="fake-target-player" type="text" placeholder="False Duke, Nefarious, etc.">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="fake-target-tribe">Tribes</label>
+                    </td>
+                    <td>
+                        <input id="fake-target-tribe" type="text" placeholder="Hundred Hungry Hippos, 100, ODZ, etc.">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="fake-target-continents">Continents</label>
+                    </td>
+                    <td>
+                        <input id="fake-target-continents" type="text" placeholder="44,45,etc.">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Min Coord</label>
+                    </td>
+                    <td>
+                        <input id="fake-min-x" placeholder="X">|<input id="fake-min-y" placeholder="Y">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Max Coord</label>
+                    </td>
+                    <td>
+                        <input id="fake-max-x" placeholder="X">|<input id="fake-max-y" placeholder="Y">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Dist From Center</label>
+                    </td>
+                    <td>
+                        <input id="fake-dist-max"> fields from <input id="fake-dist-x" placeholder="X">|<input id="fake-dist-y" placeholder="Y">
+                    </td>
+                </tr>
+            </table>
 
-                <div style="text-align:center;margin: 1em 0;">
-                    <button id="fake-make-script">Get Script</button>
-                    <button id="fake-get-coords">Get Coords</button>
-                </div>
+            <div style="text-align:center;margin: 1em 0;">
+                <button id="fake-make-script">Get Script</button>
+                <button id="fake-get-coords">Get Coords</button>
+            </div>
 
-                <div>
-                    <textarea id="fake-script-output" style="width:100%;height:5em"></textarea>
-                </div>
-            `;
-        }
+            <div>
+                <textarea id="fake-script-output" style="width:100%;height:5em"></textarea>
+            </div>
+        `
     }
 }
 

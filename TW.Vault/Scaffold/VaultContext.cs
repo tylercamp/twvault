@@ -110,7 +110,7 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("command", "tw");
 
-                entity.HasKey(e => new { e.WorldId, e.CommandId });
+                entity.HasKey(e => new { e.WorldId, e.AccessGroupId, e.CommandId });
                 
                 entity.Property(e => e.CommandId)
                     .HasColumnName("command_id")

@@ -545,9 +545,9 @@ namespace TW.Vault.Controllers
                     var targetVillage = relevantVillages[incoming.TargetVillageId];
                     tag.SourceVillageCoords = $"{sourceVillage.X}|{sourceVillage.Y}";
                     tag.TargetVillageCoords = $"{targetVillage.X}|{targetVillage.Y}";
-                    tag.SourcePlayerName = WebUtility.UrlDecode(sourcePlayerNames[incoming.SourcePlayerId]);
-                    tag.SourceVillageName = WebUtility.UrlDecode(sourceVillage.VillageName);
-                    tag.TargetVillageName = WebUtility.UrlDecode(targetVillage.VillageName);
+                    tag.SourcePlayerName = sourcePlayerNames.GetValueOrDefault(incoming.SourcePlayerId, "Unknown").UrlDecode();
+                    tag.SourceVillageName = sourceVillage.VillageName.UrlDecode();
+                    tag.TargetVillageName = targetVillage.VillageName.UrlDecode();
                     tag.Distance = new Coordinate { X = sourceVillage.X, Y = sourceVillage.Y }.DistanceTo(targetVillage.X, targetVillage.Y);
 
                     if (effectiveArmy != null)

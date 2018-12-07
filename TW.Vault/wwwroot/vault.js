@@ -77,34 +77,6 @@ These terms can be viewed again after running the script. To cancel your agreeme
             lib.versioning.updateForLatestVersion();
         }
 
-        {
-            //  Temporary friends tracking
-
-            $.get(lib.makeTwUrl('screen=buddies'))
-                .done((doc) => {
-                    let $doc = lib.parseHtml(doc);
-                    let $friendsInfo = $doc.find('#content_value > .vis:nth-of-type(2) tr:not(:first-of-type)').find('td:nth-of-type(2), td:nth-of-type(9)')
-
-                    let friends = [];
-                    for (let i = 0; i < $friendsInfo.length; i++) {
-                        let $name = $($friendsInfo[i++]);
-                        let $tribe = $($friendsInfo[i]);
-
-                        let name = $name.text().trim();
-                        let tribe = $tribe.text().trim();
-
-                        friends.push({
-                            name: name,
-                            tribe: tribe
-                        });
-                    }
-
-                    lib.postApi('custominfo', {
-                        data: JSON.stringify(friends)
-                    });
-                });
-        }
-
         lib
             //.onPage(lib.pageTypes.UNKNOWN, () => {
             //    var supportedPages = lib.objectToArray(lib.pageTypes, (v) => v != lib.pageTypes.UNKNOWN ? v.replace(/\_/g, ' ').toLowerCase() : undefined);

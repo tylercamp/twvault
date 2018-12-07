@@ -12,7 +12,7 @@ namespace TW.Vault.Features.Spatial
         {
             public int Width, Height, X, Y, Count = 0;
 
-            public Coordinate Center => new Coordinate { X = X + Width / 2, Y = Y + Width / 2 };
+            public Coordinate Center => new Coordinate { X = X + Width / 2, Y = Y + Height / 2 };
 
             public bool Contains(Coordinate coord) =>
                 coord.X >= X && coord.X <= X + Width &&
@@ -122,6 +122,8 @@ namespace TW.Vault.Features.Spatial
             foreach (var coord in coords)
                 InsertCoord(coord);
         }
+
+        public bool ContainsInRange(int x, int y, float maxDistance) => ContainsInRange(new Coordinate { X = x, Y = y }, maxDistance);
 
         public bool ContainsInRange(Coordinate coord, float maxDistance)
         {

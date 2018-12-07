@@ -12,19 +12,17 @@ function makeSmsTab() {
     ];
 
     let smsTab = {
-        label: 'SMS Notifications',
+        label: 'SMS/Texts',
         containerId: 'vault-sms-container',
 
-        getContent: function () {
-            return `
-                <p>
-                    The Vault can send you a text at a certain time. Use this as a reminder for launch times, etc. All
-                    phone numbers added here will be texted when a notification is sent.
-                </p>
+        getContent: `
+            <p>
+                The Vault can send you a text at a certain time. Use this as a reminder for launch times, etc. All
+                phone numbers added here will be texted when a notification is sent.
+            </p>
 
-                ${uilib.mkTabbedContainer(displayTab.containerId, tabs)}
-            `;
-        }
+            ${uilib.mkTabbedContainer(displayTab, tabs)}
+        `
     };
 
     return smsTab;
@@ -110,30 +108,28 @@ function makeSmsDisplayTab() {
             });
         },
 
-        getContent: function () {
-            return `
-                <h4>Notifications</h4>
-                <p style="text-align:left">
-                    <em>Add New</em>
-                    <br>
-                    <label style="display:inline-block;width:7em;text-align:right" for="notification-time">Server Time</label>
-                    <input type="text" id="notification-time" style="width:400px">
-                    <input type="submit" id="notification-time-formats" value="Supported Formats">
-                    <br>
-                    <label style="display:inline-block;width:7em;text-align:right" for="notification-label">Message</label>
-                    <input type="text" id="notification-label" style="width:400px">
-                    <br>
-                    <button id="add-notification">Add</button>
-                </p>
-                <table style="width:100%" class="vis">
-                    <tr>
-                        <th style="width:12em">Server Time</th>
-                        <th>Message</th>
-                        <th style="width:5em"></th>
-                    </tr>
-                </table>
-            `;
-        }
+        getContent: `
+            <h4>Notifications</h4>
+            <p style="text-align:left">
+                <em>Add New</em>
+                <br>
+                <label style="display:inline-block;width:7em;text-align:right" for="notification-time">Server Time</label>
+                <input type="text" id="notification-time" style="width:400px">
+                <input type="submit" id="notification-time-formats" value="Supported Formats">
+                <br>
+                <label style="display:inline-block;width:7em;text-align:right" for="notification-label">Message</label>
+                <input type="text" id="notification-label" style="width:400px">
+                <br>
+                <button id="add-notification">Add</button>
+            </p>
+            <table style="width:100%" class="vis">
+                <tr>
+                    <th style="width:12em">Server Time</th>
+                    <th>Message</th>
+                    <th style="width:5em"></th>
+                </tr>
+            </table>
+        `
     };
 }
 
@@ -193,29 +189,27 @@ function makeSmsPhoneNumbersTab() {
 
         },
 
-        getContent: function () {
-            return `
-                <h4>Phone Numbers</h4>
-                <p style="text-align: left">
-                    Add a New Number
-                    <br>
-                    <label style="display:inline-block;width:3em;text-align:right" for="new-number">#</label>
-                    <input type="text" id="new-number" placeholder="+1 202-555-0109">
-                    <br>
-                    <label style="display:inline-block;width:3em;text-align:right" for="new-number-label">Name</label>
-                    <input type="text" id="new-number-label" placeholder="(Optional)">
-                    <br>
-                    <button id="add-phone-number">Add</button>
-                </p>
-                <table style="width:100%" class="vis">
-                    <tr>
-                        <th style="width:30%">#</th>
-                        <th></th>
-                        <th style="5em"></th>
-                    </tr>
-                </table>
-            `;
-        }
+        getContent: `
+            <h4>Phone Numbers</h4>
+            <p style="text-align: left">
+                Add a New Number
+                <br>
+                <label style="display:inline-block;width:3em;text-align:right" for="new-number">#</label>
+                <input type="text" id="new-number" placeholder="+1 202-555-0109">
+                <br>
+                <label style="display:inline-block;width:3em;text-align:right" for="new-number-label">Name</label>
+                <input type="text" id="new-number-label" placeholder="(Optional)">
+                <br>
+                <button id="add-phone-number">Add</button>
+            </p>
+            <table style="width:100%" class="vis">
+                <tr>
+                    <th style="width:30%">#</th>
+                    <th></th>
+                    <th style="5em"></th>
+                </tr>
+            </table>
+        `
     };
 }
 
@@ -231,17 +225,15 @@ function makeSmsSettingsTab() {
             });
         },
 
-        getContent: function () {
-            return `
-                <h4>Settings</h4>
-                <div>
-                    <p>
-                        Send me a text <input id="notify-window-minutes" type="text" style="width:2em;text-align:center"> minutes early.
-                    </p>
-                    <button id="save-notification-settings-btn">Save</button>
-                </div>
-            `;
-        }
+        getContent: `
+            <h4>Settings</h4>
+            <div>
+                <p>
+                    Send me a text <input id="notify-window-minutes" type="text" style="width:2em;text-align:center"> minutes early.
+                </p>
+                <button id="save-notification-settings-btn">Save</button>
+            </div>
+        `
     };
 }
 

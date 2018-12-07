@@ -39,7 +39,7 @@
         sourceVillageId: parseInt(sourceVillageId),
         targetPlayerId: parseInt(targetPlayerId),
         targetVillageId: parseInt(targetVillageId),
-        landsAt: landsAt.toUTCString(),
+        landsAt: landsAt.toISOString(),
         troops: troopCounts,
         commandType: commandType,
         isReturning: isReturning

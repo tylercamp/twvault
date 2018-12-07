@@ -15,7 +15,7 @@ function makeAdminTab() {
     ];
 
     let adminTab = {
-        label: 'Admin Options',
+        label: 'Admin',
         containerId: 'vault-admin-container',
         btnCss: 'display:none',
 
@@ -38,7 +38,7 @@ function makeAdminTab() {
         },
 
         getContent: function () {
-            return uilib.mkTabbedContainer(statsTab.containerId, tabs);
+            return uilib.mkTabbedContainer(statsTab, tabs);
         }
     };
 
@@ -120,7 +120,7 @@ function makeEnemyTribesTab() {
             });
         },
 
-        getContent: () => `
+        getContent: `
             <h4>Enemy Tribes</h4>
             <p>
                 Tell the Vault which tribes to consider as "enemies" when determining which villages are back-line.
@@ -139,7 +139,7 @@ function makeAdminUsersTab() {
         label: 'Manage Users',
         containerId: 'vault-admin-users-container',
 
-        getContent: () => `
+        getContent: `
             <h4>Keys</h4>
             <input type="button" id="new-key-button" value="Make new key">
 
@@ -217,7 +217,7 @@ function makeAdminStatsTab() {
             });
         },
 
-        getContent: () => `
+        getContent: `
             <p>Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download"></p>
             <p>
                 <input type="checkbox" id="vault-admin-stats-nuke-breakdown"> <label for="vault-admin-stats-nuke-breakdown">Include stats for 1/4, 1/2, and 3/4 nukes</label>
@@ -231,7 +231,7 @@ function makeAdminLogTab() {
         label: "Log",
         containerId: "vault-admin-log-container",
 
-        getContent: () => `
+        getContent: `
             <h4>User Log</h4>
 
             <div style="max-height:500px; overflow-y:auto">

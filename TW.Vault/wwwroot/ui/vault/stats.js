@@ -11,12 +11,8 @@
         label: 'Stats',
         containerId: 'vault-stats-container',
 
-        init: function ($container) {
-
-        },
-
         getContent: function () {
-            return uilib.mkTabbedContainer(userStatsTab.containerId, tabs);
+            return uilib.mkTabbedContainer(userStatsTab, tabs);
         }
     };
 }
@@ -73,7 +69,7 @@ function makeUserStatsTab() {
                 });
         },
 
-        getContent: () => `
+        getContent: `
             <h3 style="margin-bottom:0">Last 7 Days</h3>
             <div style="display:inline-block">
                 <i style="font-size:0.8em;margin:0">(Traveling and landed)</i>
@@ -154,7 +150,7 @@ function makeHighScoresTab() {
 
         //  Top of the tab has overview of top 3 players for a few different categories
         //  Full listings are available below that overview in different tabs
-        getContent: () => `
+        getContent: `
             <h3 style="margin-bottom:0">High Scores</h3>
             <em style="font-size:0.75em;margin-bottom:1em">Over the last 7 days</em>
 

@@ -46,8 +46,8 @@ namespace TW.Vault.Controllers
             var maxCoord = Request.Query["max"].ToString();
             var center = Request.Query["center"].ToString();
 
-            players = players.Select(WebUtility.UrlEncode).ToList();
-            tribes = tribes.Select(WebUtility.UrlEncode).ToList();
+            players = players.Select(MiscExtensions.UrlEncode).ToList();
+            tribes = tribes.Select(MiscExtensions.UrlEncode).ToList();
 
             var scriptId = $"player_{string.Join('_', players)}__tribe_{string.Join('_',tribes)}__k_{string.Join('_',continents)}__server_{server}";
             scriptId += $"__min_{minCoord}__max_{maxCoord}__center_{center}";

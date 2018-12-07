@@ -31,9 +31,15 @@
                     if (tabInfo.tab.initialized)
                         return;
 
-                    $ui.find('#' + tabInfo.btnId).click(() => selectTab($ui, tabInfo.tabId, tabIds));
+                    lib.bindMembers(tabInfo.tab);
+
+                    let $container = $('#' + tabInfo.tabId);
+                    let $tabButton = $ui.find('#' + tabInfo.btnId);
+                    tabInfo.tab.$container = $container;
+                    tabInfo.tab.$tabButton = $tabButton;
+                    $tabButton.click(() => selectTab($ui, tabInfo.tabId, tabIds));
                     tabInfo.tab.btnId = tabInfo.btnId;
-                    tabInfo.tab.init && tabInfo.tab.init.call(tabInfo.tab, $ui.find('#' + tabInfo.tabId));
+                    tabInfo.tab.init && tabInfo.tab.init.call(tabInfo.tab, $container);
                     tabInfo.tab.initialized = true;
                 });
             });
@@ -44,6 +50,9 @@
         },
 
         mkTabbedContainer: function makeTabbedContainerHtml(defaultTab, tabs) {
+            if (typeof defaultTab == 'object')
+                defaultTab = defaultTab.containerId;
+
             let containerInfo = tabs.map((t) => {
                 return {
                     btnId: mkContainerBtnId(t.containerId),
@@ -58,7 +67,11 @@
                 ${containerInfo.map((i) => uilib.mkBtn(i.btnId, i.tab.label, i.tabId == defaultTab ? 'font-weight:bold;' : 'font-weight:normal;' + (i.tab.btnCss ? i.tab.btnCss : ''))).join("\n")}
 
                 <div class="vault-tab-container" style="padding:1em">
-                    ${containerInfo.map((i) => `<div style="display:${i.tabId == defaultTab ? 'block' : 'none'}" id="${i.tabId}">${i.tab.getContent.call(i.tab)}</div>`).join('\n')}
+                    ${containerInfo.map((i) => {
+                        let style = `display:${i.tabId == defaultTab ? 'block' : 'none'}`;
+                        let content = typeof i.tab.getContent == 'string' ? i.tab.getContent : i.tab.getContent.call(i.tab);
+                        return `<div style="${style}" id="${i.tabId}">${content}</div>`;
+                    }).join('\n')}
                 </div>
             `.trim();
 
@@ -88,7 +101,7 @@
                     switch ($input.prop('type')) {
                         case 'number':
                         case 'text':
-                            if (typeof targetObject[targetProp] != 'undefined')
+                            if (typeof targetObject[targetProp] != 'undefined' && targetObject[targetProp] != null)
                                 $input.val(targetObject[targetProp]);
                             else
                                 $input.val('');
@@ -145,6 +158,44 @@
 
                 default:
                     console.warn('Unhandled tag: ', tag);
+            }
+        },
+
+        propTransformers: {
+            float: function (newVal, oldVal) {
+                if (typeof newVal == 'number')
+                    return newVal;
+
+                if (newVal.match(/[^\d\.]/))
+                    return oldVal;
+                else
+                    return parseFloat(newVal);
+            },
+
+            int: function (newVal, oldVal) {
+                if (typeof newVal == 'number')
+                    return Math.round(newVal);
+
+                if (newVal.match(/[^\d]/))
+                    return oldVal;
+                else
+                    return parseInt(newVal);
+            },
+
+            floatOptional: function (newVal, oldVal) {
+                if (!newVal) {
+                    return null;
+                } else {
+                    return uilib.propTransformers.float(newVal, oldVal);
+                }
+            },
+
+            intOptional: function (newVal, oldVal) {
+                if (!newVal) {
+                    return null;
+                } else {
+                    return uilib.propTransformers.int(newVal, oldVal);
+                }
             }
         }
     };

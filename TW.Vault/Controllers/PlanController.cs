@@ -190,9 +190,9 @@ namespace TW.Vault.Controllers
                 {
                     //  General info
                     TravelingArmyPopulation = Model.Native.ArmyStats.CalculateTotalPopulation(command.Army, offensiveTypes),
-                    TargetPlayerName = WebUtility.UrlDecode(targetPlayer.PlayerName),
-                    TargetTribeName = targetTribe == null ? null : WebUtility.UrlDecode(targetTribe.TribeName),
-                    TargetTribeTag = targetTribe == null ? null : WebUtility.UrlDecode(targetTribe.Tag),
+                    TargetPlayerName = targetPlayer.PlayerName.UrlDecode(),
+                    TargetTribeName = targetTribe?.TribeName?.UrlDecode(),
+                    TargetTribeTag = targetTribe?.Tag?.UrlDecode(),
                     ExistingBacktimes = existingBacktimesPerCommand[command.CommandId],
                     IsStacked = isStacked,
 
@@ -217,8 +217,8 @@ namespace TW.Vault.Controllers
                             SourceVillageId = instruction.SendFrom,
                             TargetVillageId = instruction.SendTo,
 
-                            SourceVillageName = WebUtility.UrlDecode(sourceVillage.VillageName),
-                            TargetVillageName = WebUtility.UrlDecode(targetVillage.VillageName),
+                            SourceVillageName = sourceVillage.VillageName.UrlDecode(),
+                            TargetVillageName = targetVillage.VillageName.UrlDecode(),
 
                             SourceVillageX = sourceVillage.X.Value,
                             SourceVillageY = sourceVillage.Y.Value,

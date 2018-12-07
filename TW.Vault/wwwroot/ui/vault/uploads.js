@@ -1,7 +1,7 @@
 ﻿
 function makeUploadsTab() {
     let uploadsTab = {
-        label: 'Upload Reports, Troops, Etc.',
+        label: 'Upload',
         containerId: 'vault-uploads-container',
 
         init: function ($container) {
@@ -264,64 +264,62 @@ function makeUploadsTab() {
             });
         },
 
-        getContent: function () {
-            return `
-                <p>
-                    <strong>Click <em>Upload All</em> below. If needed, upload different things individually using the other Upload buttons.</strong>
-                </p>
+        getContent: `
+            <p>
+                <strong>Click <em>Upload All</em> below. If needed, upload different things individually using the other Upload buttons.</strong>
+            </p>
 
-                <table style="width:100%" class="vis lit">
-                    <tr>
-                        <th style="width:12em">Upload</th>
-                        <th style="width:6em"></th>
-                        <th>Progress</th>
-                    </tr>
-                    <tr id="vault-upload-reports" class="lit">
-                        <td>Reports</td>
-                        <td><input type="button" class="details-button" value="Details"></td>
-                        <td>
-                            <input type="button" class="upload-button" value="Upload">
-                            <span class="status-container"></span>
-                            <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
-                        </td>
-                    </tr>
-                    <tr id="vault-upload-incomings">
-                        <td>Incomings</td>
-                        <td><input type="button" class="details-button" value="Details"></td>
-                        <td>
-                            <input type="button" class="upload-button" value="Upload">
-                            <span class="status-container"></span>
-                            <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
-                        </td>
-                    </tr>
-                    <tr id="vault-upload-troops">
-                        <td>Troops</td>
-                        <td><input type="button" class="details-button" value="Details"></td>
-                        <td>
-                            <input type="button" class="upload-button" value="Upload">
-                            <span class="status-container"></span>
-                            <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
-                        </td>
-                    </tr>
-                    <tr id="vault-upload-commands">
-                        <td>Commands</td>
-                        <td><input type="button" class="details-button" value="Details"></td>
-                        <td>
-                            <input type="button" class="upload-button" value="Upload">
-                            <span class="status-container"></span>
-                            <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
-                        </td>
-                    </tr>
-                    <tr id="vault-upload-all">
-                        <td colspan=3 style="text-align:center">
-                            <input type="button" class="upload-button upload-button-all" value="Upload All">
-                        </td>
-                    </tr>
-                </table>
+            <table style="width:100%" class="vis lit">
+                <tr>
+                    <th style="width:12em">Upload</th>
+                    <th style="width:6em"></th>
+                    <th>Progress</th>
+                </tr>
+                <tr id="vault-upload-reports" class="lit">
+                    <td>Reports</td>
+                    <td><input type="button" class="details-button" value="Details"></td>
+                    <td>
+                        <input type="button" class="upload-button" value="Upload">
+                        <span class="status-container"></span>
+                        <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
+                    </td>
+                </tr>
+                <tr id="vault-upload-incomings">
+                    <td>Incomings</td>
+                    <td><input type="button" class="details-button" value="Details"></td>
+                    <td>
+                        <input type="button" class="upload-button" value="Upload">
+                        <span class="status-container"></span>
+                        <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
+                    </td>
+                </tr>
+                <tr id="vault-upload-troops">
+                    <td>Troops</td>
+                    <td><input type="button" class="details-button" value="Details"></td>
+                    <td>
+                        <input type="button" class="upload-button" value="Upload">
+                        <span class="status-container"></span>
+                        <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
+                    </td>
+                </tr>
+                <tr id="vault-upload-commands">
+                    <td>Commands</td>
+                    <td><input type="button" class="details-button" value="Details"></td>
+                    <td>
+                        <input type="button" class="upload-button" value="Upload">
+                        <span class="status-container"></span>
+                        <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
+                    </td>
+                </tr>
+                <tr id="vault-upload-all">
+                    <td colspan=3 style="text-align:center">
+                        <input type="button" class="upload-button upload-button-all" value="Upload All">
+                    </td>
+                </tr>
+            </table>
 
-                <input type="button" class="upload-clear-cache" value="Clear Cache" style="float:right">
-            `;
-        }
+            <input type="button" class="upload-clear-cache" value="Clear Cache" style="float:right">
+        `
     };
 
     return uploadsTab;

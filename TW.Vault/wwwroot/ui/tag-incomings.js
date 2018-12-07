@@ -274,7 +274,7 @@
 
         $container.find('#v-tag-format').val(settings.tagFormat);
 
-        $('#incomings_table').before($container);
+        $('.overview_filters').before($container);
 
         $container.find('#v-tag-format').focusout(() => {
             let newFormat = $container.find('#v-tag-format').val();

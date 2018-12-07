@@ -31,6 +31,7 @@
     console.log('pages = ', pages);
 
     collectReportLinks();
+    makeUploadsDisplay();
 
 
     function collectReportLinks() {
@@ -66,29 +67,89 @@
         requestManager.setFinishedHandler(() => {
             requestManager.stop();
             console.log('Got all page links: ', reportLinks);
-            let filteredReports = reportLinks.except((l) => previousReports.contains(l.reportId));
 
-            onProgress_ && onProgress_('Checking for reports already uploaded...');
-            getExistingReports(filteredReports.map(r => r.reportId), (existing) => {
-                console.log('Got existing reports: ', existing);
+            collectFarmingReportLinks((farmReportIds) => {
+                console.log('Got farm report IDs: ', farmReportIds);
 
-                previousReports.push(...existing);
-                let withoutMissingReports = previousReports.except((r) => !reportLinks.contains((l) => l.reportId == r));
-                console.log('Updated reports cache without missing reports: ', withoutMissingReports);
-                lib.setLocalStorage('reports-history', withoutMissingReports);
+                let filteredReports = reportLinks.except((l) => previousReports.contains(l.reportId));
+                filteredReports = filteredReports.except((l) => farmReportIds.contains(l.reportId));
 
-                let filteredLinks =
-                    reportLinks.except((l) => previousReports.contains(l.reportId))
-                        .map((l) => l.link)
-                        .distinct();
+                onProgress_ && onProgress_('Checking for reports already uploaded...');
+                getExistingReports(filteredReports.map(r => r.reportId), (existing) => {
+                    console.log('Got existing reports: ', existing);
 
-                console.log('Made filtered links: ', filteredLinks);
+                    previousReports.push(...existing);
+                    let withoutMissingReports = previousReports.except((r) => !reportLinks.contains((l) => l.reportId == r));
+                    console.log('Updated reports cache without missing reports: ', withoutMissingReports);
+                    lib.setLocalStorage('reports-history', withoutMissingReports);
 
-                uploadReports(filteredLinks);
+                    let filteredLinks =
+                        reportLinks.except((l) => previousReports.contains(l.reportId))
+                            .map((l) => l.link)
+                            .distinct();
+
+                    console.log('Made filtered links: ', filteredLinks);
+
+                    uploadReports(filteredLinks);
+                });
             });
         });
 
         requestManager.start();
+    }
+
+    function collectFarmingReportLinks(onDone) {
+        let $groupLinks = $doc.find('td > a[href*=group_id]:not([href*=view]):not(.village_switch_link)');
+        let $farmReportGroup = $groupLinks.filter((i, el) => $(el).text().contains('Loot Assistant'));
+
+        if (!$farmReportGroup.length) {
+            onProgress_ && onProgress_("Couldn't find Loot Assistant reports folder, skipping filtering...");
+            setTimeout(() => onDone([]), 1500);
+            return;
+        }
+
+        let farmGroupLink = $farmReportGroup.prop('href');
+        let farmGroupId = farmGroupLink.match(/group_id=(\w+)/)[1];
+        $.get(farmGroupLink)
+            .done((data) => {
+                const baseFilteringMessage = "Filtering loot assistant reports...";
+                onProgress_ && onProgress_(baseFilteringMessage);
+
+                let $folderDoc = lib.parseHtml(data);
+                let $lootFolderPages = [$folderDoc];
+                // The .map isn't really necessary, but done so RequestManager doesn't complain of duplicate links
+                let lootFolderPageLinks = lib.detectMultiPages($folderDoc).map(l => l + '&group_id=' + farmGroupId);
+
+                requestManager.resetStats();
+
+                lootFolderPageLinks.forEach((link) => {
+                    requestManager.addRequest(link, (page) => {
+                        $lootFolderPages.push(lib.parseHtml(page));
+                        let stats = requestManager.getStats();
+                        onProgress_ && onProgress_(`${baseFilteringMessage} (${stats.toString()})`);
+                    });
+                });
+
+                requestManager.setFinishedHandler(() => {
+                    requestManager.stop();
+                    requestManager.resetStats();
+
+                    let lootReportLinks = [];
+                    $lootFolderPages.forEach(($page) => {
+                        let pageLinks = parseReportsOverviewPage($page);
+                        console.log('Got loot assistant report links: ', pageLinks);
+                        lootReportLinks.push(...pageLinks);
+                    });
+
+                    onDone(lootReportLinks.map(l => l.reportId));
+                });
+
+                requestManager.start();
+            })
+            .error(() => {
+                onProgress_ && onProgress_("Error getting Loot Assistant reports folder, skipping filtering...");
+                setTimeout(() => onDone([]), 1500);
+            });
     }
 
     function getExistingReports(reportIds, onDone) {
@@ -185,8 +246,6 @@
             requestManager.start();
         }
     }
-
-    makeUploadsDisplay();
 
     function makeUploadsDisplay() {
         if (onDone_ || onProgress_)

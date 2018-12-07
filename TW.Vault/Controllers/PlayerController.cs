@@ -139,7 +139,7 @@ namespace TW.Vault.Controllers
             if (currentPlayerName == null)
                 return Ok(new JSON.UserStats());
 
-            currentPlayerName = WebUtility.UrlDecode(currentPlayerName);
+            currentPlayerName = currentPlayerName.UrlDecode();
             var stats = Features.HighScoresService.Instance?[CurrentAccessGroupId]?.GetValueOrDefault(currentPlayerName);
 
             return Ok(stats ?? new JSON.UserStats());

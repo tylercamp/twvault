@@ -63,7 +63,7 @@
             sourcePlayerId: parseInt(sourcePlayerId),
             targetVillageId: parseInt(targetVillageId),
             targetPlayerId: null,
-            landsAt: arrivalTime.toUTCString(),
+            landsAt: arrivalTime.toISOString(),
             commandType: commandType,
             troopType: troopType,
             isReturning: false,

@@ -222,6 +222,44 @@ var lib = (() => {
             return `${minLength(dateTime.getUTCHours())}:${minLength(dateTime.getUTCMinutes())}:${minLength(dateTime.getUTCSeconds())} on ${minLength(dateTime.getUTCDate())}/${minLength(dateTime.getUTCMonth()+1)}/${dateTime.getUTCFullYear()}`;
         },
 
+        formatDuration: function (durationOrTime) {
+            let duration = durationOrTime;
+            if (durationOrTime instanceof Date) {
+                let serverTime = lib.getServerDateTime();
+                duration = serverTime.valueOf() - durationOrTime.valueOf();
+            }
+
+            duration = Math.abs(duration);
+            duration = Math.round(duration / 1000);
+
+            let numSeconds = duration % 60; duration -= numSeconds; duration /= 60;
+            let numMinutes = duration % 60; duration -= numMinutes; duration /= 60;
+            let numHours = duration % 24; duration -= numHours; duration /= 24;
+            let numDays = duration;
+
+            let nonZeroParts = [];
+            if (numDays) nonZeroParts.push([numDays, 'day']);
+            if (numHours) nonZeroParts.push([numHours, 'hr']);
+            if (numMinutes) nonZeroParts.push([numMinutes, 'min']);
+            if (numSeconds) nonZeroParts.push([numSeconds, 'sec']);
+
+            if (nonZeroParts.length > 2)
+                nonZeroParts = nonZeroParts.slice(0, 2);
+
+            if (nonZeroParts.length == 0)
+                return 'now';
+
+            return nonZeroParts.map((part) => {
+                let count = part[0];
+                let label = part[1];
+
+                if (count != 1)
+                    label += 's';
+
+                return count + ' ' + label;
+            }).join(', ');
+        },
+
         parseHtml: function (htmlText) {
             let parser = new DOMParser();
             let doc = parser.parseFromString(htmlText, "text/html");
@@ -675,13 +713,13 @@ var lib = (() => {
                 return object;
 
             if (object instanceof Date) {
-                return object.toUTCString();
+                return object.toISOString();
             }
 
             let result = lib.clone(object);
             lib.recursiveObjForEach(result, (prop, value, obj) => {
                 if (value instanceof Date) {
-                    obj[prop] = value.toUTCString();
+                    obj[prop] = value.toISOString();
                 }
             });
 
@@ -794,6 +832,14 @@ var lib = (() => {
                     }
                 }
             }
+        },
+
+        // Binds all functions in the object to the object itself
+        bindMembers: function (object) {
+            lib.objForEach(object, (prop, value) => {
+                if (typeof value == 'function')
+                    object[prop] = value.bind(object);
+            });
         },
 
         init: function init(callback) {

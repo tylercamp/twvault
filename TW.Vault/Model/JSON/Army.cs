@@ -160,6 +160,23 @@ namespace TW.Vault.Model.JSON
         public static implicit operator Army(Scaffold.CurrentArmy currentArmy) => Convert.ArmyConvert.ArmyToJson(currentArmy);
         public static implicit operator Army(Scaffold.CommandArmy commandArmy) => Convert.ArmyConvert.ArmyToJson(commandArmy);
 
+        public static Army Max(params Army[] armies)
+        {
+            var result = new Army();
+            foreach (var army in armies.Where(a => a != null))
+            {
+                foreach (var type in army.Keys)
+                {
+                    if (!result.ContainsKey(type))
+                        result.Add(type, army[type]);
+                    else if (result[type] < army[type])
+                        result[type] = army[type];
+                }
+            }
+
+            return result;
+        }
+
         public override bool Equals(object obj)
         {
             return this == obj as Army;

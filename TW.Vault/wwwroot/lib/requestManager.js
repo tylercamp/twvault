@@ -22,6 +22,11 @@ RequestManager.prototype.start = function () {
         return;
     }
 
+    if (!this.pendingRequests.length) {
+        this._onFinishedHandler && this._onFinishedHandler();
+        return;
+    }
+
     var self = this;
     var numResponding = 0;
 
@@ -147,10 +152,17 @@ RequestManager.prototype.hasErrors = function () {
 };
 
 RequestManager.prototype.resetStats = function () {
-    this.stats = {
-        done: 0,
-        pending: 0,
-        total: 0,
-        numFailed: 0
-    };
+    this.stats = new RequestManagerStats();
+};
+
+
+function RequestManagerStats() {
+    this.done = 0;
+    this.pending = 0;
+    this.total = 0;
+    this.numFailed = 0;
+}
+
+RequestManagerStats.prototype.toString = function () {
+    return `${this.done}/${this.total} done, ${this.numFailed} failed`;
 };

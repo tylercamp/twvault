@@ -80,9 +80,9 @@ namespace TW.Vault.Features.Simulation
 
             foreach (var kvp in defendingArmy)
             {
-                result.Infantry += ArmyStats.DefensePower[kvp.Key].Infantry;
-                result.Cavalry += ArmyStats.DefensePower[kvp.Key].Cavalry;
-                result.Archer += ArmyStats.DefensePower[kvp.Key].Archer;
+                result.Infantry += ArmyStats.DefensePower[kvp.Key].Infantry * kvp.Value;
+                result.Cavalry += ArmyStats.DefensePower[kvp.Key].Cavalry * kvp.Value;
+                result.Archer += ArmyStats.DefensePower[kvp.Key].Archer * kvp.Value;
             }
 
             return result;

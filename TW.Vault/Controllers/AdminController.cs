@@ -62,8 +62,8 @@ namespace TW.Vault.Controllers
                     select new { user.Uid, player.PlayerName }
                 ).ToListAsync();
 
-            var playerNamesById = playerIds.ToDictionary(pid => pid, pid => WebUtility.UrlDecode(playerNames.SingleOrDefault(n => n.PlayerId == pid)?.PlayerName));
-            var userNamesById = userNames.ToDictionary(u => u.Uid, u => WebUtility.UrlDecode(u.PlayerName));
+            var playerNamesById = playerIds.ToDictionary(pid => pid, pid => playerNames.SingleOrDefault(n => n.PlayerId == pid)?.PlayerName?.UrlDecode());
+            var userNamesById = userNames.ToDictionary(u => u.Uid, u => u.PlayerName.UrlDecode());
 
             var logsByKey = userLogs.Select(l => l.AuthToken).Distinct().ToDictionary(t => t, t => userLogs.Where(l => l.AuthToken == t).ToList());
 
@@ -189,8 +189,8 @@ namespace TW.Vault.Controllers
 
             var jsonUsers = users.Select(p => UserConvert.ModelToJson(
                 p.user,
-                WebUtility.UrlDecode(p.playerName),
-                p.tribe != null ? WebUtility.UrlDecode(p.tribe.TribeName) : null
+                p.playerName.UrlDecode(),
+                p.tribe != null ? p.tribe.TribeName.UrlDecode() : null
             ));
 
             return Ok(jsonUsers);
@@ -229,7 +229,7 @@ namespace TW.Vault.Controllers
             }
             else if (keyRequest.PlayerName != null)
             {
-                var formattedPlayerName = WebUtility.UrlEncode(keyRequest.PlayerName);
+                var formattedPlayerName = keyRequest.PlayerName.UrlEncode();
 
                 var possiblePlayer = await (
                         from p in CurrentSets.Player
@@ -289,7 +289,7 @@ namespace TW.Vault.Controllers
             await context.SaveChangesAsync();
 
             var jsonUser = UserConvert.ModelToJson(newAuthUser);
-            jsonUser.PlayerName = WebUtility.UrlDecode(player.PlayerName);
+            jsonUser.PlayerName = player.PlayerName.UrlDecode();
 
             var playerTribe = await (
                     from tribe in CurrentSets.Ally
@@ -297,7 +297,7 @@ namespace TW.Vault.Controllers
                     select tribe
                 ).FirstOrDefaultAsync();
 
-            jsonUser.TribeName = WebUtility.UrlDecode(playerTribe.TribeName);
+            jsonUser.TribeName = playerTribe.TribeName.UrlDecode();
 
             return Ok(jsonUser);
         }
@@ -649,7 +649,7 @@ namespace TW.Vault.Controllers
                 var playerHistory = uploadHistoryByPlayer.GetValueOrDefault(player.PlayerId);
                 var playerSummary = new JSON.PlayerSummary
                 {
-                    PlayerName = WebUtility.UrlDecode(playerName),
+                    PlayerName = playerName.UrlDecode(),
                     PlayerId = player.PlayerId,
                     TribeName = tribeName,
                     UploadedAt = playerHistory?.LastUploadedTroopsAt ?? new DateTime(),
@@ -770,7 +770,7 @@ namespace TW.Vault.Controllers
             var result = await (
                     from enemy in CurrentSets.EnemyTribe
                     join tribe in CurrentSets.Ally on enemy.EnemyTribeId equals tribe.TribeId
-                    select new { tribe.TribeId, Tag = WebUtility.UrlDecode(tribe.Tag), TribeName = WebUtility.UrlDecode(tribe.TribeName) }
+                    select new { tribe.TribeId, Tag = tribe.Tag.UrlDecode(), TribeName = tribe.TribeName.UrlDecode() }
                 ).ToListAsync();
 
             return Ok(result);
@@ -787,7 +787,7 @@ namespace TW.Vault.Controllers
                 return Unauthorized();
             }
 
-            nameOrTag = WebUtility.UrlEncode(nameOrTag);
+            nameOrTag = nameOrTag.UrlEncode();
 
             var discoveredTribe = await (
                     from tribe in CurrentSets.Ally
@@ -819,7 +819,7 @@ namespace TW.Vault.Controllers
 
             await context.SaveChangesAsync();
 
-            return Ok(new { discoveredTribe.TribeId, Tag = WebUtility.UrlDecode(discoveredTribe.Tag), TribeName = WebUtility.UrlDecode(discoveredTribe.TribeName) });
+            return Ok(new { discoveredTribe.TribeId, Tag = discoveredTribe.Tag.UrlDecode(), TribeName = discoveredTribe.TribeName.UrlDecode() });
         }
 
         [HttpDelete("enemies/{nameOrTag}")]
@@ -833,7 +833,7 @@ namespace TW.Vault.Controllers
                 return Unauthorized();
             }
 
-            nameOrTag = WebUtility.UrlEncode(nameOrTag);
+            nameOrTag = nameOrTag.UrlEncode();
 
             var discoveredTribe = CurrentSets.Ally
                                          .Where(a => a.TribeName == nameOrTag || a.Tag == nameOrTag)

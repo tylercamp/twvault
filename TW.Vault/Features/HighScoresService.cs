@@ -386,12 +386,12 @@ namespace TW.Vault.Features
                     DVsAtHome = playerVillages?.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyAtHome) / (float)ArmyStats.FullDVDefensivePower) ?? 0,
                     DVsTraveling = playerVillages?.Sum(v => BattleSimulator.TotalDefensePower(v.ArmyTraveling) / (float)ArmyStats.FullDVDefensivePower) ?? 0,
                     PopPerTribe = supportByTargetTribe[player.PlayerId].Where(kvp => kvp.Value.Count > 0).ToDictionary(
-                        kvp => WebUtility.UrlDecode(tribeInfo[kvp.Key].Tag),
+                        kvp => tribeInfo[kvp.Key].Tag.UrlDecode(),
                         kvp => kvp.Value.Sum(a => BattleSimulator.TotalDefensePower(a) / (float)ArmyStats.FullDVDefensivePower)
                     )
                 };
 
-                result.Add(WebUtility.UrlDecode(player.PlayerName), playerResult);
+                result.Add(player.PlayerName.UrlDecode(), playerResult);
             }
 
             logger.LogDebug("Generated result data");

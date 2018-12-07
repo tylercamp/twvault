@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace TW.Vault
@@ -17,6 +18,49 @@ namespace TW.Vault
                 return str.ToUpper();
             else
                 return char.ToUpper(str[0]) + str.Substring(1);
+        }
+
+        public static IEnumerable<IEnumerable<T>> GroupWhile<T>(this IEnumerable<T> enumerable, Func<T, T, bool> predicate)
+        {
+            var enumerator = enumerable.GetEnumerator();
+            List<T> workingGroup = null;
+            while (enumerator.MoveNext())
+            {
+                if (workingGroup == null)
+                {
+                    workingGroup = new List<T> { enumerator.Current };
+                    continue;
+                }
+
+                var previous = workingGroup.Last();
+                var current = enumerator.Current;
+                if (predicate(previous, current))
+                    workingGroup.Add(current);
+                else
+                    yield return workingGroup;
+            }
+
+            if (workingGroup != null)
+                yield return workingGroup;
+        }
+
+        public static String UrlEncode(this String str)
+        {
+            return WebUtility.UrlEncode(str)
+                .Replace("*", "%2A")
+                .Replace("(", "%28")
+                .Replace(")", "%29")
+                .Replace("!", "%21");
+        }
+
+        public static String UrlDecode(this String str)
+        {
+            return WebUtility.UrlDecode(str
+                .Replace("%2A", "*")
+                .Replace("%28", "(")
+                .Replace("%29", ")")
+                .Replace("%21", "!")
+            );
         }
     }
 }

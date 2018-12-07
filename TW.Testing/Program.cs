@@ -1,9 +1,13 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using TW.Vault.Features.Simulation;
 using TW.Vault.Model.JSON;
+using TW.Vault;
+using Microsoft.EntityFrameworkCore;
 
 namespace TW.Testing
 {
@@ -15,8 +19,10 @@ namespace TW.Testing
             //TestRecruitment();
             //TestUsingBattleTester();
 
-            for (int i = 0; i < 10; i++)
-                TestHighScores();
+            //for (int i = 0; i < 10; i++)
+            //    TestHighScores();
+
+            DoSomeQuery();
 
             Console.ReadLine();
         }
@@ -39,6 +45,59 @@ namespace TW.Testing
             Console.WriteLine("Done, took {0:N2} seconds", time.TotalSeconds);
         }
 
+
+        static void DoSomeQuery()
+        {
+            var coords = File.ReadAllLines("coords.txt")
+                .Select(l => l.Trim())
+                .Where(l => !String.IsNullOrWhiteSpace(l))
+                .Select(l => l.Split('|'))
+                .Select(c => new { X = short.Parse(c[0]), Y = short.Parse(c[1]) })
+                .ToList();
+
+            using (var context = new Shim.ServiceScopeFactory().CreateScope().ServiceProvider.GetRequiredService<Vault.Scaffold.VaultContext>())
+            {
+                var villages = (
+                        from village in context.Village.FromWorld(1)
+                        where coords.Contains(new { X = village.X.Value, Y = village.Y.Value })
+                        select village
+                    ).ToList();
+
+                var villageIds = villages.Select(v => v.VillageId).ToList();
+
+                var currentVillages = context.CurrentVillage
+                    .Include(cv => cv.ArmyStationed)
+                    .Include(cv => cv.ArmyOwned)
+                    .Include(cv => cv.ArmyTraveling)
+                    .FromWorld(1)
+                    .FromAccessGroup(1)
+                    .Where(cv => villageIds.Contains(cv.VillageId))
+                    .ToList();
+
+                var commands = context.Command.FromWorld(1).FromAccessGroup(1).Where(cmd => villageIds.Contains(cmd.SourceVillageId)).Where(cmd => cmd.LandsAt > DateTime.UtcNow).ToList();
+                //var attackedPlayers = 
+
+                var oldestTimesByVillage = currentVillages.ToDictionary(
+                    cv => cv.VillageId,
+                    cv => new [] { cv.ArmyStationed?.LastUpdated, cv.ArmyOwned?.LastUpdated, cv.ArmyTraveling?.LastUpdated }.Where(d => d != null).OrderByDescending(d => d.Value).FirstOrDefault() ?? DateTime.MinValue
+                );
+
+                var oldVillages = oldestTimesByVillage.Where(kvp => DateTime.UtcNow - kvp.Value > TimeSpan.FromDays(7));
+
+                var villagesById = villages.ToDictionary(v => v.VillageId, v => v);
+
+                var rows = oldVillages.Select(kvp => new
+                {
+                    X = villagesById[kvp.Key].X.Value,
+                    Y = villagesById[kvp.Key].Y.Value
+                }).ToList();
+
+                String result = "sep=,\nX,Y\n";
+                result += String.Join('\n', rows.Select(r => r.X + "," + r.Y));
+
+                File.WriteAllText("result.csv", result);
+            }
+        }
 
 
         static void TestUsingBattleTester()

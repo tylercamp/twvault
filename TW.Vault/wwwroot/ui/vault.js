@@ -6,22 +6,25 @@
     //# REQUIRE ui/vault/uploads.js
     //# REQUIRE ui/vault/tools.js
     //# REQUIRE ui/vault/stats.js
+    //# REQUIRE ui/vault/actions.js
 
     $doc = $doc || $(document);
 
     let uploadsTab = makeUploadsTab();
-    let smsTab = makeSmsTab();
+    //let smsTab = makeSmsTab();
     let adminTab = makeAdminTab();
     let termsTab = makeTermsTab();
     let toolsTab = makeToolsTab();
     let statsTab = makeStatsTab();
+    let actionsTab = makeActionsTab();
 
     let onClosedListeners = [];
 
     let tabs = [
         uploadsTab,
         statsTab,
-        smsTab,
+        //smsTab,
+        actionsTab,
         toolsTab,
         adminTab,
         termsTab
@@ -35,11 +38,11 @@
                 <div class="confirmation-box-content" style="min-height:100%">
                     <h3>Vault</h3>
                     <p>
-                        Here you can upload data to the Vault or set up SMS notifications. Run this script on your Map or on your Incomings to
-                        see everything the Vault has to offer.
+                        This is the Main Vault Interface. Make sure to upload your reports, etc. in the Upload tab. Run
+                        this script on your Map or on your Incomings to see everything the Vault has to offer.
                     </p>
 
-                    ${uilib.mkTabbedContainer(uploadsTab.containerId, tabs)}
+                    ${uilib.mkTabbedContainer(uploadsTab, tabs)}
 
                     <p style="font-size:12px">
                         Vault server and script by: Tyler (tcamps/False Duke), Glen (vahtos/TheBossPig)

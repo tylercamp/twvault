@@ -472,7 +472,7 @@ namespace TW.Vault.Controllers
                     commandData.OtherVillageId = command.TargetVillageId;
 
                     var otherVillage = targetVillagesById[command.TargetVillageId];
-                    commandData.OtherVillageName = WebUtility.UrlDecode(otherVillage.VillageName);
+                    commandData.OtherVillageName = otherVillage.VillageName.UrlDecode();
                     commandData.OtherVillageCoords = $"{otherVillage.X}|{otherVillage.Y}";
 
                     result.CommandsFromVillage.Add(commandData);
@@ -548,7 +548,7 @@ namespace TW.Vault.Controllers
                 select new { tribe.Tag, tribe.TribeId }
             ).ToListAsync());
 
-            var tribeNamesById = tribeIds.ToDictionary(tid => tid, tid => WebUtility.UrlDecode(tribeNames.First(tn => tn.TribeId == tid).Tag));
+            var tribeNamesById = tribeIds.ToDictionary(tid => tid, tid => tribeNames.First(tn => tn.TribeId == tid).Tag.UrlDecode());
 
             Profile("Generate JSON tags", () =>
             {
@@ -643,7 +643,7 @@ namespace TW.Vault.Controllers
             tribe = tribe ?? "";
             k = k ?? "";
 
-            IEnumerable<String> TrimAndFilter(IEnumerable<String> e) => e.Select(n => n.Trim()).Where(n => n.Length > 0).Select(WebUtility.UrlEncode);
+            IEnumerable<String> TrimAndFilter(IEnumerable<String> e) => e.Select(n => n.Trim()).Where(n => n.Length > 0).Select(MiscExtensions.UrlEncode);
 
             var players = TrimAndFilter(player.Split(',')).ToList();
             var tribes = TrimAndFilter(tribe.Split(',')).ToList();

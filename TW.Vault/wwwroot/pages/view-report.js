@@ -35,7 +35,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
 
 
     var occurredAt = $doc.find('td.nopad > .vis:nth-of-type(2) > tbody > tr:nth-of-type(2) td:nth-of-type(2)').text().trim();
-    reportInfo.occurredAt = lib.parseTimeString(occurredAt).toUTCString();
+    reportInfo.occurredAt = lib.parseTimeString(occurredAt).toISOString();
 
     //  Get attacker player
     if (attackingPlayer.length)

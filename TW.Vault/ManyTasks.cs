@@ -10,10 +10,7 @@ namespace TW.Vault
 {
     public static class ManyTasks
     {
-        public static async Task<Tuple<T1>> Run<T1>(Task<T1> task1)
-        {
-            return new Tuple<T1>(await task1);
-        }
+        public static Task<T1> Run<T1>(Task<T1> task1) => task1;
 
         public static async Task<Tuple<T1, T2>> Run<T1,T2>(Task<T1> task1, Task<T2> task2)
         {
@@ -66,7 +63,7 @@ namespace TW.Vault
 
 
 
-        public static Task<Tuple<List<T1>>> RunToList<T1>(IQueryable<T1> q1) =>
+        public static Task<List<T1>> RunToList<T1>(IQueryable<T1> q1) =>
             Run(q1.ToListAsync());
 
         public static Task<Tuple<List<T1>, List<T2>>> RunToList<T1, T2>(IQueryable<T1> q1, IQueryable<T2> q2) =>

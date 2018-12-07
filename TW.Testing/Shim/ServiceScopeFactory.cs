@@ -31,7 +31,7 @@ namespace TW.Testing.Shim
             if (serviceType == typeof(Vault.Scaffold.VaultContext))
                 return new Vault.Scaffold.VaultContext(
                     new DbContextOptionsBuilder<Vault.Scaffold.VaultContext>()
-                        .UseNpgsql("Server=v.tylercamp.me; Port=22342; Database=vault_dev; User Id=twu_vault; Password=!!TWV@ult4Us??")
+                        .UseNpgsql("Server=v.tylercamp.me; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??")
                         .Options
                 );
             else
