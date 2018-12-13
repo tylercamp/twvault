@@ -53,7 +53,6 @@ namespace TW.Vault
 
             services
                 .AddScoped<RequireAuthAttribute>()
-                .AddSingleton<Hosting.IHostedService, Features.Notifications.NotificationsService>()
                 .AddSingleton<Hosting.IHostedService, Features.HighScoresService>();
 
             String connectionString = Configuration.GetConnectionString("Vault");

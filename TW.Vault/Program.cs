@@ -24,10 +24,7 @@ namespace TW.Vault
                 .ApplyVaultConfiguration()
                 .Build();
 
-            TwilioClient.Init(
-                Configuration.Behavior.Notifications.TwilioClientKey,
-                Configuration.Behavior.Notifications.TwilioClientSecret
-            );
+            Features.Notifications.SMS.Init();
 
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(config)

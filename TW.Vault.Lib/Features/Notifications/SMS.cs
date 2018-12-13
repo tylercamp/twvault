@@ -10,6 +10,14 @@ namespace TW.Vault.Features.Notifications
 {
     public static class SMS
     {
+        public static void Init()
+        {
+            TwilioClient.Init(
+                Configuration.Behavior.Notifications.TwilioClientKey,
+                Configuration.Behavior.Notifications.TwilioClientSecret
+            );
+        }
+
         public static void Send(String phoneNumber, String message)
         {
             MessageResource.Create(

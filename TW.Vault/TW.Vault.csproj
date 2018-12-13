@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-	<RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
-	<Platforms>AnyCPU;x64</Platforms>
+	  <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+	  <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -76,6 +76,10 @@
 
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TW.Vault.Lib\TW.Vault.Lib.csproj" />
   </ItemGroup>
 
   <ItemGroup>

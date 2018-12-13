@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Configuration;
 
 namespace TW.Vault.Scaffold
 {
@@ -13,6 +14,12 @@ namespace TW.Vault.Scaffold
         public VaultContext(DbContextOptions<VaultContext> options)
             : base(options)
         {
+        }
+
+        public static VaultContext MakeFromConfig()
+        {
+            String connectionString = Configuration.Instance.GetConnectionString("Vault");
+            return new VaultContext(new DbContextOptionsBuilder<VaultContext>().UseNpgsql(connectionString).Options);
         }
 
         public virtual DbSet<AccessGroup> AccessGroup { get; set; }
