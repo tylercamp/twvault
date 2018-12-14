@@ -46,21 +46,27 @@ namespace TW.Vault
 
         public static String UrlEncode(this String str)
         {
-            return WebUtility.UrlEncode(str)
-                .Replace("*", "%2A")
-                .Replace("(", "%28")
-                .Replace(")", "%29")
-                .Replace("!", "%21");
+            if (str == null)
+                return null;
+            else
+                return WebUtility.UrlEncode(str)
+                    .Replace("*", "%2A")
+                    .Replace("(", "%28")
+                    .Replace(")", "%29")
+                    .Replace("!", "%21");
         }
 
         public static String UrlDecode(this String str)
         {
-            return WebUtility.UrlDecode(str
-                .Replace("%2A", "*")
-                .Replace("%28", "(")
-                .Replace("%29", ")")
-                .Replace("%21", "!")
-            );
+            if (str == null)
+                return null;
+            else
+                return WebUtility.UrlDecode(str
+                    .Replace("%2A", "*")
+                    .Replace("%28", "(")
+                    .Replace("%29", ")")
+                    .Replace("%21", "!")
+                );
         }
     }
 }

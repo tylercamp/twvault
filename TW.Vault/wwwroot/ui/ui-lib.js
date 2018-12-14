@@ -197,6 +197,29 @@
                     return uilib.propTransformers.int(newVal, oldVal);
                 }
             }
+        },
+
+        mkSpinner: ($container) => {
+            let spinner = {
+                $el: null,
+                done: () => {
+                    $containerContent.children().appendTo($container);
+                    $containerContent.remove();
+                    $el.remove();
+                }
+            };
+
+            let $containerContent = $('<div style="display:none">');
+            $container.children().appendTo($containerContent);
+            $container.append($containerContent);
+
+            spinner.$el = $('<div>').css({
+
+            });
+
+            $container.append(spinner.$el);
+
+            return spinner;
         }
     };
 

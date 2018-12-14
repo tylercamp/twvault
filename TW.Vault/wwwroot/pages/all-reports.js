@@ -66,7 +66,7 @@
 
         requestManager.setFinishedHandler(() => {
             requestManager.stop();
-            console.log('Got all page links: ', reportLinks);
+            console.log('Got all report links: ', reportLinks);
 
             collectFarmingReportLinks((farmReportIds) => {
                 console.log('Got farm report IDs: ', farmReportIds);
@@ -84,7 +84,7 @@
                     lib.setLocalStorage('reports-history', withoutMissingReports);
 
                     let filteredLinks =
-                        reportLinks.except((l) => previousReports.contains(l.reportId))
+                        filteredReports.except((l) => previousReports.contains(l.reportId))
                             .map((l) => l.link)
                             .distinct();
 
