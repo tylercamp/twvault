@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TW.Vault
@@ -61,6 +62,15 @@ namespace TW.Vault
                 .Replace("%29", ")")
                 .Replace("%21", "!")
             );
+        }
+
+        public static T ResultWithToken<T>(this Task<T> task, CancellationToken cancellationToken)
+        {
+            task.Wait(cancellationToken);
+            if (task.Status == TaskStatus.Canceled)
+                return default(T);
+            else
+                return task.Result;
         }
     }
 }

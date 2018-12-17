@@ -55,7 +55,7 @@ namespace TW.Vault
                 .AddScoped<RequireAuthAttribute>()
                 .AddSingleton<Hosting.IHostedService, Features.HighScoresService>();
 
-            String connectionString = Configuration.GetConnectionString("Vault");
+            String connectionString = Vault.Configuration.ConnectionString;
             services.AddDbContext<VaultContext>(options => options.UseNpgsql(connectionString));
         }
 
@@ -67,7 +67,7 @@ namespace TW.Vault
                 app.UseDeveloperExceptionPage();
             }
 
-            var initCfg = TW.Vault.Configuration.Initialization;
+            var initCfg = Vault.Configuration.Initialization;
             if (initCfg.EnableRequiredFiles)
             {
                 var webRoot = env.WebRootPath;

@@ -18,7 +18,7 @@ namespace TW.Vault.Scaffold
 
         public static VaultContext MakeFromConfig()
         {
-            String connectionString = Configuration.Instance.GetConnectionString("Vault");
+            String connectionString = Vault.Configuration.ConnectionString;
             return new VaultContext(new DbContextOptionsBuilder<VaultContext>().UseNpgsql(connectionString).Options);
         }
 

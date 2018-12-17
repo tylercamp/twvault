@@ -28,15 +28,17 @@ namespace TW.Vault.Services.SMS
             logger.Information("Creating notifications service");
             var notificationsService = new NotificationsService();
 
+            logger.Information("Using connectionString: {connectionString}", Configuration.ConnectionString);
+
             logger.Information("Clearing expired notifications from first run");
             using (var context = Scaffold.VaultContext.MakeFromConfig())
-                notificationsService.ClearExpiredNotifications(context);
+                notificationsService.ClearExpiredNotifications(context, ExitToken);
 
             logger.Information("Starting notifications service loop at {ms}ms intervals", refreshDelay);
             while (!ExitToken.IsCancellationRequested)
             {
                 using (var context = Scaffold.VaultContext.MakeFromConfig())
-                    notificationsService.RunOnce(context, refreshDelayTimeSpan);
+                    notificationsService.RunOnce(context, refreshDelayTimeSpan, ExitToken);
                 Task.Delay(refreshDelay).Wait(ExitToken);
             }
             logger.Information("Exiting");
@@ -50,6 +52,8 @@ namespace TW.Vault.Services.SMS
 
             Action<String> signalExit = (String source) =>
             {
+                if (ExitToken.IsCancellationRequested)
+                    return;
                 logger.Information("Received ProcessExit event via " + source + ", setting cancellation token");
                 tokenSource.Cancel();
             };
@@ -58,11 +62,6 @@ namespace TW.Vault.Services.SMS
             Console.CancelKeyPress += (sender, e) => signalExit("CancelKeyPress");
             AssemblyLoadContext.Default.Unloading += (ctx) => signalExit("Default.Unloading");
             AssemblyLoadContext.GetLoadContext(typeof(Program).GetTypeInfo().Assembly).Unloading += (ctx) => signalExit("GetLoadContext.Unloading");
-
-            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
-            {
-                logger.Error(e.ExceptionObject as Exception, "An unhandled exception occurred");
-            };
         }
     }
 }

@@ -13,7 +13,7 @@ namespace TW.Vault.Services.SMS
     {
         private ILogger logger = Log.ForContext<NotificationsService>();
 
-        public void RunOnce(Scaffold.VaultContext context, TimeSpan window)
+        public void RunOnce(Scaffold.VaultContext context, TimeSpan window, CancellationToken cancellationToken)
         {
             /*
                 * Would like to do exact filtering for which notifications need
@@ -43,7 +43,7 @@ namespace TW.Vault.Services.SMS
                     where notification.Enabled
                     where notification.EventOccursAt < tomorrow
                     select new { Notification = notification, Settings = userSettings, PhoneNumbers = user.NotificationPhoneNumber, ServerTimeOffset = worldSettings.UtcOffset }
-                ).ToList();
+                ).ToListAsync().ResultWithToken(cancellationToken);
 
             if (!possibleNotifications.Any())
                 return;
@@ -99,7 +99,7 @@ namespace TW.Vault.Services.SMS
             }
 
             context.NotificationRequest.RemoveRange(upcomingNotifications.Select(r => r.Notification));
-            context.SaveChanges();
+            context.SaveChangesAsync().Wait(cancellationToken);
         }
 
         private String BuildNotificationText(List<Scaffold.NotificationRequest> requests, DateTime serverTime)
@@ -156,14 +156,14 @@ namespace TW.Vault.Services.SMS
             return notificationMessage.ToString();
         }
 
-        public void ClearExpiredNotifications(Scaffold.VaultContext context)
+        public void ClearExpiredNotifications(Scaffold.VaultContext context, CancellationToken cancellationToken)
         {
             var yesterday = DateTime.UtcNow - TimeSpan.FromDays(1);
             var expiredNotifications = (
                     from notification in context.NotificationRequest
                     where notification.EventOccursAt < yesterday
                     select notification
-                ).ToList();
+                ).ToListAsync().ResultWithToken(cancellationToken);
 
             context.RemoveRange(expiredNotifications);
             context.SaveChanges();
