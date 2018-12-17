@@ -23,11 +23,6 @@ var lib = (() => {
 
     window.addEventListener('unload', () => isUnloading = true);
 
-    //  TODO - Pull this from server
-    let worldSettings = {
-        archersEnabled: false
-    };
-
     let encryption = makeEncryption();
 
     let makeAuthHeader = (playerId, tribeId, authKey, isSitter) => {
@@ -596,14 +591,19 @@ var lib = (() => {
 
         troopsArrayToObject: function troopsArrayToNamedObject(array) {
             let result = {};
-            let archerIndex = 3, mountedArcherIndex = 6;
-            for (var i = 0, ai = 0; ai < array.length && i < lib.twstats.unitTypes.length; i++ , ai++) {
-                if ((i == archerIndex || i == mountedArcherIndex) && !worldSettings.archersEnabled) {
-                    --ai;
+            let archerIndex = 3, mountedArcherIndex = 6, paladinIndex = 10;
+            for (var i = 0, ei = 0; ei < array.length && i < lib.twstats.unitTypes.length; i++ , ei++) {
+                if ((i == archerIndex || i == mountedArcherIndex) && !serverSettings.archersEnabled) {
+                    --ei;
                     continue;
                 }
 
-                result[lib.twstats.unitTypes[i].canonicalName] = array[ai];
+                if (i == paladinIndex && !serverSettings.paladinEnabled) {
+                    --ei;
+                    continue;
+                }
+
+                result[lib.twstats.unitTypes[i].canonicalName] = array[ei];
             }
             return result;
         },
