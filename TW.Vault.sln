@@ -9,9 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Testing", "TW.Testing\TW
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.ConfigurationFetcher", "TW.ConfigurationFetcher\TW.ConfigurationFetcher.csproj", "{9116426F-5D10-47F8-84E0-35DDCC8FDDE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TW.Vault.Lib", "TW.Vault.Lib\TW.Vault.Lib.csproj", "{F132A7DE-30D3-4BAD-AE30-F3959B9D64E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.Lib", "TW.Vault.Lib\TW.Vault.Lib.csproj", "{F132A7DE-30D3-4BAD-AE30-F3959B9D64E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TW.Vault.Services.SMS", "TW.Vault.Services.SMS\TW.Vault.Services.SMS.csproj", "{7C6FE8FE-D196-462A-93B0-CFC4F0959077}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.Services.SMS", "TW.Vault.Services.SMS\TW.Vault.Services.SMS.csproj", "{7C6FE8FE-D196-462A-93B0-CFC4F0959077}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.MapDataFetcher", "TW.Vault.MapDataFetcher\TW.Vault.MapDataFetcher.csproj", "{D3502F70-95B2-4792-81EF-720792128B2A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +63,14 @@ Global
 		{7C6FE8FE-D196-462A-93B0-CFC4F0959077}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7C6FE8FE-D196-462A-93B0-CFC4F0959077}.Release|x64.ActiveCfg = Release|Any CPU
 		{7C6FE8FE-D196-462A-93B0-CFC4F0959077}.Release|x64.Build.0 = Release|Any CPU
+		{D3502F70-95B2-4792-81EF-720792128B2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3502F70-95B2-4792-81EF-720792128B2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3502F70-95B2-4792-81EF-720792128B2A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D3502F70-95B2-4792-81EF-720792128B2A}.Debug|x64.Build.0 = Debug|Any CPU
+		{D3502F70-95B2-4792-81EF-720792128B2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3502F70-95B2-4792-81EF-720792128B2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3502F70-95B2-4792-81EF-720792128B2A}.Release|x64.ActiveCfg = Release|Any CPU
+		{D3502F70-95B2-4792-81EF-720792128B2A}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

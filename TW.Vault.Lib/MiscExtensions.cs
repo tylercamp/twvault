@@ -36,9 +36,41 @@ namespace TW.Vault
                 var previous = workingGroup.Last();
                 var current = enumerator.Current;
                 if (predicate(previous, current))
+                {
                     workingGroup.Add(current);
+                }
                 else
+                {
                     yield return workingGroup;
+                    workingGroup = null;
+                }
+            }
+
+            if (workingGroup != null)
+                yield return workingGroup;
+        }
+
+        public static IEnumerable<IEnumerable<T>> Grouped<T>(this IEnumerable<T> enumerable, int groupSize)
+        {
+            var enumerator = enumerable.GetEnumerator();
+            List<T> workingGroup = null;
+            while (enumerator.MoveNext())
+            {
+                if (workingGroup == null)
+                {
+                    workingGroup = new List<T> { enumerator.Current };
+                    continue;
+                }
+
+                if (workingGroup.Count >= groupSize)
+                {
+                    yield return workingGroup;
+                    workingGroup = new List<T> { enumerator.Current };
+                }
+                else
+                {
+                    workingGroup.Add(enumerator.Current);
+                }
             }
 
             if (workingGroup != null)

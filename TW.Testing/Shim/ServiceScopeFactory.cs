@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog.AspNetCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,7 +17,7 @@ namespace TW.Testing.Shim
 
     class ServiceScope : IServiceScope
     {
-        public IServiceProvider ServiceProvider => new ServiceProvider();
+        public IServiceProvider ServiceProvider { get; } = new ServiceProvider();
 
         public void Dispose()
         {
@@ -26,14 +27,25 @@ namespace TW.Testing.Shim
 
     class ServiceProvider : IServiceProvider
     {
+        static SerilogLoggerFactory loggerFactory;
+        static DbContextOptions<Vault.Scaffold.VaultContext> dbOptions;
+
+        public ServiceProvider()
+        {
+            if (loggerFactory == null)
+                loggerFactory = new SerilogLoggerFactory();
+
+            if (dbOptions == null)
+                dbOptions = new DbContextOptionsBuilder<Vault.Scaffold.VaultContext>()
+                            .UseNpgsql(Vault.Configuration.ConnectionString)
+                            .UseLoggerFactory(loggerFactory)
+                            .Options;
+        }
+
         public object GetService(Type serviceType)
         {
             if (serviceType == typeof(Vault.Scaffold.VaultContext))
-                return new Vault.Scaffold.VaultContext(
-                    new DbContextOptionsBuilder<Vault.Scaffold.VaultContext>()
-                        .UseNpgsql("Server=v.tylercamp.me; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??")
-                        .Options
-                );
+                return new Vault.Scaffold.VaultContext(dbOptions);
             else
                 return null;
         }

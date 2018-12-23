@@ -30,6 +30,8 @@ namespace TW.Vault.Features
 
         protected abstract Task ExecuteAsync(CancellationToken stoppingToken);
 
+        public Task ExecutingTask => _executingTask;
+
         public virtual Task StartAsync(CancellationToken cancellationToken)
         {
             // Store the task we're executing
@@ -79,6 +81,17 @@ namespace TW.Vault.Features
                 using (var context = scope.ServiceProvider.GetRequiredService<Scaffold.VaultContext>())
                 {
                     await action(context);
+                }
+            }
+        }
+
+        public async Task<T> WithVaultContext<T>(Func<Scaffold.VaultContext, Task<T>> action)
+        {
+            using (var scope = scopeFactory.CreateScope())
+            {
+                using (var context = scope.ServiceProvider.GetRequiredService<Scaffold.VaultContext>())
+                {
+                    return await action(context);
                 }
             }
         }

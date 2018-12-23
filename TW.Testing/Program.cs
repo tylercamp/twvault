@@ -8,6 +8,7 @@ using TW.Vault.Features.Simulation;
 using TW.Vault.Model.JSON;
 using TW.Vault;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace TW.Testing
 {
@@ -15,6 +16,10 @@ namespace TW.Testing
     {
         static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(Vault.Configuration.Instance)
+                .CreateLogger();
+
             //TestBattleSimulation();
             //TestRecruitment();
             //TestUsingBattleTester();
@@ -22,9 +27,24 @@ namespace TW.Testing
             //for (int i = 0; i < 10; i++)
             //    TestHighScores();
 
-            DoSomeQuery();
+            //DoSomeQuery();
+            TestMapDataFetcher();
 
             Console.ReadLine();
+        }
+
+        static void TestMapDataFetcher()
+        {
+            var dataFetcher = new Vault.MapDataFetcher.DataFetchingService(new Shim.ServiceScopeFactory(), new Serilog.AspNetCore.SerilogLoggerFactory());
+            dataFetcher.ForceRefresh(true);
+            Console.WriteLine("Running...");
+            dataFetcher.StartAsync(new CancellationToken());
+            while (!dataFetcher.ExecutingTask.IsCompleted && (!Console.KeyAvailable || Console.ReadKey().Key != ConsoleKey.Enter))
+                dataFetcher.ExecutingTask.Wait(100);
+            Console.WriteLine("Cancelling...");
+            dataFetcher.StopAsync(new CancellationToken()).Wait();
+
+            Console.WriteLine("DONE.");
         }
 
         static void TestHighScores()
