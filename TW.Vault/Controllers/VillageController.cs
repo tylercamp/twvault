@@ -163,7 +163,7 @@ namespace TW.Vault.Controllers
 
                 if (currentVillage.Loyalty != null)
                 {
-                    var loyaltyCalculator = new LoyaltyCalculator();
+                    var loyaltyCalculator = new LoyaltyCalculator(CurrentWorldSettings.LoyaltyPerHour);
                     jsonData.PossibleLoyalty = loyaltyCalculator.PossibleLoyalty(currentVillage.Loyalty.Value, CurrentServerTime - currentVillage.LoyaltyLastUpdated.Value);
                 }
 

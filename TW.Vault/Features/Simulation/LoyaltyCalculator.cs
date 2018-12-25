@@ -7,16 +7,11 @@ namespace TW.Vault.Features.Simulation
 {
     public class LoyaltyCalculator
     {
-        private int loyaltyPerHour = 2;
-
-        public LoyaltyCalculator()
-        {
-
-        }
+        private int loyaltyPerHour;
 
         public LoyaltyCalculator(int loyaltyPerHour)
         {
-
+            this.loyaltyPerHour = loyaltyPerHour;
         }
 
         public short PossibleLoyalty(short oldLoyalty, TimeSpan timeSinceLoyalty)
