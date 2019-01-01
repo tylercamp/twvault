@@ -38,6 +38,7 @@ namespace TW.Vault
                 .AddMvcOptions(opt =>
                 {
                     opt.Filters.Add(new IPLoggingInterceptionAttribute());
+                    opt.Filters.Add(new ExceptionInterceptionAttribute());
                 });
 
             services.AddCors(options =>

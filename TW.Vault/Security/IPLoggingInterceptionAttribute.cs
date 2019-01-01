@@ -26,8 +26,9 @@ namespace TW.Vault.Security
             var requestMethod = context.HttpContext.Request.Method;
             var ip = context.HttpContext.Connection.RemoteIpAddress;
             var target = context.HttpContext.Request.Path;
+            var headers = context.HttpContext.Request.Headers;
 
-            logger.Information($"{requestMethod} request from {ip} to {controllerType.Name}::{target}");
+            logger.Information($"{requestMethod} request from {ip} to {controllerType.Name}::{target} with {headers.Count} headers ({String.Join(", ", headers.Keys)})");
             base.OnActionExecuting(context);
         }
     }
