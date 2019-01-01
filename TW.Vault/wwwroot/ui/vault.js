@@ -7,6 +7,7 @@
     //# REQUIRE ui/vault/tools.js
     //# REQUIRE ui/vault/stats.js
     //# REQUIRE ui/vault/actions.js
+    //# REQUIRE ui/vault/support.js
 
     $doc = $doc || $(document);
 
@@ -17,6 +18,7 @@
     let toolsTab = makeToolsTab();
     let statsTab = makeStatsTab();
     let actionsTab = makeActionsTab();
+    let supportTab = makeVaultSupportTab();
 
     let onClosedListeners = [];
 
@@ -27,7 +29,8 @@
         actionsTab,
         toolsTab,
         adminTab,
-        termsTab
+        termsTab,
+        supportTab
     ];
 
     $doc.find('#vault-ui-container').remove();

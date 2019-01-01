@@ -128,7 +128,7 @@ var lib = (() => {
                     time: match[2].splitMany(timeSeparators)
                 };
 
-            } else if (match = timeString.match(new RegExp(`((?:${monthStrings.join('|')}))\\.?\\s+(\\d+),\\s+(?:(\\d+)\\s+)?${timeRegex}`, 'i'))) {
+            } else if (match = timeString.match(new RegExp(`((?:${monthStrings.join('|')}))\\.?\\s+(\\d+),\\s*(?:(\\d+)\\s+)?${timeRegex}`, 'i'))) {
                 //  (Mon.) Day, Year Hour:Minute:Second:Ms
                 var monthName = match[1];
                 var day = match[2];
