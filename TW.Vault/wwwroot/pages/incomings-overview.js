@@ -57,6 +57,11 @@
         if (commandType.contains("_"))
             commandType = commandType.substr(0, commandType.indexOf('_'));
 
+        if (commandType.toLowerCase() != 'support' && commandType.toLowerCase() != 'attack') {
+            console.warn(`Incoming ${commandId} has unknown command type "${commandType}", skipping`);
+            return;
+        }
+
         commandsData.push({
             commandId: parseInt(commandId),
             sourceVillageId: parseInt(sourceVillageId),
