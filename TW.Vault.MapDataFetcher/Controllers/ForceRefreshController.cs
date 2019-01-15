@@ -13,9 +13,19 @@ namespace TW.Vault.MapDataFetcher.Controllers
     [EnableCors("AllOrigins")]
     public class ForceRefreshController : Controller
     {
-        public IActionResult Get()
+        [HttpGet]
+        public async Task<IActionResult> Get(bool? forceReApply)
         {
-            return Ok();
+            return Ok((await DataFetchingService.Instance.ForceRefresh(forceReApply ?? false)) ?? (object)"No updates yet");
+        }
+
+        [HttpGet("stats")]
+        public IActionResult GetLatestStats()
+        {
+            if (DataFetchingService.Instance.LatestStats == null)
+                return Ok("No updates yet");
+            else
+                return Ok(DataFetchingService.Instance.LatestStats);
         }
     }
 }

@@ -18,24 +18,45 @@ namespace TW.Vault.MapDataFetcher
     {
         public DataFetchingService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(scopeFactory, loggerFactory)
         {
+            Instance = this;
         }
 
         public static DataFetchingService Instance { get; private set; }
         private bool forceRefresh = false;
         private bool forceReApply = false;
+        private FetchJobStats pendingStats = null;
+        private DateTime lastCheckedAt = DateTime.MinValue;
 
-        public async Task ForceRefresh(bool forceReApply)
+        public FetchJobStats LatestStats { get; private set; } = null;
+
+        public async Task<FetchJobStats> ForceRefresh(bool forceReApply)
         {
             this.forceRefresh = true;
             this.forceReApply = forceReApply;
             while (forceRefresh)
                 await Task.Delay(100);
+            return LatestStats;
         }
 
         private static String FileCachingPath => Configuration.Instance["CachingFilePath"] ?? "cache";
         private static int DataBatchSize => int.Parse(Configuration.Instance["DataBatchSize"]);
+        private static int CheckDelaySeconds => int.Parse(Configuration.Instance["CheckDelaySeconds"] ?? "60");
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            try
+            {
+                await InternalExecuteAsync(stoppingToken);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"An exception occurred in {nameof(DataFetchingService)}, terminating");
+                Serilog.Log.CloseAndFlush();
+                Environment.Exit(1);
+            }
+        }
+
+        private async Task InternalExecuteAsync(CancellationToken stoppingToken)
         {
             var cachingPath = FileCachingPath;
             if (!Directory.Exists(cachingPath))
@@ -59,10 +80,16 @@ namespace TW.Vault.MapDataFetcher
 
                     using (var client = new HttpClient())
                     {
+                        if (jobs.Count > 0)
+                            pendingStats = new FetchJobStats();
+
                         foreach (var job in jobs)
                         {
                             logger.LogInformation("Running job for {world}/id={id}", job.WorldName, job.WorldId);
                             String villageData, playerData, conquerData, tribeData;
+
+                            var currentWorldStats = new FetchWorldJobStats();
+                            pendingStats.StatsByWorld.Add(job.WorldName, currentWorldStats);
 
                             if (job.NeedsRefresh)
                             {
@@ -121,10 +148,10 @@ namespace TW.Vault.MapDataFetcher
                             var tribeDataParts = tribeData.Split('\n').Where(s => s.Length > 0);
 
                             logger.LogInformation("Uploading data to DB...");
-                            await UploadTribeData(job.WorldId, tribeDataParts, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
-                            await UploadPlayerData(job.WorldId, playerDataParts, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
-                            await UploadVillageData(job.WorldId, villageDataParts, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
-                            await UploadConquerData(job.WorldId, conquerDataParts, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
+                            await UploadTribeData(job.WorldId, tribeDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
+                            await UploadPlayerData(job.WorldId, playerDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
+                            await UploadVillageData(job.WorldId, villageDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
+                            await UploadConquerData(job.WorldId, conquerDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
 
                             if (stoppingToken.IsCancellationRequested)
                                 break;
@@ -133,15 +160,30 @@ namespace TW.Vault.MapDataFetcher
 
                     if (jobs.Count > 0)
                         logger.LogInformation("Finished in {ms}ms", sw.ElapsedMilliseconds);
+
+                    if (pendingStats != null)
+                        pendingStats.Duration = sw.Elapsed;
                 });
+
+                if (pendingStats != null)
+                {
+                    pendingStats.TotalConquersUpdated = pendingStats.StatsByWorld.Values.Sum(s => s.NumConquersCreated);
+                    pendingStats.TotalVillagesUpdated = pendingStats.StatsByWorld.Values.Sum(s => s.NumVillagesUpdated + s.NumVillagesCreated);
+                    pendingStats.TotalTribesUpdated = pendingStats.StatsByWorld.Values.Sum(s => s.NumTribesCreated + s.NumTribesUpdated);
+                    pendingStats.TotalPlayersUpdated = pendingStats.StatsByWorld.Values.Sum(s => s.NumPlayersCreated + s.NumPlayersUpdated);
+                    LatestStats = pendingStats;
+                    pendingStats = null;
+                }
 
                 forceReApply = false;
                 forceRefresh = false;
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                lastCheckedAt = DateTime.UtcNow;
+                while (!stoppingToken.IsCancellationRequested && !forceRefresh && (DateTime.UtcNow - lastCheckedAt) < TimeSpan.FromSeconds(CheckDelaySeconds))
+                    await Task.Delay(100, stoppingToken);
             }
         }
 
-        private async Task UploadVillageData(short worldId, IEnumerable<String> villageDataParts, CancellationToken stoppingToken)
+        private async Task UploadVillageData(short worldId, IEnumerable<String> villageDataParts, FetchWorldJobStats currentStats, CancellationToken stoppingToken)
         {
             logger.LogDebug("Uploading village data...");
 
@@ -184,6 +226,8 @@ namespace TW.Vault.MapDataFetcher
 
                 await WithVaultContext(async context =>
                 {
+                    int numCreated = 0;
+
                     foreach (var entry in batch)
                     {
                         var village = scaffoldVillages[entry.VillageId];
@@ -195,13 +239,18 @@ namespace TW.Vault.MapDataFetcher
                         if (village.VillageRank != entry.Rank) village.VillageRank = entry.Rank;
 
                         if (!existingVillageIds.Contains(entry.VillageId))
+                        {
                             context.Add(village);
+                            numCreated++;
+                        }
                     }
 
                     if (stoppingToken.IsCancellationRequested)
                         return;
 
-                    await context.SaveChangesAsync(stoppingToken);
+                    int numUpdated = await context.SaveChangesAsync(stoppingToken);
+                    currentStats.NumVillagesUpdated += numUpdated - numCreated;
+                    currentStats.NumVillagesCreated += numCreated;
                 });
 
                 logger.LogDebug("Uploaded batch of {cnt} villages", batch.Count);
@@ -210,7 +259,7 @@ namespace TW.Vault.MapDataFetcher
             logger.LogDebug("Finished uploading village data");
         }
 
-        private async Task UploadPlayerData(short worldId, IEnumerable<String> playerDataParts, CancellationToken stoppingToken)
+        private async Task UploadPlayerData(short worldId, IEnumerable<String> playerDataParts, FetchWorldJobStats currentStats, CancellationToken stoppingToken)
         {
             logger.LogDebug("Uploading player data...");
 
@@ -253,6 +302,8 @@ namespace TW.Vault.MapDataFetcher
 
                 await WithVaultContext(async context =>
                 {
+                    int numCreated = 0;
+
                     foreach (var entry in batch)
                     {
                         var player = scaffoldPlayers[entry.PlayerId];
@@ -264,13 +315,18 @@ namespace TW.Vault.MapDataFetcher
                         if (player.PlayerRank != entry.Rank) player.PlayerRank = entry.Rank;
 
                         if (!existingPlayerIds.Contains(entry.PlayerId))
+                        {
                             context.Add(player);
+                            numCreated++;
+                        }
                     }
 
                     if (stoppingToken.IsCancellationRequested)
                         return;
 
-                    await context.SaveChangesAsync(stoppingToken);
+                    var numUpdated = await context.SaveChangesAsync(stoppingToken);
+                    currentStats.NumPlayersUpdated += numUpdated - numCreated;
+                    currentStats.NumPlayersCreated += numCreated;
                 });
 
                 logger.LogDebug("Uploaded batch of {cnt} players", batch.Count);
@@ -279,7 +335,7 @@ namespace TW.Vault.MapDataFetcher
             logger.LogDebug("Finished uploading player data");
         }
 
-        private async Task UploadConquerData(short worldId, IEnumerable<String> conquerDataParts, CancellationToken stoppingToken)
+        private async Task UploadConquerData(short worldId, IEnumerable<String> conquerDataParts, FetchWorldJobStats currentStats, CancellationToken stoppingToken)
         {
             logger.LogDebug("Uploading conquer data...");
 
@@ -336,10 +392,12 @@ namespace TW.Vault.MapDataFetcher
                 await context.SaveChangesAsync(stoppingToken);
             });
 
+            currentStats.NumConquersCreated = numAdded;
+
             logger.LogDebug("Finished updating with {cnt} conquer items ({numAdded} added)", conquerData.Count, numAdded);
         }
 
-        private async Task UploadTribeData(short worldId, IEnumerable<String> tribeDataParts, CancellationToken stoppingToken)
+        private async Task UploadTribeData(short worldId, IEnumerable<String> tribeDataParts, FetchWorldJobStats currentStats, CancellationToken stoppingToken)
         {
             logger.LogDebug("Uploading tribe data...");
 
@@ -381,6 +439,8 @@ namespace TW.Vault.MapDataFetcher
 
                 await WithVaultContext(async context =>
                 {
+                    int numCreated = 0;
+
                     foreach (var entry in batch)
                     {
                         var tribe = scaffoldTribes[entry.TribeId];
@@ -394,13 +454,18 @@ namespace TW.Vault.MapDataFetcher
                         if (tribe.TribeRank != entry.TribeRank) tribe.TribeRank = entry.TribeRank;
 
                         if (!existingTribeIds.Contains(entry.TribeId))
+                        {
                             context.Add(tribe);
+                            numCreated++;
+                        }
                     }
 
                     if (stoppingToken.IsCancellationRequested)
                         return;
 
-                    await context.SaveChangesAsync(stoppingToken);
+                    var numUpdated = await context.SaveChangesAsync(stoppingToken);
+                    currentStats.NumTribesUpdated += numUpdated - numCreated;
+                    currentStats.NumTribesCreated += numCreated;
                 });
 
                 logger.LogDebug("Uploaded batch of {cnt} tribes", batch.Count);

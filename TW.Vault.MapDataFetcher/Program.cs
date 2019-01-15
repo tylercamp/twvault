@@ -19,8 +19,6 @@ namespace TW.Vault.MapDataFetcher
                 .ApplyVaultConfiguration()
                 .Build();
 
-            Features.Notifications.SMS.Init();
-
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(config)
                 .CreateLogger();
