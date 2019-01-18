@@ -208,25 +208,23 @@ namespace TW.Vault.MapDataFetcher
             foreach (var batch in batchedVillageData)
             {
                 if (stoppingToken.IsCancellationRequested)
-                    break;
+                    return;
 
-                var villageIds = batch.Select(v => v.VillageId).ToList();
-
-                var existingVillages = await WithVaultContext(context => context.Village.FromWorld(worldId).Where(v => villageIds.Contains(v.VillageId)).ToListAsync(stoppingToken));
-                if (stoppingToken.IsCancellationRequested)
-                    break;
-
-                var existingVillageIds = existingVillages.Select(v => v.VillageId).ToList();
-                var scaffoldVillages = existingVillages
-                    .Concat(villageIds
-                        .Except(existingVillageIds)
-                        .Select(id => new Scaffold.Village { VillageId = id })
-                    )
-                    .ToDictionary(v => v.VillageId, v => v);
-
-                await WithVaultContext(async context =>
+                await WithVaultContext(async (context) =>
                 {
-                    int numCreated = 0;
+                    var villageIds = batch.Select(v => v.VillageId).ToList();
+
+                    var existingVillages = await context.Village.FromWorld(worldId).Where(v => villageIds.Contains(v.VillageId)).ToListAsync(stoppingToken);
+                    if (stoppingToken.IsCancellationRequested)
+                        return;
+
+                    var existingVillageIds = existingVillages.Select(v => v.VillageId).ToList();
+                    var scaffoldVillages = existingVillages
+                        .Concat(villageIds
+                            .Except(existingVillageIds)
+                            .Select(id => new Scaffold.Village { VillageId = id })
+                        )
+                        .ToDictionary(v => v.VillageId, v => v);
 
                     foreach (var entry in batch)
                     {
@@ -239,18 +237,17 @@ namespace TW.Vault.MapDataFetcher
                         if (village.VillageRank != entry.Rank) village.VillageRank = entry.Rank;
 
                         if (!existingVillageIds.Contains(entry.VillageId))
-                        {
                             context.Add(village);
-                            numCreated++;
-                        }
                     }
 
                     if (stoppingToken.IsCancellationRequested)
                         return;
 
-                    int numUpdated = await context.SaveChangesAsync(stoppingToken);
-                    currentStats.NumVillagesUpdated += numUpdated - numCreated;
-                    currentStats.NumVillagesCreated += numCreated;
+                    context.ChangeTracker.DetectChanges();
+                    currentStats.NumVillagesCreated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).Count();
+                    currentStats.NumVillagesUpdated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Modified).Count();
+
+                    await context.SaveChangesAsync(stoppingToken);
                 });
 
                 logger.LogDebug("Uploaded batch of {cnt} villages", batch.Count);
@@ -286,23 +283,21 @@ namespace TW.Vault.MapDataFetcher
                 if (stoppingToken.IsCancellationRequested)
                     break;
 
-                var playerIds = batch.Select(p => p.PlayerId).ToList();
-
-                var existingPlayers = await WithVaultContext(context => context.Player.FromWorld(worldId).Where(p => playerIds.Contains(p.PlayerId)).ToListAsync(stoppingToken));
-                if (stoppingToken.IsCancellationRequested)
-                    break;
-
-                var existingPlayerIds = existingPlayers.Select(p => p.PlayerId).ToList();
-                var scaffoldPlayers = existingPlayers
-                    .Concat(playerIds
-                        .Except(existingPlayerIds)
-                        .Select(id => new Scaffold.Player { PlayerId = id })
-                    )
-                    .ToDictionary(p => p.PlayerId, p => p);
-
                 await WithVaultContext(async context =>
                 {
-                    int numCreated = 0;
+                    var playerIds = batch.Select(p => p.PlayerId).ToList();
+
+                    var existingPlayers = await context.Player.FromWorld(worldId).Where(p => playerIds.Contains(p.PlayerId)).ToListAsync(stoppingToken);
+                    if (stoppingToken.IsCancellationRequested)
+                        return;
+
+                    var existingPlayerIds = existingPlayers.Select(p => p.PlayerId).ToList();
+                    var scaffoldPlayers = existingPlayers
+                        .Concat(playerIds
+                            .Except(existingPlayerIds)
+                            .Select(id => new Scaffold.Player { PlayerId = id })
+                        )
+                        .ToDictionary(p => p.PlayerId, p => p);
 
                     foreach (var entry in batch)
                     {
@@ -315,18 +310,17 @@ namespace TW.Vault.MapDataFetcher
                         if (player.PlayerRank != entry.Rank) player.PlayerRank = entry.Rank;
 
                         if (!existingPlayerIds.Contains(entry.PlayerId))
-                        {
                             context.Add(player);
-                            numCreated++;
-                        }
                     }
 
                     if (stoppingToken.IsCancellationRequested)
                         return;
 
-                    var numUpdated = await context.SaveChangesAsync(stoppingToken);
-                    currentStats.NumPlayersUpdated += numUpdated - numCreated;
-                    currentStats.NumPlayersCreated += numCreated;
+                    context.ChangeTracker.DetectChanges();
+                    currentStats.NumPlayersCreated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).Count();
+                    currentStats.NumPlayersUpdated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Modified).Count();
+
+                    await context.SaveChangesAsync(stoppingToken);
                 });
 
                 logger.LogDebug("Uploaded batch of {cnt} players", batch.Count);
@@ -423,23 +417,21 @@ namespace TW.Vault.MapDataFetcher
                 if (stoppingToken.IsCancellationRequested)
                     break;
 
-                var tribeIds = batch.Select(e => e.TribeId).ToList();
-
-                var existingTribes = await WithVaultContext(context => context.Ally.FromWorld(worldId).Where(t => tribeIds.Contains(t.TribeId)).ToListAsync(stoppingToken));
-                if (stoppingToken.IsCancellationRequested)
-                    break;
-
-                var existingTribeIds = existingTribes.Select(t => t.TribeId).ToList();
-                var scaffoldTribes = existingTribes
-                    .Concat(tribeIds
-                        .Except(existingTribeIds)
-                        .Select(tid => new Scaffold.Ally { TribeId = tid })
-                    )
-                    .ToDictionary(t => t.TribeId, t => t);
-
                 await WithVaultContext(async context =>
                 {
-                    int numCreated = 0;
+                    var tribeIds = batch.Select(e => e.TribeId).ToList();
+
+                    var existingTribes = await context.Ally.FromWorld(worldId).Where(t => tribeIds.Contains(t.TribeId)).ToListAsync(stoppingToken);
+                    if (stoppingToken.IsCancellationRequested)
+                        return;
+
+                    var existingTribeIds = existingTribes.Select(t => t.TribeId).ToList();
+                    var scaffoldTribes = existingTribes
+                        .Concat(tribeIds
+                            .Except(existingTribeIds)
+                            .Select(tid => new Scaffold.Ally { TribeId = tid })
+                        )
+                        .ToDictionary(t => t.TribeId, t => t);
 
                     foreach (var entry in batch)
                     {
@@ -454,18 +446,17 @@ namespace TW.Vault.MapDataFetcher
                         if (tribe.TribeRank != entry.TribeRank) tribe.TribeRank = entry.TribeRank;
 
                         if (!existingTribeIds.Contains(entry.TribeId))
-                        {
                             context.Add(tribe);
-                            numCreated++;
-                        }
                     }
 
                     if (stoppingToken.IsCancellationRequested)
                         return;
 
-                    var numUpdated = await context.SaveChangesAsync(stoppingToken);
-                    currentStats.NumTribesUpdated += numUpdated - numCreated;
-                    currentStats.NumTribesCreated += numCreated;
+                    context.ChangeTracker.DetectChanges();
+                    currentStats.NumPlayersCreated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).Count();
+                    currentStats.NumPlayersUpdated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Modified).Count();
+
+                    await context.SaveChangesAsync(stoppingToken);
                 });
 
                 logger.LogDebug("Uploaded batch of {cnt} tribes", batch.Count);
