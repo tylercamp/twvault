@@ -34,12 +34,12 @@ namespace TW.Vault.Features
                     select player.PlayerName
                 ).ToListAsync());
 
-            var playerIds = await context.Player
+            var playerIds = await context.Player.FromWorld(worldId)
                 .Where(p => players.Contains(p.PlayerName))
                 .Select(p => p.PlayerId)
                 .ToListAsync();
 
-            var villageCoords = await context.Village
+            var villageCoords = await context.Village.FromWorld(worldId)
                 .Where(v => playerIds.Contains(v.PlayerId.Value))
                 .Select(v => new { X = v.X.Value, Y = v.Y.Value, v.VillageId })
                 .OrderBy(v => v.VillageId)

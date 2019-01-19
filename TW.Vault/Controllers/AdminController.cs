@@ -636,7 +636,7 @@ namespace TW.Vault.Controllers
                     select new { tribe.Tag, tribe.TribeId }
                 ).ToListAsync();
 
-            var tribeNamesById = tribeNames.ToDictionary(tn => tn.TribeId, tn => tn.Tag);
+            var tribeNamesById = tribeNames.ToDictionary(tn => tn.TribeId, tn => tn.Tag.UrlDecode());
 
             var jsonData = new List<JSON.PlayerSummary>();
             foreach (var kvp in villagesByPlayer.OrderBy(kvp => kvp.Key.TribeId).ThenBy(kvp => kvp.Key.PlayerName))
