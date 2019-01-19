@@ -1,6 +1,24 @@
 ﻿function makeVaultSupportTab() {
+
+    let userSupportTab = makeVaultSupportInfoTab();
+    let translationTab = makeTranslationsTab();
+
+    let tabs = [
+        userSupportTab,
+        translationTab
+    ];
+
     return {
         label: 'Support',
+        containerId: 'vault-support-container',
+
+        getContent: uilib.mkTabbedContainer(userSupportTab, tabs)
+    };
+}
+
+function makeVaultSupportInfoTab() {
+    return {
+        label: 'Help',
         containerId: 'vault-user-support-container',
 
         getContent: `
@@ -45,5 +63,62 @@
             </p>
             <hr>
         `
-    }
+    };
+}
+
+function makeTranslationsTab() {
+
+    let languages = null;
+    let translations = null;
+
+    let translationEntries = {};
+
+    return {
+        label: 'Translations',
+        containerId: 'vault-translations-container',
+
+        init: function($container) {
+
+            let languageRequest = $.get(lib.makeVaultUrl('api/translation/languages'))
+                .done((data) => languages = data);
+
+            let translationsRequest = $.get(lib.makeVaultUrl('api/translation'))
+                .done((data) => translations = lib.arrayToObject(data, t => t.languageId));
+
+            lib.whenAll$(() => {
+
+                let $currentLanguage = $container.find('#vault-current-language');
+                let $currentTranslation = $container.find('#vault-current-translation');
+
+                languages.forEach(l => {
+                    $currentLanguage.append(`<option selected value="${l.id}">${l.name}</option>`);
+                });
+
+                let lang = languages[0].id;
+
+                translations[lang].forEach(t => {
+                    $currentTranslation.append(`<option selected value="${t.id}">${t.name} by ${t.author}`);
+                });
+
+                // TODO:
+                // - Create translation button
+                // - etc ... tired
+
+            }, [languageRequest, translationsRequest]);
+        },
+
+        getContent: `
+            <hr>
+            <h3>Translations</h3>
+
+            <label for="vault-current-language">Language: </label>
+            <select id="vault-current-language"></select>
+            <br>
+            <label for="vault-current-translation">Translation: </label>
+            <select id="vault-current-translation"></select>
+            <br>
+            <br
+            
+        `
+    };
 }

@@ -342,6 +342,17 @@ var lib = (() => {
             return isUnloading;
         },
 
+        whenAll$: function (callback, ...requests) {
+            let numDone = 0;
+            requests.forEach((r) => {
+                r.done(() => {
+                    if (++numDone == requests.length) {
+                        callback();
+                    }
+                });
+            });
+        },
+
         //  Iterates over the properties of an object similar to iterating over an array
         objForEach: function objForEach(obj, callback) {
             for (var prop in obj) {

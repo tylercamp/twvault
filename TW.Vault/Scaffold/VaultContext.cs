@@ -26,7 +26,6 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<CurrentPlayer> CurrentPlayer { get; set; }
         public virtual DbSet<CurrentVillage> CurrentVillage { get; set; }
         public virtual DbSet<CurrentVillageSupport> CurrentVillageSupport { get; set; }
-        public virtual DbSet<CustomInfo> CustomInfo { get; set; }
         public virtual DbSet<EnemyTribe> EnemyTribe { get; set; }
         public virtual DbSet<FailedAuthorizationRecord> FailedAuthorizationRecord { get; set; }
         public virtual DbSet<IgnoredReport> IgnoredReport { get; set; }
@@ -551,29 +550,6 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey(d => d.TxId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_tx_id");
-            });
-
-            modelBuilder.Entity<CustomInfo>(entity =>
-            {
-                entity.ToTable("custom_info", "security");
-
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .HasColumnName("id")
-                    .HasDefaultValueSql("nextval('security.custom_info_id_seq'::regclass)");
-
-                entity.Property(e => e.Uid)
-                    .IsRequired()
-                    .HasColumnName("uid");
-
-                entity.Property(e => e.CreatedAt)
-                    .IsRequired()
-                    .HasColumnName("created_at");
-
-                entity.Property(e => e.Data)
-                    .IsRequired()
-                    .HasColumnName("data");
             });
 
             modelBuilder.Entity<EnemyTribe>(entity =>

@@ -19,6 +19,14 @@ namespace TW.Vault.Controllers
             this.context = vaultContext;
         }
 
+        [HttpGet]
+        public IActionResult GetAllTranslations() => Ok(
+            context.TranslationRegistry.Select(r => new
+            {
+                r.Author, r.AuthorPlayerId, r.Id, r.Name, r.LanguageId
+            })
+        );
+
         [HttpGet("{translationId}")]
         public IActionResult GetTranslationRegistry(int translationId)
         {
