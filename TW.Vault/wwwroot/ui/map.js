@@ -15,6 +15,7 @@
     var currentVillageId = null;
     let $popup = $doc.find('#map_popup');
 
+    // MAP_USING_VAULT
     $doc.find('#continent_id').parent().append('<span> - Using Vault</span>');
     let $openVaultLink = $('<button style="margin-left:1em;vertical-align:middle">Open Vault</button>');
     $doc.find('#continent_id').parent().append($openVaultLink);
@@ -94,7 +95,9 @@
 
             tribeNames.sort();
 
+            // MAP_HIGHLIGHT_ANY
             $highlightTribeSelect.append('<option value="___ANY___" selected>Any</option>');
+            // MAP_HIGHLIGHT_NO
             $highlightTribeSelect.append('<option value="___NONE___">No</option>');
 
             tribeNames.forEach((n) => {
@@ -227,8 +230,10 @@
                         lockedDataReasons = reasons;
                     } catch (_) { }
 
+                    // MAP_UPLOAD_DATA_REQUIRED
                     let alertMessage = "You haven't uploaded data in a while, you can't use the map script until you do. Click the 'Show' link at the top of the page to start uploading. (Then refresh the page)"
                     if (reasons) {
+                        // UPLOAD_DATA_REQUIRED_REASONS
                         alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
                     }
 
@@ -236,6 +241,7 @@
                     canUse = false;
                 } else if (xhr.status != 401) {
                     if (!lib.isUnloading()) {
+                        // ERROR_OCCURRED
                         alert("An error occurred...");
                     }
                 }
@@ -493,7 +499,15 @@
                     numNukes++;
             }
         });
-        
+
+        // MAP_HOVER_CMD_FAKES | MAP_HOVER_CMD_NUKES | MAP_HOVER_CMD_NOBLES | MAP_HOVER_CMD_DVS | MAP_HOVER_CMD_NUM_PLAYERS
+        // MAP_HOVER_ARMY_AT_HOME | MAP_HOVER_ARMY_STATIONED | MAP_HOVER_ARMY_TRAVELING | MAP_HOVER_ARMY_OWNED
+        // MAP_HOVER_ARMY_POSSIBLE_RECRUIT
+        // MAP_HOVER_NUKE_ESTIMATE
+        // MAP_HOVER_SEEN_AT
+        // MAP_HOVER_LATEST_LEVELS | MAP_HOVER_POSSIBLE_LEVELS
+        // MAP_HOVER_LOYALTY | MAP_HOVER_LATEST_LOYALTY | MAP_HOVER_POSSIBLE_LOYALTY
+        // VAULT
         $villageInfoContainer.html(`
                     ${ !settings.showCommands ? '' : `
                         <table class='vis' style="width:100%">
@@ -672,6 +686,7 @@
             fuckYouMessage += lockedDataReasons[i];
         }
 
+        // MAP_UPLOAD_DATA_REQUIRED
         $villageInfoContainer.html(`
             <h3 style="padding:1em; text-align:center;margin:0">
                 Upload your damn ${fuckYouMessage}!!
@@ -707,6 +722,20 @@
 
     function createSettingsUI() {
 
+        // MAP_SETTINGS_HOVER | MAP_SETTINGS_HOVER_COMMANDS | MAP_SETTINGS_HOVER_RECRUITS
+        // MAP_SETTINGS_HOVER_BUILDINGS | MAP_SETTINGS_HOVER_LOYALTY
+        //
+        // MAP_SETTINGS_OVERLAY | MAP_SETTINGS_OVERLAY_SHOW | MAP_SETTINGS_OVERLAY_IGNORE_INTEL_1
+        // MAP_SETTINGS_OVERLAY_IGNORE_INTEL_2 | MAP_SETTINGS_OVERLAY_HIGHLIGHTS
+        // MAP_SETTINGS_OVERLAY_HIGHLIGHTS_NONE | MAP_SETTINGS_OVERLAY_HIGHLIGHTS_HAS_GROUP
+        // MAP_SETTINGS_OVERLAY_HIGHLIGHTS_HAS_INTEL
+        // MAP_SETTINGS_OVERLAY_SHOW_NUKES | MAP_SETTINGS_OVERLAY_SHOW_NOBLES | MAP_SETTINGS_OVERLAY_SHOW_STACKS
+        // MAP_SETTINGS_OVERLAY_SHOW_WALL_1 | MAP_SETTINGS_OVERLAY_SHOW_WALL_2
+        // MAP_SETTINGS_OVERLAY_RETURNING_1 | MAP_SETTINGS_OVERLAY_RETURNING_2
+        // MAP_SETTINGS_OVERLAY_WATCHTOWER
+        // MAP_SETTINGS_OVERLAY_DV
+        // MAP_SETTINGS_OVERLAY_STACK_1 | MAP_SETTINGS_OVERLAY_STACK_2
+        // MAP_SETTINGS_OVERLAY_TRIBE_1 | MAP_SETTINGS_OVERLAY_TRIBE_2
         let $container = $(`
             <div>
                 <h4>Hover Settings</h4>

@@ -1,15 +1,20 @@
 ﻿
 function makeUploadsTab() {
     let uploadsTab = {
+        // TAB_UPLOAD
         label: 'Upload',
         containerId: 'vault-uploads-container',
 
         init: function ($container) {
 
             var uploadDetailsMessages = {
+                // UPLOAD_DESCRIPTION_REPORTS
                 'vault-upload-reports': `Uploads all data from all new battle reports.`,
+                // UPLOAD_DESCRIPTION_INCOMINGS
                 'vault-upload-incomings': `Uploads all available data from your Incomings page. This includes attacks and support.`,
+                // UPLOAD_DESCRIPTION_COMMANDS
                 'vault-upload-commands': `Uploads all data for all of your current commands.`,
+                // UPLOAD_DESCRIPTION_TROOPS
                 'vault-upload-troops': `Uploads all data for all troops.`
             };
 
@@ -24,6 +29,7 @@ function makeUploadsTab() {
                 lib.deleteLocalStorage('reports-history');
                 lib.deleteLocalStorage('commands-history');
 
+                // UPLOAD_CACHE_CLEARED
                 alert('Local vault cache cleared.');
             });
 
@@ -53,6 +59,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    // REPORTS
                                     alertFilter('reports');
                                 }
                             }
@@ -66,6 +73,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    // INCOMINGS
                                     alertFilter('incomings');
                                 }
                             }
@@ -79,6 +87,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    // COMMANDS
                                     alertFilter('commands');
                                 }
                             }
@@ -92,6 +101,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    // TROOPS
                                     alertFilter('troops');
                                 }
                             }
@@ -99,9 +109,11 @@ function makeUploadsTab() {
                         break;
 
                     case 'vault-upload-all':
+                        // WAITING
                         $('.status-container').html('<em>Waiting...</em>');
 
                         let resetStatusContainers = () => {
+                            // WAITING
                             $('.status-container').filter((i, el) => $(el).text().toLowerCase().contains("waiting")).empty();
                         };
 
@@ -113,8 +125,10 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    // REPORTS
                                     alertFilter('reports');
                                 } else if (!lib.isUnloading()) {
+                                    // UNEXPECTED_ERROR
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -128,8 +142,10 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    // INCOMINGS
                                     alertFilter('incomings');
                                 } else if (!lib.isUnloading()) {
+                                    // UNEXPECTED_ERROR
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -143,8 +159,10 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                    // TROOPS
                                     alertFilter('troops');
                                 } else if (!lib.isUnloading()) {
+                                    // UNEXPECTED_ERROR
                                     alert('An unexpected error occurred: ' + didFail);
                                 }
                                 resetButtons();
@@ -156,8 +174,10 @@ function makeUploadsTab() {
                                     if (didFail == lib.errorCodes.CAPTCHA) {
                                         alertCaptcha();
                                     } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
+                                        // COMMANDS
                                         alertFilter('commands');
                                     } else if (!lib.isUnloading()) {
+                                        // UNEXPECTED_ERROR
                                         alert('An unexpected error occurred: ' + didFail);
                                     }
                                 }
@@ -188,6 +208,7 @@ function makeUploadsTab() {
                                 onDone(didFail);
                             });
                         } catch (e) {
+                            // ERROR_OCCURRED
                             $statusContainer.text('An error occurred.');
                             console.error(e);
 
@@ -210,6 +231,7 @@ function makeUploadsTab() {
                                 onDone(didFail);
                             });
                         } catch (e) {
+                            // ERROR_OCCURRED
                             $statusContainer.text('An error occurred.');
                             console.error(e);
 
@@ -232,6 +254,7 @@ function makeUploadsTab() {
                                 onDone(didFail);
                             });
                         } catch (e) {
+                            // ERROR_OCCURRED
                             $statusContainer.text('An error occurred.');
                             console.error(e);
 
@@ -254,6 +277,7 @@ function makeUploadsTab() {
                                 onDone(didFail);
                             });
                         } catch (e) {
+                            // ERROR_OCCURRED
                             $statusContainer.text('An error occurred.');
                             console.error(e);
 
@@ -264,9 +288,11 @@ function makeUploadsTab() {
             });
         },
 
+        // UPLOAD_DESCRIPTION | PROGRESS | DETAILS | CANCEL | REPORTS | INCOMINGS | TROOPS
+        // COMMANDS | UPLOAD_ALL | UPLOAD_CLEAR_CACHE
         getContent: `
             <p>
-                <strong>Click <em>Upload All</em> below. If needed, upload different things individually using the other Upload buttons.</strong>
+                <strong>Click "Upload All" below. If needed, upload different things individually using the other Upload buttons.</strong>
             </p>
 
             <table style="width:100%" class="vis lit">

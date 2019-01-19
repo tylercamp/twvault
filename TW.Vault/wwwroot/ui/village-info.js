@@ -2,6 +2,7 @@
     $doc = $doc || $(document);
 
     $doc.find('#vault-commands').remove();
+    // OPEN_VAULT | ARRIVAL_TIME | ARRIVES_IN
     let $container = $(`
         <div id="vault-commands" style="padding-top:10px;clear:both">
             <div id="vault-commands-backtime-bbcode" style="padding-bottom:10px;display:none">
@@ -46,6 +47,7 @@
                     bodyHandler: handleIconHover
                 });
                 UI.ToolTip('.vault-backtime', {
+                    // BACKTIME_BB_CODE_HOVER
                     bodyHandler: () => '<b>Make BB-code for back-timing</b>'
                 });
             })
@@ -59,14 +61,17 @@
                     try {
                         reasons = JSON.parse(xhr.responseText);
                     } catch (_) { }
+                    // BACKTIME_UPLOAD_DATA_REQUIRED
                     let alertMessage = "You haven't uploaded data in a while, you can't use the backtiming script until you do. Upload your data then refresh the page and run this script again.";
                     if (reasons) {
+                        // UPLOAD_DATA_REQUIRED_REASONS
                         alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
                     }
                     alert(alertMessage);
                     displayMainVaultUI().onClosed(loadCommandData);
                     showedNeedsUploadMessage = true;
                 } else {
+                    // ERROR_OCCURRED
                     alert('An error occurred...');
                 }
             });
@@ -77,6 +82,7 @@
         $container.find('table tr:not(:first-of-type)').remove();
 
         if (!villageCommandData || !villageCommandData.commandsFromVillage || !villageCommandData.commandsFromVillage.length) {
+            // NO_COMMANDS_AVAILABLE
             $container.find('table').append(`
                 <tr><td colspan="3" style="text-align:center">No commands available</td></tr>
             `.trim());
@@ -133,6 +139,7 @@
                     })
                     .error(() => {
                         enableButton();
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                     });
             });
@@ -208,6 +215,7 @@
         let army = commandsById[$el.data('command-id')].army;
 
         if (!army) {
+            // NO_DATA_AVAILABLE
             return '<b>No data is available</b>';
         }
 
@@ -230,7 +238,7 @@
         if (lib.twstats.paladinEnabled)
             troopNames.push('knight');
 
-        //  TODO - Make this work with archers
+        // TROOPS
         return `
             <b style="white-space:nowrap;">Troops</b>
             <br>
@@ -248,6 +256,7 @@
 
     function makePlanBbCode(instructions) {
         const tableBuilder = new BBTableBuilder();
+        // SOURCE_VILLAGE | LAUNCH_TIME | LANDING_TIME | TROOP_REQUIRED
         tableBuilder.setColumnNames("Source Village", "Launch Time", "Landing Time", "Troop Req.");
 
         instructions.forEach((i) => {

@@ -29,6 +29,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     reportInfo.luck = parseInt($doc.find('#attack_luck').text().match(/(\-?\d.+)\%/)[1]);
     reportInfo.morale = parseInt($doc.find('.report_ReportAttack h4:nth-of-type(2)').text().match(/(\d+)\%/)[1]);
 
+    // REPORT_LOYALTY_FROM_TO
     var loyalty = $doc.find('#attack_results tr').filter((i, el) => $(el).text().indexOf('Loyalty') >= 0).text().match(/from\s+\d+\s+to\s+(\-?\d+)/);
     if (loyalty)
         reportInfo.loyalty = parseInt(loyalty[1]);
@@ -174,6 +175,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
                     return;
 
                 if (showNotice_)
+                    // ERROR_OCCURRED
                     alert('An error occurred...');
                 if (onError_)
                     onError_();

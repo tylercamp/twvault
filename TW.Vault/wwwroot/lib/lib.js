@@ -49,9 +49,13 @@ var lib = (() => {
         },
 
         messages: {
+            // TRIGGER_CAPTCHA
             TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again. Any uploads will continue where they left off.',
+            // IS_IN_GROUP
             IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\".",
+            // FILTER_APPLIED
             FILTER_APPLIED: (type) => `You have filters set for your ${type}, please remove them before uploading.`,
+            // ERROR_OCCURRED
             GENERIC: 'An error occurred...'
         },
 
@@ -97,6 +101,7 @@ var lib = (() => {
 
             $doc_ = $doc_ || $(document);
 
+            // ORDERED_MONTHS
             var monthStrings = [
                 'jan', 'feb', 'mar', 'apr', 'may', 'jun',
                 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
@@ -141,6 +146,7 @@ var lib = (() => {
                 };
 
             } else if (match = timeString.match(new RegExp(`today at\\s+${timeRegex}`))) {
+                // TIME_TODAY_AT
                 // today at (Hours:Minute:Second:Ms)
                 result = {
                     date: serverDate,
@@ -148,6 +154,7 @@ var lib = (() => {
                 }
 
             } else if (match = timeString.match(new RegExp(`tomorrow at\\s+${timeRegex}`))) {
+                // TIME_TOMORROW_AT
                 // tomorrow at (Hours:Minute:Second:Ms)
                 result = {
                     date: [
@@ -159,6 +166,7 @@ var lib = (() => {
                 };
 
             } else if (match = timeString.match(new RegExp(`${timeRegex} on ${dateRegex}`))) {
+                // TIME_ON
                 // (Hours:Minutes:Seconds:Ms) on (Day/Month/Year)
                 result = {
                     date: match[2].splitMany(dateSeparators),
@@ -167,6 +175,7 @@ var lib = (() => {
 
                 //  TODO - Update this one
             } else if (match = timeString.match(/on (\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)\s+at\s+(\d+:\d+:\d+:\d+)/)) {
+                // TIME_ON_AT
                 // on (Day/Month/Year) at (Hours:Minute:Second:Ms)
                 result = {
                     date: match[1].splitMany(dateSeparators),
@@ -214,6 +223,7 @@ var lib = (() => {
         formatDateTime: function (dateTime) {
             let minLength = (str) => '0'.repeat(2 - str.toString().length) + str.toString();
 
+            // TIME_DATE_FORMAT
             return `${minLength(dateTime.getUTCHours())}:${minLength(dateTime.getUTCMinutes())}:${minLength(dateTime.getUTCSeconds())} on ${minLength(dateTime.getUTCDate())}/${minLength(dateTime.getUTCMonth()+1)}/${dateTime.getUTCFullYear()}`;
         },
 
@@ -233,16 +243,26 @@ var lib = (() => {
             let numDays = duration;
 
             let nonZeroParts = [];
+            // TIME_DAY_SHORT
             if (numDays) nonZeroParts.push([numDays, 'day']);
+            // TIME_HOUR_SHORT
             if (numHours) nonZeroParts.push([numHours, 'hr']);
+            // TIME_MINUTE_SHORT
             if (numMinutes) nonZeroParts.push([numMinutes, 'min']);
+            // TIME_SECOND_SHORT
             if (numSeconds) nonZeroParts.push([numSeconds, 'sec']);
 
             if (nonZeroParts.length > 2)
                 nonZeroParts = nonZeroParts.slice(0, 2);
 
+            // TIME_NOW
             if (nonZeroParts.length == 0)
                 return 'now';
+
+            // TIME_DAY_PLURAL_SHORT
+            // TIME_HOUR_PLURAL_SHORT
+            // TIME_MINUTE_PLURAL_SHORT
+            // TIME_SECOND_PLURAL_SHORT
 
             return nonZeroParts.map((part) => {
                 let count = part[0];

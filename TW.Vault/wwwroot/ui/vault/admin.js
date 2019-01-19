@@ -15,6 +15,7 @@ function makeAdminTab() {
     ];
 
     let adminTab = {
+        // TAB_ADMIN
         label: 'Admin',
         containerId: 'vault-admin-container',
         btnCss: 'display:none',
@@ -48,6 +49,7 @@ function makeAdminTab() {
 function makeEnemyTribesTab() {
 
     function insertEnemyTribe($target, tribe) {
+        // DELETE
         let $row = $(`
             <tr>
                 <td style="text-align:right;width:50%;padding-right:0.5em">${tribe.tag}</td>
@@ -56,6 +58,7 @@ function makeEnemyTribesTab() {
         `.trim());
 
         $row.find('.delete-enemy').click(() => {
+            // ADMIN_REMOVE_ENEMY
             if (!confirm(tribe.tag + ' will no longer be considered an enemy.'))
                 return;
 
@@ -65,6 +68,7 @@ function makeEnemyTribesTab() {
                 })
                 .error(() => {
                     if (!lib.isUnloading())
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                 });
         });
@@ -73,6 +77,7 @@ function makeEnemyTribesTab() {
     }
 
     return {
+        // TAB_ENEMY_TRIBES
         label: 'Enemy Tribes',
         containerId: 'vault-admin-enemy-tribes',
 
@@ -90,11 +95,13 @@ function makeEnemyTribesTab() {
                 })
                 .error(() => {
                     if (!lib.isUnloading()) {
+                        // ERROR_LOADING_ENEMY_TRIBES
                         alert('An error occurred while listing enemy tribes...');
                     }
                 });
 
             $container.find('#new-enemy-button').click(() => {
+                // ADMIN_NAME_OF_TRIBE
                 let nameOrTag = prompt('Enter the name or tag of the tribe.');
                 if (!nameOrTag)
                     return;
@@ -106,12 +113,15 @@ function makeEnemyTribesTab() {
                             switch (xhr.status) {
                                 case 401: break;
                                 case 404:
+                                    // ADMIN_TRIBE_NOT_FOUND
                                     alert('No tribe exists with that tag or name.');
                                     break;
                                 case 409:
+                                    // ADMIN_TRIBE_ALREADY_EXISTS
                                     alert('That tribe is already registered as an enemy.')
                                     break;
                                 default:
+                                    // ERROR_OCCURRED
                                     alert('An error occurred...');
                                     break;
                             }
@@ -120,6 +130,8 @@ function makeEnemyTribesTab() {
             });
         },
 
+        // ADMIN_ENEMY_TRIBES | ADMIN_ENEMY_TRIBES_DESCRIPTION
+        // ADMIN_ADD_ENEMY_TRIBE
         getContent: `
             <h4>Enemy Tribes</h4>
             <p>
@@ -136,9 +148,13 @@ function makeEnemyTribesTab() {
 
 function makeAdminUsersTab() {
     return {
+        // TAB_MANAGE_USERS
         label: 'Manage Users',
         containerId: 'vault-admin-users-container',
 
+        // KEYS | ADMIN_NEW_KEY | ADMIN_NEW_VAULT_SCRIPT
+        // USER_NAME
+        // CURRENT_TRIBE
         getContent: `
             <h4>Keys</h4>
             <input type="button" id="new-key-button" value="Make new key">
@@ -173,6 +189,7 @@ function makeAdminStatsTab() {
     }
 
     return {
+        // TAG_TRIBE_STATS
         label: 'Tribe Stats',
         containerId: 'vault-admin-stats-container',
 
@@ -183,6 +200,7 @@ function makeAdminStatsTab() {
                 let $downloadButton = $container.find('#download-army-stats');
                 let originalText = $downloadButton.val();
 
+                // WORKING
                 let loading = () => { $downloadButton.val('Working...'); $downloadButton.prop('disabled', true); };
                 let loadingDone = () => { $downloadButton.val(originalText); $downloadButton.prop('disabled', false); };
 
@@ -192,6 +210,7 @@ function makeAdminStatsTab() {
                     .error(() => {
                         if (lib.isUnloading())
                             return;
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                         loadingDone();
                     })
@@ -210,6 +229,7 @@ function makeAdminStatsTab() {
 
                         } catch (e) {
                             loadingDone();
+                            // ERROR_OCCURRED
                             alert('An error occurred...');
                             throw e;
                         }
@@ -217,6 +237,9 @@ function makeAdminStatsTab() {
             });
         },
 
+        // ADMIN_TRIBE_STATS_DESCRIPTION
+        // ADMIN_TRIBE_STATS_SETTINGS_NUKES
+        // DOWNLOAD
         getContent: `
             <p>Get tribe army stats as a spreadsheet: <input id="download-army-stats" type="button" value="Download"></p>
             <p>
@@ -228,9 +251,11 @@ function makeAdminStatsTab() {
 
 function makeAdminLogTab() {
     return {
+        // TAB_LOG
         label: "Log",
         containerId: "vault-admin-log-container",
 
+        // ADMIN_USER_LOG | ADMIN | EVENT | TIME
         getContent: `
             <h4>User Log</h4>
 
@@ -269,6 +294,7 @@ function makeAdminUsersInterface($container) {
             if (lib.isUnloading())
                 return;
 
+            // ERROR_OCCURRED
             alert('An error occurred...');
         });
 
@@ -288,12 +314,14 @@ function makeAdminUsersInterface($container) {
                 let error = JSON.parse(xhr.responseText).error;
                 alert(error);
             } else {
+                // ERROR_OCCURRED
                 alert('An error occurred...');
             }
         });
 
     //  Logic for making a new auth key
     $container.find('#new-key-button').click(() => {
+        // ADMIN_MANAGE_USERS_ENTER_NAME
         var username = prompt("Enter the username or ID");
         if (!username)
             return;
@@ -318,6 +346,7 @@ function makeAdminUsersInterface($container) {
                     let error = JSON.parse(xhr.responseText).error;
                     alert(error);
                 } else {
+                    // ERROR_OCCURRED
                     alert('An error occurred...');
                 }
             });
@@ -326,6 +355,9 @@ function makeAdminUsersInterface($container) {
 
     function insertNewAuthKey(user) {
 
+        // NO_TRIBE | ADMIN
+        // DELETE | GET_SCRIPT
+        // ADMIN_MANAGE_USERS_GIVE_ADMIN | ADMIN_MANAGE_USERS_REVOKE_ADMIN
         var $newRow = $(`
                 <tr data-auth-key="${user.key}">
                     <td>${user.playerName + (user.isAdmin ? " <b>(Admin)</b>" : "")}</td>
@@ -339,6 +371,7 @@ function makeAdminUsersInterface($container) {
         $newRow.find('.get-script').click(() => displayUserScript(user));
 
         $newRow.find('input.delete-user').click(() => {
+            // ADMIN_MANAGE_USERS_CONFIRM_DELETE
             if (!confirm(user.playerName + ' will have their auth key removed.'))
                 return;
 
@@ -355,6 +388,7 @@ function makeAdminUsersInterface($container) {
                         let error = JSON.parse(xhr.responseText).error;
                         alert(error);
                     } else {
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                     }
                 });
@@ -365,8 +399,10 @@ function makeAdminUsersInterface($container) {
             let message = '';
 
             if (!updatedAdmin) {
+                // ADMIN_MANAGE_USERS_CONFIRM_REMOVE_ADMIN
                 message = `${user.playerName} will no longer have admin rights.`;
             } else {
+                // ADMIN_MANAGE_USERS_CONFIRM_GIVE_ADMIN
                 message =
                     `${user.playerName} will be given admin status, and will be able to:\n` +
                     "\n- Access all troop information available" +
@@ -390,6 +426,7 @@ function makeAdminUsersInterface($container) {
                     if (lib.isUnloading())
                         return;
 
+                    // ERROR_OCCURRED
                     alert('An error occurred...');
                 });
         });
@@ -408,6 +445,7 @@ function makeAdminUsersInterface($container) {
         $('#key-script-container textarea').val(scriptString);
         $('#key-script-container').css('display', 'block');
 
+        // ADMIN_MANAGE_USERS_VAULT_SCRIPT_FOR
         $('#key-script-container h5').text(`Vault Script for: ${user.playerName}`);
     }
 }
@@ -494,9 +532,13 @@ function makeArmySummaryCsv(armyData, options) {
     var csvBuilder = new CsvBuilder();
     supportedTribeNames.sort();
 
+    // ADMIN_TRIBE_STATS_25/50/75%_NUKES
     let nukeBreakdownHeaders = ['1/4 Nukes', '1/2 Nukes', '3/4 Nukes'];
     if (!options.includeNukeBreakdown)
         nukeBreakdownHeaders = [];
+
+    // ADMIN_TRIBE_STATS_TOTAL_FULL_NUKES | ADMIN_TRIBE_STATS_TOTAL_NOBLES | ADMIN_TRIBE_STATS_TOTAL_POSSIBLE_NOBLES
+    // ADMIN_TRIBE_STATS_TOTAL_DVS | ADMIN_TRIBE_STATS_TOTAL_INCS | ADMIN_TRIBE_STATS_TOTAL_ATTACKS
 
     csvBuilder.addRow('', '', '', '', 'Total full nukes', 'Total Nobles', 'Total Possible Nobles', 'Total DVs', 'Total Incs', 'Total Attacks');
     csvBuilder.addRow('', '', '', '', totalNukes, totalNobles, totalPossibleNobles, totalDVs, totalIncomings, totalAttacks);
@@ -504,16 +546,23 @@ function makeArmySummaryCsv(armyData, options) {
     csvBuilder.addBlank(2);
 
     csvBuilder.addRow(
+        // TIME | ADMIN_TRIBE_STATS_NEEDS_UPLOAD | PLAYER | ADMIN_TRIBE_STATS_FULL_NUKES
         'Time', 'Needs upload?', 'Tribe', 'Player', ...nukeBreakdownHeaders, 'Full Nukes',
+        // ADMIN_TRIBE_STATS_NUKES_TRAVELING | NOBLES | POSSIBLE_NOBLES
         'Nukes traveling', 'Nobles', 'Possible nobles', 
+        // ADMIN_TRIBE_STATS_OWNED_DVS | ADMIN_TRIBE_STATS_DVS_HOME | ADMIN_TRIBE_STATS_BACKLINE_DVS_HOME
+        // ADMIN_TRIBE_STATS_DVS_TRAVELING | ADMIN_TRIBE_STATS_DVS_TO_SELF | ADMIN_TRIBE_STATS_DVS_TO_OTHERS
         'Owned DVs', 'DVs at Home', 'Backline DVs at Home', 'DVs Traveling', 'DVs Supporting Self', 'DVs Supporting Others',
+        // ADMIN_TRIBE_STATS_OFF_VILLAS | ADMIN_TRIBE_STATS_DEF_VILLAS | ADMIN_TRIBE_STATS_NUM_INCS | ADMIN_TRIBE_STATS_NUM_ATTACKS
         'Est. Off. Villas', 'Est. Def. Villas', '# Incs', '# Attacks',
         '',
+        // ADMIN_TRIBE_STATS_DVS_TO_TRIBE
         ...supportedTribeNames.map((tn) => `DVs to ${tn}`)
     );
 
     playerSummaries.forEach((s) => {
         csvBuilder.addRow(
+            // YES
             s.uploadedAt, s.needsUpload ? 'YES' : '', s.tribeName, s.playerName, ...s.nukeBreakdown, s.numNukes,
             s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
             s.numOwnedDVs, s.numDVsAtHome, s.numDVsAtHomeBackline, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,

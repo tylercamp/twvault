@@ -9,6 +9,7 @@ function makeToolsTab() {
     ];
 
     let toolsTab = {
+        // TAB_TOOLS
         label: 'Tools',
         containerId: 'vault-tools-container',
 
@@ -24,6 +25,7 @@ function makeToolsTab() {
 
 function makeFakeScriptTab() {
     return {
+        // TAB_FAKE_SCRIPT
         label: 'Fake Script',
         containerId: 'vault-fake-script-tools',
         init: function ($container) {
@@ -128,11 +130,14 @@ $.getScript("${link}");
                         if (lib.isUnloading())
                             return;
 
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                     });
             });
         },
 
+        // DYNAMIC_FAKE_SCRIPTS | PLAYERS | TRIBES | CONTINENTS | FAKES_MIN_COORD | FAKES_MAX_COORD
+        // FAKES_DIST_LABEL | FAKES_DIST_FIELDS_FROM | GET_SCRIPT | GET_COORDS
         getContent: `
             <h3>Dynamic Fake Scripts</h3>
             <table style="width:100%">
@@ -239,6 +244,7 @@ function makeBacktimeListTab() {
         ;
 
         let builder = new BBTableBuilder();
+        // SOURCE_VILLAGE | LAUNCH_TIME | LANDING_TIME | TROOP_REQ
         builder.setColumnNames("Source Village", "Launch Time", "Landing Time", "Troop Req.");
 
         let allCommands = [];
@@ -274,6 +280,7 @@ function makeBacktimeListTab() {
 
         let numNukes = allCommands.distinctBy(c => c.targetVillageId + '_' + c.landsAt.valueOf()).length;
 
+        // BACKTIME_RESULTS
         $container.find('#backtime-output-container p').text(`Found ${total} timings for ${numNukes} returning nukes (${displayedCommands.length} shown)`);
 
         displayedCommands.forEach((i) => {
@@ -290,6 +297,7 @@ function makeBacktimeListTab() {
     }
 
     return {
+        // TAB_FIND_BACKTIMES
         label: 'Find Backtimes',
         containerId: 'vault-backtime-search',
         init: function ($container) {
@@ -308,16 +316,19 @@ function makeBacktimeListTab() {
 
             $container.find('#backtime-make-list button').click((ev) => {
                 let $el = $(ev.originalEvent.target);
+                // BACKTIME_WORKING
                 $el.text('Working... (This may take a while)');
                 lib.getApi('plan/backtime-list')
                     .done((data) => {
                         console.log('Got plan data:', data);
+                        // SEARCH
                         $el.text('Search');
 
                         currentCommands = data;
                         updateBacktimingList($container);
                     })
                     .error(() => {
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                     });
             });
@@ -351,6 +362,11 @@ function makeBacktimeListTab() {
                     </div>
                 `;
             }
+
+            // TAB_FIND_BACKTIMES | BACKTIME_DESCRIPTION_1 | BACKTIME_DESCRIPTION_2 | SEARCH
+            // OPTIONS | BACKTIME_MIN_RETURNING_POPULATION | BACKTIME_MIN_ATTACK_SIZE_1/2
+            // BACKTIME_MAX_TRAVEL_TIME | BACKTIME_MAX_NUM_TIMINGS | BACKTIME_HIDE_HANDLED_NUKES
+            // BACKTIME_HIDE_STACKED_NUKES
 
             return `
                 <h3>Find Backtimes</h3>

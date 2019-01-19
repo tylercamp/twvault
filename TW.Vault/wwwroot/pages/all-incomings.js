@@ -52,6 +52,7 @@
     var pageContents = [];
     let requestManager = new RequestManager();
 
+    // INCOMINGS_COLLECTING_PAGES
     let collectPagesMessage = 'Collecting incoming pages...';
     onProgress_ && onProgress_(collectPagesMessage);
 
@@ -74,6 +75,7 @@
                 return;
             }
 
+            // INCOMINGS_PROGRESS
             onProgress_ && onProgress_(`${collectPagesMessage} (${requestManager.getStats().done}/${pages.length} done, ${requestManager.getStats().numFailed} failed)`);
             let pageIncomings = parseUploadIncomingsOverviewPage(lib.parseHtml(data));
             allIncomings.push(...pageIncomings);
@@ -82,10 +84,12 @@
 
     if (!requestManager.getStats().total) {
         lib.postApi('command/finished-incoming-uploads');
+        // INCOMINGS_NONE
         onProgress_ && onProgress_('No incomings to upload.');
         if (onDone_)
             onDone_(false);
         else
+            // INCOMINGS_NONE
             alert('No incomings to upload.');
 
         return;
@@ -95,6 +99,7 @@
 
     requestManager.setFinishedHandler(() => {
         requestManager.stop();
+        // INCOMINGS_UPLOADING
         onProgress_ && onProgress_('Uploading incomings...');
 
         lib.queryCurrentPlayerInfo((playerId) => {
@@ -112,10 +117,12 @@
                     $doc.find('input[name*=id_][type=checkbox]').prop('checked', true);
 
                     if (onProgress_) {
+                        // INCOMINGS_FINISHED
                         onProgress_('Finished: Uploaded ' + distinctIncomings.length + ' incomings.');
                     }
 
                     if (!onDone_)
+                        // INCOMINGS_FINISHED
                         alert('Uploaded commands!');
                     else
                         onDone_();
@@ -125,10 +132,12 @@
                         return;
 
                     if (onProgress_) {
+                        // INCOMINGS_UPLOAD_ERROR
                         onProgress_('An error occurred while uploading data.');
                     }
 
                     if (!onDone_) {
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                     } else {
                         onDone_(true);

@@ -12,9 +12,11 @@ function makeSmsTab() {
     ];
 
     let smsTab = {
+        // TAB_SMS
         label: 'SMS/Texts',
         containerId: 'vault-sms-container',
 
+        // TAB_SMS_DESCRIPTION
         getContent: `
             <p>
                 The Vault can send you a text at a certain time. Use this as a reminder for launch times, etc. All
@@ -30,6 +32,7 @@ function makeSmsTab() {
 
 function makeSmsDisplayTab() {
     return {
+        // TAB_NOTIFICATIONS
         label: 'Notifications',
         containerId: 'vault-notifications-display',
         init: function ($container) {
@@ -38,6 +41,7 @@ function makeSmsDisplayTab() {
 
             $container.find('#notification-time-formats').click((e) => {
                 e.originalEvent.preventDefault();
+                // SMS_TIME_FORMAT_DESCRIPTION
                 alert(`Supported time formats: Basically everything under the sun. Copy/paste whatever you see.`);
             });
 
@@ -49,23 +53,27 @@ function makeSmsDisplayTab() {
                 let message = $message.val().trim();
 
                 if (!message.length) {
+                    // SMS_MESSAGE_REQUIRED
                     alert('A message is required!');
                     return;
                 }
 
                 if (message.length > 256) {
+                    // SMS_CHARACTER_LIMIT
                     alert(`Your message can't be over 256 characters! (Currently ${message.length})`);
                     return;
                 }
 
                 let notificationTime = lib.parseTimeString(notificationTimeText);
                 if (!notificationTime) {
+                    // SMS_INVALID_TIME_1
                     alert('Invalid notification time!');
                     return;
                 }
 
                 let serverTime = lib.getServerDateTime();
                 if (serverTime.valueOf() >= notificationTime.valueOf()) {
+                    // SMS_TIME_TOO_EARLY
                     alert("Your notification time must be *after* the current server time!");
                     return;
                 }
@@ -103,11 +111,13 @@ function makeSmsDisplayTab() {
                         if (lib.isUnloading())
                             return;
 
+                        // ERROR_OCCURRED
                         alert('An error occurred.');
                     });
             });
         },
 
+        // SMS_ADD_NEW | SERVER_TIME | SMS_SUPPORTED_FORMATS | MESSAGE | ADD
         getContent: `
             <h4>Notifications</h4>
             <p style="text-align:left">
@@ -135,6 +145,7 @@ function makeSmsDisplayTab() {
 
 function makeSmsPhoneNumbersTab() {
     return {
+        // TAB_PHONE_NUMBERS
         label: 'Phone Numbers',
         containerId: 'vault-notifications-phone-numbers',
 
@@ -150,11 +161,13 @@ function makeSmsPhoneNumbersTab() {
 
                 let trimmedNumber = phoneNumber.replace(/[^\d]/g, '');
                 if (trimmedNumber.length < 11) {
+                    // SMS_INVALID_PHONE_NUMBER
                     alert('Invalid phone number - must include country code and area code.\n\nie +1 202-555-0109');
                     return;
                 }
 
                 if (label.length > 128) {
+                    // SMS_PHONE_NAME_TOO_LONG
                     alert(`Phone name is too long - must be less than 128 characters. (Currently ${label.length})`);
                     return;
                 }
@@ -183,12 +196,14 @@ function makeSmsPhoneNumbersTab() {
 
                         $phoneNumber.prop('disabled', false);
                         $label.prop('disabled', false);
+                        // ERROR_OCCURRED
                         alert('An error occurred.');
                     });
             });
 
         },
 
+        // SMS_PHONE_NUMBERS | SMS_ADD_PHONE_NUMBER | OPTIONAL | ADD
         getContent: `
             <h4>Phone Numbers</h4>
             <p style="text-align: left">
@@ -215,6 +230,7 @@ function makeSmsPhoneNumbersTab() {
 
 function makeSmsSettingsTab() {
     return {
+        // TAB_SMS_SETTINGS
         label: 'Settings',
         containerId: 'vault-notifications-settings',
 
@@ -225,6 +241,7 @@ function makeSmsSettingsTab() {
             });
         },
 
+        // TAB_SMS_SETTINGS | SMS_SETTINGS_1 | SMS_SETTINGS_2 | SAVE
         getContent: `
             <h4>Settings</h4>
             <div>
@@ -244,6 +261,7 @@ function updatePhoneNumbers($container) {
             $phoneNumbersTable.find('tr:not(:first-of-type)').remove();
 
             phoneNumbers.forEach((number) => {
+                // DELETE
                 let $row = $(`
                         <tr data-id="${number.id}">
                             <td>${number.number}</td>
@@ -254,6 +272,7 @@ function updatePhoneNumbers($container) {
                 $phoneNumbersTable.append($row);
                 $row.find('input').click((ev) => {
                     ev.originalEvent.preventDefault();
+                    // SMS_CONFIRM_REMOVE_NUMBER
                     if (!confirm(`Are you sure you want to remove the number ${number.number}?`)) {
                         return;
                     }
@@ -263,6 +282,7 @@ function updatePhoneNumbers($container) {
                             updatePhoneNumbers($container);
                         })
                         .error(() => {
+                            // ERROR_OCCURRED
                             alert('An error occurred.');
                         });
                 });
@@ -272,6 +292,7 @@ function updatePhoneNumbers($container) {
             if (lib.isUnloading())
                 return;
 
+            // SMS_PHONE_NUMBERS_ERROR
             alert('An error occurred while getting your phone numbers.');
         });
 }
@@ -285,6 +306,7 @@ function loadNotificationSettings($container) {
             if (lib.isUnloading())
                 return;
 
+            // ERROR_OCCURRED
             alert('An error occurred.');
         });
 }
@@ -293,11 +315,13 @@ function saveNotificationSettings($container) {
     let $notificationWindow = $container.find('#notify-window-minutes');
     let notificationWindow = $notificationWindow.val().trim();
     if (!notificationWindow.length) {
+        // SMS_SETTINGS_EMPTY_VALUE
         alert("Empty settings value!");
         return;
     }
 
     if (notificationWindow.match(/[^\d]/)) {
+        // SMS_SETTINGS_INVALID_VALUE
         alert("Invalid settings value!");
         return;
     }
@@ -321,6 +345,7 @@ function saveNotificationSettings($container) {
             if (lib.isUnloading())
                 return;
 
+            // ERROR_OCCURRED
             alert('An error occurred.');
         });
 }
@@ -334,6 +359,7 @@ function loadNotifications($container) {
             requests.forEach((request) => {
                 request.eventOccursAt = new Date(Date.parse(request.eventOccursAt));
 
+                // DELETE
                 let $row = $(`
                         <tr data-id="${request.id}">
                             <td>${lib.formatDateTime(request.eventOccursAt)}</td>
@@ -346,6 +372,7 @@ function loadNotifications($container) {
                     ev.originalEvent.preventDefault();
 
                     let confirmInfo = `"${request.message}" at ${lib.formatDateTime(request.eventOccursAt)}`;
+                    // SMS_CONFIRM_DELETE_NOTIFICATION
                     if (!confirm(`Are you sure you want to delete this notification?\n\n${confirmInfo}`)) {
                         return;
                     }
@@ -358,6 +385,7 @@ function loadNotifications($container) {
                             if (lib.isUnloading())
                                 return;
 
+                            // ERROR_OCCURRED
                             alert('An error occurred.');
                         });
                 });
@@ -369,6 +397,7 @@ function loadNotifications($container) {
             if (lib.isUnloading())
                 return;
 
+            // SMS_NOTIFICATIONS_ERROR
             alert("An error occurred while loading notification requests.");
         });
 }

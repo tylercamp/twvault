@@ -12,6 +12,7 @@
     let troops = [];
     let supportData = [];
 
+    // TROOPS_COLLECTING_PAGES
     let gettingPagesMessage = 'Getting village troop pages...';
     onProgress_ && onProgress_(gettingPagesMessage);
 
@@ -44,20 +45,24 @@
     requestManager.setFinishedHandler(() => {
         requestManager.stop();
 
+        // TROOPS_FIND_ACADEMY
         onProgress_ && onProgress_('Finding village with academy...');
 
         findVillaWithAcademy((villageId) => {
 
             if (villageId < 0) {
                 if (onProgress_) {
+                    // TROOPS_NO_ACADEMY
                     onProgress_ && onProgress_('(No village with academy found)');
                     setTimeout(() => uploadToVault(0), 1500);
                 } else {
                     uploadToVault(0);
                 }
             } else {
+                // TROOPS_FIND_POSSIBLE_NOBLES
                 onProgress_ && onProgress_('Getting possible nobles...');
                 getPossibleNobles(villageId, (cnt) => {
+                    // TROOPS_FIND_SUPPORT
                     onProgress_ && onProgress_('Getting support...');
                     collectSupportData(() => {
                         uploadToVault(cnt);
@@ -74,6 +79,7 @@
     function collectSupportData(onDone) {
         $.get(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW))
             .done((data) => {
+                // TROOPS_COLLECTING_SUPPORT
                 onProgress_ && onProgress_('Collecting supported villages and DVs...');
                 let $supportDoc = lib.parseHtml(data);
                 let supportPages = lib.detectMultiPages($supportDoc);
@@ -138,6 +144,7 @@
                 if (lib.isUnloading())
                     return;
 
+                // TROOPS_ERROR_FINDINGS_ACADEMY
                 if (onProgress_)
                     onProgress_('An error occurred while finding villa with academy...');
                 else
@@ -152,7 +159,9 @@
         $.get(lib.makeTwUrl(`village=${villaIdWithAcademy}&screen=snob`))
             .done((data) => {
                 let docText = lib.parseHtml(data).text();
+                // TROOPS_NOBLES_LIMIT
                 let limit = docText.match(/Noblemen\s+limit:\s*(\d+)/);
+                // TROOPS_NOBLES_CURRENT
                 let current = docText.match(/Number\s+of\s+conquered\s+villages:\s*(\d+)/);
 
                 console.log('Got limit: ', limit);
@@ -168,6 +177,7 @@
                 if (lib.isUnloading())
                     return;
 
+                // TROOPS_ERROR_GETTING_NOBLES
                 if (onProgress_)
                     onProgress_('An error occurred while getting possible noble counts...');
                 else
@@ -180,6 +190,7 @@
 
     function uploadToVault(possibleNobles) {
 
+        // TROOPS_UPLOADING
         onProgress_ && onProgress_("Uploading troops to vault...");
 
         let distinctTroops = troops.distinct((a, b) => a.villageId == b.villageId);
@@ -194,9 +205,11 @@
                 return;
 
             if (onProgress_)
+                // UPLOAD_ERROR
                 onProgress_("An error occurred while uploading to the vault.");
 
             if (!onDone_)
+                // ERROR_OCCURRED
                 alert('An error occurred...')
             else
                 onDone_(true);
@@ -204,6 +217,7 @@
 
         uploadArmy(() => {
             if (onProgress_)
+                // TROOPS_FINISHED
                 onProgress_('Finished: Uploaded troops for ' + distinctTroops.length + ' villages.');
 
             if (!onDone_)
@@ -217,6 +231,7 @@
             lib.postApi('village/army/current', data)
                 .error(onError)
                 .done(() => {
+                    // TROOPS_UPLOADING_SUPPORT
                     onProgress_ && onProgress_('Uploading support to vault...');
                     uploadSupport(onDone);
                 });

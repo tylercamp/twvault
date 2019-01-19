@@ -34,6 +34,7 @@
     ];
 
     $doc.find('#vault-ui-container').remove();
+    // VAULT | VAULT_INTERFACE_DESCRIPTION | DONE
     var $uiContainer = $(`
         <div id="vault-ui-container" class="confirmation-box" style="border-width: 20px">
             <!-- Weird margins on this since TW styling has an annoying gap -->
@@ -97,6 +98,7 @@
 
     $uiContainer.find('.vault-close-btn').click(() => {
         let isUploading = $('.upload-button').prop('disabled');
+        // UPLOADING_IF_CLOSED
         if (isUploading && !confirm("Current uploads will continue running while this popup is closed.")) {
             return;
         }

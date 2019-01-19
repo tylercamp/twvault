@@ -105,6 +105,7 @@
 
                 let numMissingIncs = incomings.filter((i) => !incomingTags[i.id]).length;
                 if (numMissingIncs > 0) {
+                    // INCS_NOT_TAGGED
                     $('#missing-command-uploads').html(`<b>${numMissingIncs} incomings weren't uploaded to Vault yet and won't be tagged!</b>`);
                 } else {
                     $('#missing-command-uploads').html('');
@@ -122,14 +123,17 @@
                         reasons = JSON.parse(xhr.responseText);
                     } catch (_) { }
 
+                    // TAG_UPLOAD_DATA_REQUIRED
                     let alertMessage = "You haven't uploaded data in a while, you can't use tagging until you do."
                     if (reasons) {
+                        // UPLOAD_DATA_REQUIRED_REASONS
                         alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
                     }
 
                     alert(alertMessage);
                     displayMainVaultUI();
                 } else if (xhr.status != 401) {
+                    // ERROR_OCCURRED
                     alert("An error occurred...");
                 }
             });
@@ -137,6 +141,20 @@
 
     function makeTaggingUI() {
         $('#v-tagging-ui').remove();
+        // FEATURE_IS_EXPERIMENTAL | OPEN_VAULT | UPLOAD_VISIBLE_INCOMINGS
+        // TAG_CODE_HEADER | TAG_CODE_DETAILS
+        // TAG_CODE_TROOP_NAME_DETAILS | TAG_CODE_TAG_TYPE_DETAILS | TAG_CODE_POP_PERCENT_DETAILS
+        // TAG_CODE_POP_COUNT_DETAILS | TAG_CODE_RETURN_PERCENT_DETAILS | TAG_CODE_RETURN_COUNT_DETAILS
+        // TAG_CODE_NUM_CATS_DETAILS | TAG_CODE_NUM_COMS_DETAILS | TAG_CODE_SRC_PLAYER_DETAILS
+        // TAG_CODE_SRC_VILLAGE_DETAILS | TAG_CODE_TGT_PLAYER_DETAILS | TAG_CODE_TGT_VILLAGE_DETAILS
+        // TAG_CODE_SRC_COORDS_DETAILS | TAG_CODE_TGT_COORDS_DETAILS | TAG_CODE_CUSTOM_LABEL_DETAILS
+        // RESET
+        // TAG_CFG_ONLY_UNLABELED
+        // TAG_CFG_AUTOTAG_FAKE_1 | TAG_CFG_AUTOTAG_FAKE_2
+        // TAG_CFG_IGNORE_NO_DATA
+        // TAG_ALL | TAG_SELECTED | TAG_REVERT
+        // CANCEL
+        // TAG_DURATION_NOTICE
         let $container = $(`
             <div id="v-tagging-ui" class="content-border">
                 <h3>Vault Tagging</h3>
@@ -304,6 +322,7 @@
             let maxPopText = $maxFakePop.val();
             let maxPop = parseFloat(maxPopText);
             if (isNaN(maxPop) || maxPopText.match(/[^\d\.]/)) {
+                // NOT_A_NUMBER
                 alert("That's not a number!");
                 $maxFakePop.val(settings.maxFakePop);
                 return;
@@ -334,6 +353,7 @@
                     toggleUploadButtons(true);
                 })
                 .error(() => {
+                    // ERROR_OCCURRED
                     alert('An error occurred...');
                 });
         });
@@ -388,6 +408,7 @@
 
         $container.find('#v-tag-all').click((e) => {
             e.originalEvent.preventDefault();
+            // FAKE_DETECTION_CONFIRM
             if (settings.autoLabelFakes && !confirm("WARNING - Fake detection isn't 100% accurate, but you have enabled the 'label as fakes' option."))
                 return;
 
@@ -396,11 +417,13 @@
 
         $container.find('#v-tag-selected').click((e) => {
             e.originalEvent.preventDefault();
+            // FAKE_DETECTION_CONFIRM
             if (settings.autoLabelFakes && !confirm("WARNING - Fake detection isn't 100% accurate, but you have enabled the 'label as fakes' option."))
                 return;
 
             let selectedIds = getSelectedIncomingIds();
             if (!selectedIds.length)
+                // NO_INCOMINGS_SELECTED
                 alert("You didn't select any incomings!");
             beginTagging(selectedIds);
         });
@@ -446,6 +469,7 @@
                 rateLimiter.start();
             } else {
                 toggleUploadButtons(true);
+                // TAGS_ARE_CURRENT
                 updateTagStatus("Either no incomings or all tags are current");
             }
         });
@@ -454,6 +478,7 @@
             e.originalEvent.preventDefault();
             rateLimiter.stop();
             toggleUploadButtons(true);
+            // TAGGING_CANCELED
             updateTagStatus("Tagging canceled");
         });
     }
@@ -502,6 +527,7 @@
             rateLimiter.start();
         } else {
             toggleUploadButtons(true);
+            // TAGS_ARE_CURRENT
             updateTagStatus("Either no incomings or all tags are current");
         }
     }
@@ -512,12 +538,16 @@
         if (msg_) {
             $tagStatus.text(msg_);
         } else if (stats.total) {
+            // TAGGING_PROGRESS
             let progress = `${stats.done}/${stats.total} tagged (${stats.numFailed} failed)`;
             if (stats.total == stats.done) {
+                // TAG_STATE_FINISHED
                 progress = `Finished: ${progress}`;
             } else if (rateLimiter.isRunning()) {
+                // TAG_STATE_RUNNING
                 progress = `Tagging: ${progress}`;
             } else {
+                // TAG_STATE_CANCELED
                 progress = `Canceled: ${progress}`;
             }
             $tagStatus.text(progress);
@@ -584,7 +614,7 @@
         let missingReturnPop = typeof incomingData.returningPopulation == 'undefined' || incomingData.returningPopulation == null;
         let troopTypeName = incomingData.troopType ? (
             lib.twstats.getUnit(incomingData.troopType).name
-        ) : 'Unknown';
+        ) : 'Unknown'; // UNKNOWN
 
         let maxNukePop = 20000;
         let nukePop = Math.min(maxNukePop, incomingData.offensivePopulation || 0);
@@ -595,7 +625,7 @@
         let returnPopPerc = Math.roundTo(returnPop / maxNukePop * 100, 1);
 
         if (settings.autoLabelFakes && incomingData.troopType != 'snob' && !missingNukePop && nukePopK < settings.maxFakePop) {
-            return 'Fakes';
+            return 'Fakes'; // FAKES
         }
 
         let customLabel = currentLabel.match(/".+"/);
@@ -604,7 +634,7 @@
 
         return format
             .replace("%troopName%", troopTypeName)
-            .replace("%tagType%", incomingData.definiteFake ? 'Fake' : 'Nuke?')
+            .replace("%tagType%", incomingData.definiteFake ? 'Fake' : 'Nuke?') // FAKE | MAYBE_NUKE
             .replace("%popPerc%", missingNukePop ? '?' : nukePopPerc)
             .replace("%popCnt%", missingNukePop ? '?' : nukePopK)
             .replace("%numCats%", missingNumCats ? '?' : incomingData.numCats)

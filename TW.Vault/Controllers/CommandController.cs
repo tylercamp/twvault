@@ -545,6 +545,7 @@ namespace TW.Vault.Controllers
                     var targetVillage = relevantVillages[incoming.TargetVillageId];
                     tag.SourceVillageCoords = $"{sourceVillage.X}|{sourceVillage.Y}";
                     tag.TargetVillageCoords = $"{targetVillage.X}|{targetVillage.Y}";
+                    // UNKNOWN
                     tag.SourcePlayerName = sourcePlayerNames.GetValueOrDefault(incoming.SourcePlayerId, "Unknown").UrlDecode();
                     tag.SourceVillageName = sourceVillage.VillageName.UrlDecode();
                     tag.TargetVillageName = targetVillage.VillageName.UrlDecode();
@@ -555,6 +556,7 @@ namespace TW.Vault.Controllers
                         //  TODO - Make this a setting
                         bool isOffense = ArmyStats.IsOffensive(effectiveArmy);
 
+                        // OFFENSE | DEFENSE
                         tag.VillageType = isOffense ? "Offense" : "Defense";
 
                         if (!isOffense && isConfidentArmy && (effectiveArmy.Snob == null || effectiveArmy.Snob == 0) && incoming.TroopType != JSON.TroopType.Snob.ToTroopString())

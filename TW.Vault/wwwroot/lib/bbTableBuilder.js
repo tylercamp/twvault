@@ -15,5 +15,6 @@ BBTableBuilder.prototype.toString = function toString() {
     let headerRow = `[**]${this._header.join('[||]')}[/**]`;
     let tableContents = this._rows.map(r => `[*]${r.join('[|]')}`).join('\n');
 
+    // BB_TABLE
     return `[table]\n${headerRow}\n${tableContents}\n[/table]`;
 };

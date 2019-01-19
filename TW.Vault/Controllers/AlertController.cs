@@ -99,7 +99,9 @@ namespace TW.Vault.Controllers
                         v.X, v.Y, v.VillageId,
                         VillageName = v.VillageName.UrlDecode(), 
                         OldOwnerId = v.OldOwner, NewOwnerId = v.NewOwner,
+                        // NONE
                         OldOwnerName = playerNamesById.GetValueOrDefault(v.OldOwner ?? -1, "None").UrlDecode(),
+                        // NONE
                         NewOwnerName = playerNamesById.GetValueOrDefault(v.NewOwner ?? -1, "None").UrlDecode(),
                         IsNearby = ownVillageMap.ContainsInRange(v.X, v.Y, 5),
                         Loyalty = possibleLoyalties[v.VillageId]

@@ -25,6 +25,7 @@
 
     let reportLinks = [];
 
+    // REPORTS_COLLECTING_PAGES
     onProgress_ && onProgress_('Collecting report pages...');
     let pages = lib.detectMultiPages($doc);
     pages.push(lib.makeTwUrl(lib.pageTypes.ALL_REPORTS));
@@ -35,11 +36,13 @@
 
 
     function collectReportLinks() {
+        // REPORTS_COLLECTING_LINKS
         let collectingReportLinksMessage = 'Collecting report links...';
         onProgress_ && onProgress_(collectingReportLinksMessage);
 
         pages.forEach((link) => {
             requestManager.addRequest(link, (data) => {
+                // REPORTS_PAGES_PROGRESS
                 onProgress_ && onProgress_(`${collectingReportLinksMessage} (page ${requestManager.getStats().done}/${pages.length})`);
 
                 if (lib.checkContainsCaptcha(data)) {
@@ -74,6 +77,7 @@
                 let filteredReports = reportLinks.except((l) => previousReports.contains(l.reportId));
                 filteredReports = filteredReports.except((l) => farmReportIds.contains(l.reportId));
 
+                // REPORTS_CHECK_UPLOADED
                 onProgress_ && onProgress_('Checking for reports already uploaded...');
                 getExistingReports(filteredReports.map(r => r.reportId), (existing) => {
                     console.log('Got existing reports: ', existing);
@@ -103,6 +107,7 @@
         let $farmReportGroup = $groupLinks.filter((i, el) => $(el).text().contains('Loot Assistant'));
 
         if (!$farmReportGroup.length) {
+            // REPORTS_LA_NOT_FOUND
             onProgress_ && onProgress_("Couldn't find Loot Assistant reports folder, skipping filtering...");
             setTimeout(() => onDone([]), 1500);
             return;
@@ -112,6 +117,7 @@
         let farmGroupId = farmGroupLink.match(/group_id=(\w+)/)[1];
         $.get(farmGroupLink)
             .done((data) => {
+                // REPORTS_FILTERING_LA
                 const baseFilteringMessage = "Filtering loot assistant reports...";
                 onProgress_ && onProgress_(baseFilteringMessage);
 
@@ -147,6 +153,7 @@
                 requestManager.start();
             })
             .error(() => {
+                // REPORTS_LA_ERROR
                 onProgress_ && onProgress_("Error getting Loot Assistant reports folder, skipping filtering...");
                 setTimeout(() => onDone([]), 1500);
             });
@@ -158,6 +165,7 @@
                 if (typeof data == 'string')
                     data = JSON.parse(data);
                 if (data.length) {
+                    // REPORTS_SKIPPED_OLD
                     onProgress_ && onProgress_('Found ' + data.length + ' previously uploaded reports, skipping these...');
                     setTimeout(() => onDone(data), 2000);
                 } else {
@@ -168,6 +176,7 @@
                 if (lib.isUnloading())
                     return;
 
+                // REPORTS_ERROR_CHECK_OLD
                 onProgress_ && onProgress_('An error occurred while checking for existing reports, continuing...');
                 setTimeout(() => onDone([]), 2000);
             });
@@ -217,11 +226,13 @@
         requestManager.setFinishedHandler(() => {
             let stats = requestManager.getStats();
 
+            // REPORTS_FINISHED
             let statusMessage = `Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`;
             if (onProgress_)
                 onProgress_(statusMessage);
 
             if (!onDone_) {
+                // REPORTS_FINISHED
                 alert('Done!');
                 let stats = requestManager.getStats();
                 setUploadsDisplay(statusMessage);
@@ -234,9 +245,12 @@
             lib.postApi('report/finished-report-uploads');
 
             if (!onDone_) {
-                setUploadsDisplay('No new reports to upload.');
-                alert('No new reports to upload!');
+                // REPORTS_NONE_NEW
+                setUploadsDisplay('Finished: No new reports to upload.');
+                // REPORTS_NONE_NEW
+                alert('Finished: No new reports to upload!');
             } else {
+                // REPORTS_NONE_NEW
                 if (onProgress_)
                     onProgress_('Finished: No new reports to upload.');
                 if (onDone_)
@@ -260,6 +274,7 @@
 
     function updateUploadsDisplay() {
         let stats = requestManager.getStats();
+        // REPORTS_PROGRESS
         let statusMessage = `Uploading ${stats.total} reports... (${stats.done} done, ${stats.numFailed} failed.)`;
 
         if (!onProgress_) {

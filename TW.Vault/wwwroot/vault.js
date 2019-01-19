@@ -29,12 +29,14 @@
     lib.setScriptHost(lib.getScriptHost());
 
     if (!lib.checkUserHasPremium()) {
+        // REQUIRE_PREMIUM_ACCOUNT
         alert('This script cannot be used without a premium account!');
         return;
     }
 
     lib.init(() => {
 
+        // TERMS_AND_CONDITIONS
         let terms = `
 
 This script serves as an interface to the Vault, a private tool for collecting Tribal Wars data.
@@ -55,15 +57,18 @@ These terms can be viewed again after running the script. To cancel your agreeme
 `;
 
         let isFirstRun = lib.onFirstRun((onAccepted) => {
+            // TERMS_AND_CONDITIONS
             let alertString =
                 "This is your first time running the script - please see the terms and conditions on DATA COLLECTION below.\n\n"
                 + terms.trim()
                 + "\n\nAgree to these terms?";
 
             if (confirm(alertString)) {
+                // RE_RUN_SCRIPT
                 alert('Thank you, please run the script again to start using it.');
                 onAccepted();
             } else {
+                // SCRIPT_NOT_RAN
                 alert('The script will not be ran.');
             }
         });
@@ -73,6 +78,7 @@ These terms can be viewed again after running the script. To cancel your agreeme
         }
 
         if (lib.versioning.checkNeedsUpdate()) {
+            // UPDATE_NOTICE
             alert('The vault was recently updated, you will need to re-upload some data.');
             lib.versioning.updateForLatestVersion();
         }

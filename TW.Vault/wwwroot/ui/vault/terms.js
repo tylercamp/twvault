@@ -1,9 +1,11 @@
 ﻿
 function makeTermsTab() {
     return {
+        // TAB_TERMS
         label: 'Disclaimers and Terms',
         containerId: 'vault-terms-container',
 
+        // TERMS_NOT_INNO | TERMS_DETAILS
         getContent: `
             <p>
                 <em>This tool is not endorsed or developed by InnoGames.</em>

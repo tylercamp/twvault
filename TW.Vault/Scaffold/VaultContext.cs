@@ -40,6 +40,10 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<ReportArmy> ReportArmy { get; set; }
         public virtual DbSet<ReportBuilding> ReportBuilding { get; set; }
         public virtual DbSet<Transaction> Transaction { get; set; }
+        public virtual DbSet<TranslationEntry> TranslationEntry { get; set; }
+        public virtual DbSet<TranslationKey> TranslationKey { get; set; }
+        public virtual DbSet<TranslationLanguage> TranslationLanguage { get; set; }
+        public virtual DbSet<TranslationRegistry> TranslationRegistry { get; set; }
         public virtual DbSet<User> User { get; set; }
         public virtual DbSet<UserLog> UserLog { get; set; }
         public virtual DbSet<UserUploadHistory> UserUploadHistory { get; set; }
@@ -1076,6 +1080,77 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey(d => d.WorldId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_world_id");
+            });
+
+            modelBuilder.Entity<TranslationEntry>(entity =>
+            {
+                entity.HasKey(e => new { e.TranslationId, e.KeyId });
+
+                entity.ToTable("translation", "feature");
+
+                entity.Property(e => e.TranslationId)
+                    .IsRequired()
+                    .HasColumnName("translation_id");
+
+                entity.Property(e => e.KeyId)
+                    .IsRequired()
+                    .HasColumnName("key");
+
+                entity.Property(e => e.Value)
+                    .IsRequired()
+                    .HasColumnName("value");
+
+                entity.HasOne(e => e.Translation)
+                    .WithMany(e => e.Entries)
+                    .HasForeignKey(e => e.TranslationId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("fk_translation_registry_id");
+
+                entity.HasOne(e => e.Key)
+                    .WithMany(e => e.TranslationEntries)
+                    .HasForeignKey(e => e.KeyId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("fk_translation_key_id");
+            });
+
+            modelBuilder.Entity<TranslationKey>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.ToTable("translation_key", "feature");
+
+                entity.Property(e => e.Id).IsRequired().HasColumnName("id");
+                entity.Property(e => e.Name).IsRequired().HasColumnName("name");
+                entity.Property(e => e.IsTwNative).HasDefaultValue(false).IsRequired().HasColumnName("is_tw_native");
+            });
+
+            modelBuilder.Entity<TranslationLanguage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.ToTable("translation_language", "feature");
+
+                entity.Property(e => e.Id).IsRequired().HasColumnName("id");
+                entity.Property(e => e.Name).IsRequired().HasColumnName("name");
+            });
+
+            modelBuilder.Entity<TranslationRegistry>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.ToTable("translation_registry", "feature");
+
+                entity.Property(e => e.Id).IsRequired().HasColumnName("id");
+                entity.Property(e => e.Name).IsRequired().HasColumnName("name");
+                entity.Property(e => e.Author).IsRequired().HasColumnName("author");
+                entity.Property(e => e.AuthorPlayerId).IsRequired().HasColumnName("author_player_id");
+                entity.Property(e => e.LanguageId).IsRequired().HasColumnName("language_id");
+
+                entity.HasOne(e => e.Language)
+                    .WithMany(e => e.Translations)
+                    .HasForeignKey(e => e.LanguageId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("fk_registry_language_id");
             });
 
             modelBuilder.Entity<User>(entity =>

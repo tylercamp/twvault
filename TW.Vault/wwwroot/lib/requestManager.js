@@ -164,5 +164,6 @@ function RequestManagerStats() {
 }
 
 RequestManagerStats.prototype.toString = function () {
+    // REQUEST_STATS
     return `${this.done}/${this.total} done, ${this.numFailed} failed`;
 };

@@ -15,6 +15,7 @@
     let pages = lib.detectMultiPages($doc);
     pages.push(lib.makeTwUrl(lib.pageTypes.OWN_COMMANDS_OVERVIEW));
 
+    // COMMANDS_COLLECTING_PAGES
     let collectingPagesMessage = 'Collecting command pages...';
     onProgress_ && onProgress_(collectingPagesMessage);
 
@@ -58,11 +59,13 @@
 
         if (!newCommands.length) {
             lib.postApi('command/finished-command-uploads');
+            // COMMANDS_NONE_NEW
             onProgress_ && onProgress_('Finished: No new commands to upload.');
 
             if (onDone_)
                 onDone_();
             else
+                // COMMANDS_NONE_NEW
                 alert('No new commands to upload.');
 
             return;
@@ -70,11 +73,13 @@
 
         requestManager.resetStats();
 
+        // COMMANDS_CHECK_UPLOADED
         onProgress_ && onProgress_('Checking for previously-uploaded commands...');
         checkExistingCommands(newCommands.map(_ => _.commandId), (existingCommands) => {
 
             oldCommands.push(...existingCommands);
 
+            // COMMANDS_UPLOADING
             let fetchingCommandsMessage = 'Uploading commands...';
             onProgress_ && onProgress_(fetchingCommandsMessage);
 
@@ -103,6 +108,7 @@
 
                     let command = parseOwnCommand(commandId, cmd.commandType, cmd.isReturning, cmd.userLabel, lib.parseHtml(data));
 
+                    // COMMANDS_PROGRESS
                     let notifyOnDone = () => requestManager.pendingRequests.length && onProgress_ && onProgress_(`${fetchingCommandsMessage} (${requestManager.getStats().done}/${requestManager.getStats().total} done, ${requestManager.getStats().numFailed} failed)`);
 
                     let commandData = {
@@ -132,11 +138,13 @@
             if (!requestManager.getStats().total) {
                 lib.setLocalStorage('commands-history', oldCommands);
                 lib.postApi('command/finished-command-uploads');
+                // COMMANDS_NONE_NEW
                 onProgress_ && onProgress_('Finished: No new commands to upload.');
 
                 if (onDone_)
                     onDone_();
                 else
+                    // COMMANDS_NONE_NEW
                     alert('No new commands to upload.');
 
                 return;
@@ -147,9 +155,11 @@
             requestManager.setFinishedHandler(() => {
                 let stats = requestManager.getStats();
                 lib.setLocalStorage('commands-history', oldCommands);
+                // COMMANDS_FINISHED
                 onProgress_ && onProgress_(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`);
 
                 if (!onDone_)
+                    // DONE
                     alert('Done!');
                 else
                     onDone_(false);
@@ -169,11 +179,13 @@
                 if (lib.isUnloading())
                     return;
 
+                // COMMANDS_CHECK_UPLOADED_FAILED
                 onProgress_ && onProgress_('Failed to check for old commands, uploading all...');
                 setTimeout(onDone, 2000);
             })
             .done((existingCommandIds) => {
                 if (existingCommandIds.length) {
+                    // COMMANDS_SKIPPED_OLD
                     onProgress_ && onProgress_('Found ' + existingCommandIds.length + ' old commands, skipping these...');
                     setTimeout(() => onDone(existingCommandIds), 2000);
                 } else {

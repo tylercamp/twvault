@@ -13,6 +13,7 @@ function makeActionsTab() {
     ];
 
     return {
+        // TAB_ACTIONS_ALERTS
         label: 'Actions/Alerts',
         containerId: 'vault-actions-container',
 
@@ -101,6 +102,7 @@ function makeSuggestedActionsTab() {
         let saveSettings = () => lib.setLocalStorage('suggested-recap-settings', settings);
 
         return {
+            // TAB_SEND_RECAP
             label: 'Send Recap',
             containerId: 'vault-suggested-recaps-container',
 
@@ -124,6 +126,7 @@ function makeSuggestedActionsTab() {
                     data = data.filter((d) => d.isNearby);
 
                 if (!data.length) {
+                    // ACTION_RECAPS_NONE
                     $table.append(noDataRow(5, '(No recaps)'));
                     return;
                 }
@@ -131,6 +134,7 @@ function makeSuggestedActionsTab() {
                 data.forEach((recap, i) => {
                     let rowClass = i % 2 ? 'row_b' : 'row_a';
 
+                    // ACTIONS_RECAPS_AGE
                     $table.append(`
                         <tr class="${rowClass}">
                             <td>${makeVillageLink(recap.villageName, recap.villageId, recap.x, recap.y)}</td>
@@ -143,6 +147,8 @@ function makeSuggestedActionsTab() {
                 });
             },
 
+            // ACTIONS_RECAPS_DESCRIPTION | ACTIONS_RECAPS_ONLY_NEARBY
+            // VILLAGE | LOYALTY | ACTIONS_RECAPS_CAPTURED_AT | ACTIONS_RECAPS_OLD_OWNER | ACTIONS_RECAPS_NEW_OWNER
             getContent: `
                 <p>
                     A list of friendly villages that were recently conquered.
@@ -166,6 +172,7 @@ function makeSuggestedActionsTab() {
 
     function makeSuggestedSnipeTab() {
         return {
+            // TAB_SNIPES_NEEDED
             label: 'Snipes Needed',
             containerId: 'vault-suggested-snipes-container',
 
@@ -176,6 +183,7 @@ function makeSuggestedActionsTab() {
                 let $table = $container.find('table');
 
                 if (!data.length) {
+                    // ACTIONS_SNIPES_NONE
                     $table.append(noDataRow(3, '(No snipes needed)'));
                     return;
                 }
@@ -192,6 +200,8 @@ function makeSuggestedActionsTab() {
                 });
             },
 
+            // ACTIONS_SNIPES_DESCRIPTION | ACTIONS_SNIPES_NUM_NOBLES
+            // VILLAGE | LANDS_AT
             getContent: `
                 <p>
                     A list of incoming trains that you have troops to snipe for.
@@ -210,6 +220,7 @@ function makeSuggestedActionsTab() {
     function makeSuggestedStackingTab() {
         return {
             containerId: 'vault-suggested-stacks-container',
+            // TAB_SEND_STACKS
             label: 'Send Stacks',
 
             _init: function ($container, data) {
@@ -219,6 +230,7 @@ function makeSuggestedActionsTab() {
                 let $table = $container.find('table');
 
                 if (!data.length) {
+                    // ACTIONS_STACKS_NONE
                     $table.append(noDataRow(3, '(No stacks to suggest)'));
                     return;
                 }
@@ -226,6 +238,7 @@ function makeSuggestedActionsTab() {
                 data.forEach((village, i) => {
                     let rowClass = i % 2 ? 'row_b' : 'row_a';
 
+                    // ACTIONS_STACKS_EATABLE_NUKES
                     $table.append(`
                         <tr class="${rowClass}">
                             <td>${makeVillageLink(village.villageName, village.villageId, village.x, village.y)}</td>
@@ -236,6 +249,8 @@ function makeSuggestedActionsTab() {
                 });
             },
 
+            // ACTIONS_STACKS_DESCRIPTION | ACTIONS_STACKS_POSSIBLE_NUKES
+            // ACTIONS_STACKS_CURRENT_STRENGTH
             getContent: `
                 <p>
                     A list of villages to stack, based on their incomings and current defense stationed there.
@@ -254,6 +269,7 @@ function makeSuggestedActionsTab() {
     function makeSuggestedNobleTargetsTab() {
         return {
             containerId: 'vault-suggested-noble-targets-container',
+            // TAB_NOBLE_TARGETS
             label: 'Noble Targets',
 
             _init: function ($container, data) {
@@ -263,6 +279,7 @@ function makeSuggestedActionsTab() {
                 let $table = $container.find('table');
 
                 if (!data.length) {
+                    // ACTIONS_NOBLE_TARGETS_NONE
                     $table.append(noDataRow(5, '(No suggested targets)'));
                     return;
                 }
@@ -270,6 +287,7 @@ function makeSuggestedActionsTab() {
                 data.forEach((target, i) => {
                     let rowClass = i % 2 ? 'row_b' : 'row_a';
 
+                    // ACTIONS_NOBLE_TARGETS_DV_AGE
                     $table.append(`
                         <tr class="${rowClass}">
                             <td>${makeVillageLink(target.villageName, target.villageId, target.x, target.y)}</td>
@@ -282,6 +300,10 @@ function makeSuggestedActionsTab() {
                 });
             },
 
+            // ACTIONS_NOBLE_TARGETS_DESCRIPTION
+            // ACTIONS_NOBLE_TARGETS_STATIONED_DVS
+            // ACTIONS_NOBLE_TARGETS_DVS_SEEN_AT
+            // VILLAGE | OWNER | LOYALTY
             getContent: `
                 <p>
                     A list of potential nobling targets, based on their stationed defense and current loyalty.
@@ -302,6 +324,7 @@ function makeSuggestedActionsTab() {
     function makeSuggestedUselessStacksTab() {
         return {
             containerId: 'vault-suggested-useless-stacks-container',
+            // TAB_USELESS_STACKS
             label: 'Useless Stacks',
 
             _init: function ($container, data) {
@@ -311,6 +334,7 @@ function makeSuggestedActionsTab() {
                 let $table = $container.find('table');
 
                 if (!data.length) {
+                    // ACTIONS_USELESS_STACKS_NONE
                     $table.append(noDataRow(4, '(No useless stacks)'));
                     return;
                 }
@@ -329,6 +353,9 @@ function makeSuggestedActionsTab() {
                 });
             },
 
+            // ACTIONS_USELESS_STACKS_DESCRIPTION
+            // ACTIONS_USELESS_STACKS_POP_COUNT
+            // VILLAGE | OWNER | TRIBE
             getContent: `
                 <p>
                     A list of villages that should have their support sent home, whether they are backline villages
@@ -355,6 +382,7 @@ function makeRequestLocalSupportTab() {
     let saveSettings = () => lib.setLocalStorage('request-local-support-settings', settings);
 
     return {
+        // TAB_QUICK_SUPPORT
         label: 'Quick Support',
         containerId: 'vault-quick-support-container',
 
@@ -388,6 +416,7 @@ function makeRequestLocalSupportTab() {
                     .done((players) => {
                         $searchButton.prop('disabled', false);
                         if (!players.length) {
+                            // NO_PLAYERS_FOUND
                             alert('No players found!');
                             return;
                         }
@@ -405,6 +434,7 @@ function makeRequestLocalSupportTab() {
                     })
                     .error(() => {
                         $searchButton.prop('disabled', false);
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                     });
 
@@ -412,6 +442,9 @@ function makeRequestLocalSupportTab() {
             });
         },
 
+        // ACTIONS_QUICK_SUPPORT_DESCRIPTION
+        // ACTIONS_QUICK_SUPPORT_SETTINGS_1/2/3
+        // SEARCH | RESULTS
         getContent: `
             <p>
                 Find and mail players with nearby defense.
@@ -455,6 +488,7 @@ function makeRequestStackTab() {
     let saveSettings = () => lib.setLocalStorage('request-stack-settings', settings);
 
     return {
+        // TAB_REQUEST_STACK
         label: 'Request Stack',
         containerId: 'vault-request-stack-container',
 
@@ -493,6 +527,7 @@ function makeRequestStackTab() {
                     .done((players) => {
                         $searchButton.prop('disabled', false);
                         if (!players.length) {
+                            // NO_PLAYERS_FOUND
                             alert('No players found!');
                             return;
                         }
@@ -510,6 +545,7 @@ function makeRequestStackTab() {
                     })
                     .error(() => {
                         $searchButton.prop('disabled', false);
+                        // ERROR_OCCURRED
                         alert('An error occurred...');
                     });
 
@@ -517,6 +553,9 @@ function makeRequestStackTab() {
             });
         },
 
+        // ACTIONS_REQUEST_STACK_DESCRIPTION
+        // ACTIONS_REQUEST_STACK_SETTINGS_1/2/3
+        // RESULTS
         getContent: `
             <p>
                 Find and mail players with backline defense.

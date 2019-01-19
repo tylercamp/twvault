@@ -8,6 +8,7 @@
     ];
 
     return {
+        // TAB_STATS
         label: 'Stats',
         containerId: 'vault-stats-container',
 
@@ -19,6 +20,7 @@
 
 function makeUserStatsTab() {
     return {
+        // TAB_ME
         label: 'Me',
         containerId: 'vault-user-stats-container',
 
@@ -65,10 +67,14 @@ function makeUserStatsTab() {
                 })
                 .error(() => {
                     if (!lib.isUnloading())
+                        // STATS_LOAD_ERROR
                         alert('An error occurred while loading stats');
                 });
         },
 
+        // STATS_7_DAYS | NUKES | FANGS | FAKES | STATS_TRAVELING_LANDED
+        // DEFENSE | SUPPORT | STATS_NUM_DVS | STATS_DVS_AT_HOME | STATS_BACKLINE_DVS_AT_HOME
+        // STATS_DVS_TRAVELING
         getContent: `
             <h3 style="margin-bottom:0">Last 7 Days</h3>
             <div style="display:inline-block">
@@ -107,12 +113,14 @@ function makeUserStatsTab() {
 
 function makeHighScoresTab() {
     var rankings = [
+    // FANGS | FAKES | NUKES
         { label: '# Fakes', property: 'fakesInPastWeek' },
         { label: '# Fangs', property: 'fangsInPastWeek' },
         { label: '# Nukes', property: 'nukesInPastWeek' }
     ];
 
     return {
+        // TAB_HIGH_SCORES
         label: 'High Scores',
         containerId: 'vault-stats-high-scores-container',
 
@@ -144,12 +152,15 @@ function makeHighScoresTab() {
                     });
                 })
                 .error(() => {
+                    // RANKINGS_LOAD_ERROR
                     alert('An error occurred while getting rankings');
                 });
         },
 
         //  Top of the tab has overview of top 3 players for a few different categories
         //  Full listings are available below that overview in different tabs
+        
+        // STATS_7_DAYS | RANKINGS
         getContent: `
             <h3 style="margin-bottom:0">High Scores</h3>
             <em style="font-size:0.75em;margin-bottom:1em">Over the last 7 days</em>
@@ -192,6 +203,7 @@ function makeTopRankedList(scoreData, label, property, suffix) {
 }
 
 function makeRankingTab(scoreData, label, property, suffix) {
+    // PLAYER
     return `
         <table class="vis" style="width:100%">
             <tr>
