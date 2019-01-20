@@ -124,7 +124,9 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
         var attack_results = null;
         if (attack_results = $doc.find('#attack_results').text()) {
             reportInfo.buildingLevels = {};
+            // REPORT_BUILDING_DAMAGE_NAMES
             var building_names = attack_results.match(/The (.*) has/g);
+            // REPORT_BUILDING_DAMAGE_LEVELS
             var building_levels = attack_results.match(/to level (.*)/g);
             if(building_names) {
                 for (i=0; i < building_names.length; i++) {

@@ -104,6 +104,7 @@
 
     function collectFarmingReportLinks(onDone) {
         let $groupLinks = $doc.find('td > a[href*=group_id]:not([href*=view]):not(.village_switch_link)');
+        // REPORTS_LOOT_ASSISTANT
         let $farmReportGroup = $groupLinks.filter((i, el) => $(el).text().contains('Loot Assistant'));
 
         if (!$farmReportGroup.length) {

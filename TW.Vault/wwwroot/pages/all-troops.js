@@ -144,7 +144,7 @@
                 if (lib.isUnloading())
                     return;
 
-                // TROOPS_ERROR_FINDINGS_ACADEMY
+                // TROOPS_ERROR_FINDING_ACADEMY
                 if (onProgress_)
                     onProgress_('An error occurred while finding villa with academy...');
                 else

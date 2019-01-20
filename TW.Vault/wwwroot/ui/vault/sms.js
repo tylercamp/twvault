@@ -66,7 +66,7 @@ function makeSmsDisplayTab() {
 
                 let notificationTime = lib.parseTimeString(notificationTimeText);
                 if (!notificationTime) {
-                    // SMS_INVALID_TIME_1
+                    // SMS_INVALID_TIME
                     alert('Invalid notification time!');
                     return;
                 }
