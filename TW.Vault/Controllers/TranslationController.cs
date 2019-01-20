@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using JSON = TW.Vault.Model.JSON;
 
 namespace TW.Vault.Controllers
 {
     [Produces("application/json")]
     [Route("api/Translation")]
+    [EnableCors("AllOrigins")]
     public class TranslationController : Controller
     {
         Scaffold.VaultContext context;
@@ -42,6 +45,7 @@ namespace TW.Vault.Controllers
         {
             var registry = context
                 .TranslationRegistry
+                .Include(r => r.Language)
                 .Include(r => r.Entries)
                     .ThenInclude(e => e.Key)
                 .Where(r => r.Id == translationId).FirstOrDefault();
@@ -53,6 +57,7 @@ namespace TW.Vault.Controllers
                 registry.Id,
                 registry.LanguageId,
                 registry.Name,
+                Language = registry.Language.Name,
                 Entries = registry.Entries.ToDictionary(
                     e => e.Key.Name,
                     e => e.Value
@@ -79,6 +84,33 @@ namespace TW.Vault.Controllers
                     .Select(t => new { t.Id, t.Name, t.Author, t.AuthorPlayerId })
                     .ToList()
             );
+        }
+
+        [HttpGet("translation-keys")]
+        public IActionResult GetTranslationKeys() => Ok(
+            context.TranslationKey.Select(k => new { k.Id, k.Name, k.IsTwNative, k.Group })
+        );
+
+        [HttpGet("default/{serverName}")]
+        public IActionResult GetDefaultServerTranslationId(String serverName)
+        {
+            var world = context.World
+                .Include(w => w.DefaultTranslation)
+                    .ThenInclude(t => t.Language)
+                .Where(w => w.Hostname == serverName)
+                .FirstOrDefault();
+
+            if (world == null)
+                return NotFound();
+
+            return Ok(new
+            {
+                translationId = world.DefaultTranslationId,
+                languageId = world.DefaultTranslation.Language.Id,
+                translationAuthor = world.DefaultTranslation.Author,
+                translationName = world.DefaultTranslation.Name,
+                language = world.DefaultTranslation.Language.Name
+            });
         }
     }
 }

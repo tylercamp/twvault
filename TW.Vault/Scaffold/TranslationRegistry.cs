@@ -16,5 +16,6 @@ namespace TW.Vault.Scaffold
         public TranslationLanguage Language { get; set; }
 
         public ICollection<TranslationEntry> Entries { get; set; }
+        public ICollection<World> DefaultWorlds { get; set; }
     }
 }

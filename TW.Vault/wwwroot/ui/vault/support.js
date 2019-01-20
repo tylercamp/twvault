@@ -70,8 +70,96 @@ function makeTranslationsTab() {
 
     let languages = null;
     let translations = null;
+    let translationKeys = null;
 
-    let translationEntries = {};
+    let currentEditingTranslation = null;
+
+    function loadRegistryEditor($container, registry) {
+        console.log('Loading registry editor for: ', registry);
+
+        let requests = [];
+
+        if (!translationKeys) {
+            requests.push($.get(lib.makeVaultUrl('api/translation/translation-keys')).done((data) => translationKeys = data));
+        }
+
+        let $entriesContainer = $container.find('#vault-translation-registry-entries');
+        let $infoContainer = $container.find('#vault-translation-registry-info');
+
+        function makeGroupEditor($container, name, group) {
+            lib.selectSort(group, (e) => e.name);
+            let toggleButtonText = () => {
+                let numExisting = group.filter((k) => !!registry.entries[k.name]).length;
+                return `${numExisting == group.length ? '' : '(!) '}${name} (${numExisting}/${group.length})`
+            };
+
+            let $groupContainer = $(`
+                <div class="vault-translation-key-group-container" style="margin-bottom:1em">
+                    ${uilib.mkBtn('vault-translation-key-group-toggle-' + name, toggleButtonText())}
+                    <table id="vault-translation-key-${name}-group-entry-container" style="display:none; width:100%">
+                        <thead>
+                            <tr>
+                                <th style="width:20%">Key</th>
+                                <th>Value</th>
+                                <th style="width:35%">English Example</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            `.trim());
+
+            let $entriesContainer = $groupContainer.find(`#vault-translation-key-${name}-group-entry-container tbody`);
+            let $toggleButton = $groupContainer.find('#vault-translation-key-group-toggle-' + name);
+
+            $toggleButton.click(() => {
+                $entriesContainer.closest('table').toggle();
+            });
+
+            group.forEach((k) => makeKeyEditor($entriesContainer, k, registry));
+
+            $entriesContainer.find('textarea').change((ev) => {
+                let $el = $(ev.target);
+                let keyName = $el.closest('tr').data('key-name');
+                registry.entries[keyName] = $el.val().trim();
+
+                $toggleButton.text(toggleButtonText());
+            });
+
+            $container.append($groupContainer);
+        }
+
+        function makeKeyEditor($container, key, registry) {
+            $container.append(`
+                <tr data-key-id="${key.id}" data-key-name="${key.name}">
+                    <td>${key.name}</td>
+                    <td>
+                        <textarea style="width:100%;margin:0" rows="2">${registry.entries[key.name] || ''}</textarea>
+                    </td>
+                </tr>
+            `);
+        }
+
+        lib.whenAll$(requests, () => {
+
+            //  TODO - Load general info
+
+            let groupedKeys = lib.groupBy(translationKeys, k => k.group);
+            lib.selectSort(groupedKeys, (k) => k.key);
+            groupedKeys.forEach((group) => {
+                makeGroupEditor($entriesContainer, group.key, group.values);
+            });
+
+            $entriesContainer.find('table tr').find('td:first-of-type,th:first-of-type').css('width', '100px');
+            $entriesContainer.find('table tr td:first-of-type').css({
+                'font-size': '0.8em',
+                'word-break': 'break-word',
+                'padding-bottom': '1em'
+            });
+
+            $entriesContainer.find('textarea').css('box-sizing', 'border-box');
+        });
+    }
 
     return {
         label: 'Translations',
@@ -80,12 +168,20 @@ function makeTranslationsTab() {
         init: function($container) {
 
             let languageRequest = $.get(lib.makeVaultUrl('api/translation/languages'))
-                .done((data) => languages = data);
+                .done((data) => {
+                    languages = data;
+                    console.log('Got languages: ', languages);
+                });
 
             let translationsRequest = $.get(lib.makeVaultUrl('api/translation'))
-                .done((data) => translations = lib.arrayToObject(data, t => t.languageId));
+                .done((data) => {
+                    translations = lib.arrayToObjectByGroup(data, t => t.languageId);
+                    console.log('Got translations: ', data, translations);
+                });
 
-            lib.whenAll$(() => {
+            lib.whenAll$([languageRequest, translationsRequest], () => {
+
+                console.log('Loading translation UI');
 
                 let $currentLanguage = $container.find('#vault-current-language');
                 let $currentTranslation = $container.find('#vault-current-translation');
@@ -102,9 +198,22 @@ function makeTranslationsTab() {
 
                 // TODO:
                 // - Create translation button
-                // - etc ... tired
+                // - Save translation changes
+                // - Inputs for author/etc
+                // - Save language/translation settings
 
-            }, [languageRequest, translationsRequest]);
+                $container.find('#vault-edit-translation').click(() => {
+                    currentEditingTranslation = lib.getCurrentTranslation();
+                    loadRegistryEditor($container, currentEditingTranslation);
+                });
+
+                $container.find('#vault-save-translation-registry-changes').click(() => {
+                    lib.putApi('playertranslation', currentEditingTranslation)
+                        .done(() => alert('Saved changes!'))
+                        .error(() => alert('An error occurred...'));
+                });
+
+            });
         },
 
         getContent: `
@@ -117,7 +226,19 @@ function makeTranslationsTab() {
             <label for="vault-current-translation">Translation: </label>
             <select id="vault-current-translation"></select>
             <br>
-            <br
+            <button id="vault-save-translation-settings">Save</button>
+            <br>
+            <br>
+            <button id="vault-edit-translation">Edit Translation</button>
+            <button id="vault-new-translation">New Translation</button>
+            <div id="vault-translation-registry-info">
+                <div id="vault-translation-registry-info">
+                </div>
+            
+                <div id="vault-translation-registry-entries" style="text-align:left;max-height:600px;overflow-y:scroll"></div>
+                
+                <button id="vault-save-translation-registry-changes">Save Changes</button>
+            </div>
             
         `
     };

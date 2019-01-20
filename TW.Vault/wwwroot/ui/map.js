@@ -506,7 +506,7 @@
         // MAP_HOVER_NUKE_ESTIMATE
         // MAP_HOVER_SEEN_AT
         // MAP_HOVER_LATEST_LEVELS | MAP_HOVER_POSSIBLE_LEVELS
-        // MAP_HOVER_LOYALTY | MAP_HOVER_LATEST_LOYALTY | MAP_HOVER_POSSIBLE_LOYALTY
+        // LOYALTY | MAP_HOVER_LATEST_LOYALTY | MAP_HOVER_POSSIBLE_LOYALTY
         // VAULT
         $villageInfoContainer.html(`
                     ${ !settings.showCommands ? '' : `

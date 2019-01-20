@@ -1095,9 +1095,14 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("translation_key", "feature");
 
-                entity.Property(e => e.Id).IsRequired().HasColumnName("id");
+                entity.Property(e => e.Id)
+                    .IsRequired()
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('feature.translation_key_id_seq'::regclass)"); ;
+
                 entity.Property(e => e.Name).IsRequired().HasColumnName("name");
                 entity.Property(e => e.IsTwNative).HasDefaultValue(false).IsRequired().HasColumnName("is_tw_native");
+                entity.Property(e => e.Group).IsRequired().HasColumnName("group");
             });
 
             modelBuilder.Entity<TranslationLanguage>(entity =>
@@ -1106,7 +1111,11 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("translation_language", "feature");
 
-                entity.Property(e => e.Id).IsRequired().HasColumnName("id");
+                entity.Property(e => e.Id)
+                    .IsRequired()
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('feature.translation_language_id_seq'::regclass)");
+
                 entity.Property(e => e.Name).IsRequired().HasColumnName("name");
             });
 
@@ -1116,7 +1125,11 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("translation_registry", "feature");
 
-                entity.Property(e => e.Id).IsRequired().HasColumnName("id");
+                entity.Property(e => e.Id)
+                    .IsRequired()
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('feature.translation_registry_id_seq'::regclass)");
+
                 entity.Property(e => e.Name).IsRequired().HasColumnName("name");
                 entity.Property(e => e.Author).IsRequired().HasColumnName("author");
                 entity.Property(e => e.AuthorPlayerId).IsRequired().HasColumnName("author_player_id");
@@ -1308,6 +1321,16 @@ namespace TW.Vault.Scaffold
                     .IsRequired()
                     .HasColumnName("name")
                     .HasMaxLength(6);
+
+                entity.Property(e => e.DefaultTranslationId)
+                    .IsRequired()
+                    .HasColumnName("default_translation_id");
+
+                entity.HasOne(e => e.DefaultTranslation)
+                    .WithMany(e => e.DefaultWorlds)
+                    .HasForeignKey(e => e.DefaultTranslationId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("fk_default_translation_id");
             });
 
             modelBuilder.Entity<WorldSettings>(entity =>
@@ -1405,6 +1428,12 @@ namespace TW.Vault.Scaffold
             modelBuilder.HasSequence("enemy_tribe_id_seq");
 
             modelBuilder.HasSequence("access_group_id_seq");
+
+            modelBuilder.HasSequence<short>("translation_key_id_seq");
+
+            modelBuilder.HasSequence<short>("translation_language_id_seq");
+
+            modelBuilder.HasSequence<short>("translation_registry_id_seq");
         }
     }
 }

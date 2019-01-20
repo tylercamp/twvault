@@ -30,6 +30,8 @@ var lib = (() => {
         return encryption.encryptString(authString, lib.getCurrentUtcTimestamp());
     };
 
+    let currentTranslation = null;
+
     let lib = {
 
         //  The set of known page types recognized by this script
@@ -338,11 +340,64 @@ var lib = (() => {
             return !hasRan;
         },
 
+        getCurrentTranslationAsync: function (callback) {
+            if (currentTranslation) {
+                callback(currentTranslation);
+            }
+
+            let translationId = lib.getLocalStorage('currentTranslationId');
+            if (translationId == null) {
+                $.get(lib.makeVaultUrl('api/translation/default/' + window.location.host))
+                    .done((translation) => {
+                        lib.setCurrentTranslation(translation.translationId);
+                        lib.getCurrentTranslationAsync(callback);
+                    });
+                return;
+            }
+
+            $.get(lib.makeVaultUrl(`api/translation/${translationId}/contents`))
+                .done((translation) => {
+                    currentTranslation = translation;
+                    callback(currentTranslation);
+                });
+        },
+
+        getCurrentTranslation: function () {
+            if (currentTranslation) {
+                return currentTranslation;
+            } else {
+                throw "No translation loaded";
+            }
+        },
+
+        setCurrentTranslation: function (translationId) {
+            lib.setLocalStorage('currentTranslationId', translationId);
+            currentTranslation = null;
+        },
+
+        translate: function (key) {
+            if (currentTranslation == null)
+                throw "No translation loaded";
+
+            let result = currentTranslation.entries[key];
+            if (!result || !result.trim().length) {
+                console.error('No translation provided for key: ', key);
+                return "NO TRANSLATION AVAILABLE";
+            } else {
+                return result;
+            }
+        },
+
         isUnloading: function () {
             return isUnloading;
         },
 
-        whenAll$: function (callback, ...requests) {
+        whenAll$: function (requests, callback) {
+            if (!requests.length) {
+                callback();
+                return;
+            }
+
             let numDone = 0;
             requests.forEach((r) => {
                 r.done(() => {
@@ -392,6 +447,28 @@ var lib = (() => {
                 data: object,
                 contentType: 'application/json',
                 type: 'POST',
+                converters: {
+                    "text json": lib.jsonParse
+                },
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken, lib.isSitter()));
+                }
+            });
+        },
+
+        //  PUTs JSON data to the given URL with vault auth data
+        putApi: function putApi(url, object) {
+            if (typeof object != 'string' && !!object)
+                object = JSON.stringify(object);
+
+            if (object && object.length) {
+                object = encryption.encryptString(object, lib.getCurrentUtcTimestamp());
+            }
+
+            return $.ajax(lib.makeApiUrl(url), {
+                data: object,
+                contentType: 'application/json',
+                type: 'PUT',
                 converters: {
                     "text json": lib.jsonParse
                 },
@@ -820,6 +897,44 @@ var lib = (() => {
             return result;
         },
 
+        arrayToObjectByGroup: function arrayToObjectByGroup(array, keySelector) {
+            var result = {};
+            array.forEach((v) => {
+                let k = keySelector(v);
+                if (!result[k])
+                    result[k] = [v];
+                else
+                    result[k].push(v);
+            });
+            return result;
+        },
+
+        groupBy: function groupArrayBy(array, keySelector) {
+            var result = [];
+            var resultMap = {};
+            array.forEach((v) => {
+                let k = keySelector(v);
+                if (!resultMap[k])
+                    result.push(resultMap[k] = { key: k, values: [v] });
+                else
+                    resultMap[k].values.push(v);
+            });
+            return result;
+        },
+
+        selectSort: function (array, selector_) {
+            selector_ = selector_ || ((_) => _);
+
+            array.sort((a, b) =>
+                selector_(a) == selector_(b)
+                    ? 0
+                    : (selector_(a) < selector_(b)
+                        ? -1
+                        : 1
+                    )
+            );
+        },
+
         objectToArray: function objectToArray(object, selector) {
             var result = [];
             lib.objForEach(object, (val, prop) => {
@@ -879,7 +994,7 @@ var lib = (() => {
                 authTribeId = tribeId;
 
                 function checkDone() {
-                    if (utcTimeOffset != null && serverSettings != null) {
+                    if (utcTimeOffset != null && serverSettings != null && currentTranslation != null) {
                         lib.twstats._updateWithSettings(
                             serverSettings.archersEnabled,
                             serverSettings.militiaEnabled,
@@ -901,6 +1016,8 @@ var lib = (() => {
                         serverSettings = data;
                         checkDone();
                     });
+
+                lib.getCurrentTranslationAsync(checkDone);
             });
         }
     };
