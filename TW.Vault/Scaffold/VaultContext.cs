@@ -42,6 +42,7 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<TranslationEntry> TranslationEntry { get; set; }
         public virtual DbSet<TranslationKey> TranslationKey { get; set; }
         public virtual DbSet<TranslationLanguage> TranslationLanguage { get; set; }
+        public virtual DbSet<TranslationParameter> TranslationParameter { get; set; }
         public virtual DbSet<TranslationRegistry> TranslationRegistry { get; set; }
         public virtual DbSet<User> User { get; set; }
         public virtual DbSet<UserLog> UserLog { get; set; }
@@ -1117,6 +1118,31 @@ namespace TW.Vault.Scaffold
                     .HasDefaultValueSql("nextval('feature.translation_language_id_seq'::regclass)");
 
                 entity.Property(e => e.Name).IsRequired().HasColumnName("name");
+            });
+
+            modelBuilder.Entity<TranslationParameter>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.ToTable("translation_parameter", "feature");
+
+                entity.Property(e => e.Id)
+                    .IsRequired()
+                    .HasColumnName("id")
+                    .HasDefaultValueSql("nextval('feature.translation_parameter_id_seq'::regclass)");
+
+                entity.Property(e => e.KeyId)
+                    .IsRequired()
+                    .HasColumnName("key_id");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasColumnName("name");
+
+                entity.HasOne(e => e.Key)
+                    .WithMany(e => e.Parameters)
+                    .HasForeignKey(e => e.KeyId)
+                    .HasConstraintName("fk_translation_key_id");
             });
 
             modelBuilder.Entity<TranslationRegistry>(entity =>

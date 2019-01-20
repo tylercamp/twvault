@@ -73,6 +73,16 @@ namespace TW.Vault
                 return cfg;
             }
         }
+
+        public static TranslationConfiguration Translation
+        {
+            get
+            {
+                TranslationConfiguration cfg = new TranslationConfiguration();
+                Instance.GetSection("Translation").Bind(cfg);
+                return cfg;
+            }
+        }
     }
 
     public class SecurityConfiguration
@@ -139,5 +149,10 @@ namespace TW.Vault
     {
         public bool EnableRankingsService { get; set; } = true;
         public int RefreshCheckIntervalSeconds { get; set; } = 300;
+    }
+
+    public class TranslationConfiguration
+    {
+        public int BaseTranslationId { get; set; }
     }
 }

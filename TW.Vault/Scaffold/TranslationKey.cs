@@ -13,5 +13,6 @@ namespace TW.Vault.Scaffold
         public String Group { get; set; }
 
         public ICollection<TranslationEntry> TranslationEntries { get; set; }
+        public ICollection<TranslationParameter> Parameters { get; set; }
     }
 }

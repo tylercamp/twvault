@@ -71,16 +71,21 @@ function makeTranslationsTab() {
     let languages = null;
     let translations = null;
     let translationKeys = null;
+    let translationParameters = null;
 
     let currentEditingTranslation = null;
 
-    function loadRegistryEditor($container, registry) {
+    function loadRegistryEditor($container, registry, onLoaded) {
         console.log('Loading registry editor for: ', registry);
 
         let requests = [];
 
         if (!translationKeys) {
             requests.push($.get(lib.makeVaultUrl('api/translation/translation-keys')).done((data) => translationKeys = data));
+        }
+
+        if (!translationParameters) {
+            requests.push($.get(lib.makeVaultUrl('api/translation/parameters')).done((data) => translationParameters = data));
         }
 
         let $entriesContainer = $container.find('#vault-translation-registry-entries');
@@ -121,12 +126,32 @@ function makeTranslationsTab() {
             $entriesContainer.find('textarea').change((ev) => {
                 let $el = $(ev.target);
                 let keyName = $el.closest('tr').data('key-name');
-                registry.entries[keyName] = $el.val().trim();
+                let val = $el.val().trim();
+
+                let parameters = translationParameters[keyName];
+                if (parameters) {
+                    let missingParameters = [];
+                    parameters.forEach((paramName) => {
+                        let paramText = `{${paramName}}`;
+                        if (!val.contains(paramText)) {
+                            missingParameters.push(paramText);
+                        }
+                    });
+
+                    if (missingParameters.length) {
+                        alert(`The translation for "${keyName}" is missing: ${missingParameters.join(", ")}`);
+                        return;
+                    }
+                }
+
+                registry.entries[keyName] = val;
 
                 $toggleButton.text(toggleButtonText());
             });
 
             $container.append($groupContainer);
+
+            onLoaded && onLoaded();
         }
 
         function makeKeyEditor($container, key, registry) {

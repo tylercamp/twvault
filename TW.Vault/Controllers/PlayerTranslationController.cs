@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -44,6 +45,10 @@ namespace TW.Vault.Controllers
 
             if (existingRegistry != null)
                 return Conflict();
+
+            TranslationValidationResult validationResult;
+            if (!ValidateRegistry(newRegistry.Entries, out validationResult))
+                return BadRequest(validationResult.FailureReasons);
 
             var scaffoldRegistry = new Scaffold.TranslationRegistry
             {
@@ -96,10 +101,13 @@ namespace TW.Vault.Controllers
             if (scaffoldRegistry == null)
                 return NotFound();
 
-            scaffoldRegistry.Name = jsonRegistry.Name;
-
             var translationKeys = context.TranslationKey.ToDictionary(k => k.Name, k => k.Id);
             var translationKeysInverted = translationKeys.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
+
+            TranslationValidationResult validationResult;
+            if (!ValidateRegistry(jsonRegistry.Entries, out validationResult))
+                return BadRequest(validationResult.FailureReasons);
+
             var existingKeyIds = scaffoldRegistry.Entries.Select(e => e.KeyId).ToList();
 
             var addedKeyNames = jsonRegistry.Entries.Keys
@@ -112,6 +120,8 @@ namespace TW.Vault.Controllers
                 .Where((kvp) => existingKeyIds.Contains(kvp.Value))
                 .Select(kvp => kvp.Key)
                 .ToList();
+
+            scaffoldRegistry.Name = jsonRegistry.Name;
 
             // Delete removed entries
             foreach (var removedEntry in scaffoldRegistry.Entries)
@@ -161,6 +171,56 @@ namespace TW.Vault.Controllers
             context.SaveChanges();
 
             return Ok();
+        }
+
+        private class TranslationValidationResult
+        {
+            public Dictionary<String, String> FailureReasons { get; set; } = new Dictionary<String, string>();
+        }
+
+        private static readonly Regex ParameterExtractor = new Regex(@"\{([^\}]+)\}");
+
+        private bool ValidateRegistry(Dictionary<String, String> checkedEntries, out TranslationValidationResult validationResult)
+        {
+            var parameters =
+                context.TranslationParameter
+                    .Include(p => p.Key)
+                    .Select(p => new { Key = p.Key.Name, p.Name })
+                .ToList()
+                .GroupBy(p => p.Key)
+                .ToDictionary(g => g.Key, g => g.Select(p => p.Name).ToList());
+
+            var result = new TranslationValidationResult();
+
+            foreach (var (key, value) in checkedEntries.Tupled())
+            {
+                if (!parameters.ContainsKey(key))
+                    continue;
+
+                var keyParameters = parameters[key];
+                var discoveredParameters = ParameterExtractor
+                    .Matches(value)
+                    ?.SelectMany(m => m.Groups.Select(g => g.Value))
+                ?? new String[] { };
+
+                var missingParameters = keyParameters.Except(discoveredParameters);
+                if (missingParameters.Any())
+                {
+                    var message = $"Missing parameters: {String.Join(", ", missingParameters.Select(p => $"\"{p}\""))}";
+                    result.FailureReasons.Add(key, message);
+                }
+            }
+
+            if (result.FailureReasons.Count > 0)
+            {
+                validationResult = result;
+                return false;
+            }
+            else
+            {
+                validationResult = null;
+                return true;
+            }
         }
     }
 }

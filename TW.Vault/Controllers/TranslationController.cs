@@ -112,5 +112,24 @@ namespace TW.Vault.Controllers
                 language = world.DefaultTranslation.Language.Name
             });
         }
+
+        [HttpGet("reference")]
+        public IActionResult GetReferenceTranslation() => Ok(new { translationId = Configuration.Translation.BaseTranslationId });
+
+        [HttpGet("parameters")]
+        public IActionResult GetAllTranslationParameters()
+        {
+            return Ok(
+                context.TranslationParameter
+                    .Include(p => p.Key)
+                    .Select(p => new { Key = p.Key.Name, p.Name })
+                    .ToList()
+                    .GroupBy(p => p.Key)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(p => p.Name)
+                    )
+            );
+        }
     }
 }
