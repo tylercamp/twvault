@@ -161,7 +161,7 @@
                 let docText = lib.parseHtml(data).text();
                 // TROOPS_NOBLES_LIMIT
                 let limit = docText.match(/Noblemen\s+limit:\s*(\d+)/);
-                // TROOPS_NOBLES_CURRENT
+                // TROOPS_NOBLES_NUM_VILLAGES
                 let current = docText.match(/Number\s+of\s+conquered\s+villages:\s*(\d+)/);
 
                 console.log('Got limit: ', limit);
