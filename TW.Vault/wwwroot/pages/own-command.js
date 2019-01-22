@@ -15,7 +15,7 @@
         targetPlayerId = null;
     }
 
-    let hasCatapult = $container.text().contains("Catapult");
+    let hasCatapult = $container.text().toLowerCase().contains(lib.translate(lib.itlcodes.UNIT_CATAPULT).toLowerCase());
     let landsAtSelector = hasCatapult
         ? '#content_value .vis:nth-of-type(1) tr:nth-of-type(8) td:nth-of-type(2)'
         : '#content_value .vis:nth-of-type(1) tr:nth-of-type(7) td:nth-of-type(2)';

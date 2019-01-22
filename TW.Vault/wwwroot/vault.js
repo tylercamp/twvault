@@ -29,47 +29,19 @@
     lib.setScriptHost(lib.getScriptHost());
 
     if (!lib.checkUserHasPremium()) {
-        // REQUIRE_PREMIUM_ACCOUNT
-        alert('This script cannot be used without a premium account!');
+        alert(lib.translate(lib.itlcodes.REQUIRE_PREMIUM_ACCOUNT));
         return;
     }
 
     lib.init(() => {
-
-        // TERMS_AND_CONDITIONS
-        let terms = `
-
-This script serves as an interface to the Vault, a private tool for collecting Tribal Wars data.
-
-All data and requests to the Vault will have various information logged for security. This is limited to:
-- Authentication token
-- IP address
-- Player ID
-- Tribe ID
-- Requested endpoint
-- Time of transaction
-
-Requests to this script will only be IP-logged to protect against abuse. Information collected by this script will never be shared
-with any third parties or any unauthorized tribes/players.
-
-These terms can be viewed again after running the script. To cancel your agreement, do not run this script again.
-
-`;
-
         let isFirstRun = lib.onFirstRun((onAccepted) => {
-            // TERMS_AND_CONDITIONS
-            let alertString =
-                "This is your first time running the script - please see the terms and conditions on DATA COLLECTION below.\n\n"
-                + terms.trim()
-                + "\n\nAgree to these terms?";
+            let alertString = lib.translate(lib.itlcodes.TERMS_AND_CONDITIONS);
 
             if (confirm(alertString)) {
-                // RE_RUN_SCRIPT
-                alert('Thank you, please run the script again to start using it.');
+                alert(lib.translate(lib.itlcodes.RE_RUN_SCRIPT));
                 onAccepted();
             } else {
-                // SCRIPT_NOT_RAN
-                alert('The script will not be ran.');
+                alert(lib.translate(lib.itlcodes.SCRIPT_NOT_RAN));
             }
         });
 
@@ -78,8 +50,7 @@ These terms can be viewed again after running the script. To cancel your agreeme
         }
 
         if (lib.versioning.checkNeedsUpdate()) {
-            // UPDATE_NOTICE
-            alert('The vault was recently updated, you will need to re-upload some data.');
+            alert(lib.translate(lib.itlcodes.UPDATE_NOTICE));
             lib.versioning.updateForLatestVersion();
         }
 

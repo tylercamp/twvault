@@ -2,18 +2,17 @@
     $doc = $doc || $(document);
 
     $doc.find('#vault-commands').remove();
-    // OPEN_VAULT | ARRIVAL_TIME | ARRIVES_IN
     let $container = $(`
         <div id="vault-commands" style="padding-top:10px;clear:both">
             <div id="vault-commands-backtime-bbcode" style="padding-bottom:10px;display:none">
                 <textarea style="width:100%; box-sizing:border-box;min-height:100px"></textarea>
             </div>
-            <button id="vault-show-main">Open Vault</button>
+            <button id="vault-show-main">${lib.translate(lib.itlcodes.OPEN_VAULT)}</button>
             <table class="vis" width="100%">
                 <tr>
                     <th width="52%">Vault - commands from here</th>
-                    <th width="33%">Arrival time</th>
-                    <th width="15%">Arrives in</th>
+                    <th width="33%">${lib.translate(lib.itlcodes.ARRIVAL_TIME)}</th>
+                    <th width="15%">${lib.translate(lib.itlcodes.ARRIVES_IN)}</th>
                 </tr>
             </table>
         </div>
@@ -47,8 +46,7 @@
                     bodyHandler: handleIconHover
                 });
                 UI.ToolTip('.vault-backtime', {
-                    // BACKTIME_BB_CODE_HOVER
-                    bodyHandler: () => '<b>Make BB-code for back-timing</b>'
+                    bodyHandler: () => `<b>${lib.translate(lib.itlcodes.BACKTIME_BB_CODE_HOVER)}</b>`
                 });
             })
             .error((xhr) => {
@@ -61,18 +59,15 @@
                     try {
                         reasons = JSON.parse(xhr.responseText);
                     } catch (_) { }
-                    // BACKTIME_UPLOAD_DATA_REQUIRED
-                    let alertMessage = "You haven't uploaded data in a while, you can't use the backtiming script until you do. Upload your data then refresh the page and run this script again.";
+                    let alertMessage = lib.translate(lib.itlcodes.BACKTIME_UPLOAD_DATA_REQUIRED);
                     if (reasons) {
-                        // UPLOAD_DATA_REQUIRED_REASONS
-                        alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
+                        alertMessage += `\n${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS)} ${reasons.join(', ')}`;
                     }
                     alert(alertMessage);
                     displayMainVaultUI().onClosed(loadCommandData);
                     showedNeedsUploadMessage = true;
                 } else {
-                    // ERROR_OCCURRED
-                    alert('An error occurred...');
+                    alert(lib.messages.GENERIC_ERROR);
                 }
             });
     }
@@ -82,9 +77,8 @@
         $container.find('table tr:not(:first-of-type)').remove();
 
         if (!villageCommandData || !villageCommandData.commandsFromVillage || !villageCommandData.commandsFromVillage.length) {
-            // NO_COMMANDS_AVAILABLE
             $container.find('table').append(`
-                <tr><td colspan="3" style="text-align:center">No commands available</td></tr>
+                <tr><td colspan="3" style="text-align:center">${lib.translate(lib.itlcodes.NO_COMMANDS_AVAILABLE)}</td></tr>
             `.trim());
             return;
         }
@@ -139,8 +133,7 @@
                     })
                     .error(() => {
                         enableButton();
-                        // ERROR_OCCURRED
-                        alert('An error occurred...');
+                        alert(lib.messages.GENERIC_ERROR);
                     });
             });
             
@@ -215,8 +208,7 @@
         let army = commandsById[$el.data('command-id')].army;
 
         if (!army) {
-            // NO_DATA_AVAILABLE
-            return '<b>No data is available</b>';
+            return `<b>${lib.translate(lib.itlcodes.NO_DATA_AVAILABLE)}</b>`;
         }
 
         let troopNames = [
@@ -238,9 +230,8 @@
         if (lib.twstats.paladinEnabled)
             troopNames.push('knight');
 
-        // TROOPS
         return `
-            <b style="white-space:nowrap;">Troops</b>
+            <b style="white-space:nowrap;">${lib.translate(lib.itlcodes.TROOPS)}</b>
             <br>
             <table class="vis" style="width:100%">
                 <tr>
@@ -256,8 +247,12 @@
 
     function makePlanBbCode(instructions) {
         const tableBuilder = new BBTableBuilder();
-        // SOURCE_VILLAGE | LAUNCH_TIME | LANDING_TIME | TROOP_REQUIRED
-        tableBuilder.setColumnNames("Source Village", "Launch Time", "Landing Time", "Troop Req.");
+        tableBuilder.setColumnNames(
+            lib.translate(lib.itlcodes.SOURCE_VILLAGE),
+            lib.translate(lib.itlcodes.LAUNCH_TIME),
+            lib.translate(lib.itlcodes.LANDING_TIME),
+            lib.translate(lib.itlcodes.TROOP_REQUIRED)
+        );
 
         instructions.forEach((i) => {
             tableBuilder.addRow(

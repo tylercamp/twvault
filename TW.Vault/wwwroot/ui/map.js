@@ -15,8 +15,7 @@
     var currentVillageId = null;
     let $popup = $doc.find('#map_popup');
 
-    // MAP_USING_VAULT
-    $doc.find('#continent_id').parent().append('<span> - Using Vault</span>');
+    $doc.find('#continent_id').parent().append(`<span> - ${lib.translate(lib.itlcodes.MAP_USING_VAULT)}</span>`);
     let $openVaultLink = $('<button style="margin-left:1em;vertical-align:middle">Open Vault</button>');
     $doc.find('#continent_id').parent().append($openVaultLink);
 
@@ -95,10 +94,8 @@
 
             tribeNames.sort();
 
-            // MAP_HIGHLIGHT_ANY
-            $highlightTribeSelect.append('<option value="___ANY___" selected>Any</option>');
-            // MAP_HIGHLIGHT_NO
-            $highlightTribeSelect.append('<option value="___NONE___">No</option>');
+            $highlightTribeSelect.append(`<option value="___ANY___" selected>${lib.translate(lib.itlcodes.MAP_HIGHLIGHT_ANY)}</option>`);
+            $highlightTribeSelect.append(`<option value="___NONE___">${lib.translate(lib.itlcodes.MAP_HIGHLIGHT_NO)}</option>`);
 
             tribeNames.forEach((n) => {
                 if (!n) {
@@ -230,19 +227,16 @@
                         lockedDataReasons = reasons;
                     } catch (_) { }
 
-                    // MAP_UPLOAD_DATA_REQUIRED
-                    let alertMessage = "You haven't uploaded data in a while, you can't use the map script until you do. Click the 'Show' link at the top of the page to start uploading. (Then refresh the page)"
+                    let alertMessage = lib.translate(lib.itlcodes.MAP_UPLOAD_DATA_REQUIRED);
                     if (reasons) {
-                        // UPLOAD_DATA_REQUIRED_REASONS
-                        alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
+                        alertMessage += `\n${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS)} ${ reasons.join(', ') }`;
                     }
 
                     alert(alertMessage);
                     canUse = false;
                 } else if (xhr.status != 401) {
                     if (!lib.isUnloading()) {
-                        // ERROR_OCCURRED
-                        alert("An error occurred...");
+                        alert(lib.messages.GENERIC_ERROR);
                     }
                 }
             });
@@ -500,23 +494,15 @@
             }
         });
 
-        // MAP_HOVER_CMD_FAKES | MAP_HOVER_CMD_NUKES | MAP_HOVER_CMD_NOBLES | MAP_HOVER_CMD_DVS | MAP_HOVER_CMD_NUM_PLAYERS
-        // MAP_HOVER_ARMY_AT_HOME | MAP_HOVER_ARMY_STATIONED | MAP_HOVER_ARMY_TRAVELING | MAP_HOVER_ARMY_OWNED
-        // MAP_HOVER_ARMY_POSSIBLE_RECRUIT
-        // MAP_HOVER_NUKE_ESTIMATE
-        // MAP_HOVER_SEEN_AT
-        // MAP_HOVER_LATEST_LEVELS | MAP_HOVER_POSSIBLE_LEVELS
-        // LOYALTY | MAP_HOVER_LATEST_LOYALTY | MAP_HOVER_POSSIBLE_LOYALTY
-        // VAULT
         $villageInfoContainer.html(`
                     ${ !settings.showCommands ? '' : `
                         <table class='vis' style="width:100%">
                             <tr>
-                                <th># Fakes</th>
-                                <th># Nukes</th>
-                                <th># Nobles</th>
-                                <th># DVs</th>
-                                <th># Players Sending</th>
+                                <th>${lib.translate(lib.itlcodes.MAP_HOVER_CMD_FAKES)}</th>
+                                <th>${lib.translate(lib.itlcodes.MAP_HOVER_CMD_NUKES)}</th>
+                                <th>${lib.translate(lib.itlcodes.MAP_HOVER_CMD_NOBLES)}</th>
+                                <th>${lib.translate(lib.itlcodes.MAP_HOVER_CMD_DVS)}</th>
+                                <th>${lib.translate(lib.itlcodes.MAP_HOVER_CMD_NUM_PLAYERS)}</th>
                             </tr>
                             <tr>
                                 <td>${numFakes}</td>
@@ -553,21 +539,21 @@
                         </tr>
                         ${ !data.atHomeArmy ? '' : `
                         <tr>
-                            <td>At home</td>
+                            <td>${lib.translate(lib.itlcodes.MAP_HOVER_ARMY_AT_HOME)}</td>
                             <td>${data.atHomeSeenAt ? lib.formatDateTime(data.atHomeSeenAt) : ''}</td>
                             ${makeTroopTds(data.atHomeArmy || {})}
                         </tr>
                         `}
                         ${ !data.stationedArmy ? '' : `
                         <tr>
-                            <td>Stationed</td>
+                            <td>${lib.translate(lib.itlcodes.MAP_HOVER_ARMY_STATIONED)}</td>
                             <td>${data.stationedSeenAt ? lib.formatDateTime(data.stationedSeenAt) : ''}</td>
                             ${makeTroopTds(data.stationedArmy || {})}
                         </tr>
                         `}
                         ${ !data.travelingArmy ? '' : `
                         <tr>
-                            <td>Traveling</td>
+                            <td>${lib.translate(lib.itlcodes.MAP_HOVER_ARMY_TRAVELING)}</td>
                             <td>${data.travelingSeenAt ? lib.formatDateTime(data.travelingSeenAt) : ''}</td>
                             ${makeTroopTds(data.travelingArmy || {})}
                         </tr>
@@ -581,7 +567,7 @@
                         `}
                         ${ !data.ownedArmy ? '' : `
                         <tr>
-                            <td>Owned</td>
+                            <td>${lib.translate(lib.itlcodes.MAP_HOVER_ARMY_OWNED)}</td>
                             <td>${data.ownedArmySeenAt ? lib.formatDateTime(data.ownedArmySeenAt) : ''}</td>
                             ${makeTroopTds(data.ownedArmy || {})}
                         </tr>
@@ -589,7 +575,7 @@
                         ${ !settings.showPossiblyRecruited ? '' : `
                             ${ !data.possibleRecruitedOffensiveArmy || !data.possibleRecruitedDefensiveArmy ? '' : `
                             <tr>
-                                <td rowspan="2">Possibly recruited</td>
+                                <td rowspan="2">${lib.translate(lib.itlcodes.MAP_HOVER_ARMY_POSSIBLE_RECRUIT)}</td>
                                 <td></td>
                                 ${makeTroopTds(data.possibleRecruitedOffensiveArmy || {})}
                             </tr>
@@ -601,7 +587,7 @@
                         `}
                         ${ !data.nukesRequired || !settings.showNukes ? '' : `
                         <tr>
-                            <td colspan=12 style="text-align:center">Will take ~${data.nukesRequired} nukes to clear at ${data.morale}% morale (last nuke has ~${data.lastNukeLossPercent}% losses)</td>
+                            <td colspan=12 style="text-align:center">${lib.translate(lib.itlcodes.MAP_HOVER_NUKE_ESTIMATE, { nukesRequired: data.nukesRequired, morale: data.morale, lossPercent: data.lastNukeLossPercent })}</td>
                         </tr>
                         `}
                     </table>
@@ -610,8 +596,8 @@
                         ${ typeof data.lastBuildings == 'undefined' || data.lastBuildings == null ? '<div style="text-align:center;padding:0.5em;">No building data available.</div>' : `
                         <table class='vis' style="width:100%">
                             <tr style="background-color:#c1a264 !important">
-                                <th>Vault</th>
-                                <th>Seen at</th>
+                                <th>${lib.translate(lib.itlcodes.VAULT)}</th>
+                                <th>${lib.translate(lib.itlcodes.MAP_HOVER_SEEN_AT)}</th>
                                 <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/snob.png" title="Academy" alt="" class="bmain_list_img"></th>
                                 <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/smith.png" title="Smithy" alt="" class="bmain_list_img"></th>
                                 <th><img src="https://dsen.innogamescdn.com/8.137/38092/graphic/buildings/farm.png" title="Farm" alt="" class="bmain_list_img"></th>
@@ -621,7 +607,7 @@
                                 ` }
                             </tr>
                             <tr>
-                                <td>Latest levels</td>
+                                <td>${lib.translate(lib.itlcodes.MAP_HOVER_LATEST_LEVELS)}</td>
                                 <td>${data.lastBuildingsSeenAt ? lib.formatDateTime(data.lastBuildingsSeenAt) : ''}</td>
                                 <td>${data.lastBuildings ? data.lastBuildings['snob'] || '-' : '' }</td>
                                 <td>${data.lastBuildings ? data.lastBuildings['smith'] || '-' : '' }</td>
@@ -632,7 +618,7 @@
                                 ` }
                             </tr>
                             <tr>
-                                <td>Possible levels</td>
+                                <td>${lib.translate(lib.itlcodes.MAP_HOVER_POSSIBLE_LEVELS)}</td>
                                 <td></td>
                                 <td>${data.possibleBuildings ? data.possibleBuildings['snob'] || '-' : ''}</td>
                                 <td>${data.possibleBuildings ? data.possibleBuildings['smith'] || '-' : ''}</td>
@@ -648,17 +634,17 @@
                     ${ typeof data.lastLoyalty == 'undefined' || data.lastLoyalty == null || !settings.showLoyalty ? '' : `
                     <table class='vis' style="width:100%">
                         <tr style="background-color:#c1a264 !important">
-                            <th>Vault</th>
-                            <th>Seen at</th>
-                            <th>Loyalty</th>
+                            <th>${lib.translate(lib.itlcodes.VAULT)}</th>
+                            <th>${lib.translate(lib.itlcodes.MAP_HOVER_SEEN_AT)}</th>
+                            <th>${lib.translate(lib.itlcodes.LOYALTY)}</th>
                         </tr>
                         <tr>
-                            <td>Latest loyalty</td>
+                            <td>${lib.translate(lib.itlcodes.MAP_HOVER_LATEST_LOYALTY)}</td>
                             <td>${data.lastLoyaltySeenAt ? lib.formatDateTime(data.lastLoyaltySeenAt) : ''}</td>
                             <td>${data.lastLoyalty ? data.lastLoyalty || '-' : ''}</td>
                         </tr>
                         <tr>
-                            <td>Possible loyalty</td>
+                            <td>${lib.translate(lib.itlcodes.MAP_HOVER_POSSIBLE_LOYALTY)}</td>
                             <td></td>
                             <td>${data.possibleLoyalty ? data.possibleLoyalty || '-' : ''}</td>
                         </tr>
@@ -680,19 +666,16 @@
             if (fuckYouMessage.length && i != lockedDataReasons.length - 1) {
                 fuckYouMessage += ', ';
             }
-            if (i > 0 && i == lockedDataReasons.length - 1) {
-                fuckYouMessage += ' and ';
-            }
             fuckYouMessage += lockedDataReasons[i];
         }
 
         // MAP_UPLOAD_DATA_REQUIRED
         $villageInfoContainer.html(`
             <h3 style="padding:1em; text-align:center;margin:0">
-                Upload your damn ${fuckYouMessage}!!
+                ${lib.translate(lib.itlcodes.MAP_UPLOAD_DATA_REQUIRED)}
                 <br>
                 <br>
-                (then refresh this page)
+                ${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS)} ${fuckYouMessage}
             </h3>
         `);
     }
@@ -721,120 +704,112 @@
     }
 
     function createSettingsUI() {
-
-        // MAP_SETTINGS_HOVER | MAP_SETTINGS_HOVER_COMMANDS | MAP_SETTINGS_HOVER_RECRUITS
-        // MAP_SETTINGS_HOVER_BUILDINGS | MAP_SETTINGS_HOVER_LOYALTY
-        //
-        // MAP_SETTINGS_OVERLAY | MAP_SETTINGS_OVERLAY_SHOW | MAP_SETTINGS_OVERLAY_IGNORE_INTEL_1
-        // MAP_SETTINGS_OVERLAY_IGNORE_INTEL_2 | MAP_SETTINGS_OVERLAY_HIGHLIGHTS
-        // MAP_SETTINGS_OVERLAY_HIGHLIGHTS_NONE | MAP_SETTINGS_OVERLAY_HIGHLIGHTS_HAS_GROUP
-        // MAP_SETTINGS_OVERLAY_HIGHLIGHTS_HAS_INTEL
-        // MAP_SETTINGS_OVERLAY_SHOW_NUKES | MAP_SETTINGS_OVERLAY_SHOW_NOBLES | MAP_SETTINGS_OVERLAY_SHOW_STACKS
-        // MAP_SETTINGS_OVERLAY_SHOW_WALL_1 | MAP_SETTINGS_OVERLAY_SHOW_WALL_2
-        // MAP_SETTINGS_OVERLAY_RETURNING_1 | MAP_SETTINGS_OVERLAY_RETURNING_2
-        // MAP_SETTINGS_OVERLAY_WATCHTOWER
-        // MAP_SETTINGS_OVERLAY_DV
-        // MAP_SETTINGS_OVERLAY_STACK_1 | MAP_SETTINGS_OVERLAY_STACK_2
-        // MAP_SETTINGS_OVERLAY_TRIBE_1 | MAP_SETTINGS_OVERLAY_TRIBE_2
         let $container = $(`
             <div>
-                <h4>Hover Settings</h4>
+                <h4>${lib.translate(lib.itlcodes.MAP_SETTINGS_HOVER)}</h4>
                 <p>
                     <span style="display:inline-block">
                         <input type="checkbox" id="vault-show-commands">
-                        <label for="vault-show-commands">Commands</label>
+                        <label for="vault-show-commands">${lib.translate(lib.itlcodes.MAP_SETTINGS_HOVER_COMMANDS)}</label>
                     </span>
 
                     <span style="display:inline-block">
                         <input type="checkbox" id="vault-show-recruits">
-                        <label for="vault-show-recruits">Possible recruits</label>
+                        <label for="vault-show-recruits">${lib.translate(lib.itlcodes.MAP_SETTINGS_HOVER_RECRUITS)}</label>
                     </span>
 
                     <span style="display:inline-block">
                         <input type="checkbox" id="vault-show-buildings">
-                        <label for="vault-show-buildings">Buildings</label>
+                        <label for="vault-show-buildings">${lib.translate(lib.itlcodes.MAP_SETTINGS_HOVER_BUILDINGS)}</label>
                     </span>
 
                     <span style="display:inline-block">
                         <input type="checkbox" id="vault-show-nukes">
-                        <label for="vault-show-nukes">Nukes required</label>
+                        <label for="vault-show-nukes">${lib.translate(lib.itlcodes.MAP_SETTINGS_HOVER_NUKES)}</label>
                     </span>
 
                     <span style="display:inline-block">
                         <input type="checkbox" id="vault-show-loyalty">
-                        <label for="vault-show-loyalty">Loyalty</label>
+                        <label for="vault-show-loyalty">${lib.translate(lib.itlcodes.MAP_SETTINGS_HOVER_LOYALTY)}</label>
                     </span>
                 </p>
-                <h4>Overlay Settings</h4>
+                <h4>${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY)}</h4>
                 <p>
                     <p>
                         <span style="display:inline-block">
                             <input type="checkbox" id="vault-show-overlay">
-                            <label for="vault-show-overlay">Show overlay</label>
+                            <label for="vault-show-overlay">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_SHOW)}</label>
                         </span>
 
                         <span style="display:inline-block">
-                            <label for="vault-overlay-max-age">Ignore intel over </label>
+                            <label for="vault-overlay-max-age">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_IGNORE_INTEL_1)}</label>
                             <input id="vault-overlay-max-age" style="text-align:center;width:1.75em">
-                            <label for="vault-overlay-max-age"> days old</label>
+                            <label for="vault-overlay-max-age">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_IGNORE_INTEL_2)}</label>
                         </span>
 
                         <span style="display:inline-block">
                             <select id="vault-overlay-highlight-method" style="margin-left:1.5em">
-                                <option value="none">None</option>
-                                <option value="limited">Has group</option>
-                                <option value="all">Has intel</option>
+                                <option value="none">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_HIGHLIGHTS_NONE)}</option>
+                                <option value="limited">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_HIGHLIGHTS_HAS_GROUP)}</option>
+                                <option value="all">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_HIGHLIGHTS_HAS_INTEL)}</option>
                             </select>
-                            <label for="vault-overlay-highlight-method">Highlights</label>
+                            <label for="vault-overlay-highlight-method">=${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_HIGHLIGHTS)}</label>
                         </span>
 
                         <span style="display:inline-block">
                             <input type="checkbox" id="vault-overlay-show-nukes">
-                            <label for="vault-overlay-show-nukes">Nukes</label>
+                            <label for="vault-overlay-show-nukes">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_SHOW_NUKES)}</label>
                         </span>
 
                         <span style="display:inline-block">
                             <input type="checkbox" id="vault-overlay-show-nobles">
-                            <label for="vault-overlay-show-nobles">Nobles</label>
+                            <label for="vault-overlay-show-nobles">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_SHOW_NOBLES)}</label>
                         </span>
 
                         <span style="display:inline-block">
                             <input type="checkbox" id="vault-overlay-show-stacks">
-                            <label for="vault-overlay-show-stacks">Stacks</label>
+                            <label for="vault-overlay-show-stacks">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_SHOW_STACKS)}</label>
                         </span>
 
                         <span style="display:inline-block">
                             <input type="checkbox" id="vault-overlay-show-wall">
-                            <label for="vault-overlay-show-wall">Wall under level <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center"></label>
+                            <label for="vault-overlay-show-wall">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_SHOW_WALL)}</label>
+                            <input id="vault-overlay-wall-min" type="text" style="width:1.5em;text-align:center">
                         </span>
 
                         <span style="display:inline-block">
                             <input type="checkbox" id="vault-overlay-show-returning">
-                            <label for="vault-overlay-show-returning">Returning troops over <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center">k pop</label>
+                            <label for="vault-overlay-show-returning">
+                                ${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_RETURNING_1)}
+                            </label>
+                            <input id="vault-overlay-returning-min-pop" type="text" style="width:1.5em;text-align:center">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_RETURNING_2)}
                         </span>
 
                         ${ !lib.getCurrentServerSettings().watchtowerEnabled ? '' : `
                             <span style="display:inline-block">
                                 <input type="checkbox" id="vault-overlay-show-watchtower">
-                                <label for="vault-overlay-show-watchtower">Watchtower over level <input id="vault-overlay-watchtower-min" type="text" style="width:1.5em;text-align:center;"></label>
+                                <label for="vault-overlay-show-watchtower">
+                                    ${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_WATCHTOWER)}
+                                </label>
+                                <input id="vault-overlay-watchtower-min" type="text" style="width:1.5em;text-align:center;">
                             </span>
                         ` }
                     </p>
 
                     <p>
-                        <label for="vault-overlay-stack-min-dv">A small stack is </label>
+                        <label for="vault-overlay-stack-min-dv">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_STACK_1)}</label>
                         <input type="text" id="vault-overlay-stack-min-dv" style="width:1.5em;text-align:center">
-                        <label for="vault-overlay-stack-min-dv">DV</label>, and
+                        <label for="vault-overlay-stack-min-dv">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_DV)}</label>
 
-                        <label for="vault-overlay-stack-max-dv">a big stack is </label>
+                        <label for="vault-overlay-stack-max-dv">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_STACK_2)}</label>
                         <input type="text" id="vault-overlay-stack-max-dv" style="width:1.5em;text-align:center">
-                        <label for="vault-overlay-stack-max-dv">DV</label>
+                        <label for="vault-overlay-stack-max-dv">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_DV)}</label>
                     </p>
 
                     <p>
-                        Highlight villages in
+                        ${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_TRIBE_1)}
                         <select id="vault-overlay-highlight-tribe"></select>
-                        tribe
+                        ${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_TRIBE_2)}
                     </p>
                 </p>
             </div>

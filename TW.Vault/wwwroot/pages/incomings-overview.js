@@ -7,18 +7,18 @@
 
     //  In matching priority
     let troopNames = [
-        { name: 'ram', aliases: ['rams'] },
-        { name: 'catapult', aliases: ['catapults', 'cat.'] },
-        { name: 'spear', aliases: [] },
-        { name: 'sword', aliases: [] },
-        { name: 'axe', aliases: [] },
-        { name: 'archer', aliases: [] },
-        { name: 'spy', aliases: ['scout'] },
-        { name: 'light', aliases: [ 'lcav'] },
-        { name: 'marcher', aliases: ['mount archer'] },
-        { name: 'heavy', aliases: [ 'hcav' ] },
-        { name: 'snob', aliases: ['noble', 'nobleman'] },
-        { name: 'knight', aliases: ['paladin', 'pally'] }
+        { name: 'ram', aliases: lib.translate(lib.itlcodes.UNIT_RAM_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'catapult', aliases: lib.translate(lib.itlcodes.UNIT_CATAPULT_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'spear', aliases: lib.translate(lib.itlcodes.UNIT_SPEAR_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'sword', aliases: lib.translate(lib.itlcodes.UNIT_SWORD_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'axe', aliases: lib.translate(lib.itlcodes.UNIT_AXE_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'archer', aliases: lib.translate(lib.itlcodes.UNIT_ARCHER_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'spy', aliases: lib.translate(lib.itlcodes.UNIT_SPY_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'light', aliases: lib.translate(lib.itlcodes.UNIT_LIGHT_CAV_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'marcher', aliases: lib.translate(lib.itlcodes.UNIT_M_ARCHER_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'heavy', aliases: lib.translate(lib.itlcodes.UNIT_HEAVY_CAV_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'snob', aliases: lib.translate(lib.itlcodes.UNIT_NOBLE_ALIASES).split(',').map(_ => _.trim()) },
+        { name: 'knight', aliases: lib.translate(lib.itlcodes.UNIT_PALADIN_ALIASES).split(',').map(_ => _.trim()) }
     ];
 
     $incomingRows.each((i, el) => {

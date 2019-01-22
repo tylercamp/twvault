@@ -15,8 +15,7 @@
     let pages = lib.detectMultiPages($doc);
     pages.push(lib.makeTwUrl(lib.pageTypes.OWN_COMMANDS_OVERVIEW));
 
-    // COMMANDS_COLLECTING_PAGES
-    let collectingPagesMessage = 'Collecting command pages...';
+    let collectingPagesMessage = lib.translate(lib.itlcodes.COMMANDS_COLLECTING_PAGES);
     onProgress_ && onProgress_(collectingPagesMessage);
 
     pages.forEach((link) => {
@@ -59,28 +58,24 @@
 
         if (!newCommands.length) {
             lib.postApi('command/finished-command-uploads');
-            // COMMANDS_NONE_NEW
-            onProgress_ && onProgress_('Finished: No new commands to upload.');
+            onProgress_ && onProgress_(lib.translate(lib.itlcodes.COMMANDS_NONE_NEW));
 
             if (onDone_)
                 onDone_();
             else
-                // COMMANDS_NONE_NEW
-                alert('No new commands to upload.');
+                alert(lib.translate(lib.itlcodes.COMMANDS_NONE_NEW));
 
             return;
         }
 
         requestManager.resetStats();
 
-        // COMMANDS_CHECK_UPLOADED
-        onProgress_ && onProgress_('Checking for previously-uploaded commands...');
+        onProgress_ && onProgress_(lib.translate(lib.itlcodes.COMMANDS_CHECK_UPLOADED));
         checkExistingCommands(newCommands.map(_ => _.commandId), (existingCommands) => {
 
             oldCommands.push(...existingCommands);
 
-            // COMMANDS_UPLOADING
-            let fetchingCommandsMessage = 'Uploading commands...';
+            let fetchingCommandsMessage = lib.translate(lib.itlcodes.COMMANDS_UPLOADING);
             onProgress_ && onProgress_(fetchingCommandsMessage);
 
             newCommands.forEach((cmd) => {
@@ -108,8 +103,11 @@
 
                     let command = parseOwnCommand(commandId, cmd.commandType, cmd.isReturning, cmd.userLabel, lib.parseHtml(data));
 
-                    // COMMANDS_PROGRESS
-                    let notifyOnDone = () => requestManager.pendingRequests.length && onProgress_ && onProgress_(`${fetchingCommandsMessage} (${requestManager.getStats().done}/${requestManager.getStats().total} done, ${requestManager.getStats().numFailed} failed)`);
+                    let notifyOnDone = () => {
+                        let stats = requestManager.getStats();
+                        if (requestManager.pendingRequests.length && onProgress_)
+                            onProgress_(`${fetchingCommandsMessage} (${lib.translate(lib.itlcodes.COMMANDS_PROGRESS, { numFailed: stats.numFailed, numDone: stats.done, numTotal: stats.total })})`);
+                    };
 
                     let commandData = {
                         isOwnCommands: true,
@@ -138,14 +136,12 @@
             if (!requestManager.getStats().total) {
                 lib.setLocalStorage('commands-history', oldCommands);
                 lib.postApi('command/finished-command-uploads');
-                // COMMANDS_NONE_NEW
-                onProgress_ && onProgress_('Finished: No new commands to upload.');
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.COMMANDS_NONE_NEW));
 
                 if (onDone_)
                     onDone_();
                 else
-                    // COMMANDS_NONE_NEW
-                    alert('No new commands to upload.');
+                    alert(lib.translate(lib.itlcodes.COMMANDS_NONE_NEW));
 
                 return;
             }
@@ -155,12 +151,10 @@
             requestManager.setFinishedHandler(() => {
                 let stats = requestManager.getStats();
                 lib.setLocalStorage('commands-history', oldCommands);
-                // COMMANDS_FINISHED
-                onProgress_ && onProgress_(`Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`);
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.COMMANDS_FINISHED, { numDone: stats.done, numTotal: stats.total, numFailed: stats.numFailed }));
 
                 if (!onDone_)
-                    // DONE
-                    alert('Done!');
+                    alert(lib.translate(lib.itlcodes.DONE));
                 else
                     onDone_(false);
             });
@@ -179,14 +173,13 @@
                 if (lib.isUnloading())
                     return;
 
-                // COMMANDS_CHECK_UPLOADED_FAILED
-                onProgress_ && onProgress_('Failed to check for old commands, uploading all...');
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.COMMANDS_CHECK_UPLOADED_FAILED));
                 setTimeout(onDone, 2000);
             })
             .done((existingCommandIds) => {
                 if (existingCommandIds.length) {
                     // COMMANDS_SKIPPED_OLD
-                    onProgress_ && onProgress_('Found ' + existingCommandIds.length + ' old commands, skipping these...');
+                    onProgress_ && onProgress_(lib.translate(lib.itlcodes.COMMANDS_SKIPPED_OLD, { numCommands: existingCommandIds.length }));
                     setTimeout(() => onDone(existingCommandIds), 2000);
                 } else {
                     onDone(existingCommandIds);

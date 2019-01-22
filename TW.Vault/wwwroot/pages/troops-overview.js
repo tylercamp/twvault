@@ -44,18 +44,5 @@ function parseOwnTroopsOverviewPage($doc) {
 
     function indexToName(idx) {
         return lib.twstats.unitTypes[idx].canonicalName;
-        //switch (idx) {
-        //    case 0: return 'spear'; break;
-        //    case 1: return 'sword'; break;
-        //    case 2: return 'axe'; break;
-        //    case 3: return 'spy'; break;
-        //    case 4: return 'light'; break;
-        //    case 5: return 'heavy'; break;
-        //    case 6: return 'ram'; break;
-        //    case 7: return 'catapult'; break;
-        //    case 8: return 'knight'; break;
-        //    case 9: return 'snob'; break;
-        //    case 10: return 'militia'; break;
-        //}
     }
 }

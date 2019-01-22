@@ -127,7 +127,7 @@ namespace TW.Vault.Controllers
                     .GroupBy(p => p.Key)
                     .ToDictionary(
                         g => g.Key,
-                        g => g.Select(p => p.Name)
+                        g => g.Select(p => p.Name).ToList()
                     )
             );
         }

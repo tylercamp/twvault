@@ -12,8 +12,7 @@
     let troops = [];
     let supportData = [];
 
-    // TROOPS_COLLECTING_PAGES
-    let gettingPagesMessage = 'Getting village troop pages...';
+    let gettingPagesMessage = lib.translate(lib.itlcodes.TROOPS_COLLECTING_PAGES);
     onProgress_ && onProgress_(gettingPagesMessage);
 
     pages.forEach((link) => {
@@ -45,25 +44,21 @@
     requestManager.setFinishedHandler(() => {
         requestManager.stop();
 
-        // TROOPS_FIND_ACADEMY
-        onProgress_ && onProgress_('Finding village with academy...');
+        onProgress_ && onProgress_(lib.translate(lib.itlcodes.TROOPS_FIND_ACADEMY));
 
         findVillaWithAcademy((villageId) => {
 
             if (villageId < 0) {
                 if (onProgress_) {
-                    // TROOPS_NO_ACADEMY
-                    onProgress_ && onProgress_('(No village with academy found)');
+                    onProgress_ && onProgress_(lib.translate(lib.itlcodes.TROOPS_NO_ACADEMY));
                     setTimeout(() => uploadToVault(0), 1500);
                 } else {
                     uploadToVault(0);
                 }
             } else {
-                // TROOPS_FIND_POSSIBLE_NOBLES
-                onProgress_ && onProgress_('Getting possible nobles...');
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.TROOPS_FIND_POSSIBLE_NOBLES));
                 getPossibleNobles(villageId, (cnt) => {
-                    // TROOPS_FIND_SUPPORT
-                    onProgress_ && onProgress_('Getting support...');
+                    onProgress_ && onProgress_(lib.translate(lib.itlcodes.TROOPS_FIND_SUPPORT));
                     collectSupportData(() => {
                         uploadToVault(cnt);
                     });
@@ -79,8 +74,7 @@
     function collectSupportData(onDone) {
         $.get(lib.makeTwUrl(lib.pageTypes.OWN_TROOPS_SUPPORTING_OVERVIEW))
             .done((data) => {
-                // TROOPS_COLLECTING_SUPPORT
-                onProgress_ && onProgress_('Collecting supported villages and DVs...');
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.TROOPS_COLLECTING_SUPPORT));
                 let $supportDoc = lib.parseHtml(data);
                 let supportPages = lib.detectMultiPages($supportDoc);
                 let $supportPages = [];
@@ -144,11 +138,10 @@
                 if (lib.isUnloading())
                     return;
 
-                // TROOPS_ERROR_FINDING_ACADEMY
                 if (onProgress_)
-                    onProgress_('An error occurred while finding villa with academy...');
+                    onProgress_(lib.translate(lib.itlcodes.TROOPS_ERROR_FINDING_ACADEMY));
                 else
-                    alert('An error occurred while finding villa with academy...');
+                    alert(lib.translate(lib.itlcodes.TROOPS_ERROR_FINDING_ACADEMY));
 
                 if (onDone_)
                     onDone_(false);
@@ -159,10 +152,8 @@
         $.get(lib.makeTwUrl(`village=${villaIdWithAcademy}&screen=snob`))
             .done((data) => {
                 let docText = lib.parseHtml(data).text();
-                // TROOPS_NOBLES_LIMIT
-                let limit = docText.match(/Noblemen\s+limit:\s*(\d+)/);
-                // TROOPS_NOBLES_NUM_VILLAGES
-                let current = docText.match(/Number\s+of\s+conquered\s+villages:\s*(\d+)/);
+                let limit = docText.match(new RegExp(`${lib.translate(lib.itlcodes.TROOPS_NOBLES_LIMIT)}\s*(\d+)`));
+                let current = docText.match(new RegExp(`${lib.translate(lib.itlcodes.TROOPS_NOBLES_NUM_VILLAGES)}\s*(\d+)`));
 
                 console.log('Got limit: ', limit);
                 console.log('Got current: ', current);
@@ -177,11 +168,10 @@
                 if (lib.isUnloading())
                     return;
 
-                // TROOPS_ERROR_GETTING_NOBLES
                 if (onProgress_)
-                    onProgress_('An error occurred while getting possible noble counts...');
+                    onProgress_(lib.translate(lib.itlcodes.TROOPS_ERROR_GETTING_NOBLES));
                 else
-                    alert('An error occurred while getting possible noble counts...');
+                    alert(lib.translate(lib.itlcodes.TROOPS_ERROR_GETTING_NOBLES));
 
                 if (onDone_)
                     onDone_(false);
@@ -190,8 +180,7 @@
 
     function uploadToVault(possibleNobles) {
 
-        // TROOPS_UPLOADING
-        onProgress_ && onProgress_("Uploading troops to vault...");
+        onProgress_ && onProgress_(lib.translate(lib.itlcodes.TROOPS_UPLOADING));
 
         let distinctTroops = troops.distinct((a, b) => a.villageId == b.villageId);
 
@@ -205,20 +194,17 @@
                 return;
 
             if (onProgress_)
-                // UPLOAD_ERROR
-                onProgress_("An error occurred while uploading to the vault.");
+                onProgress_(lib.translate(lib.itlcodes.UPLOAD_ERROR));
 
             if (!onDone_)
-                // ERROR_OCCURRED
-                alert('An error occurred...')
+                alert(lib.messages.GENERIC_ERROR);
             else
                 onDone_(true);
         };
 
         uploadArmy(() => {
             if (onProgress_)
-                // TROOPS_FINISHED
-                onProgress_('Finished: Uploaded troops for ' + distinctTroops.length + ' villages.');
+                onProgress_(lib.translate(lib.itlcodes.TROOPS_FINISHED, { numVillages: distinctTroops.length }));
 
             if (!onDone_)
                 alert('Done!')
@@ -231,8 +217,7 @@
             lib.postApi('village/army/current', data)
                 .error(onError)
                 .done(() => {
-                    // TROOPS_UPLOADING_SUPPORT
-                    onProgress_ && onProgress_('Uploading support to vault...');
+                    onProgress_ && onProgress_(lib.translate(lib.itlcodes.TROOPS_UPLOADING_SUPPORT));
                     uploadSupport(onDone);
                 });
         }

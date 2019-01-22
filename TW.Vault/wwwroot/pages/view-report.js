@@ -14,7 +14,26 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     var $defenseInfo = $doc.find('#attack_info_def')
     var defendingPlayer = $defenseInfo.find('a[href*=info_player]');
     var attackingPlayer = $attackInfo.find('a[href*=info_player]');
-    var building_to_canonical_name = {"Headquarters":"main", "Barracks":"barracks", "Stable":"stable", "Workshop":"garage", "Academy":"snob", "Smithy":"smith", "Rally Point":"place", "Statue":"statue", "Market":"market", "Timber camp":"wood", "Clay pit":"stone", "Iron mine":"iron", "Farm":"farm", "Warehouse":"storage", "Hiding place":"hide", "Wall":"wall", "Watchtower":"watchtower", "Church":"church", "First church":"first_church"}; //not sure about Watchtower and Church entries
+    var building_to_canonical_name = {};
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_ACADEMY)] = 'snob';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_BARRACKS)] = 'barracks';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_CHURCH)] = 'church';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_CLAY_PIT)] = 'stone';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_FARM)] = 'farm';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_HIDING_PLACE)] = 'hide';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_HQ)] = 'main';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_IRON_MINE)] = 'iron';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_MARKET)] = 'market';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_RALLY_POINT)] = 'place';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_SMITHY)] = 'smith';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_STABLE)] = 'stable';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_STATUE)] = 'statue';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_TIMBER_CAMP)] = 'wood';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_WALL)] = 'wall';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_WAREHOUSE)] = 'storage';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_WATCHTOWER)] = 'watchtower';
+    building_to_canonical_name[lib.translate(lib.itlcodes.BUILDING_WORKSHOP)] = 'garage';
+
     var reportInfo = {};
     reportInfo.reportId = parseInt(href.match(/view=(\d+)/)[1]);
     console.log('Processing report ' + reportInfo.reportId);
@@ -29,8 +48,8 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     reportInfo.luck = parseInt($doc.find('#attack_luck').text().match(/(\-?\d.+)\%/)[1]);
     reportInfo.morale = parseInt($doc.find('.report_ReportAttack h4:nth-of-type(2)').text().match(/(\d+)\%/)[1]);
 
-    // REPORT_LOYALTY_FROM_TO
-    var loyalty = $doc.find('#attack_results tr').filter((i, el) => $(el).text().indexOf('Loyalty') >= 0).text().match(/from\s+\d+\s+to\s+(\-?\d+)/);
+    let loyaltyRegex = lib.translate(lib.itlcodes.REPORT_LOYALTY_FROM_TO, { oldLoyalty: String.raw`\d+`, newLoyalty: String.raw`(\-?\d+)` });
+    var loyalty = $doc.find('#attack_results tr').filter((i, el) => $(el).text().toLowerCase().indexOf(lib.translate(lib.itlcodes.LOYALTY).toLowerCase()) >= 0).text().match(new RegExp(loyaltyRegex));
     if (loyalty)
         reportInfo.loyalty = parseInt(loyalty[1]);
 
@@ -124,10 +143,8 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
         var attack_results = null;
         if (attack_results = $doc.find('#attack_results').text()) {
             reportInfo.buildingLevels = {};
-            // REPORT_BUILDING_DAMAGE_NAMES
-            var building_names = attack_results.match(/The (.*) has/g);
-            // REPORT_BUILDING_DAMAGE_LEVELS
-            var building_levels = attack_results.match(/to level (.*)/g);
+            var building_names = attack_results.match(new RegExp(lib.translate(lib.itlcodes.REPORT_BUILDING_DAMAGE_NAMES, { buildingName: '(.*)' }), 'g'));
+            var building_levels = attack_results.match(new RegExp(lib.translate(lib.itlcodes.REPORT_BUILDING_DAMAGE_LEVELS, { newLevel: '(.*)' }), 'g'));
             if(building_names) {
                 for (i=0; i < building_names.length; i++) {
                     reportInfo.buildingLevels[building_to_canonical_name[building_names[i].split(" ")[1]]] = parseInt(building_levels[i].split(" ")[2]);
@@ -177,8 +194,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
                     return;
 
                 if (showNotice_)
-                    // ERROR_OCCURRED
-                    alert('An error occurred...');
+                    alert(lib.messages.GENERIC_ERROR);
                 if (onError_)
                     onError_();
             });
@@ -195,7 +211,7 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
                 return;
 
             if (showNotice_)
-                alert('An error occurred...');
+                alert(lib.messages.GENERIC_ERROR);
             console.error('POST request failed: ', req, status, err);
             if (onError_)
                 onError_();

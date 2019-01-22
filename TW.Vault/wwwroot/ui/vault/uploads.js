@@ -1,21 +1,16 @@
 ﻿
 function makeUploadsTab() {
     let uploadsTab = {
-        // TAB_UPLOAD
-        label: 'Upload',
+        label: lib.translate(lib.itlcodes.TAB_UPLOAD),
         containerId: 'vault-uploads-container',
 
         init: function ($container) {
 
             var uploadDetailsMessages = {
-                // UPLOAD_DESCRIPTION_REPORTS
-                'vault-upload-reports': `Uploads all data from all new battle reports.`,
-                // UPLOAD_DESCRIPTION_INCOMINGS
-                'vault-upload-incomings': `Uploads all available data from your Incomings page. This includes attacks and support.`,
-                // UPLOAD_DESCRIPTION_COMMANDS
-                'vault-upload-commands': `Uploads all data for all of your current commands.`,
-                // UPLOAD_DESCRIPTION_TROOPS
-                'vault-upload-troops': `Uploads all data for all troops.`
+                'vault-upload-reports': lib.translate(lib.itlcodes.UPLOAD_DESCRIPTION_REPORTS),
+                'vault-upload-incomings': lib.translate(lib.itlcodes.UPLOAD_DESCRIPTION_INCS),
+                'vault-upload-commands': lib.translate(lib.itlcodes.UPLOAD_DESCRIPTION_COMMANDS),
+                'vault-upload-troops': lib.translate(lib.itlcodes.UPLOAD_DESCRIPTION_TROOPS)
             };
 
             $container.find('.details-button').click((ev) => {
@@ -29,8 +24,7 @@ function makeUploadsTab() {
                 lib.deleteLocalStorage('reports-history');
                 lib.deleteLocalStorage('commands-history');
 
-                // UPLOAD_CACHE_CLEARED
-                alert('Local vault cache cleared.');
+                alert(lib.translate(lib.itlcodes.UPLOAD_CACHE_CLEARED));
             });
 
             $container.find('.upload-button').click((ev) => {
@@ -59,8 +53,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    // REPORTS
-                                    alertFilter('reports');
+                                    alertFilter(lib.translate(lib.itlcodes.REPORTS));
                                 }
                             }
                         });
@@ -73,8 +66,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    // INCOMINGS
-                                    alertFilter('incomings');
+                                    alertFilter(lib.translate(lib.itlcodes.INCOMINGS));
                                 }
                             }
                         });
@@ -87,8 +79,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    // COMMANDS
-                                    alertFilter('commands');
+                                    alertFilter(lib.translate(lib.itlcodes.COMMANDS));
                                 }
                             }
                         });
@@ -101,20 +92,17 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    // TROOPS
-                                    alertFilter('troops');
+                                    alertFilter(lib.translate(lib.itlcodes.TROOPS));
                                 }
                             }
                         });
                         break;
 
                     case 'vault-upload-all':
-                        // WAITING
-                        $('.status-container').html('<em>Waiting...</em>');
+                        $('.status-container').html(`<em>${lib.translate(lib.itlcodes.WAITING)}...</em>`);
 
                         let resetStatusContainers = () => {
-                            // WAITING
-                            $('.status-container').filter((i, el) => $(el).text().toLowerCase().contains("waiting")).empty();
+                            $('.status-container').filter((i, el) => $(el).text().toLowerCase().contains(lib.translate(lib.itlcodes.WAITING))).empty();
                         };
 
                         let runReports = () => {
@@ -125,11 +113,9 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    // REPORTS
-                                    alertFilter('reports');
+                                    alertFilter(lib.translate(lib.itlcodes.REPORTS));
                                 } else if (!lib.isUnloading()) {
-                                    // UNEXPECTED_ERROR
-                                    alert('An unexpected error occurred: ' + didFail);
+                                    alert(lib.messages.GENERIC_ERROR + ': ' + didFail);
                                 }
                                 resetButtons();
                                 resetStatusContainers();
@@ -142,11 +128,9 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    // INCOMINGS
-                                    alertFilter('incomings');
+                                    alertFilter(lib.translate(lib.itlcodes.INCOMINGS));
                                 } else if (!lib.isUnloading()) {
-                                    // UNEXPECTED_ERROR
-                                    alert('An unexpected error occurred: ' + didFail);
+                                    alert(lib.messages.GENERIC_ERROR + ': ' + didFail);
                                 }
                                 resetButtons();
                                 resetStatusContainers();
@@ -159,11 +143,9 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    // TROOPS
-                                    alertFilter('troops');
+                                    alertFilter(lib.translate(lib.itlcodes.TROOPS));
                                 } else if (!lib.isUnloading()) {
-                                    // UNEXPECTED_ERROR
-                                    alert('An unexpected error occurred: ' + didFail);
+                                    alert(lib.messages.GENERIC_ERROR + ': ' + didFail);
                                 }
                                 resetButtons();
                                 resetStatusContainers();
@@ -174,11 +156,9 @@ function makeUploadsTab() {
                                     if (didFail == lib.errorCodes.CAPTCHA) {
                                         alertCaptcha();
                                     } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                        // COMMANDS
-                                        alertFilter('commands');
+                                        alertFilter(lib.translate(lib.itlcodes.COMMANDS));
                                     } else if (!lib.isUnloading()) {
-                                        // UNEXPECTED_ERROR
-                                        alert('An unexpected error occurred: ' + didFail);
+                                        alert(lib.messages.GENERIC_ERROR + ': ' + didFail);
                                     }
                                 }
                                 resetButtons();
@@ -208,8 +188,7 @@ function makeUploadsTab() {
                                 onDone(didFail);
                             });
                         } catch (e) {
-                            // ERROR_OCCURRED
-                            $statusContainer.text('An error occurred.');
+                            $statusContainer.text(lib.messages.GENERIC_ERROR);
                             console.error(e);
 
                             onDone(true);
@@ -231,8 +210,7 @@ function makeUploadsTab() {
                                 onDone(didFail);
                             });
                         } catch (e) {
-                            // ERROR_OCCURRED
-                            $statusContainer.text('An error occurred.');
+                            $statusContainer.text(lib.messages.GENERIC_ERROR);
                             console.error(e);
 
                             onDone(true);
@@ -254,8 +232,7 @@ function makeUploadsTab() {
                                 onDone(didFail);
                             });
                         } catch (e) {
-                            // ERROR_OCCURRED
-                            $statusContainer.text('An error occurred.');
+                            $statusContainer.text(lib.messages.GENERIC_ERROR);
                             console.error(e);
 
                             onDone(true);
@@ -277,8 +254,7 @@ function makeUploadsTab() {
                                 onDone(didFail);
                             });
                         } catch (e) {
-                            // ERROR_OCCURRED
-                            $statusContainer.text('An error occurred.');
+                            $statusContainer.text(lib.messages.GENERIC_ERROR);
                             console.error(e);
 
                             onDone(true);
@@ -288,63 +264,61 @@ function makeUploadsTab() {
             });
         },
 
-        // UPLOAD_DESCRIPTION | PROGRESS | DETAILS | CANCEL | REPORTS | INCOMINGS | TROOPS
-        // COMMANDS | UPLOAD_ALL | UPLOAD_CLEAR_CACHE
         getContent: `
             <p>
-                <strong>Click "Upload All" below. If needed, upload different things individually using the other Upload buttons.</strong>
+                <strong>${lib.translate(lib.itlcodes.UPLOAD_DESCRIPTION)}</strong>
             </p>
 
             <table style="width:100%" class="vis lit">
                 <tr>
-                    <th style="width:12em">Upload</th>
+                    <th style="width:12em">${lib.translate(lib.itlcodes.UPLOAD)}</th>
                     <th style="width:6em"></th>
-                    <th>Progress</th>
+                    <th>${lib.translate(lib.itlcodes.PROGRESS)}</th>
                 </tr>
                 <tr id="vault-upload-reports" class="lit">
-                    <td>Reports</td>
-                    <td><input type="button" class="details-button" value="Details"></td>
+                    <td>${lib.translate(lib.itlcodes.REPORTS)}</td>
+                    <td><input type="button" class="details-button" value="${lib.translate(lib.itlcodes.DETAILS)}"></td>
                     <td>
-                        <input type="button" class="upload-button" value="Upload">
+                        <input type="button" class="upload-button" value="${lib.translate(lib.itlcodes.UPLOAD)}">
                         <span class="status-container"></span>
-                        <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
+                        <!-- <input type="button" class="cancel-button" value="${lib.translate(lib.itlcodes.CANCEL)}" disabled> -->
                     </td>
                 </tr>
                 <tr id="vault-upload-incomings">
-                    <td>Incomings</td>
-                    <td><input type="button" class="details-button" value="Details"></td>
+                    <td>${lib.translate(lib.itlcodes.INCOMINGS)}</td>
+                    <td><input type="button" class="details-button" value="${lib.translate(lib.itlcodes.DETAILS)}"></td>
                     <td>
-                        <input type="button" class="upload-button" value="Upload">
+                        <input type="button" class="upload-button" value="${lib.translate(lib.itlcodes.UPLOAD)}">
                         <span class="status-container"></span>
-                        <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
+                        <!-- <input type="button" class="cancel-button" value="${lib.translate(lib.itlcodes.CANCEL)}" disabled> -->
                     </td>
                 </tr>
                 <tr id="vault-upload-troops">
-                    <td>Troops</td>
-                    <td><input type="button" class="details-button" value="Details"></td>
+                    <td>${lib.translate(lib.itlcodes.TROOPS)}</td>
+                    <td><input type="button" class="details-button" value="${lib.translate(lib.itlcodes.DETAILS)}"></td>
                     <td>
-                        <input type="button" class="upload-button" value="Upload">
+                        <input type="button" class="upload-button" value="${lib.translate(lib.itlcodes.UPLOAD)}">
                         <span class="status-container"></span>
-                        <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
+                        <!-- <input type="button" class="cancel-button" value="${lib.translate(lib.itlcodes.CANCEL)}" disabled> -->
                     </td>
                 </tr>
                 <tr id="vault-upload-commands">
-                    <td>Commands</td>
-                    <td><input type="button" class="details-button" value="Details"></td>
+                    <td>${lib.translate(lib.itlcodes.COMMANDS)}</td>
+                    <td><input type="button" class="details-button" value="${lib.translate(lib.itlcodes.DETAILS)}"></td>
                     <td>
-                        <input type="button" class="upload-button" value="Upload">
+                        <input type="button" class="upload-button" value="${lib.translate(lib.itlcodes.UPLOAD)}">
                         <span class="status-container"></span>
-                        <!-- <input type="button" class="cancel-button" value="Cancel" disabled> -->
+                        <!-- <input type="button" class="cancel-button" value="${lib.translate(lib.itlcodes.CANCEL)}" disabled> -->
                     </td>
                 </tr>
                 <tr id="vault-upload-all">
                     <td colspan=3 style="text-align:center">
-                        <input type="button" class="upload-button upload-button-all" value="Upload All">
+                        <input type="button" class="upload-button upload-button-all" value="${lib.translate(lib.itlcodes.UPLOAD_ALL)}">
                     </td>
                 </tr>
             </table>
 
-            <input type="button" class="upload-clear-cache" value="Clear Cache" style="float:right">
+            <input type="button" class="upload-clear-cache" value="${lib.translate(lib.itlcodes.UPLOAD_CLEAR_CACHE)}" style="float:right">
         `
     };
 

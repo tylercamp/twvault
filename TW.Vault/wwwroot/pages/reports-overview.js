@@ -43,7 +43,7 @@ function parseReportsOverviewPage($doc) {
                 isBattleReport = true;
         });
 
-        if ($el.text().contains("Your support from"))
+        if ($el.text().toLowerCase().contains(lib.translate(lib.itlcodes.YOUR_SUPPORT_FROM).toLowerCase()))
             isBattleReport = false;
 
         if (!isBattleReport)

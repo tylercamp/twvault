@@ -9,8 +9,7 @@ function makeToolsTab() {
     ];
 
     let toolsTab = {
-        // TAB_TOOLS
-        label: 'Tools',
+        label: lib.translate(lib.itlcodes.TAB_TOOLS),
         containerId: 'vault-tools-container',
 
         getContent: function () {
@@ -25,8 +24,7 @@ function makeToolsTab() {
 
 function makeFakeScriptTab() {
     return {
-        // TAB_FAKE_SCRIPT
-        label: 'Fake Script',
+        label: lib.translate(lib.itlcodes.TAB_FAKE_SCRIPT),
         containerId: 'vault-fake-script-tools',
         init: function ($container) {
             $container.find('td').css({
@@ -130,20 +128,17 @@ $.getScript("${link}");
                         if (lib.isUnloading())
                             return;
 
-                        // ERROR_OCCURRED
-                        alert('An error occurred...');
+                        alert(lib.messages.GENERIC_ERROR);
                     });
             });
         },
 
-        // DYNAMIC_FAKE_SCRIPTS | PLAYERS | TRIBES | CONTINENTS | FAKES_MIN_COORD | FAKES_MAX_COORD
-        // FAKES_DIST_LABEL | FAKES_DIST_FIELDS_FROM | GET_SCRIPT | GET_COORDS
         getContent: `
-            <h3>Dynamic Fake Scripts</h3>
+            <h3>${lib.translate(lib.itlcodes.DYNAMIC_FAKE_SCRIPTS)}</h3>
             <table style="width:100%">
                 <tr>
                     <td>
-                        <label for="fake-target-player">Players</label>
+                        <label for="fake-target-player">${lib.translate(lib.itlcodes.PLAYERS)}</label>
                     </td>
                     <td>
                         <input id="fake-target-player" type="text" placeholder="False Duke, Nefarious, etc.">
@@ -151,7 +146,7 @@ $.getScript("${link}");
                 </tr>
                 <tr>
                     <td>
-                        <label for="fake-target-tribe">Tribes</label>
+                        <label for="fake-target-tribe">${lib.translate(lib.itlcodes.TRIBES)}</label>
                     </td>
                     <td>
                         <input id="fake-target-tribe" type="text" placeholder="Hundred Hungry Hippos, 100, ODZ, etc.">
@@ -159,7 +154,7 @@ $.getScript("${link}");
                 </tr>
                 <tr>
                     <td>
-                        <label for="fake-target-continents">Continents</label>
+                        <label for="fake-target-continents">${lib.translate(lib.itlcodes.CONTINENTS)}</label>
                     </td>
                     <td>
                         <input id="fake-target-continents" type="text" placeholder="44,45,etc.">
@@ -167,7 +162,7 @@ $.getScript("${link}");
                 </tr>
                 <tr>
                     <td>
-                        <label>Min Coord</label>
+                        <label>${lib.translate(lib.itlcodes.FAKES_MIN_COORD)}</label>
                     </td>
                     <td>
                         <input id="fake-min-x" placeholder="X">|<input id="fake-min-y" placeholder="Y">
@@ -175,7 +170,7 @@ $.getScript("${link}");
                 </tr>
                 <tr>
                     <td>
-                        <label>Max Coord</label>
+                        <label>${lib.translate(lib.itlcodes.FAKES_MAX_COORD)}</label>
                     </td>
                     <td>
                         <input id="fake-max-x" placeholder="X">|<input id="fake-max-y" placeholder="Y">
@@ -183,17 +178,17 @@ $.getScript("${link}");
                 </tr>
                 <tr>
                     <td>
-                        <label>Dist From Center</label>
+                        <label>${lib.translate(lib.itlcodes.FAKES_DIST_LABEL)}</label>
                     </td>
                     <td>
-                        <input id="fake-dist-max"> fields from <input id="fake-dist-x" placeholder="X">|<input id="fake-dist-y" placeholder="Y">
+                        <input id="fake-dist-max"> ${lib.translate(lib.itlcodes.FAKES_DIST_FIELDS_FROM)} <input id="fake-dist-x" placeholder="X">|<input id="fake-dist-y" placeholder="Y">
                     </td>
                 </tr>
             </table>
 
             <div style="text-align:center;margin: 1em 0;">
-                <button id="fake-make-script">Get Script</button>
-                <button id="fake-get-coords">Get Coords</button>
+                <button id="fake-make-script">${lib.translate(lib.itlcodes.GET_SCRIPT)}</button>
+                <button id="fake-get-coords">${lib.translate(lib.itlcodes.GET_COORDS)}</button>
             </div>
 
             <div>
@@ -244,8 +239,12 @@ function makeBacktimeListTab() {
         ;
 
         let builder = new BBTableBuilder();
-        // SOURCE_VILLAGE | LAUNCH_TIME | LANDING_TIME | TROOP_REQ
-        builder.setColumnNames("Source Village", "Launch Time", "Landing Time", "Troop Req.");
+        builder.setColumnNames(
+            lib.translate(lib.itlcodes.SOURCE_VILLAGE),
+            lib.translate(lib.itlcodes.LAUNCH_TIME),
+            lib.translate(lib.itlcodes.LANDING_TIME),
+            lib.translate(lib.itlcodes.TROOP_REQUIRED)
+        );
 
         let allCommands = [];
         selectedCommands.forEach((com) => {
@@ -280,8 +279,7 @@ function makeBacktimeListTab() {
 
         let numNukes = allCommands.distinctBy(c => c.targetVillageId + '_' + c.landsAt.valueOf()).length;
 
-        // BACKTIME_RESULTS
-        $container.find('#backtime-output-container p').text(`Found ${total} timings for ${numNukes} returning nukes (${displayedCommands.length} shown)`);
+        $container.find('#backtime-output-container p').text(lib.translate(lib.itlcodes.BACKTIME_RESULTS, { numTimings: total, numNukes: numNukes, numShown: displayedCommands.length }));
 
         displayedCommands.forEach((i) => {
             builder.addRow(
@@ -297,8 +295,7 @@ function makeBacktimeListTab() {
     }
 
     return {
-        // TAB_FIND_BACKTIMES
-        label: 'Find Backtimes',
+        label: lib.translate(lib.itlcodes.TAB_FIND_BACKTIMES),
         containerId: 'vault-backtime-search',
         init: function ($container) {
             $container.find('td').css({
@@ -316,20 +313,17 @@ function makeBacktimeListTab() {
 
             $container.find('#backtime-make-list button').click((ev) => {
                 let $el = $(ev.originalEvent.target);
-                // BACKTIME_WORKING
-                $el.text('Working... (This may take a while)');
+                $el.text(lib.translate(lib.itlcodes.BACKTIME_WORKING));
                 lib.getApi('plan/backtime-list')
                     .done((data) => {
                         console.log('Got plan data:', data);
-                        // SEARCH
-                        $el.text('Search');
+                        $el.text(lib.translate(lib.itlcodes.SEARCH));
 
                         currentCommands = data;
                         updateBacktimingList($container);
                     })
                     .error(() => {
-                        // ERROR_OCCURRED
-                        alert('An error occurred...');
+                        alert(lib.messages.GENERIC_ERROR);
                     });
             });
 
@@ -363,29 +357,24 @@ function makeBacktimeListTab() {
                 `;
             }
 
-            // TAB_FIND_BACKTIMES | BACKTIME_DESCRIPTION_1 | BACKTIME_DESCRIPTION_2 | SEARCH
-            // OPTIONS | BACKTIME_MIN_RETURNING_POPULATION | BACKTIME_MIN_ATTACK_SIZE_1/2
-            // BACKTIME_MAX_TRAVEL_TIME | BACKTIME_MAX_NUM_TIMINGS | BACKTIME_HIDE_HANDLED_NUKES
-            // BACKTIME_HIDE_STACKED_NUKES
-
             return `
-                <h3>Find Backtimes</h3>
+                <h3>${lib.translate(lib.itlcodes.TAB_FIND_BACKTIMES)}</h3>
                 <p>
-                    Get plans for all available backtimes that you can make for enemy nukes using the troops you've uploaded to the vault.
+                    ${lib.translate(lib.itlcodes.BACKTIME_DESCRIPTION_1)}
                 </p>
                 <p>
-                    <b>Upload your troops frequently to get the most accurate timings!</b>
+                    <b>${lib.translate(lib.itlcodes.BACKTIME_DESCRIPTION_2)}</b>
                 </p>
                 <p id="backtime-make-list">
-                    ${uilib.mkBtn(null, 'Search')}
+                    ${uilib.mkBtn(null, lib.translate(lib.itlcodes.SEARCH))}
                 <p>
                 <div id="backtime-output-container" style="display:none;text-align:left">
-                    <h4>Options</h4>
+                    <h4>${lib.translate(lib.itlcodes.OPTIONS)}</h4>
                     <table style="text-align:left">
                         <tr>
                             <td>
                                 <label for="backtime-list-settings-min-return-pop">
-                                    Minimum returning population: 
+                                    ${lib.translate(lib.itlcodes.BACKTIME_MIN_RETURNING_POPULATION)}
                                 </label>
                             </td>
                             <td>
@@ -395,27 +384,27 @@ function makeBacktimeListTab() {
                         <tr>
                             <td>
                                 <label for="backtime-list-settings-min-attack-nuke-size">
-                                    Minimum attack size:
+                                    ${lib.translate(lib.itlcodes.BACKTIME_MIN_ATTACK_SIZE_1)}
                                 </label>
                             </td>
                             <td>
-                                <input id="backtime-list-settings-min-attack-nuke-size" type="text">% of a full nuke
+                                <input id="backtime-list-settings-min-attack-nuke-size" type="text">${lib.translate(lib.itlcodes.BACKTIME_MIN_ATTACK_SIZE_2)}
                             </td>
                         </tr>
                         <tr>
                             <td>
                                 <label for="backtime-list-settings-max-travel-hours">
-                                    Max travel time:
+                                    ${lib.translate(lib.itlcodes.BACKTIME_MAX_TRAVEL_TIME)}
                                 </label>
                             </td>
                             <td>
-                                <input id="backtime-list-settings-max-travel-hours" type="text"> hours
+                                <input id="backtime-list-settings-max-travel-hours" type="text"> ${lib.translate(lib.itlcodes.BACKTIME_HOURS)}
                             </td>
                         </tr>
                         <tr>
                             <td>
                                 <label for="backtime-list-settings-max-instructions">
-                                    Max number of timings:
+                                    ${lib.translate(lib.itlcodes.BACKTIME_MAX_NUM_TIMINGS)}
                                 </label>
                             </td>
                             <td>
@@ -424,7 +413,7 @@ function makeBacktimeListTab() {
                         </tr>
                         <tr>
                             <td>
-                                <label for="backtime-list-settings-hide-existing-backtimes">Hide backtimed nukes:</label>
+                                <label for="backtime-list-settings-hide-existing-backtimes">${lib.translate(lib.itlcodes.BACKTIME_HIDE_HANDLED_NUKES)}</label>
                             </td>
                             <td>
                                 <input id="backtime-list-settings-hide-existing-backtimes" type="checkbox">
@@ -432,7 +421,7 @@ function makeBacktimeListTab() {
                         </tr>
                         <tr>
                             <td>
-                                <label for="backtime-list-settings-hide-stacked-backtimes">Hide stacked nukes:</label>
+                                <label for="backtime-list-settings-hide-stacked-backtimes">${lib.translate(lib.itlcodes.BACKTIME_HIDE_STACKED_NUKES)}</label>
                             </td>
                             <td>
                                 <input id="backtime-list-settings-hide-stacked-backtimes" type="checkbox">

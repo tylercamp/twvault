@@ -13,9 +13,9 @@
 
     if (hasFilters) {
         if (onProgress_)
-            onProgress_(lib.messages.FILTER_APPLIED('reports'));
+            onProgress_(lib.messages.FILTER_APPLIED(lib.translate(lib.itlcodes.REPORTS)));
         else
-            alert(lib.messages.FILTER_APPLIED('reports'));
+            alert(lib.messages.FILTER_APPLIED(lib.translate(lib.itlcodes.REPORTS)));
 
         if (onDone_) {
             onDone_(lib.errorCodes.FILTER_APPLIED);
@@ -25,8 +25,7 @@
 
     let reportLinks = [];
 
-    // REPORTS_COLLECTING_PAGES
-    onProgress_ && onProgress_('Collecting report pages...');
+    onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_COLLECTING_PAGES));
     let pages = lib.detectMultiPages($doc);
     pages.push(lib.makeTwUrl(lib.pageTypes.ALL_REPORTS));
     console.log('pages = ', pages);
@@ -36,14 +35,12 @@
 
 
     function collectReportLinks() {
-        // REPORTS_COLLECTING_LINKS
-        let collectingReportLinksMessage = 'Collecting report links...';
+        let collectingReportLinksMessage = lib.translate(lib.itlcodes.REPORTS_COLLECTING_LINKS);
         onProgress_ && onProgress_(collectingReportLinksMessage);
 
         pages.forEach((link) => {
             requestManager.addRequest(link, (data) => {
-                // REPORTS_PAGES_PROGRESS
-                onProgress_ && onProgress_(`${collectingReportLinksMessage} (page ${requestManager.getStats().done}/${pages.length})`);
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_PAGES_PROGRESS, { numDone: requestManager.getStats().done, numTotal: pages.length }));
 
                 if (lib.checkContainsCaptcha(data)) {
                     if (requestManager.isRunning()) {
@@ -77,8 +74,7 @@
                 let filteredReports = reportLinks.except((l) => previousReports.contains(l.reportId));
                 filteredReports = filteredReports.except((l) => farmReportIds.contains(l.reportId));
 
-                // REPORTS_CHECK_UPLOADED
-                onProgress_ && onProgress_('Checking for reports already uploaded...');
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_CHECK_UPLOADED));
                 getExistingReports(filteredReports.map(r => r.reportId), (existing) => {
                     console.log('Got existing reports: ', existing);
 
@@ -104,12 +100,10 @@
 
     function collectFarmingReportLinks(onDone) {
         let $groupLinks = $doc.find('td > a[href*=group_id]:not([href*=view]):not(.village_switch_link)');
-        // REPORTS_LOOT_ASSISTANT
-        let $farmReportGroup = $groupLinks.filter((i, el) => $(el).text().contains('Loot Assistant'));
+        let $farmReportGroup = $groupLinks.filter((i, el) => $(el).text().contains(lib.translate(lib.itlcodes.REPORTS_LOOT_ASSISTANT)));
 
         if (!$farmReportGroup.length) {
-            // REPORTS_LA_NOT_FOUND
-            onProgress_ && onProgress_("Couldn't find Loot Assistant reports folder, skipping filtering...");
+            onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_LA_NOT_FOUND));
             setTimeout(() => onDone([]), 1500);
             return;
         }
@@ -118,8 +112,7 @@
         let farmGroupId = farmGroupLink.match(/group_id=(\w+)/)[1];
         $.get(farmGroupLink)
             .done((data) => {
-                // REPORTS_FILTERING_LA
-                const baseFilteringMessage = "Filtering loot assistant reports...";
+                const baseFilteringMessage = lib.translate(lib.itlcodes.REPORTS_FILTERING_LA);
                 onProgress_ && onProgress_(baseFilteringMessage);
 
                 let $folderDoc = lib.parseHtml(data);
@@ -154,8 +147,7 @@
                 requestManager.start();
             })
             .error(() => {
-                // REPORTS_LA_ERROR
-                onProgress_ && onProgress_("Error getting Loot Assistant reports folder, skipping filtering...");
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_LA_ERROR));
                 setTimeout(() => onDone([]), 1500);
             });
     }
@@ -166,8 +158,7 @@
                 if (typeof data == 'string')
                     data = JSON.parse(data);
                 if (data.length) {
-                    // REPORTS_SKIPPED_OLD
-                    onProgress_ && onProgress_('Found ' + data.length + ' previously uploaded reports, skipping these...');
+                    onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_SKIPPED_OLD, { numOld: data.length }));
                     setTimeout(() => onDone(data), 2000);
                 } else {
                     onDone(data);
@@ -177,8 +168,7 @@
                 if (lib.isUnloading())
                     return;
 
-                // REPORTS_ERROR_CHECK_OLD
-                onProgress_ && onProgress_('An error occurred while checking for existing reports, continuing...');
+                onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_ERROR_CHECK_OLD));
                 setTimeout(() => onDone([]), 2000);
             });
     }
@@ -227,14 +217,12 @@
         requestManager.setFinishedHandler(() => {
             let stats = requestManager.getStats();
 
-            // REPORTS_FINISHED
-            let statusMessage = `Finished: ${stats.done}/${stats.total} uploaded, ${stats.numFailed} failed.`;
+            let statusMessage = lib.translate(lib.itlcodes.REPORTS_FINISHED, { numDone: stats.done, numFailed: stats.numFailed, numTotal: stats.total });
             if (onProgress_)
                 onProgress_(statusMessage);
 
             if (!onDone_) {
-                // REPORTS_FINISHED
-                alert('Done!');
+                alert(statusMessage);
                 let stats = requestManager.getStats();
                 setUploadsDisplay(statusMessage);
             } else {
@@ -245,15 +233,14 @@
         if (!requestManager.getStats().total) {
             lib.postApi('report/finished-report-uploads');
 
+            let noNewReportsMessage = lib.translate(lib.itlcodes.REPORTS_NONE_NEW);
+
             if (!onDone_) {
-                // REPORTS_NONE_NEW
-                setUploadsDisplay('Finished: No new reports to upload.');
-                // REPORTS_NONE_NEW
-                alert('Finished: No new reports to upload!');
+                setUploadsDisplay(noNewReportsMessage);
+                alert(noNewReportsMessage);
             } else {
-                // REPORTS_NONE_NEW
                 if (onProgress_)
-                    onProgress_('Finished: No new reports to upload.');
+                    onProgress_(noNewReportsMessage);
                 if (onDone_)
                     onDone_(false);
             }
@@ -275,8 +262,7 @@
 
     function updateUploadsDisplay() {
         let stats = requestManager.getStats();
-        // REPORTS_PROGRESS
-        let statusMessage = `Uploading ${stats.total} reports... (${stats.done} done, ${stats.numFailed} failed.)`;
+        let statusMessage = lib.translate(lib.itlcodes.REPORTS_PROGRESS, { numDone: stats.done, numTotal: stats.total, numFailed: stats.numFailed });
 
         if (!onProgress_) {
             setUploadsDisplay(statusMessage);

@@ -12,15 +12,12 @@ function makeSmsTab() {
     ];
 
     let smsTab = {
-        // TAB_SMS
-        label: 'SMS/Texts',
+        label: lib.translate(lib.itlcodes.TAB_SMS),
         containerId: 'vault-sms-container',
 
-        // TAB_SMS_DESCRIPTION
         getContent: `
             <p>
-                The Vault can send you a text at a certain time. Use this as a reminder for launch times, etc. All
-                phone numbers added here will be texted when a notification is sent.
+                ${lib.translate(lib.itlcodes.SMS_DESCRIPTION)}
             </p>
 
             ${uilib.mkTabbedContainer(displayTab, tabs)}
@@ -32,8 +29,7 @@ function makeSmsTab() {
 
 function makeSmsDisplayTab() {
     return {
-        // TAB_NOTIFICATIONS
-        label: 'Notifications',
+        label: lib.translate(lib.itlcodes.TAB_NOTIFICATIONS),
         containerId: 'vault-notifications-display',
         init: function ($container) {
 
@@ -41,8 +37,7 @@ function makeSmsDisplayTab() {
 
             $container.find('#notification-time-formats').click((e) => {
                 e.originalEvent.preventDefault();
-                // SMS_TIME_FORMAT_DESCRIPTION
-                alert(`Supported time formats: Basically everything under the sun. Copy/paste whatever you see.`);
+                alert(lib.translate(lib.itlcodes.SMS_TIME_FORMAT_DESCRIPTION));
             });
 
             $container.find('#add-notification').click(() => {
@@ -52,29 +47,24 @@ function makeSmsDisplayTab() {
                 let notificationTimeText = $notificationTime.val().trim();
                 let message = $message.val().trim();
 
-                if (!message.length) {
-                    // SMS_MESSAGE_REQUIRED
-                    alert('A message is required!');
+                if (!message.length) {                    alert(lib.translate(lib.itlcodes.SMS_MESSAGE_REQUIRED));
                     return;
                 }
 
                 if (message.length > 256) {
-                    // SMS_CHARACTER_LIMIT
-                    alert(`Your message can't be over 256 characters! (Currently ${message.length})`);
+                    alert(lib.translate(lib.itlcodes.SMS_CHARACTER_LIMIT, { length: message.length }));
                     return;
                 }
 
                 let notificationTime = lib.parseTimeString(notificationTimeText);
                 if (!notificationTime) {
-                    // SMS_INVALID_TIME
-                    alert('Invalid notification time!');
+                    alert(lib.translate(lib.itlcodes.SMS_INVALID_TIME));
                     return;
                 }
 
                 let serverTime = lib.getServerDateTime();
                 if (serverTime.valueOf() >= notificationTime.valueOf()) {
-                    // SMS_TIME_TOO_EARLY
-                    alert("Your notification time must be *after* the current server time!");
+                    alert(lib.translate(lib.itlcodes.SMS_TIME_TOO_EARLY));
                     return;
                 }
 
@@ -111,31 +101,29 @@ function makeSmsDisplayTab() {
                         if (lib.isUnloading())
                             return;
 
-                        // ERROR_OCCURRED
-                        alert('An error occurred.');
+                        alert(lib.messages.GENERIC_ERROR);
                     });
             });
         },
 
-        // SMS_ADD_NEW | SERVER_TIME | SMS_SUPPORTED_FORMATS | MESSAGE | ADD
         getContent: `
-            <h4>Notifications</h4>
+            <h4>${lib.translate(lib.itlcodes.TAB_NOTIFICATIONS)}</h4>
             <p style="text-align:left">
-                <em>Add New</em>
+                <em>${lib.translate(lib.itlcodes.SMS_ADD_NEW)}</em>
                 <br>
-                <label style="display:inline-block;width:7em;text-align:right" for="notification-time">Server Time</label>
+                <label style="display:inline-block;width:7em;text-align:right" for="notification-time">${lib.translate(lib.itlcodes.SERVER_TIME)}</label>
                 <input type="text" id="notification-time" style="width:400px">
-                <input type="submit" id="notification-time-formats" value="Supported Formats">
+                <input type="submit" id="notification-time-formats" value="${lib.translate(lib.itlcodes.SMS_SUPPORTED_FORMATS)}">
                 <br>
-                <label style="display:inline-block;width:7em;text-align:right" for="notification-label">Message</label>
+                <label style="display:inline-block;width:7em;text-align:right" for="notification-label">${lib.translate(lib.itlcodes.MESSAGE)}</label>
                 <input type="text" id="notification-label" style="width:400px">
                 <br>
-                <button id="add-notification">Add</button>
+                <button id="add-notification">${lib.translate(lib.itlcodes.ADD)}</button>
             </p>
             <table style="width:100%" class="vis">
                 <tr>
-                    <th style="width:12em">Server Time</th>
-                    <th>Message</th>
+                    <th style="width:12em">${lib.translate(lib.itlcodes.SERVER_TIME)}</th>
+                    <th>${lib.translate(lib.itlcodes.MESSAGE)}</th>
                     <th style="width:5em"></th>
                 </tr>
             </table>
@@ -145,8 +133,7 @@ function makeSmsDisplayTab() {
 
 function makeSmsPhoneNumbersTab() {
     return {
-        // TAB_PHONE_NUMBERS
-        label: 'Phone Numbers',
+        label: lib.translate(lib.itlcodes.TAB_PHONE_NUMBERS),
         containerId: 'vault-notifications-phone-numbers',
 
         init: function ($container) {
@@ -161,14 +148,12 @@ function makeSmsPhoneNumbersTab() {
 
                 let trimmedNumber = phoneNumber.replace(/[^\d]/g, '');
                 if (trimmedNumber.length < 11) {
-                    // SMS_INVALID_PHONE_NUMBER
-                    alert('Invalid phone number - must include country code and area code.\n\nie +1 202-555-0109');
+                    alert(lib.translate(lib.itlcodes.SMS_INVALID_PHONE_NUMBER));
                     return;
                 }
 
                 if (label.length > 128) {
-                    // SMS_PHONE_NAME_TOO_LONG
-                    alert(`Phone name is too long - must be less than 128 characters. (Currently ${label.length})`);
+                    alert(lib.translate(lib.itlcodes.SMS_PHONE_NAME_TOO_LONG));
                     return;
                 }
 
@@ -196,26 +181,24 @@ function makeSmsPhoneNumbersTab() {
 
                         $phoneNumber.prop('disabled', false);
                         $label.prop('disabled', false);
-                        // ERROR_OCCURRED
-                        alert('An error occurred.');
+                        alert(lib.messages.GENERIC_ERROR);
                     });
             });
 
         },
 
-        // SMS_PHONE_NUMBERS | SMS_ADD_PHONE_NUMBER | OPTIONAL | ADD
         getContent: `
-            <h4>Phone Numbers</h4>
+            <h4>${lib.translate(lib.itlcodes.SMS_PHONE_NUMBERS)}</h4>
             <p style="text-align: left">
-                Add a New Number
+                ${lib.translate(lib.itlcodes.SMS_ADD_PHONE_NUMBER)}
                 <br>
                 <label style="display:inline-block;width:3em;text-align:right" for="new-number">#</label>
                 <input type="text" id="new-number" placeholder="+1 202-555-0109">
                 <br>
-                <label style="display:inline-block;width:3em;text-align:right" for="new-number-label">Name</label>
-                <input type="text" id="new-number-label" placeholder="(Optional)">
+                <label style="display:inline-block;width:3em;text-align:right" for="new-number-label">${lib.translate(lib.itlcodes.NAME)}</label>
+                <input type="text" id="new-number-label" placeholder="(${lib.translate(lib.itlcodes.OPTIONAL)})">
                 <br>
-                <button id="add-phone-number">Add</button>
+                <button id="add-phone-number">${lib.translate(lib.itlcodes.ADD)}</button>
             </p>
             <table style="width:100%" class="vis">
                 <tr>
@@ -230,8 +213,7 @@ function makeSmsPhoneNumbersTab() {
 
 function makeSmsSettingsTab() {
     return {
-        // TAB_SMS_SETTINGS
-        label: 'Settings',
+        label: lib.translate(lib.itlcodes.TAB_SMS_SETTINGS),
         containerId: 'vault-notifications-settings',
 
         init: function ($container) {
@@ -241,14 +223,15 @@ function makeSmsSettingsTab() {
             });
         },
 
-        // TAB_SMS_SETTINGS | SMS_SETTINGS_1 | SMS_SETTINGS_2 | SAVE
         getContent: `
-            <h4>Settings</h4>
+            <h4>${lib.translate(lib.itlcodes.TAB_SMS_SETTINGS)}</h4>
             <div>
                 <p>
-                    Send me a text <input id="notify-window-minutes" type="text" style="width:2em;text-align:center"> minutes early.
+                    ${lib.translate(lib.itlcodes.SMS_SETTINGS_1)}
+                    <input id="notify-window-minutes" type="text" style="width:2em;text-align:center">
+                    ${lib.translate(lib.itlcodes.SMS_SETTINGS_2)}
                 </p>
-                <button id="save-notification-settings-btn">Save</button>
+                <button id="save-notification-settings-btn">${lib.translate(lib.itlcodes.SAVE)}</button>
             </div>
         `
     };
@@ -261,19 +244,17 @@ function updatePhoneNumbers($container) {
             $phoneNumbersTable.find('tr:not(:first-of-type)').remove();
 
             phoneNumbers.forEach((number) => {
-                // DELETE
                 let $row = $(`
                         <tr data-id="${number.id}">
                             <td>${number.number}</td>
                             <td>${number.label}</td>
-                            <td><input type="submit" value="Delete"></td>
+                            <td><input type="submit" value="${lib.translate(lib.itlcodes.DELETE)}"></td>
                         </tr>
                     `.trim());
                 $phoneNumbersTable.append($row);
                 $row.find('input').click((ev) => {
                     ev.originalEvent.preventDefault();
-                    // SMS_CONFIRM_REMOVE_NUMBER
-                    if (!confirm(`Are you sure you want to remove the number ${number.number}?`)) {
+                    if (!confirm(lib.translate(lib.itlcodes.SMS_CONFIRM_REMOVE_NUMBER, { phoneNumber: number.number }))) {
                         return;
                     }
 
@@ -282,8 +263,7 @@ function updatePhoneNumbers($container) {
                             updatePhoneNumbers($container);
                         })
                         .error(() => {
-                            // ERROR_OCCURRED
-                            alert('An error occurred.');
+                            alert(lib.GENERIC_ERROR);
                         });
                 });
             });
@@ -292,8 +272,7 @@ function updatePhoneNumbers($container) {
             if (lib.isUnloading())
                 return;
 
-            // SMS_PHONE_NUMBERS_ERROR
-            alert('An error occurred while getting your phone numbers.');
+            alert(lib.translate(lib.itlcodes.SMS_PHONE_NUMBERS_ERROR));
         });
 }
 
@@ -306,8 +285,7 @@ function loadNotificationSettings($container) {
             if (lib.isUnloading())
                 return;
 
-            // ERROR_OCCURRED
-            alert('An error occurred.');
+            alert(lib.translate(lib.messages.GENERIC_ERROR));
         });
 }
 
@@ -315,14 +293,12 @@ function saveNotificationSettings($container) {
     let $notificationWindow = $container.find('#notify-window-minutes');
     let notificationWindow = $notificationWindow.val().trim();
     if (!notificationWindow.length) {
-        // SMS_SETTINGS_EMPTY_VALUE
-        alert("Empty settings value!");
+        alert(lib.translate(lib.itlcodes.SMS_SETTINGS_EMPTY_VALUE));
         return;
     }
 
     if (notificationWindow.match(/[^\d]/)) {
-        // SMS_SETTINGS_INVALID_VALUE
-        alert("Invalid settings value!");
+        alert(lib.translate(lib.itlcodes.SMS_SETTINGS_INVALID_VALUE));
         return;
     }
 
@@ -345,8 +321,7 @@ function saveNotificationSettings($container) {
             if (lib.isUnloading())
                 return;
 
-            // ERROR_OCCURRED
-            alert('An error occurred.');
+            alert(lib.messages.GENERIC_ERROR);
         });
 }
 
@@ -359,12 +334,11 @@ function loadNotifications($container) {
             requests.forEach((request) => {
                 request.eventOccursAt = new Date(Date.parse(request.eventOccursAt));
 
-                // DELETE
                 let $row = $(`
                         <tr data-id="${request.id}">
                             <td>${lib.formatDateTime(request.eventOccursAt)}</td>
                             <td>${request.message}</td>
-                            <td><input type="submit" value="Delete"></td>
+                            <td><input type="submit" value="${lib.translate(lib.itlcodes.DELETE)}"></td>
                         </tr>
                     `.trim());
 
@@ -372,8 +346,7 @@ function loadNotifications($container) {
                     ev.originalEvent.preventDefault();
 
                     let confirmInfo = `"${request.message}" at ${lib.formatDateTime(request.eventOccursAt)}`;
-                    // SMS_CONFIRM_DELETE_NOTIFICATION
-                    if (!confirm(`Are you sure you want to delete this notification?\n\n${confirmInfo}`)) {
+                    if (!confirm(`${lib.translate(lib.itlcodes.SMS_CONFIRM_DELETE_NOTIFICATION)}\n\n${confirmInfo}`)) {
                         return;
                     }
 
@@ -385,8 +358,7 @@ function loadNotifications($container) {
                             if (lib.isUnloading())
                                 return;
 
-                            // ERROR_OCCURRED
-                            alert('An error occurred.');
+                            alert(lib.messages.GENERIC_ERROR);
                         });
                 });
 
@@ -397,7 +369,6 @@ function loadNotifications($container) {
             if (lib.isUnloading())
                 return;
 
-            // SMS_NOTIFICATIONS_ERROR
-            alert("An error occurred while loading notification requests.");
+            alert(lib.translate(lib.itlcodes.SMS_NOTIFICATIONS_ERROR));
         });
 }

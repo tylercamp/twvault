@@ -13,8 +13,7 @@ function makeActionsTab() {
     ];
 
     return {
-        // TAB_ACTIONS_ALERTS
-        label: 'Actions/Alerts',
+        label: lib.translate(lib.itlcodes.TAB_ACTIONS_ALERTS),
         containerId: 'vault-actions-container',
 
         init: function () {
@@ -102,8 +101,7 @@ function makeSuggestedActionsTab() {
         let saveSettings = () => lib.setLocalStorage('suggested-recap-settings', settings);
 
         return {
-            // TAB_SEND_RECAP
-            label: 'Send Recap',
+            label: lib.translate(lib.itlcodes.TAB_SEND_RECAP),
             containerId: 'vault-suggested-recaps-container',
 
             _init: function ($container, data) {
@@ -126,44 +124,40 @@ function makeSuggestedActionsTab() {
                     data = data.filter((d) => d.isNearby);
 
                 if (!data.length) {
-                    // ACTION_RECAPS_NONE
-                    $table.append(noDataRow(5, '(No recaps)'));
+                    $table.append(noDataRow(5, lib.translate(lib.itlcodes.ACTIONS_RECAPS_NONE)));
                     return;
                 }
 
                 data.forEach((recap, i) => {
                     let rowClass = i % 2 ? 'row_b' : 'row_a';
 
-                    // ACTIONS_RECAPS_AGE
                     $table.append(`
                         <tr class="${rowClass}">
                             <td>${makeVillageLink(recap.villageName, recap.villageId, recap.x, recap.y)}</td>
                             <td>${recap.loyalty}</td>
-                            <td>${lib.formatDuration(recap.occurredAt)} ago</td>
+                            <td>${lib.translate(lib.itlcodes.ACTIONS_RECAPS_AGE, { age: lib.formatDuration(recap.occurredAt) })}</td>
                             <td>${makePlayerLink(recap.oldOwnerName, recap.oldOwnerId)}</td>
                             <td>${makePlayerLink(recap.newOwnerName, recap.newOwnerId)}</td>
                         </tr>
                     `.trim());
                 });
             },
-
-            // ACTIONS_RECAPS_DESCRIPTION | ACTIONS_RECAPS_ONLY_NEARBY
-            // VILLAGE | LOYALTY | ACTIONS_RECAPS_CAPTURED_AT | ACTIONS_RECAPS_OLD_OWNER | ACTIONS_RECAPS_NEW_OWNER
+            
             getContent: `
                 <p>
-                    A list of friendly villages that were recently conquered.
+                    ${lib.translate(lib.itlcodes.ACTIONS_RECAPS_DESCRIPTION)}
                 </p>
                 <p>
                     <input type="checkbox" id="vault-suggested-recaps-only-nearby">
-                    <label for="vault-suggested-recaps-only-nearby">Only show recaps with nobles nearby</label>
+                    <label for="vault-suggested-recaps-only-nearby">${lib.translate(lib.itlcodes.ACTIONS_RECAPS_ONLY_NEARBY)}</label>
                 </p>
                 <table class="vis">
                     <tr>
-                        <th>Village</th>
-                        <th>Loyalty</th>
-                        <th>Capped At</th>
-                        <th>Old Owner</th>
-                        <th>New Owner</th>
+                        <th>${lib.translate(lib.itlcodes.VILLAGE)}</th>
+                        <th>${lib.translate(lib.itlcodes.LOYALTY)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_RECAPS_CAPTURED_AT)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_RECAPS_OLD_OWNER)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_RECAPS_NEW_OWNER)}</th>
                     </tr>
                 </table>
             `
@@ -172,8 +166,7 @@ function makeSuggestedActionsTab() {
 
     function makeSuggestedSnipeTab() {
         return {
-            // TAB_SNIPES_NEEDED
-            label: 'Snipes Needed',
+            label: lib.translate(lib.itlcodes.TAB_SNIPES_NEEDED),
             containerId: 'vault-suggested-snipes-container',
 
             _init: function ($container, data) {
@@ -183,8 +176,7 @@ function makeSuggestedActionsTab() {
                 let $table = $container.find('table');
 
                 if (!data.length) {
-                    // ACTIONS_SNIPES_NONE
-                    $table.append(noDataRow(3, '(No snipes needed)'));
+                    $table.append(noDataRow(3, lib.translate(lib.itlcodes.ACTIONS_SNIPES_NONE)));
                     return;
                 }
 
@@ -200,17 +192,15 @@ function makeSuggestedActionsTab() {
                 });
             },
 
-            // ACTIONS_SNIPES_DESCRIPTION | ACTIONS_SNIPES_NUM_NOBLES
-            // VILLAGE | LANDS_AT
             getContent: `
                 <p>
-                    A list of incoming trains that you have troops to snipe for.
+                    ${lib.translate(lib.itlcodes.ACTIONS_SNIPES_DESCRIPTION)}
                 </p>
                 <table class="vis">
                     <tr>
-                        <th>Village</th>
-                        <th># Nobles</th>
-                        <th>Lands At</th>
+                        <th>${lib.translate(lib.itlcodes.VILLAGE)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_SNIPES_NUM_NOBLES)}</th>
+                        <th>${lib.translate(lib.itlcodes.LANDS_AT)}</th>
                     </tr>
                 </table>
             `
@@ -220,8 +210,7 @@ function makeSuggestedActionsTab() {
     function makeSuggestedStackingTab() {
         return {
             containerId: 'vault-suggested-stacks-container',
-            // TAB_SEND_STACKS
-            label: 'Send Stacks',
+            label: lib.translate(lib.itlcodes.TAB_SEND_STACKS),
 
             _init: function ($container, data) {
                 if (data.length)
@@ -230,36 +219,32 @@ function makeSuggestedActionsTab() {
                 let $table = $container.find('table');
 
                 if (!data.length) {
-                    // ACTIONS_STACKS_NONE
-                    $table.append(noDataRow(3, '(No stacks to suggest)'));
+                    $table.append(noDataRow(3, lib.translate(lib.itlcodes.ACTIONS_STACKS_NONE)));
                     return;
                 }
 
                 data.forEach((village, i) => {
                     let rowClass = i % 2 ? 'row_b' : 'row_a';
-
-                    // ACTIONS_STACKS_EATABLE_NUKES
+                    
                     $table.append(`
                         <tr class="${rowClass}">
                             <td>${makeVillageLink(village.villageName, village.villageId, village.x, village.y)}</td>
                             <td>${village.sentNukes}</td>
-                            <td>Can eat ${village.eatableNukes} nukes</td>
+                            <td>${lib.translate(lib.itlcodes.ACTIONS_STACKS_EATABLE_NUKES, { numNukes: village.eatableNukes })}</td>
                         </tr>
                     `.trim());
                 });
             },
 
-            // ACTIONS_STACKS_DESCRIPTION | ACTIONS_STACKS_POSSIBLE_NUKES
-            // ACTIONS_STACKS_CURRENT_STRENGTH
             getContent: `
                 <p>
-                    A list of villages to stack, based on their incomings and current defense stationed there.
+                    ${lib.translate(lib.itlcodes.ACTIONS_STACKS_DESCRIPTION)}
                 </p>
                 <table class="vis">
                     <tr>
-                        <th>Village</th>
-                        <th>Possible Nukes</th>
-                        <th>Current Stack Strength</th>
+                        <th>${lib.translate(lib.itlcodes.VILLAGE)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_STACKS_POSSIBLE_NUKES)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_STACKS_CURRENT_STRENGTH)}</th>
                     </tr>
                 </table>
             `
@@ -269,8 +254,7 @@ function makeSuggestedActionsTab() {
     function makeSuggestedNobleTargetsTab() {
         return {
             containerId: 'vault-suggested-noble-targets-container',
-            // TAB_NOBLE_TARGETS
-            label: 'Noble Targets',
+            label: lib.translate(lib.itlcodes.TAB_NOBLE_TARGETS),
 
             _init: function ($container, data) {
                 if (data.length)
@@ -279,42 +263,39 @@ function makeSuggestedActionsTab() {
                 let $table = $container.find('table');
 
                 if (!data.length) {
-                    // ACTIONS_NOBLE_TARGETS_NONE
-                    $table.append(noDataRow(5, '(No suggested targets)'));
+                    $table.append(noDataRow(5, lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_NONE)));
                     return;
                 }
 
                 data.forEach((target, i) => {
                     let rowClass = i % 2 ? 'row_b' : 'row_a';
 
-                    // ACTIONS_NOBLE_TARGETS_DV_AGE
                     $table.append(`
                         <tr class="${rowClass}">
                             <td>${makeVillageLink(target.villageName, target.villageId, target.x, target.y)}</td>
                             <td>${makePlayerLink(target.playerName, target.playerId)}</td>
                             <td>${target.loyalty}</td>
                             <td>${Math.roundTo(target.stationedDVs, 2)}</td>
-                            <td>${target.dVsSeenAt ? lib.formatDuration(target.dVsSeenAt) + ' ago' : '-'}</td>
+                            <td>${target.dVsSeenAt ? lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_DV_AGE, { age: lib.formatDuration(target.dVsSeenAt) } ) : '-'}</td >
                         </tr>
                     `.trim());
                 });
             },
 
-            // ACTIONS_NOBLE_TARGETS_DESCRIPTION
             // ACTIONS_NOBLE_TARGETS_STATIONED_DVS
             // ACTIONS_NOBLE_TARGETS_DVS_SEEN_AT
             // VILLAGE | OWNER | LOYALTY
             getContent: `
                 <p>
-                    A list of potential nobling targets, based on their stationed defense and current loyalty.
+                    ${lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_DESCRIPTION)}
                 </p>
                 <table class="vis">
                     <tr>
-                        <th>Village</th>
-                        <th>Owner</th>
-                        <th>Loyalty</th>
-                        <th>Stationed DVs</th>
-                        <th>DVs Seen At</th>
+                        <th>${lib.translate(lib.itlcodes.VILLAGE)}</th>
+                        <th>${lib.translate(lib.itlcodes.OWNER)}</th>
+                        <th>${lib.translate(lib.itlcodes.LOYALTY)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_STATIONED_DVS)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_DVS_SEEN_AT)}</th>
                     </tr>
                 </table>
             `
@@ -324,8 +305,7 @@ function makeSuggestedActionsTab() {
     function makeSuggestedUselessStacksTab() {
         return {
             containerId: 'vault-suggested-useless-stacks-container',
-            // TAB_USELESS_STACKS
-            label: 'Useless Stacks',
+            label: lib.translate(lib.itlcodes.TAB_USELESS_STACKS),
 
             _init: function ($container, data) {
                 if (data.length)
@@ -334,8 +314,7 @@ function makeSuggestedActionsTab() {
                 let $table = $container.find('table');
 
                 if (!data.length) {
-                    // ACTIONS_USELESS_STACKS_NONE
-                    $table.append(noDataRow(4, '(No useless stacks)'));
+                    $table.append(noDataRow(4, lib.translate(lib.itlcodes.ACTIONS_USELESS_STACKS_NONE)));
                     return;
                 }
 
@@ -352,21 +331,17 @@ function makeSuggestedActionsTab() {
                     `)
                 });
             },
-
-            // ACTIONS_USELESS_STACKS_DESCRIPTION
-            // ACTIONS_USELESS_STACKS_POP_COUNT
-            // VILLAGE | OWNER | TRIBE
+            
             getContent: `
                 <p>
-                    A list of villages that should have their support sent home, whether they are backline villages
-                    or non-friendly villages.
+                    ${lib.translate(lib.itlcodes.ACTIONS_USELESS_STACKS_DESCRIPTION)}
                 </p>
                 <table class="vis">
                     <tr>
-                        <th>Village</th>
-                        <th>Pop. Count</th>
-                        <th>Owner</th>
-                        <th>Tribe</th>
+                        <th>${lib.translate(lib.itlcodes.VILLAGE)}</th>
+                        <th>${lib.translate(lib.itlcodes.ACTIONS_USELESS_STACKS_POP_COUNT)}</th>
+                        <th>${lib.translate(lib.itlcodes.OWNER)}</th>
+                        <th>${lib.translate(lib.itlcodes.TRIBE)}</th>
                     </tr>
                 </table>
             `
@@ -382,8 +357,7 @@ function makeRequestLocalSupportTab() {
     let saveSettings = () => lib.setLocalStorage('request-local-support-settings', settings);
 
     return {
-        // TAB_QUICK_SUPPORT
-        label: 'Quick Support',
+        label: lib.translate(lib.itlcodes.TAB_QUICK_SUPPORT),
         containerId: 'vault-quick-support-container',
 
         init: function ($container) {
@@ -416,8 +390,7 @@ function makeRequestLocalSupportTab() {
                     .done((players) => {
                         $searchButton.prop('disabled', false);
                         if (!players.length) {
-                            // NO_PLAYERS_FOUND
-                            alert('No players found!');
+                            alert(lib.translate(lib.itlcodes.NO_PLAYERS_FOUND));
                             return;
                         }
 
@@ -434,30 +407,29 @@ function makeRequestLocalSupportTab() {
                     })
                     .error(() => {
                         $searchButton.prop('disabled', false);
-                        // ERROR_OCCURRED
-                        alert('An error occurred...');
+                        alert(lib.translate(lib.itlcodes.ERROR_OCCURRED));
                     });
 
                 return false;
             });
         },
 
-        // ACTIONS_QUICK_SUPPORT_DESCRIPTION
-        // ACTIONS_QUICK_SUPPORT_SETTINGS_1/2/3
-        // SEARCH | RESULTS
         getContent: `
             <p>
-                Find and mail players with nearby defense.
+                ${lib.translate(lib.itlcodes.ACTIONS_QUICK_SUPPORT_DESCRIPTION)}
             </p>
             <p>
-                Send to <input type="text" style="width:2em" id="vault-request-local-support-x">|<input type="text" style="width:2em" id="vault-request-local-support-y">
-                that can reach within <input type="text" style="width:2em" id="vault-request-local-support-hours"> hours
+                ${lib.translate(lib.itlcodes.ACTIONS_QUICK_SUPPORT_SETTINGS_1)}
+                <input type="text" style="width:2em" id="vault-request-local-support-x">|<input type="text" style="width:2em" id="vault-request-local-support-y">
+                ${lib.translate(lib.itlcodes.ACTIONS_QUICK_SUPPORT_SETTINGS_2)}
+                <input type="text" style="width:2em" id="vault-request-local-support-hours">
+                ${lib.translate(lib.itlcodes.ACTIONS_QUICK_SUPPORT_SETTINGS_3)}
             </p>
             <p>
-                <input type="button" id="vault-request-local-support-search" value="Search">
+                <input type="button" id="vault-request-local-support-search" value="${lib.translate(lib.itlcodes.SEARCH)}">
             </p>
             <div id="vault-request-local-support-output" style="display:none">
-                <h4>Results</h4>
+                <h4>${lib.translate(lib.itlcodes.RESULTS)}</h4>
                 <input id="vault-request-local-support-results" style="width:100%" readonly>
                 <p id="vault-request-local-support-result-players"></p>
             </div>
@@ -488,8 +460,7 @@ function makeRequestStackTab() {
     let saveSettings = () => lib.setLocalStorage('request-stack-settings', settings);
 
     return {
-        // TAB_REQUEST_STACK
-        label: 'Request Stack',
+        label: lib.translate(lib.itlcodes.TAB_REQUEST_STACK),
         containerId: 'vault-request-stack-container',
 
         init: function ($container) {
@@ -527,8 +498,7 @@ function makeRequestStackTab() {
                     .done((players) => {
                         $searchButton.prop('disabled', false);
                         if (!players.length) {
-                            // NO_PLAYERS_FOUND
-                            alert('No players found!');
+                            alert(lib.translate(lib.itlcodes.NO_PLAYERS_FOUND));
                             return;
                         }
 
@@ -545,30 +515,29 @@ function makeRequestStackTab() {
                     })
                     .error(() => {
                         $searchButton.prop('disabled', false);
-                        // ERROR_OCCURRED
-                        alert('An error occurred...');
+                        alert(lib.translate(lib.itlcodes.ERROR_OCCURRED));
                     });
 
                 return false;
             });
         },
-
-        // ACTIONS_REQUEST_STACK_DESCRIPTION
-        // ACTIONS_REQUEST_STACK_SETTINGS_1/2/3
-        // RESULTS
+        
         getContent: `
             <p>
-                Find and mail players with backline defense.
+                ${lib.translate(lib.itlcodes.ACTIONS_REQUEST_STACK_DESCRIPTION)}
             </p>
             <p>
-                Send to <input type="text" style="width:2em" id="vault-request-stack-x">|<input type="text" style="width:2em" id="vault-request-stack-y">
-                that can reach within <input type="text" style="width:2em" id="vault-request-stack-hours"> hours (optional)
+                ${lib.translate(lib.itlcodes.ACTIONS_REQUEST_STACK_SETTINGS_1)}
+                <input type="text" style="width:2em" id="vault-request-stack-x">|<input type="text" style="width:2em" id="vault-request-stack-y">
+                ${lib.translate(lib.itlcodes.ACTIONS_REQUEST_STACK_SETTINGS_2)}
+                <input type="text" style="width:2em" id="vault-request-stack-hours">
+                ${lib.translate(lib.itlcodes.ACTIONS_REQUEST_STACK_SETTINGS_3)}
             </p>
             <p>
-                <input type="button" id="vault-request-stack-search" value="Search">
+                <input type="button" id="vault-request-stack-search" value="${lib.translate(lib.itlcodes.SEARCH)}">
             </p>
             <div id="vault-request-stack-output" style="display:none">
-                <h4>Results</h4>
+                <h4>${lib.translate(lib.itlcodes.RESULTS)}</h4>
                 <input id="vault-request-stack-results" style="width:100%" readonly>
                 <p id="vault-request-stack-result-players"></p>
             </div>

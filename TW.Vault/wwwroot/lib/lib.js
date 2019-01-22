@@ -6,6 +6,7 @@ var lib = (() => {
     //# REQUIRE lib/versioning.js
     //# REQUIRE lib/lz-string.js
     //# REQUIRE lib/encryption.js
+    //# REQUIRE lib/translationCodes.js
 
     let twstats = getTwTroopStats();
     let localStoragePrefix = 'vls-';
@@ -31,6 +32,27 @@ var lib = (() => {
     };
 
     let currentTranslation = null;
+    let translationParameters = null;
+
+    let escapeHtml = (() => {
+        // https://stackoverflow.com/a/12034334/2692629
+        var entityMap = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            '`': '&#x60;',
+            '=': '&#x3D;',
+            '\\': '\\\\'
+        };
+
+        return function escapeHtml(string) {
+            return String(string).replace(/[&<>"'`=\\]/g, function (s) {
+                return entityMap[s];
+            });
+        }
+    })();
 
     let lib = {
 
@@ -51,14 +73,11 @@ var lib = (() => {
         },
 
         messages: {
-            // TRIGGER_CAPTCHA
-            TRIGGERED_CAPTCHA: 'Tribal wars Captcha was triggered, please refresh the page and try again. Any uploads will continue where they left off.',
-            // IS_IN_GROUP
-            IS_IN_GROUP: "Your current village group isn't \"All\", please change to group \"All\".",
-            // FILTER_APPLIED
-            FILTER_APPLIED: (type) => `You have filters set for your ${type}, please remove them before uploading.`,
-            // ERROR_OCCURRED
-            GENERIC: 'An error occurred...'
+            // Values loaded in init() with translations
+            TRIGGERED_CAPTCHA: null,
+            IS_IN_GROUP: null,
+            FILTER_APPLIED: (_) => null,
+            GENERIC_ERROR: null
         },
 
         errorCodes: {
@@ -66,6 +85,10 @@ var lib = (() => {
             NOT_ALL_GROUP: 'group',
             FILTER_APPLIED: 'filter'
         },
+
+        itlcodes: translationCodes,
+
+        escapeHtml: escapeHtml,
 
         twstats: twstats,
         twcalc: makeTwCalc(twstats),
@@ -103,11 +126,7 @@ var lib = (() => {
 
             $doc_ = $doc_ || $(document);
 
-            // ORDERED_MONTHS
-            var monthStrings = [
-                'jan', 'feb', 'mar', 'apr', 'may', 'jun',
-                'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
-            ];
+            var monthStrings = lib.translate(lib.itlcodes.ORDERED_MONTHS).split(',').map(m => m.trim());
 
             var result;
 
@@ -147,7 +166,7 @@ var lib = (() => {
                     time: match[4].splitMany(timeSeparators)
                 };
 
-            } else if (match = timeString.match(new RegExp(`today at\\s+${timeRegex}`))) {
+            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_TODAY_AT, { time: timeRegex })))) {
                 // TIME_TODAY_AT
                 // today at (Hours:Minute:Second:Ms)
                 result = {
@@ -155,7 +174,7 @@ var lib = (() => {
                     time: match[1].splitMany(timeSeparators)
                 }
 
-            } else if (match = timeString.match(new RegExp(`tomorrow at\\s+${timeRegex}`))) {
+            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_TOMORROW_AT, { time: timeRegex })))) {
                 // TIME_TOMORROW_AT
                 // tomorrow at (Hours:Minute:Second:Ms)
                 result = {
@@ -167,7 +186,7 @@ var lib = (() => {
                     time: match[1].splitMany(timeSeparators)
                 };
 
-            } else if (match = timeString.match(new RegExp(`${timeRegex} on ${dateRegex}`))) {
+            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_ON, { time: timeRegex, date: dateRegex })))) {
                 // TIME_ON
                 // (Hours:Minutes:Seconds:Ms) on (Day/Month/Year)
                 result = {
@@ -176,7 +195,8 @@ var lib = (() => {
                 };
 
                 //  TODO - Update this one
-            } else if (match = timeString.match(/on (\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)\s+at\s+(\d+:\d+:\d+:\d+)/)) {
+            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_ON_AT, { date: String.raw`(\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)`, time: String.raw`(\d+:\d+:\d+:\d+)` })))) {
+                //  /on (\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)\s+at\s+(\d+:\d+:\d+:\d+)/
                 // TIME_ON_AT
                 // on (Day/Month/Year) at (Hours:Minute:Second:Ms)
                 result = {
@@ -225,8 +245,15 @@ var lib = (() => {
         formatDateTime: function (dateTime) {
             let minLength = (str) => '0'.repeat(2 - str.toString().length) + str.toString();
 
-            // TIME_DATE_FORMAT
-            return `${minLength(dateTime.getUTCHours())}:${minLength(dateTime.getUTCMinutes())}:${minLength(dateTime.getUTCSeconds())} on ${minLength(dateTime.getUTCDate())}/${minLength(dateTime.getUTCMonth()+1)}/${dateTime.getUTCFullYear()}`;
+            return lib.translate(lib.itlcodes.TIME_DATE_FORMAT, {
+                hour: minLength(dateTime.getUTCHours()),
+                minute: minLength(dateTime.getUTCMinutes()),
+                second: minLength(dateTime.getUTCSeconds()),
+
+                day: minLength(dateTime.getUTCDate()),
+                month: minLength(dateTime.getUTCMonth() + 1),
+                year: dateTime.getUTCFullYear()
+            });
         },
 
         formatDuration: function (durationOrTime) {
@@ -246,32 +273,38 @@ var lib = (() => {
 
             let nonZeroParts = [];
             // TIME_DAY_SHORT
-            if (numDays) nonZeroParts.push([numDays, 'day']);
+            if (numDays) nonZeroParts.push([numDays, lib.translate(lib.itlcodes.TIME_DAY_SHORT)]);
             // TIME_HOUR_SHORT
-            if (numHours) nonZeroParts.push([numHours, 'hr']);
+            if (numHours) nonZeroParts.push([numHours, lib.translate(lib.itlcodes.TIME_HOUR_SHORT)]);
             // TIME_MINUTE_SHORT
-            if (numMinutes) nonZeroParts.push([numMinutes, 'min']);
+            if (numMinutes) nonZeroParts.push([numMinutes, lib.translate(lib.itlcodes.TIME_MINUTE_SHORT)]);
             // TIME_SECOND_SHORT
-            if (numSeconds) nonZeroParts.push([numSeconds, 'sec']);
+            if (numSeconds) nonZeroParts.push([numSeconds, lib.translate(lib.itlcodes.TIME_SECOND_SHORT)]);
 
             if (nonZeroParts.length > 2)
                 nonZeroParts = nonZeroParts.slice(0, 2);
 
             // TIME_NOW
             if (nonZeroParts.length == 0)
-                return 'now';
+                return lib.translate(lib.itlcodes.TIME_NOW);
 
             // TIME_DAY_PLURAL_SHORT
             // TIME_HOUR_PLURAL_SHORT
             // TIME_MINUTE_PLURAL_SHORT
             // TIME_SECOND_PLURAL_SHORT
 
+            let singularToPlural = {};
+            singularToPlural[lib.translate(lib.itlcodes.TIME_DAY_SHORT)] = lib.translate(lib.itlcodes.TIME_DAY_PLURAL_SHORT);
+            singularToPlural[lib.translate(lib.itlcodes.TIME_HOUR_SHORT)] = lib.translate(lib.itlcodes.TIME_HOUR_PLURAL_SHORT);
+            singularToPlural[lib.translate(lib.itlcodes.TIME_MINUTE_SHORT)] = lib.translate(lib.itlcodes.TIME_MINUTE_PLURAL_SHORT);
+            singularToPlural[lib.translate(lib.itlcodes.TIME_SECOND_SHORT)] = lib.translate(lib.itlcodes.TIME_SECOND_PLURAL_SHORT);
+
             return nonZeroParts.map((part) => {
                 let count = part[0];
                 let label = part[1];
 
                 if (count != 1)
-                    label += 's';
+                    label = singularToPlural[label];
 
                 return count + ' ' + label;
             }).join(', ');
@@ -375,15 +408,63 @@ var lib = (() => {
             currentTranslation = null;
         },
 
-        translate: function (key) {
+        translate: function (key, params_, breakNewlines_) {
             if (currentTranslation == null)
                 throw "No translation loaded";
+
+            let reservedParams = [
+                '_escaped'
+            ];
+
+            let needsEscaping = !params_ || params_._escaped;
+            if (params_ && typeof params_._escaped != 'undefined')
+                delete params_._escaped;
+
+            if ($.isEmptyObject(params_))
+                params_ = null;
 
             let result = currentTranslation.entries[key];
             if (!result || !result.trim().length) {
                 console.error('No translation provided for key: ', key);
                 return "NO TRANSLATION AVAILABLE";
             } else {
+                let keyParams = translationParameters[key];
+                if (keyParams) {
+                    let visitedParams = [];
+                    params_ && lib.objForEach(params_, (prop, val) => {
+                        if (reservedParams.contains(prop))
+                            return;
+
+                        if (!keyParams.contains(prop)) {
+                            let msg = `Translation code ${key} does not have a parameter named '${prop}'`;
+                            console.error(msg);
+                            throw msg;
+                        } else {
+                            result = result.replace(`{${prop}}`, val);
+                            visitedParams.push(prop);
+                        }
+                    });
+
+                    if (visitedParams.length != keyParams.length) {
+                        let msg = `Translation code ${key} requires params ${keyParams.length} - "${keyParams.join(", ")}",` +
+                            ` but only got ${visitedParams.length} - "${visitedParams.join(", ")}"` +
+                            ` (missing: ${keyParams.except(visitedParams).join(", ")})`;
+                        console.error(msg);
+                        throw msg;
+                    }
+                } else if (params_) {
+                    console.warn('Parameters provided for translation code ' + key + ' but no parameters exist for that code');
+                }
+
+                breakNewlines_ = breakNewlines_ || false;
+
+                if (needsEscaping)
+                    result = escapeHtml(result);
+
+                if (breakNewlines_) {
+                    result = result.replace(/\n/g, '\n<br>');
+                }
+
                 return result;
             }
         },
@@ -994,12 +1075,17 @@ var lib = (() => {
                 authTribeId = tribeId;
 
                 function checkDone() {
-                    if (utcTimeOffset != null && serverSettings != null && currentTranslation != null) {
+                    if (utcTimeOffset != null && serverSettings != null && currentTranslation != null && translationParameters != null) {
                         lib.twstats._updateWithSettings(
                             serverSettings.archersEnabled,
                             serverSettings.militiaEnabled,
                             serverSettings.paladinEnabled
                         );
+
+                        lib.messages.TRIGGERED_CAPTCHA = lib.translate(lib.itlcodes.TRIGGERED_CAPTCHA, { _escaped: false });
+                        lib.messages.IS_IN_GROUP = lib.translate(lib.itlcodes.IS_IN_GROUP, { _escaped: false });
+                        lib.messages.FILTER_APPLIED = (type) => lib.translate(lib.itlcodes.FILTER_APPLIED, { type: type, _escaped: false });
+                        lib.messages.GENERIC_ERROR = lib.translate(lib.itlcodes.ERROR_OCCURRED, { _escaped: false });
                         callback();
                     }
                 }
@@ -1014,6 +1100,12 @@ var lib = (() => {
                 $.get(lib.makeApiUrl('server/settings'))
                     .done((data) => {
                         serverSettings = data;
+                        checkDone();
+                    });
+
+                $.get(lib.makeVaultUrl('api/translation/parameters'))
+                    .done((data) => {
+                        translationParameters = data;
                         checkDone();
                     });
 

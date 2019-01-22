@@ -52,8 +52,7 @@
     var pageContents = [];
     let requestManager = new RequestManager();
 
-    // INCOMINGS_COLLECTING_PAGES
-    let collectPagesMessage = 'Collecting incoming pages...';
+    let collectPagesMessage = lib.translate(lib.itlcodes.INCOMINGS_COLLECTING_PAGES);
     onProgress_ && onProgress_(collectPagesMessage);
 
     let allIncomings = [];
@@ -75,8 +74,8 @@
                 return;
             }
 
-            // INCOMINGS_PROGRESS
-            onProgress_ && onProgress_(`${collectPagesMessage} (${requestManager.getStats().done}/${pages.length} done, ${requestManager.getStats().numFailed} failed)`);
+            let stats = requestManager.getStats();
+            onProgress_ && onProgress_(`${collectPagesMessage} (${lib.translate(lib.itlcodes.INCOMINGS_PROGRESS, { numDone: stats.done, numTotal: pages.length, numFailed: stats.numFailed })})`);
             let pageIncomings = parseUploadIncomingsOverviewPage(lib.parseHtml(data));
             allIncomings.push(...pageIncomings);
         });
@@ -84,13 +83,11 @@
 
     if (!requestManager.getStats().total) {
         lib.postApi('command/finished-incoming-uploads');
-        // INCOMINGS_NONE
-        onProgress_ && onProgress_('No incomings to upload.');
+        onProgress_ && onProgress_(lib.translate(lib.itlcodes.INCOMINGS_NONE));
         if (onDone_)
             onDone_(false);
         else
-            // INCOMINGS_NONE
-            alert('No incomings to upload.');
+            alert(lib.translate(lib.itlcodes.INCOMINGS_NONE));
 
         return;
     } else {
@@ -99,8 +96,7 @@
 
     requestManager.setFinishedHandler(() => {
         requestManager.stop();
-        // INCOMINGS_UPLOADING
-        onProgress_ && onProgress_('Uploading incomings...');
+        onProgress_ && onProgress_(lib.translate(lib.itlcodes.INCOMINGS_UPLOADING));
 
         lib.queryCurrentPlayerInfo((playerId) => {
             allIncomings.forEach((inc) => inc.targetPlayerId = playerId);
@@ -117,13 +113,11 @@
                     $doc.find('input[name*=id_][type=checkbox]').prop('checked', true);
 
                     if (onProgress_) {
-                        // INCOMINGS_FINISHED
-                        onProgress_('Finished: Uploaded ' + distinctIncomings.length + ' incomings.');
+                        onProgress_(lib.translate(lib.itlcodes.INCOMINGS_FINISHED, { numIncomings: distinctIncomings.length }));
                     }
 
                     if (!onDone_)
-                        // INCOMINGS_FINISHED
-                        alert('Uploaded commands!');
+                        alert(lib.translate(lib.itlcodes.INCOMINGS_FINISHED, { numIncomings: distinctIncomings.length }));
                     else
                         onDone_();
                 })
@@ -132,13 +126,11 @@
                         return;
 
                     if (onProgress_) {
-                        // INCOMINGS_UPLOAD_ERROR
-                        onProgress_('An error occurred while uploading data.');
+                        onProgress_(lib.translate(lib.itlcodes.INCOMINGS_UPLOAD_ERROR));
                     }
 
                     if (!onDone_) {
-                        // ERROR_OCCURRED
-                        alert('An error occurred...');
+                        alert(lib.messages.GENERIC_ERROR);
                     } else {
                         onDone_(true);
                     }

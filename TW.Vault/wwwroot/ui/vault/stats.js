@@ -8,8 +8,7 @@
     ];
 
     return {
-        // TAB_STATS
-        label: 'Stats',
+        label: lib.translate(lib.itlcodes.TAB_STATS),
         containerId: 'vault-stats-container',
 
         getContent: function () {
@@ -20,8 +19,7 @@
 
 function makeUserStatsTab() {
     return {
-        // TAB_ME
-        label: 'Me',
+        label: lib.translate(lib.itlcodes.TAB_ME),
         containerId: 'vault-user-stats-container',
 
         init: function ($container) {
@@ -67,42 +65,38 @@ function makeUserStatsTab() {
                 })
                 .error(() => {
                     if (!lib.isUnloading())
-                        // STATS_LOAD_ERROR
-                        alert('An error occurred while loading stats');
+                        alert(lib.translate(lib.itlcodes.STATS_LOAD_ERROR));
                 });
         },
 
-        // STATS_7_DAYS | NUKES | FANGS | FAKES | STATS_TRAVELING_LANDED
-        // DEFENSE | SUPPORT | STATS_NUM_DVS | STATS_DVS_AT_HOME | STATS_BACKLINE_DVS_AT_HOME
-        // STATS_DVS_TRAVELING
         getContent: `
-            <h3 style="margin-bottom:0">Last 7 Days</h3>
+            <h3 style="margin-bottom:0">${lib.translate(lib.itlcodes.STATS_7_DAYS)}</h3>
             <div style="display:inline-block">
-                <i style="font-size:0.8em;margin:0">(Traveling and landed)</i>
+                <i style="font-size:0.8em;margin:0">${lib.translate(lib.itlcodes.STATS_TRAVELING_LANDED)}</i>
                 <table style="margin-top:0.5em;">
-                    <tr><td><b id="stats-nukes-this-week">-</b></td><td>Nukes</td>
-                    <tr><td><b id="stats-fangs-this-week">-</b></td><td>Fangs</td>
-                    <tr><td><b id="stats-fakes-this-week">-</b></td><td>Fakes</td>
+                    <tr><td><b id="stats-nukes-this-week">-</b></td><td>${lib.translate(lib.itlcodes.NUKES)}</td>
+                    <tr><td><b id="stats-fangs-this-week">-</b></td><td>${lib.translate(lib.itlcodes.FANGS)}</td>
+                    <tr><td><b id="stats-fakes-this-week">-</b></td><td>${lib.translate(lib.itlcodes.FAKES)}</td>
                 </table>
             </div>
 
-            <h3 style="margin-top:2em">Support</h3>
+            <h3 style="margin-top:2em">${lib.translate(lib.itlcodes.SUPPORT)}</h3>
             <div style="display:inline-block">
                 <table class="vis">
                     <tr>
-                        <th>Defense</th>
-                        <th># DVs</th>
+                        <th>${lib.translate(lib.itlcodes.DEFENSE)}</th>
+                        <th>${lib.translate(lib.itlcodes.STATS_NUM_DVS)}</th>
                     </tr>
                     <tr>
-                        <td>At Home</td>
+                        <td>${lib.translate(lib.itlcodes.STATS_DVS_AT_HOME)}</td>
                         <td id="stats-dvs-at-home">-</td>
                     </tr>
                     <tr>
-                        <td>(Backline) At Home</td>
+                        <td>${lib.translate(lib.itlcodes.STATS_BACKLINE_DVS_AT_HOME)}</td>
                         <td id="stats-dvs-at-home-backline">-</td>
                     </tr>
                     <tr>
-                        <td>Traveling</td>
+                        <td>${lib.translate(lib.itlcodes.STATS_DVS_TRAVELING)}</td>
                         <td id="stats-dvs-traveling">-</td>
                     </tr>
                 </table>
@@ -113,15 +107,13 @@ function makeUserStatsTab() {
 
 function makeHighScoresTab() {
     var rankings = [
-    // FANGS | FAKES | NUKES
-        { label: '# Fakes', property: 'fakesInPastWeek' },
-        { label: '# Fangs', property: 'fangsInPastWeek' },
-        { label: '# Nukes', property: 'nukesInPastWeek' }
+        { label: `# ${lib.translate(lib.itlcodes.FAKES)}`, property: 'fakesInPastWeek' },
+        { label: `# ${lib.translate(lib.itlcodes.FANGS)}`, property: 'fangsInPastWeek' },
+        { label: `# ${lib.translate(lib.itlcodes.NUKES)}`, property: 'nukesInPastWeek' }
     ];
 
     return {
-        // TAB_HIGH_SCORES
-        label: 'High Scores',
+        label: lib.translate(lib.itlcodes.TAB_HIGH_SCORES),
         containerId: 'vault-stats-high-scores-container',
 
         init: function ($container) {
@@ -152,22 +144,19 @@ function makeHighScoresTab() {
                     });
                 })
                 .error(() => {
-                    // RANKINGS_LOAD_ERROR
-                    alert('An error occurred while getting rankings');
+                    alert(lib.translate(lib.itlcodes.RANKINGS_LOAD_ERROR));
                 });
         },
 
         //  Top of the tab has overview of top 3 players for a few different categories
         //  Full listings are available below that overview in different tabs
-        
-        // STATS_7_DAYS | RANKINGS
         getContent: `
-            <h3 style="margin-bottom:0">High Scores</h3>
-            <em style="font-size:0.75em;margin-bottom:1em">Over the last 7 days</em>
+            <h3 style="margin-bottom:0">${lib.translate(lib.itlcodes.TAB_HIGH_SCORES)}</h3>
+            <em style="font-size:0.75em;margin-bottom:1em">${lib.translate(lib.itlcodes.STATS_7_DAYS)}</em>
 
             <div id="high-scores-overview-container"></div>
 
-            <h3 style="margin-top:1.5em">Rankings</h3>
+            <h3 style="margin-top:1.5em">${lib.itlcodes.RANKINGS}</h3>
             <div id="high-scores-rankings-container"></div>
         `
     };
@@ -203,11 +192,10 @@ function makeTopRankedList(scoreData, label, property, suffix) {
 }
 
 function makeRankingTab(scoreData, label, property, suffix) {
-    // PLAYER
     return `
         <table class="vis" style="width:100%">
             <tr>
-                <th>Player</th>
+                <th>${lib.translate(lib.itlcodes.PLAYER)}</th>
                 <th>${label}</th>
             </tr>
             ${ lib.objectToArray(scoreData, (prop, value) => ({ name: prop, value: value[property] }))

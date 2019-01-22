@@ -105,16 +105,10 @@
 
                 let numMissingIncs = incomings.filter((i) => !incomingTags[i.id]).length;
                 if (numMissingIncs > 0) {
-                    // INCS_NOT_TAGGED
-                    $('#missing-command-uploads').html(`<b>${numMissingIncs} incomings weren't uploaded to Vault yet and won't be tagged!</b>`);
+                    $('#missing-command-uploads').html(`<b>${lib.translate(lib.itlcodes.INCS_NOT_TAGGED, { numIncs: numMissingIncs })}</b>`);
                 } else {
                     $('#missing-command-uploads').html('');
                 }
-
-                //  Note we're using labels from current page rather than labels stored in vault (for now)
-                //incomings.forEach((inc) => {
-                //    incomingTags[inc.id].oldLabel = incomingTags[inc.id].oldLabel || 
-                //});
             })
             .error((xhr, b, c) => {
                 if (xhr.status == 423) {
@@ -123,157 +117,140 @@
                         reasons = JSON.parse(xhr.responseText);
                     } catch (_) { }
 
-                    // TAG_UPLOAD_DATA_REQUIRED
-                    let alertMessage = "You haven't uploaded data in a while, you can't use tagging until you do."
+                    let alertMessage = lib.translate(lib.itlcodes.TAG_UPLOAD_DATA_REQUIRED, { _escaped: false });
                     if (reasons) {
-                        // UPLOAD_DATA_REQUIRED_REASONS
-                        alertMessage += `\nYou need to upload: ${reasons.join(', ')}`;
+                        alertMessage += `\n${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS)} ${reasons.join(', ')}`;
                     }
 
                     alert(alertMessage);
                     displayMainVaultUI();
                 } else if (xhr.status != 401) {
-                    // ERROR_OCCURRED
-                    alert("An error occurred...");
+                    alert(lib.messages.GENERIC_ERROR);
                 }
             });
     }
 
     function makeTaggingUI() {
         $('#v-tagging-ui').remove();
-        // FEATURE_IS_EXPERIMENTAL | OPEN_VAULT | UPLOAD_VISIBLE_INCOMINGS
-        // TAG_CODE_HEADER | TAG_CODE_DETAILS
-        // TAG_CODE_TROOP_NAME_DETAILS | TAG_CODE_TAG_TYPE_DETAILS | TAG_CODE_POP_PERCENT_DETAILS
-        // TAG_CODE_POP_COUNT_DETAILS | TAG_CODE_RETURN_PERCENT_DETAILS | TAG_CODE_RETURN_COUNT_DETAILS
-        // TAG_CODE_NUM_CATS_DETAILS | TAG_CODE_NUM_COMS_DETAILS | TAG_CODE_SRC_PLAYER_DETAILS
-        // TAG_CODE_SRC_VILLAGE_DETAILS | TAG_CODE_TGT_PLAYER_DETAILS | TAG_CODE_TGT_VILLAGE_DETAILS
-        // TAG_CODE_SRC_COORDS_DETAILS | TAG_CODE_TGT_COORDS_DETAILS | TAG_CODE_CUSTOM_LABEL_DETAILS
-        // RESET
-        // TAG_CFG_ONLY_UNLABELED | TAG_CFG_FORMAT
-        // TAG_CFG_AUTOTAG_FAKE_1 | TAG_CFG_AUTOTAG_FAKE_2
-        // TAG_CFG_IGNORE_NO_DATA
-        // TAG_ALL | TAG_SELECTED | TAG_REVERT
-        // CANCEL
-        // TAG_DURATION_NOTICE
         let $container = $(`
             <div id="v-tagging-ui" class="content-border">
-                <h3>Vault Tagging</h3>
+                <h3>${lib.translate(lib.itlcodes.TAGGING_TITLE)}</h3>
                 <p>
-                    <b>Note - this feature is EXPERIMENTAL and may not be accurate!</b>
+                    <b>${lib.translate(lib.itlcodes.FEATURE_IS_EXPERIMENTAL)}</b>
                 </p>
                 <p>
-                    <button id="v-show-vault">Open Vault</button>
-                    <button id="v-upload-visible-incomings">Upload Visible Incomings</button>
+                    <button id="v-show-vault">${lib.translate(lib.itlcodes.OPEN_VAULT)}</button>
+                    <button id="v-upload-visible-incomings">${lib.translate(lib.itlcodes.UPLOAD_VISIBLE_INCOMINGS)}</button>
                 </p>
                 <p id="missing-command-uploads"></p>
                 <p>
                     <table class="vis">
                         <tr>
-                            <th>Code</th>
-                            <th>Details</th>
+                            <th>${lib.translate(lib.itlcodes.TAG_CODE_HEADER)}</th>
+                            <th>${lib.translate(lib.itlcodes.TAG_CODE_DETAILS)}</th>
                         </tr>
                         <tr class="row_a">
                             <td>%troopName%</td>
-                            <td>Best known troop type (from your label or auto-calculated)</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_TROOP_NAME_DETAILS)}</td>
                         </tr>
                         <tr class="row_b">
                             <td>%tagType%</td>
-                            <td>One of: Fake, Nuke</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_TAG_TYPE_DETAILS)}</td>
                         </tr>
                         <tr class="row_a">
                             <td>%popPerc%</td>
-                            <td>% of a full nuke known at the village, ie 89% or ?%</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_POP_PERCENT_DETAILS)}</td>
                         </tr>
                         <tr class="row_b">
                             <td>%popCnt%</td>
-                            <td>Offensive pop known at the village, ie 19.2k or ?k</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_POP_COUNT_DETAILS)}</td>
                         </tr>
                         <tr class="row_a">
                             <td>%popReturnPerc%</td>
-                            <td>% of a full nuke known returning to the village when this command was sent, ie 89% or ?%</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_POP_RETURN_PERCENT_DETAILS)}</td>
                         </tr>
                         <tr class="row_b">
                             <td>%popReturnCnt%</td>
-                            <td>Offensive pop known returning to the village when this command was sent, ie 19.2k or ?k</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_POP_RETURN_COUNT_DETAILS)}</td>
                         </tr>
                         <tr class="row_a">
                             <td>%numCats%</td>
-                            <td># of catapults known at the village</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_NUM_CATS_DETAILS)}</td>
                         </tr>
                         <tr class="row_b">
                             <td>%numComs%</td>
-                            <td># of total commands from the village to the tribe</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_NUM_COMS_DETAILS)}</td>
                         </tr>
                         <tr class="row_a">
                             <td>%srcPlayer%</td>
-                            <td>Name of the player that sent the attack</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_SRC_PLAYER_DETAILS)}</td>
                         </tr>
                         <tr class="row_b">
                             <td>%srcVilla%</td>
-                            <td>Name of the village that sent the attack</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_SRC_VILLAGE_DETAILS)}</td>
                         </tr>
                         <tr class="row_a">
                             <td>%targetVilla%</td>
-                            <td>Name of the village being attacked</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_TGT_VILLAGE_DETAILS)}</td>
                         </tr>
                         <tr class="row_b">
                             <td>%srcCoords%</td>
-                            <td>Coords of the village that sent the attack</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_SRC_COORDS_DETAILS)}</td>
                         </tr>
                         <tr class="row_a">
                             <td>%targetCoords%</td>
-                            <td>Coords of the village being attacked</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_TGT_COORDS_DETAILS)}</td>
                         </tr>
                         <tr class="row_b">
                             <td>%distance%</td>
-                            <td>Distance between the source and target village</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_DISTANCE_DETAILS)}</td>
                         </tr>
                         <tr class="row_a">
                             <td>%villaType%</td>
-                            <td>Whether the village is Off., Def., or unknown</td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_VILLAGE_TYPE_DETAILS)}</td>
                         </tr>
                         <tr class="row_b">
                             <td>%customLabel%</td>
-                            <td>Custom labels you've added to the command that should be left untouched; these are surrounded by quotes ie <b>"Dodged"</b></td>
+                            <td>${lib.translate(lib.itlcodes.TAG_CODE_CUSTOM_LABEL_DETAILS)}</td>
                         </tr>
                     </table>
                 </p>
                 <p>
-                    <label for="v-tag-format">Tag format: </label>
+                    <label for="v-tag-format">${lib.translate(lib.itlcodes.TAG_CFG_FORMAT)}</label>
                     <input type="text" id="v-tag-format" style="width:80em">
-                    <button id="v-reset-format">Reset</button>
+                    <button id="v-reset-format">${lib.translate(lib.itlcodes.RESET)}</button>
                 </p>
                 <p>
                     <input type="checkbox" id="v-tag-unlabeled" ${settings.onlyTagUnlabeled ? 'checked' : ''}>
-                    <label for="v-tag-unlabeled">Only tag unlabeled incomings</label>
+                    <label for="v-tag-unlabeled">${lib.translate(lib.itlcodes.TAG_CFG_ONLY_UNLABELED)}</label>
                 </p>
                 <p>
                     <input type="checkbox" id="v-autoset-fakes" ${settings.autoLabelFakes ? 'checked' : ''}>
                     <label for="v-autoset-fakes">
-                        Label as "Fakes" if less than <input id="v-max-fake-pop" type="text" style="width:2em; text-align:center" value="${settings.maxFakePop}"> thousand offense population
+                        ${lib.translate(lib.itlcodes.TAG_CFG_AUTOTAG_FAKE_1)} <input id="v-max-fake-pop" type="text" style="width:2em; text-align:center" value="${settings.maxFakePop}"> ${lib.translate(lib.itlcodes.TAG_CFG_AUTOTAG_FAKE_2)}
                     <label>
                 </p>
                 <p>
                     <input type="checkbox" id="v-ignore-missing" ${settings.ignoreMissingData ? 'checked' : ''}>
                     <label for="v-ignore-missing">
-                        Ignore incomings without data
+                        ${lib.translate(lib.itlcodes.TAG_CFG_IGNORE_NO_DATA)}
                     </label>
                 <p>
                     <input type="checkbox" id="v-preview">
-                    <label for="v-preview">Preview</label>
+                    <label for="v-preview">${lib.translate(lib.itlcodes.PREVIEW)}</label>
                 </p>
                 <p>
-                    <button id="v-tag-all">Tag All</button>
+                    <button id="v-tag-all">${lib.translate(lib.itlcodes.TAG_ALL)}</button>
                     <span class="v-sep"></span>
-                    <button id="v-tag-selected">Tag Selected</button>
+                    <button id="v-tag-selected">${lib.translate(lib.itlcodes.TAG_SELECTED)}</button>
                     <span class="v-sep"></span>
-                    <button id="v-revert-tagging">Revert to Old Tags</button>
+                    <button id="v-revert-tagging">${lib.translate(lib.itlcodes.TAG_REVERT)}</button>
                 </p>
                 <p>
-                    <button id="v-cancel" disabled>Cancel</button>
+                    <button id="v-cancel" disabled>${lib.translate(lib.itlcodes.CANCEL)}</button>
                 </p>
                 <p>
-                    <em>Tagging will take a while!</em>
+                    <em>${lib.translate(lib.itlcodes.TAG_DURATION_NOTICE)}</em>
                 </p>
                 <p id="v-tag-status">
                 </p>
@@ -322,8 +299,7 @@
             let maxPopText = $maxFakePop.val();
             let maxPop = parseFloat(maxPopText);
             if (isNaN(maxPop) || maxPopText.match(/[^\d\.]/)) {
-                // NOT_A_NUMBER
-                alert("That's not a number!");
+                alert(lib.translate(lib.itlcodes.NOT_A_NUMBER, { _escaped: false }));
                 $maxFakePop.val(settings.maxFakePop);
                 return;
             }
@@ -353,8 +329,7 @@
                     toggleUploadButtons(true);
                 })
                 .error(() => {
-                    // ERROR_OCCURRED
-                    alert('An error occurred...');
+                    alert(lib.messages.GENERIC_ERROR);
                 });
         });
 
@@ -408,8 +383,7 @@
 
         $container.find('#v-tag-all').click((e) => {
             e.originalEvent.preventDefault();
-            // FAKE_DETECTION_CONFIRM
-            if (settings.autoLabelFakes && !confirm("WARNING - Fake detection isn't 100% accurate, but you have enabled the 'label as fakes' option."))
+            if (settings.autoLabelFakes && !confirm(lib.translate(lib.itlcodes.FAKE_DETECTION_CONFIRM)))
                 return;
 
             beginTagging(incomings.filter(i => !settings.onlyTagUnlabeled || i.$row.find('.quickedit-label').text().trim() == UNLABELED_TAG_NAME).map((i) => i.id));
@@ -417,14 +391,12 @@
 
         $container.find('#v-tag-selected').click((e) => {
             e.originalEvent.preventDefault();
-            // FAKE_DETECTION_CONFIRM
-            if (settings.autoLabelFakes && !confirm("WARNING - Fake detection isn't 100% accurate, but you have enabled the 'label as fakes' option."))
+            if (settings.autoLabelFakes && !confirm(lib.translate(lib.itlcodes.FAKE_DETECTION_CONFIRM)))
                 return;
 
             let selectedIds = getSelectedIncomingIds();
             if (!selectedIds.length)
-                // NO_INCOMINGS_SELECTED
-                alert("You didn't select any incomings!");
+                alert(lib.translate(lib.itlcodes.NO_INCOMINGS_SELECTED, { _escaped: false }));
             beginTagging(selectedIds);
         });
 
@@ -469,8 +441,7 @@
                 rateLimiter.start();
             } else {
                 toggleUploadButtons(true);
-                // TAGS_ARE_CURRENT
-                updateTagStatus("Either no incomings or all tags are current");
+                updateTagStatus(lib.translate(lib.itlcodes.TAGS_ARE_CURRENT));
             }
         });
 
@@ -478,8 +449,7 @@
             e.originalEvent.preventDefault();
             rateLimiter.stop();
             toggleUploadButtons(true);
-            // TAGGING_CANCELED
-            updateTagStatus("Tagging canceled");
+            updateTagStatus(lib.translate(lib.itlcodes.TAGGING_CANCELED));
         });
     }
 
@@ -527,8 +497,7 @@
             rateLimiter.start();
         } else {
             toggleUploadButtons(true);
-            // TAGS_ARE_CURRENT
-            updateTagStatus("Either no incomings or all tags are current");
+            updateTagStatus(lib.translate(lib.itlcodes.TAGS_ARE_CURRENT));
         }
     }
 
@@ -538,17 +507,13 @@
         if (msg_) {
             $tagStatus.text(msg_);
         } else if (stats.total) {
-            // TAGGING_PROGRESS
-            let progress = `${stats.done}/${stats.total} tagged (${stats.numFailed} failed)`;
+            let progress = lib.translate(lib.itlcodes.TAGGING_PROGRESS, { numDone: stats.done, numTotal: stats.total, numFailed: stats.numFailed });
             if (stats.total == stats.done) {
-                // TAG_STATE_FINISHED
-                progress = `Finished: ${progress}`;
+                progress = `${lib.translate(lib.itlcodes.TAG_STATE_FINISHED)} ${progress}`;
             } else if (rateLimiter.isRunning()) {
-                // TAG_STATE_RUNNING
-                progress = `Tagging: ${progress}`;
+                progress = `${lib.translate(lib.itlcodes.TAG_STATE_RUNNING)} ${progress}`;
             } else {
-                // TAG_STATE_CANCELED
-                progress = `Canceled: ${progress}`;
+                progress = `${lib.translate(lib.itlcodes.TAG_STATE_CANCELED)} ${progress}`;
             }
             $tagStatus.text(progress);
         } else {
@@ -614,7 +579,7 @@
         let missingReturnPop = typeof incomingData.returningPopulation == 'undefined' || incomingData.returningPopulation == null;
         let troopTypeName = incomingData.troopType ? (
             lib.twstats.getUnit(incomingData.troopType).name
-        ) : 'Unknown'; // UNKNOWN
+        ) : lib.translate(lib.itlcodes.UNKNOWN);
 
         let maxNukePop = 20000;
         let nukePop = Math.min(maxNukePop, incomingData.offensivePopulation || 0);
@@ -625,7 +590,7 @@
         let returnPopPerc = Math.roundTo(returnPop / maxNukePop * 100, 1);
 
         if (settings.autoLabelFakes && incomingData.troopType != 'snob' && !missingNukePop && nukePopK < settings.maxFakePop) {
-            return 'Fakes'; // FAKES
+            return lib.translate(lib.itlcodes.FAKES);
         }
 
         let customLabel = currentLabel.match(/".+"/);
@@ -634,7 +599,7 @@
 
         return format
             .replace("%troopName%", troopTypeName)
-            .replace("%tagType%", incomingData.definiteFake ? 'Fake' : 'Nuke?') // FAKE | MAYBE_NUKE
+            .replace("%tagType%", incomingData.definiteFake ? lib.translate(lib.itlcodes.FAKE) : lib.translate(lib.itlcodes.MAYBE_NUKE))
             .replace("%popPerc%", missingNukePop ? '?' : nukePopPerc)
             .replace("%popCnt%", missingNukePop ? '?' : nukePopK)
             .replace("%numCats%", missingNumCats ? '?' : incomingData.numCats)

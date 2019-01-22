@@ -9,7 +9,7 @@
     ];
 
     return {
-        label: 'Support',
+        label: lib.translate(lib.itlcodes.TAB_SUPPORT),
         containerId: 'vault-support-container',
 
         getContent: uilib.mkTabbedContainer(userSupportTab, tabs)

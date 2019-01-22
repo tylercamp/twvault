@@ -34,16 +34,14 @@
     ];
 
     $doc.find('#vault-ui-container').remove();
-    // VAULT | VAULT_INTERFACE_DESCRIPTION | DONE
     var $uiContainer = $(`
         <div id="vault-ui-container" class="confirmation-box" style="border-width: 20px">
             <!-- Weird margins on this since TW styling has an annoying gap -->
             <div class="confirmation-box-content-pane" style="min-height:100%;margin-left:-1px;margin-bottom:-1px">
                 <div class="confirmation-box-content" style="min-height:100%">
-                    <h3>Vault</h3>
+                    <h3>${lib.translate(lib.itlcodes.VAULT)}</h3>
                     <p>
-                        This is the Main Vault Interface. Make sure to upload your reports, etc. in the Upload tab. Run
-                        this script on your Map or on your Incomings to see everything the Vault has to offer.
+                        ${lib.translate(lib.itlcodes.VAULT_INTERFACE_DESCRIPTION)}
                     </p>
 
                     ${uilib.mkTabbedContainer(uploadsTab, tabs)}
@@ -55,7 +53,7 @@
                     </p>
                 </div>
                 <div class="confirmation-buttons">
-                    <button class="btn vault-close-btn btn-confirm-yes">Done</button>
+                    <button class="btn vault-close-btn btn-confirm-yes">${lib.translate(lib.itlcodes.DONE)}</button>
                 </div>
             </div>
         </div>
@@ -98,8 +96,7 @@
 
     $uiContainer.find('.vault-close-btn').click(() => {
         let isUploading = $('.upload-button').prop('disabled');
-        // UPLOADING_IF_CLOSED
-        if (isUploading && !confirm("Current uploads will continue running while this popup is closed.")) {
+        if (isUploading && !confirm(lib.translate(lib.itlcodes.UPLOADING_IF_CLOSED))) {
             return;
         }
         $uiContainer.remove();
