@@ -84,7 +84,7 @@ namespace TW.Vault.Controllers
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
-                return StatusCode(423, needsUpdateReasons); // Status code "Locked"
+                return StatusCode(423, needsUpdateReasons.Select(r => Translate(r)).ToList()); // Status code "Locked"
             }
 
             //  Start getting village data
@@ -423,7 +423,7 @@ namespace TW.Vault.Controllers
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
-                return StatusCode(423, needsUpdateReasons); // Status code "Locked"
+                return StatusCode(423, needsUpdateReasons.Select(r => Translate(r)).ToList()); // Status code "Locked"
             }
 
             var commandsFromVillage = await Profile("Get commands from village", () => (
@@ -492,7 +492,7 @@ namespace TW.Vault.Controllers
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
-                return StatusCode(423, needsUpdateReasons); // Status code "Locked"
+                return StatusCode(423, needsUpdateReasons.Select(r => Translate(r)).ToList()); // Status code "Locked"
             }
 
             var vaultTribes = await Profile("Get tribe IDs", () => (

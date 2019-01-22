@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 using TW.Vault.Features;
 using TW.Vault.Scaffold;
@@ -212,6 +213,101 @@ namespace TW.Vault.Controllers
         protected void LoadWorldData()
         {
             _currentWorld = CurrentWorld;
+        }
+
+
+
+        //  Translations
+        private short? _currentTranslationId;
+        protected short CurrentTranslationId
+        {
+            get
+            {
+                if (_currentTranslationId == null)
+                {
+                    if (Request.Headers.ContainsKey("X-TRANSLATION-ID"))
+                        _currentTranslationId = short.Parse(Request.Headers["X-TRANSLATION-ID"]);
+                    else
+                        _currentTranslationId = CurrentWorld.DefaultTranslationId;
+                }
+
+                return _currentTranslationId.Value;
+            }
+        }
+
+        private TranslationRegistry _currentTranslation;
+        protected TranslationRegistry CurrentTranslation
+        {
+            get
+            {
+                TranslationRegistry LoadTranslation(short id) => context
+                    .TranslationRegistry
+                    .Include(r => r.Entries)
+                    .Where(r => r.Id == id)
+                    .FirstOrDefault();
+
+                if (_currentTranslation == null)
+                {
+                    _currentTranslation = LoadTranslation(CurrentTranslationId);
+                    if (_currentTranslation == null)
+                    {
+                        _currentTranslationId = CurrentWorld.DefaultTranslationId;
+                        _currentTranslation = LoadTranslation(CurrentTranslationId);
+                    }
+                }
+
+                return _currentTranslation;
+            }
+        }
+
+        protected String Translate(String keyName, object parameters = null)
+        {
+            Dictionary<String, String> ParametersAsDictionary()
+            {
+                var result = new Dictionary<String, String>();
+                if (parameters == null)
+                    return result;
+
+                foreach (var property in parameters.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                {
+                    if (property.CanRead)
+                        result.Add(property.Name, property.GetValue(parameters).ToString());
+                }
+
+                return result;
+            }
+
+            var key = context
+                        .TranslationKey
+                        .Include(k => k.Parameters)
+                        .Where(k => k.Name == keyName)
+                        .FirstOrDefault();
+
+            if (key == null)
+                throw new KeyNotFoundException("No key exists named: " + keyName);
+
+            var providedParameters = ParametersAsDictionary();
+            if (providedParameters.Count > 0 && key.Parameters == null)
+                throw new InvalidOperationException($"Parameters given for key {keyName} but this key does not take parameters");
+
+            var entry = CurrentTranslation.Entries.Where(e => e.KeyId == key.Id).First();
+            var result = entry.Value;
+
+            if (key.Parameters == null)
+                return result;
+
+            var missingParams = key.Parameters.Select(p => p.Name).Except(providedParameters.Keys).ToList();
+            var extraParams = providedParameters.Keys.Except(key.Parameters.Select(p => p.Name)).ToList();
+
+            if (missingParams.Any())
+                throw new InvalidOperationException($"Cannot translate key {keyName} without the parameters: {String.Join(", ", missingParams)}");
+            if (extraParams.Any())
+                throw new InvalidOperationException($"Unnecessary parameters provided while translating key {keyName}: {String.Join(", ", extraParams)}");
+
+            foreach (var (paramName, paramValue) in providedParameters.Tupled())
+                result = result.Replace($"{{{paramName}}}", paramValue);
+
+            return result;
         }
 
 

@@ -57,29 +57,25 @@ namespace TW.Vault.Model.Validation
             if (history?.LastUploadedCommandsAt == null ||
                 (now - history.LastUploadedCommandsAt.Value > info.MaxCommandsAge))
             {
-                // UPLOAD_COMMANDS_REQUIRED
-                reasons.Add("commands");
+                reasons.Add("UPLOAD_COMMANDS_REQUIRED");
             }
 
             if (history?.LastUploadedIncomingsAt == null ||
                 (now - history.LastUploadedIncomingsAt.Value > info.MaxIncomingsAge))
             {
-                // UPLOAD_INCOMINGS_REQUIRED
-                reasons.Add("incomings");
+                reasons.Add("UPLOAD_INCOMINGS_REQUIRED");
             }
 
             if (history?.LastUploadedReportsAt == null ||
                 (now - history.LastUploadedReportsAt.Value > info.MaxReportsAge))
             {
-                // UPLOAD_REPORTS_REQUIRED
-                reasons.Add("reports");
+                reasons.Add("UPLOAD_REPORTS_REQUIRED");
             }
 
             if (history?.LastUploadedTroopsAt == null ||
                 (now - history.LastUploadedTroopsAt.Value > info.MaxTroopsAge))
             {
-                // UPLOAD_TROOPS_REQUIRED
-                reasons.Add("troops");
+                reasons.Add("UPLOAD_TROOPS_REQUIRED");
             }
 
             return reasons;

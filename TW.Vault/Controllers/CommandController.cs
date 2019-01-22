@@ -348,7 +348,7 @@ namespace TW.Vault.Controllers
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
-                return StatusCode(423, needsUpdateReasons); // Status code "Locked"
+                return StatusCode(423, needsUpdateReasons.Select(r => Translate(r)).ToList()); // Status code "Locked"
             }
 
             //  NOTE - We pull data for all villas requested but only return data for villas not in vaultOwnedVillages,
@@ -545,8 +545,7 @@ namespace TW.Vault.Controllers
                     var targetVillage = relevantVillages[incoming.TargetVillageId];
                     tag.SourceVillageCoords = $"{sourceVillage.X}|{sourceVillage.Y}";
                     tag.TargetVillageCoords = $"{targetVillage.X}|{targetVillage.Y}";
-                    // UNKNOWN
-                    tag.SourcePlayerName = sourcePlayerNames.GetValueOrDefault(incoming.SourcePlayerId, "Unknown").UrlDecode();
+                    tag.SourcePlayerName = sourcePlayerNames.GetValueOrDefault(incoming.SourcePlayerId, Translate("UNKNOWN")).UrlDecode();
                     tag.SourceVillageName = sourceVillage.VillageName.UrlDecode();
                     tag.TargetVillageName = targetVillage.VillageName.UrlDecode();
                     tag.Distance = new Coordinate { X = sourceVillage.X, Y = sourceVillage.Y }.DistanceTo(targetVillage.X, targetVillage.Y);
@@ -556,8 +555,7 @@ namespace TW.Vault.Controllers
                         //  TODO - Make this a setting
                         bool isOffense = ArmyStats.IsOffensive(effectiveArmy);
 
-                        // OFFENSE | DEFENSE
-                        tag.VillageType = isOffense ? "Offense" : "Defense";
+                        tag.VillageType = isOffense ? Translate("OFFENSE") : Translate("DEFENSE");
 
                         if (!isOffense && isConfidentArmy && (effectiveArmy.Snob == null || effectiveArmy.Snob == 0) && incoming.TroopType != JSON.TroopType.Snob.ToTroopString())
                             tag.DefiniteFake = true;

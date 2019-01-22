@@ -79,20 +79,19 @@ namespace TW.Vault.Controllers
                 else
                 {
                     json.OccurredAt = log.TransactionTime;
-                    json.AdminUserName = log.AdminPlayerId == null ? "System" : (playerNamesById[log.AdminPlayerId.Value] ?? "Unknown");
+                    json.AdminUserName = log.AdminPlayerId == null ? "System" : (playerNamesById[log.AdminPlayerId.Value] ?? Translate("UNKNOWN"));
                 }
 
                 var logsForKey = logsByKey[log.AuthToken].OrderBy(l => l.Id).ToList();
                 int logIdx = logsForKey.IndexOf(log);
                 var previousLog = logIdx > 0 ? logsForKey[logIdx - 1] : null;
 
-                var playerName = playerNamesById[log.PlayerId] ?? "Unknown";
+                var playerName = playerNamesById[log.PlayerId] ?? Translate("UNKNOWN");
 
                 switch (log.OperationType)
                 {
                     case "INSERT":
-                        // ADMIN_LOG_ADDED_KEY_FOR
-                        json.EventDescription = $"Added key for {playerName}";
+                        json.EventDescription = Translate("ADMIN_LOG_ADDED_KEY_FOR", new { playerName });
                         break;
 
                     case "UPDATE":
@@ -103,70 +102,69 @@ namespace TW.Vault.Controllers
                             if (log.PermissionsLevel != previousLog.PermissionsLevel)
                             {
                                 if (log.PermissionsLevel < (short)Security.PermissionLevel.Admin)
-                                    // ADMIN_LOG_REVOKED_PRIVELEGES_FOR
-                                    description.Add($"Revoked admin priveleges for {playerName}");
+                                    description.Add(Translate("ADMIN_LOG_REVOKED_PRIVELEGES_FOR", new { playerName }));
                                 else
-                                    // ADMIN_LOG_GAVE_PRIVELEGES_TO
-                                    description.Add($"Gave admin priveleges to {playerName}");
+                                    description.Add(Translate("ADMIN_LOG_GAVE_PRIVELEGES_TO", new { playerName }));
                             }
 
                             if (log.Enabled != previousLog.Enabled)
                             {
                                 if (log.Enabled)
-                                    // ADMIN_LOG_RE_ENABLED_KEY_FOR
-                                    description.Add($"Re-enabled key for {playerName}");
+                                    description.Add(Translate("ADMIN_LOG_RE_ENABLED_KEY_FOR", new { playerName }));
                                 else
-                                    // ADMIN_LOG_DISABLED_KEY_FOR
-                                    description.Add($"Disabled key for {playerName}");
+                                    description.Add(Translate("ADMIN_LOG_DISABLED_KEY_FOR", new { playerName }));
                             }
 
                             if (log.PlayerId != previousLog.PlayerId)
                             {
-                                // ADMIN_LOG_CHANGED_KEY_OWNER
-                                description.Add($"Changed key owner from {playerNamesById[previousLog.PlayerId]} to {playerNamesById[log.PlayerId]}");
+                                description.Add(Translate("ADMIN_LOG_CHANGED_KEY_OWNER", new {
+                                    oldOwner = playerNamesById[previousLog.PlayerId],
+                                    newOwner = playerNamesById[log.PlayerId]
+                                }));
                             }
 
                             if (log.IsReadOnly != previousLog.IsReadOnly)
                             {
                                 if (log.IsReadOnly)
-                                    // ADMIN_LOG_SET_READ_ONLY
-                                    description.Add($"Set key for {playerNamesById[log.PlayerId]} as read-only");
+                                    description.Add(Translate("ADMIN_LOG_SET_READ_ONLY", new { playerName = playerNamesById[log.PlayerId] }));
                                 else
-                                    // ADMIN_LOG_REMOVED_READ_ONLY
-                                    description.Add($"Key for {playerNamesById[log.PlayerId]} no longer read-only");
+                                    description.Add(Translate("ADMIN_LOG_REMOVED_READ_ONLY", new { playerName = playerNamesById[log.PlayerId] });
                             }
 
                             if (log.WorldId != previousLog.WorldId)
                             {
-                                // ADMIN_LOG_CHANGED_SERVER
-                                description.Add($"Changed server assigned for {playerNamesById[log.PlayerId]}");
+                                description.Add(Translate("ADMIN_LOG_CHANGED_SERVER", new { playerName = playerNamesById[log.PlayerId] }));
                             }
 
                             if (log.AdminAuthToken != previousLog.AdminAuthToken)
                             {
                                 if (previousLog.AdminAuthToken != null && log.AdminAuthToken == null)
-                                    // ADMIN_LOG_CLEARED_ADMIN
-                                    description.Add($"Cleared administrator of {playerNamesById[previousLog.PlayerId]}");
+                                    description.Add(Translate("ADMIN_LOG_CLEARED_ADMIN", new {
+                                        playerName = playerNamesById[previousLog.PlayerId]
+                                    }));
                                 else if (previousLog.AdminAuthToken == null && log.AdminAuthToken != null)
-                                    // ADMIN_LOG_ASSIGNED_ADMIN
-                                    description.Add($"Set {playerNamesById[log.AdminPlayerId.Value]} as administrator for {playerNamesById[log.PlayerId]}");
+                                    description.Add(Translate("ADMIN_LOG_ASSIGNED_ADMIN", new {
+                                        adminName = playerNamesById[log.AdminPlayerId.Value],
+                                        playerName = playerNamesById[log.PlayerId]
+                                    }));
                                 else if (description.Count == 0)
-                                    // ADMIN_LOG_CHANGED_ADMIN
-                                    description.Add($"Changed administrator of {playerNamesById[log.PlayerId]} from {playerNamesById[previousLog.AdminPlayerId.Value]} to {playerNamesById[log.AdminPlayerId.Value]}");
+                                    description.Add(Translate("ADMIN_LOG_CHANGED_ADMIN", new {
+                                        playerName = playerNamesById[log.PlayerId],
+                                        oldAdmin = playerNamesById[previousLog.AdminPlayerId.Value],
+                                        newAdmin = playerNamesById[log.AdminPlayerId.Value]
+                                    }));
                             }
                         }
 
                         if (description.Count == 0)
-                            // ADMIN_LOG_UNKNOWN_CHANGE
-                            json.EventDescription = $"Updated {playerName} (unknown change)";
+                            json.EventDescription = Translate("ADMIN_LOG_UNKNOWN_CHANGE", new { playerName });
                         else
                             json.EventDescription = String.Join("; ", description);
 
                         break;
 
                     case "DELETE":
-                        // ADMIN_LOG_DELETED_KEY
-                        json.EventDescription = $"Deleted key for {playerName}";
+                        json.EventDescription = Translate("ADMIN_LOG_DELETED_KEY", new { playerName });
                         break;
                 }
 
@@ -236,8 +234,7 @@ namespace TW.Vault.Controllers
 
                 if (possiblePlayer == null)
                 {
-                    // ADMIN_PLAYER_NOT_FOUND_ID
-                    return BadRequest(new { error = "No player could be found with the given player ID." });
+                    return BadRequest(new { error = Translate("ADMIN_PLAYER_NOT_FOUND_ID") });
                 }
 
                 player = possiblePlayer;
@@ -254,22 +251,19 @@ namespace TW.Vault.Controllers
 
                 if (possiblePlayer == null)
                 {
-                    // ADMIN_PLAYER_NOT_FOUND_NAME
-                    return BadRequest(new { error = "No user could be found with the given name." });
+                    return BadRequest(new { error = Translate("ADMIN_PLAYER_NOT_FOUND_NAME") });
                 }
 
                 player = possiblePlayer;
             }
             else
             {
-                // ADMIN_PLAYER_NAME_NOT_SET
-                return BadRequest(new { error = "Either the player ID or player name must be specified." });
+                return BadRequest(new { error = Translate("ADMIN_PLAYER_NAME_NOT_SET") });
             }
 
             if (!CurrentUserIsSystem && player.TribeId != CurrentTribeId && Configuration.Security.RestrictAccessWithinTribes)
             {
-                // ADMIN_PLAYER_NOT_IN_TRIBE
-                return BadRequest(new { error = "Cannot request a key for a player that's not in your tribe." });
+                return BadRequest(new { error = Translate("ADMIN_PLAYER_NOT_IN_TRIBE") });
             }
 
             bool userExists = await (
@@ -282,8 +276,7 @@ namespace TW.Vault.Controllers
 
             if (userExists)
             {
-                // ADMIN_PLAYER_HAS_KEY
-                return BadRequest(new { error = "This user already has an auth key." });
+                return BadRequest(new { error = Translate("ADMIN_PLAYER_HAS_KEY") });
             }
 
             var newAuthUser = new Scaffold.User();
@@ -339,8 +332,7 @@ namespace TW.Vault.Controllers
             }
             catch
             {
-                // ADMIN_INVALID_KEY
-                return BadRequest(new { error = "Invalid auth key." });
+                return BadRequest(new { error = Translate("ADMIN_INVALID_KEY") });
             }
 
             var requestedUser = await (
@@ -351,28 +343,24 @@ namespace TW.Vault.Controllers
 
             if (requestedUser == null)
             {
-                // ADMIN_KEY_NOT_FOUND
-                return BadRequest(new { error = "No user exists with that auth key." });
+                return BadRequest(new { error = Translate("ADMIN_KEY_NOT_FOUND") });
             }
 
             if (requestedUser.AuthToken == CurrentAuthToken)
             {
-                // ADMIN_DELETE_OWN_KEY
-                return BadRequest(new { error = "You cannot delete your own key." });
+                return BadRequest(new { error = Translate("ADMIN_DELETE_OWN_KEY") });
             }
 
             if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System)
             {
-                // ADMIN_DELETE_SYSTEM_KEY
-                return BadRequest(new { error = "You cannot delete a system token." });
+                return BadRequest(new { error = Translate("ADMIN_DELETE_SYSTEM_KEY") });
             }
 
             if (requestedUser.PermissionsLevel == (short)Security.PermissionLevel.Admin)
             {
                 if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUserId)
                 {
-                    // ADMIN_DELETE_OTHER_ADMIN
-                    return BadRequest(new { error = "You cannot delete an admin user that you have not created." });
+                    return BadRequest(new { error = Translate("ADMIN_DELETE_OTHER_ADMIN") });
                 }
             }
 
@@ -411,8 +399,7 @@ namespace TW.Vault.Controllers
             }
             catch
             {
-                // ADMIN_INVALID_KEY
-                return BadRequest(new { error = "Invalid auth key." });
+                return BadRequest(new { error = Translate("ADMIN_INVALID_KEY") });
             }
 
             var requestedUser = await (
@@ -423,20 +410,17 @@ namespace TW.Vault.Controllers
 
             if (requestedUser == null)
             {
-                // ADMIN_KEY_NOT_FOUND
-                return BadRequest(new { error = "No user exists with that auth key." });
+                return BadRequest(new { error = Translate("ADMIN_KEY_NOT_FOUND") });
             }
 
             if (requestedUser.AuthToken == CurrentAuthToken)
             {
-                // ADMIN_CHANGE_OWN_KEY
-                return BadRequest(new { error = "You cannot change admin status of your own key." });
+                return BadRequest(new { error = Translate("ADMIN_CHANGE_OWN_KEY") });
             }
 
             if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System && requestedUser.AdminAuthToken != CurrentUser.AuthToken)
             {
-                // ADMIN_CHANGE_OTHER_ADMIN
-                return BadRequest(new { error = "You cannot change admin status of a user that you have not created." });
+                return BadRequest(new { error = Translate("ADMIN_CHANGE_OTHER_ADMIN") });
             }
 
             if (updateRequest.HasAdmin)
@@ -754,8 +738,7 @@ namespace TW.Vault.Controllers
 
                     foreach (var (tribeId, supportToTribe) in villagesSupportByPlayerIdByTargetTribeId[player.PlayerId])
                     {
-                        // UNKNOWN
-                        var supportedTribeName = tribeNamesById.GetValueOrDefault(tribeId, "Unknown");
+                        var supportedTribeName = tribeNamesById.GetValueOrDefault(tribeId, Translate("UNKNOWN"));
                         var totalSupportPopulation = 0;
                         foreach (var support in supportToTribe)
                             totalSupportPopulation += ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(support.SupportingArmy));
