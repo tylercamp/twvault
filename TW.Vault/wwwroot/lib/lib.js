@@ -1033,8 +1033,6 @@ var lib = (() => {
     //  Make sure all page types have validators
     lib.objForEach(lib.pageTypes, (type) => !pageValidators[type] ? console.warn('No pageValidator set for pageType: ', type) : null);
 
-    window._lib = lib;
-
     return lib;
 
 })();
