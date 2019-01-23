@@ -487,10 +487,13 @@ namespace TW.Vault.Controllers
 
             );
 
+            var currentPlayerIds = currentPlayers.Select(p => p.PlayerId).ToList();
+
             var villageIds = tribeVillages.Select(v => v.currentVillage.VillageId).Distinct().ToList();
             var attackedVillageIds = await Profile("Get incomings", () => (
                     from command in CurrentSets.Command
-                    where villageIds.Contains(command.TargetVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime
+                    where villageIds.Contains(command.TargetVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime && !command.IsReturning
+                    where !currentPlayerIds.Contains(command.SourcePlayerId)
                     select command.TargetVillageId
                 ).ToListAsync());
 
