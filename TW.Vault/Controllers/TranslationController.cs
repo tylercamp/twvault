@@ -41,7 +41,7 @@ namespace TW.Vault.Controllers
         }
 
         [HttpGet("{translationId}/contents")]
-        public IActionResult GetTranslationContents(int translationId)
+        public IActionResult GetTranslationContents(int translationId, bool ignoreMissingKeys = false)
         {
             var registry = context
                 .TranslationRegistry

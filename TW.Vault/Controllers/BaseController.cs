@@ -225,10 +225,16 @@ namespace TW.Vault.Controllers
             {
                 if (_currentTranslationId == null)
                 {
-                    if (Request.Headers.ContainsKey("X-TRANSLATION-ID"))
-                        _currentTranslationId = short.Parse(Request.Headers["X-TRANSLATION-ID"]);
-                    else
+                    if (Request.Headers.ContainsKey("X-V-TRANSLATION-ID"))
+                    {
+                        short parsedTranslationId;
+                        if (short.TryParse(Request.Headers["X-V-TRANSLATION-ID"], out parsedTranslationId))
+                            _currentTranslationId = parsedTranslationId;
+                    }
+
+                    if (_currentTranslationId == null)
                         _currentTranslationId = CurrentWorld.DefaultTranslationId;
+
                 }
 
                 return _currentTranslationId.Value;
@@ -264,17 +270,17 @@ namespace TW.Vault.Controllers
         {
             Dictionary<String, String> ParametersAsDictionary()
             {
-                var result = new Dictionary<String, String>();
+                var dict = new Dictionary<String, String>();
                 if (parameters == null)
-                    return result;
+                    return dict;
 
                 foreach (var property in parameters.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
                 {
                     if (property.CanRead)
-                        result.Add(property.Name, property.GetValue(parameters).ToString());
+                        dict.Add(property.Name, property.GetValue(parameters).ToString());
                 }
 
-                return result;
+                return dict;
             }
 
             var key = context

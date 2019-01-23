@@ -26,6 +26,23 @@ namespace TW.Vault.Controllers
         {
         }
 
+        [HttpGet]
+        public IActionResult GetCurrentTranslation()
+        {
+            var translation = CurrentTranslation;
+
+            var translationEntries = translation.Entries.ToDictionary(e => e.Key.Name, e => e.Value);
+            translationEntries = translationEntries.FillMissingKeys(context, CurrentWorld.DefaultTranslationId);
+
+            return Ok(new {
+                translation.Id,
+                translation.LanguageId,
+                translation.Name,
+                Language = translation.Language.Name,
+                Entries = translationEntries
+            });
+        }
+
         [HttpPost]
         public IActionResult CreateNewTranslation([FromBody] JSON.TranslationRegistry newRegistry)
         {

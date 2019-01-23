@@ -373,6 +373,10 @@ var lib = (() => {
             return !hasRan;
         },
 
+        getSavedTranslationId: function () {
+            return lib.getLocalStorage('currentTranslationId', null);
+        },
+
         getCurrentTranslationAsync: function (callback) {
             if (currentTranslation) {
                 callback(currentTranslation);
@@ -388,7 +392,7 @@ var lib = (() => {
                 return;
             }
 
-            $.get(lib.makeVaultUrl(`api/translation/${translationId}/contents`))
+            lib.getApi('playertranslation')
                 .done((translation) => {
                     currentTranslation = translation;
                     callback(currentTranslation);
@@ -511,6 +515,7 @@ var lib = (() => {
                 },
                 beforeSend: (xhr) => {
                     xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken, lib.isSitter()));
+                    xhr.setRequestHeader('X-V-TRANSLATION-ID', lib.getSavedTranslationId());
                 }
             });
         },
@@ -533,6 +538,7 @@ var lib = (() => {
                 },
                 beforeSend: (xhr) => {
                     xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken, lib.isSitter()));
+                    xhr.setRequestHeader('X-V-TRANSLATION-ID', lib.getSavedTranslationId());
                 }
             });
         },
@@ -555,6 +561,7 @@ var lib = (() => {
                 },
                 beforeSend: (xhr) => {
                     xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken, lib.isSitter()));
+                    xhr.setRequestHeader('X-V-TRANSLATION-ID', lib.getSavedTranslationId());
                 }
             });
         },
@@ -576,6 +583,7 @@ var lib = (() => {
                 },
                 beforeSend: (xhr) => {
                     xhr.setRequestHeader('X-V-TOKEN', makeAuthHeader(authUserId, authTribeId, authToken, lib.isSitter()));
+                    xhr.setRequestHeader('X-V-TRANSLATION-ID', lib.getSavedTranslationId());
                 }
             });
         },
