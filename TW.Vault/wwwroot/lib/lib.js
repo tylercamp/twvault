@@ -591,19 +591,8 @@ var lib = (() => {
 
         troopsArrayToObject: function troopsArrayToNamedObject(array) {
             let result = {};
-            let archerIndex = 3, mountedArcherIndex = 6, paladinIndex = 10;
-            for (var i = 0, ei = 0; ei < array.length && i < lib.twstats.unitTypes.length; i++ , ei++) {
-                if ((i == archerIndex || i == mountedArcherIndex) && !serverSettings.archersEnabled) {
-                    --ei;
-                    continue;
-                }
-
-                if (i == paladinIndex && !serverSettings.paladinEnabled) {
-                    --ei;
-                    continue;
-                }
-
-                result[lib.twstats.unitTypes[i].canonicalName] = array[ei];
+            for (var i = 0; i < array.length && i < lib.twstats.unitTypes.length; i++) {
+                result[lib.twstats.unitTypes[i].canonicalName] = array[i];
             }
             return result;
         },
@@ -1043,6 +1032,8 @@ var lib = (() => {
 
     //  Make sure all page types have validators
     lib.objForEach(lib.pageTypes, (type) => !pageValidators[type] ? console.warn('No pageValidator set for pageType: ', type) : null);
+
+    window._lib = lib;
 
     return lib;
 
