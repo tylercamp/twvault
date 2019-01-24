@@ -137,7 +137,7 @@
                 defense: [{ class: "Infantry", value: 15 }, { class: "Cavalry", value: 45 }, { class: "Archer", value: 20 }],
                 cost: [{ resource: "Wood", amount: 50 }, { resource: "Clay", amount: 30 }, { resource: "Iron", amount: 10 }],
                 aliases: ['sp', 'spear fighter', 'spear fighters', 'spear', 'spears', 'spearman', 'spearmen'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/spear.png"
+                icon: "https://tylercamp.me/tw/img/unit_spear.png"
             },
             {
                 name: "Sword",
@@ -152,7 +152,7 @@
                 defense: [{ class: "Infantry", value: 50 }, { class: "Cavalry", value: 15 }, { class: "Archer", value: 40 }],
                 cost: [{ resource: "Wood", amount: 30 }, { resource: "Clay", amount: 30 }, { resource: "Iron", amount: 70 }],
                 aliases: ['sw', 'sword', 'swords', 'swordsmen', 'swordsman'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/sword.png"
+                icon: "https://tylercamp.me/tw/img/unit_sword.png"
             },
             {
                 name: "Axe",
@@ -167,7 +167,7 @@
                 defense: [{ class: "Infantry", value: 10 }, { class: "Cavalry", value: 5 }, { class: "Archer", value: 10 }],
                 cost: [{ resource: "Wood", amount: 60 }, { resource: "Clay", amount: 30 }, { resource: "Iron", amount: 40 }],
                 aliases: ['ax', 'axe', 'axes', 'axeman', 'axemen'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/axe.png"
+                icon: "https://tylercamp.me/tw/img/unit_axe.png"
             },
             {
                 name: "Archer",
@@ -182,7 +182,7 @@
                 defense: [{ class: "Infantry", value: 50 }, { class: "Cavalry", value: 40 }, { class: "Archer", value: 5 }],
                 cost: [{ resource: "Wood", amount: 100 }, { resource: "Clay", amount: 30 }, { resource: "Iron", amount: 60 }],
                 aliases: ['ar', 'archer', 'archers', 'arc'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/archer.png"
+                icon: "https://tylercamp.me/tw/img/unit_archer.png"
             },
             {
                 name: "Scout",
@@ -197,7 +197,7 @@
                 defense: [{ class: "Infantry", value: 2 }, { class: "Cavalry", value: 1 }, { class: "Archer", value: 2 }],
                 cost: [{ resource: "Wood", amount: 50 }, { resource: "Clay", amount: 50 }, { resource: "Iron", amount: 20 }],
                 aliases: ['scout', 'scouts', 'spy', 'spies', 'sc'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/spy.png"
+                icon: "https://tylercamp.me/tw/img/unit_spy.png"
             },
             {
                 name: "Light Cav.",
@@ -212,7 +212,7 @@
                 defense: [{ class: "Infantry", value: 30 }, { class: "Cavalry", value: 40 }, { class: "Archer", value: 30 }],
                 cost: [{ resource: "Wood", amount: 125 }, { resource: "Clay", amount: 100 }, { resource: "Iron", amount: 250 }],
                 aliases: ['lc', 'light cavalry', 'light cav', 'light cav.', 'light'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/light.png"
+                icon: "https://tylercamp.me/tw/img/unit_light.png"
             },
             {
                 name: "Mounted Ar.",
@@ -227,7 +227,7 @@
                 defense: [{ class: "Infantry", value: 40 }, { class: "Cavalry", value: 30 }, { class: "Archer", value: 50 }],
                 cost: [{ resource: "Wood", amount: 250 }, { resource: "Clay", amount: 100 }, { resource: "Iron", amount: 150 }],
                 aliases: ['ma', 'mounted ar', 'mounted archer', 'mounted archers', 'mounted', 'mount'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/grey/marcher.png"
+                icon: "https://tylercamp.me/tw/img/unit_marcher.png"
             },
             {
                 name: "Heavy Cav.",
@@ -242,7 +242,7 @@
                 defense: [{ class: "Infantry", value: 200 }, { class: "Cavalry", value: 80 }, { class: "Archer", value: 180 }],
                 cost: [{ resource: "Wood", amount: 200 }, { resource: "Clay", amount: 150 }, { resource: "Iron", amount: 600 }],
                 aliases: ['hc', 'heavy cavalry', 'heavy cav', 'heavy'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/heavy.png"
+                icon: "https://tylercamp.me/tw/img/unit_heavy.png"
             },
             {
                 name: "Ram",
@@ -257,7 +257,7 @@
                 defense: [{ class: "Infantry", value: 20 }, { class: "Cavalry", value: 50 }, { class: "Archer", value: 20 }],
                 cost: [{ resource: "Wood", amount: 300 }, { resource: "Clay", amount: 200 }, { resource: "Iron", amount: 200 }],
                 aliases: ['ram', 'rams'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/ram.png"
+                icon: "https://tylercamp.me/tw/img/unit_ram.png"
             },
             {
                 name: "Catapult",
@@ -272,7 +272,7 @@
                 defense: [{ class: "Infantry", value: 100 }, { class: "Cavalry", value: 50 }, { class: "Archer", value: 100 }],
                 cost: [{ resource: "Wood", amount: 320 }, { resource: "Clay", amount: 400 }, { resource: "Iron", amount: 100 }],
                 aliases: ['cat', 'cats', 'catapault', 'catapaults', 'catapult', 'catapults'],
-                icon: "https://dsen.innogamescdn.com/8.100/34723/graphic/unit/recruit/catapult.png"
+                icon: "https://tylercamp.me/tw/img/unit_catapult.png"
             },
             {
                 name: "Paladin",
@@ -286,7 +286,7 @@
                 defense: [{ class: "Infantry", value: 250 }, { class: "Cavalry", value: 400 }, { class: "Archer", value: 150 }],
                 cost: [{ resource: "Wood", amount: 20 }, { resource: "Clay", amount: 20 }, { resource: "Iron", amount: 40 }],
                 aliases: ['paladin', 'pallys', 'pally', 'paly', 'pal'],
-                icon: "https://dsen.innogamescdn.com/8.100/34797/graphic/unit/unit_knight.png"
+                icon: "https://tylercamp.me/tw/img/unit_knight.png"
             },
             {
                 name: "Nobleman",
@@ -301,7 +301,7 @@
                 defense: [{ class: "Infantry", value: 100 }, { class: "Cavalry", value: 50 }, { class: "Archer", value: 100 }],
                 cost: [{ resource: "Wood", amount: 40000 }, { resource: "Clay", amount: 50000 }, { resource: "Iron", amount: 50000 }],
                 aliases: ['nobleman', 'noblemen', 'noble', 'nobles'],
-                icon: "https://dsen.innogamescdn.com/8.100/34797/graphic/unit/unit_snob.png"
+                icon: "https://tylercamp.me/tw/img/unit_snob.png"
             },
             {
                 name: "Militia",
@@ -314,7 +314,7 @@
                 defense: [{ class: "Infantry", value: 15 }, { class: "Cavalry", value: 45 }, { class: "Archer", value: 25 }],
                 cost: [{ resource: "Wood", amount: 0 }, { resource: "Clay", amount: 0 }, { resource: "Iron", amount: 0 }],
                 aliases: ['militia', 'militias', 'mil'],
-                icon: "https://dsen.innogamescdn.com/8.100/34797/graphic/unit/unit_militia.png"
+                icon: "https://tylercamp.me/tw/img/unit_militia.png"
             }
         ]
     };
