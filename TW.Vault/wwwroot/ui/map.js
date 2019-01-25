@@ -16,7 +16,7 @@
     let $popup = $doc.find('#map_popup');
 
     $doc.find('#continent_id').parent().append(`<span> - ${lib.translate(lib.itlcodes.MAP_USING_VAULT)}</span>`);
-    let $openVaultLink = $('<button style="margin-left:1em;vertical-align:middle">Open Vault</button>');
+    let $openVaultLink = $(`<button style="margin-left:1em;vertical-align:middle">${lib.translate(lib.itlcodes.OPEN_VAULT)}</button>`);
     $doc.find('#continent_id').parent().append($openVaultLink);
 
     $openVaultLink.click((e) => {
@@ -513,7 +513,7 @@
                             </tr>
                         </table>
                     `}
-                    ${ !data.stationedArmy && !data.travelingArmy && !data.recentlyLostArmy && !data.ownedArmy ? '<div style="text-align:center;padding:0.5em;">No army data available.</div>' : `
+                    ${ !data.stationedArmy && !data.travelingArmy && !data.recentlyLostArmy && !data.ownedArmy ? `<div style="text-align:center;padding:0.5em;">${lib.translate(lib.itlcodes.MAP_HOVER_NO_ARMY)}</div>` : `
                     <table class='vis' style="width:100%">
                         <tr style="background-color:#c1a264 !important">
                             <th>Vault</th>
@@ -593,7 +593,7 @@
                     </table>
                     `}
                     ${ !settings.showBuildings ? '' : `
-                        ${ typeof data.lastBuildings == 'undefined' || data.lastBuildings == null ? '<div style="text-align:center;padding:0.5em;">No building data available.</div>' : `
+                        ${ typeof data.lastBuildings == 'undefined' || data.lastBuildings == null ? `<div style="text-align:center;padding:0.5em;">${lib.translate(lib.itlcodes.MAP_HOVER_NO_BUILDINGS)}</div>` : `
                         <table class='vis' style="width:100%">
                             <tr style="background-color:#c1a264 !important">
                                 <th>${lib.translate(lib.itlcodes.VAULT)}</th>

@@ -31,15 +31,12 @@ namespace TW.Vault.Controllers
         {
             var translation = CurrentTranslation;
 
-            var translationEntries = translation.Entries.ToDictionary(e => e.Key.Name, e => e.Value);
-            translationEntries = translationEntries.FillMissingKeys(context, CurrentWorld.DefaultTranslationId);
-
             return Ok(new {
                 translation.Id,
                 translation.LanguageId,
                 translation.Name,
                 Language = translation.Language.Name,
-                Entries = translationEntries
+                Entries = Translation.GetFullTranslation()
             });
         }
 
@@ -58,7 +55,8 @@ namespace TW.Vault.Controllers
             var existingRegistry = context.TranslationRegistry
                 .Where(r => r.LanguageId == newRegistry.LanguageId)
                 .Where(r => r.Name == newRegistry.Name)
-                .Where(r => r.AuthorPlayerId == CurrentPlayerId);
+                .Where(r => r.AuthorPlayerId == CurrentPlayerId)
+                .FirstOrDefault();
 
             if (existingRegistry != null)
                 return Conflict();
@@ -185,6 +183,29 @@ namespace TW.Vault.Controllers
                     existingScaffoldEntries[keyId].Value = value;
             }
 
+            context.SaveChanges();
+
+            return Ok();
+        }
+
+        [HttpDelete("{translationId}")]
+        public IActionResult DeleteTranslation(short translationId)
+        {
+            var registry = context.TranslationRegistry.Include(r => r.Entries).FirstOrDefault(r => r.Id == translationId);
+            if (registry == null)
+                return NotFound();
+
+            if (registry.AuthorPlayerId != CurrentPlayerId)
+                return Unauthorized();
+
+            // Don't allow deleting translations that are used as defaults
+            var worldsUsingDefault = context.World.Where(w => w.DefaultTranslationId == translationId).Count();
+            if (worldsUsingDefault > 0 || Configuration.Translation.BaseTranslationId == translationId)
+                return Conflict();
+
+            context.RemoveRange(registry.Entries);
+            context.SaveChanges();
+            context.Remove(registry);
             context.SaveChanges();
 
             return Ok();

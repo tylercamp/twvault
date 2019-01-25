@@ -10,7 +10,7 @@
         if (onDone_)
             onDone_(lib.errorCodes.NOT_ALL_GROUP);
         else
-            alert(lib.messages.IS_IN_GROUP);
+            alert(lib.messages.IS_IN_GROUP, { _escaped: false });
         return;
     }
 
@@ -24,9 +24,9 @@
 
     if (filtersEnabled) {
         if (onProgress_)
-            onProgress_(lib.messages.FILTER_APPLIED('incomings'));
+            onProgress_(lib.escapeHtml(lib.messages.FILTER_APPLIED(lib.translate(lib.itlcodes.INCOMINGS))));
         else
-            alert(lib.messages.FILTER_APPLIED('incomings'));
+            alert(lib.messages.FILTER_APPLIED(lib.translate(lib.itlcodes.INCOMINGS, { _escaped: false })));
 
         if (onDone_) {
             onDone_(lib.errorCodes.FILTER_APPLIED);
@@ -117,7 +117,7 @@
                     }
 
                     if (!onDone_)
-                        alert(lib.translate(lib.itlcodes.INCOMINGS_FINISHED, { numIncomings: distinctIncomings.length }));
+                        alert(lib.translate(lib.itlcodes.INCOMINGS_FINISHED, { numIncomings: distinctIncomings.length, _escaped: false }));
                     else
                         onDone_();
                 })

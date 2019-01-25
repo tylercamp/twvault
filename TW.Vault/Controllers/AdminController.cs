@@ -128,7 +128,7 @@ namespace TW.Vault.Controllers
                                 if (log.IsReadOnly)
                                     description.Add(Translate("ADMIN_LOG_SET_READ_ONLY", new { playerName = playerNamesById[log.PlayerId] }));
                                 else
-                                    description.Add(Translate("ADMIN_LOG_REMOVED_READ_ONLY", new { playerName = playerNamesById[log.PlayerId] });
+                                    description.Add(Translate("ADMIN_LOG_REMOVED_READ_ONLY", new { playerName = playerNamesById[log.PlayerId] }));
                             }
 
                             if (log.WorldId != previousLog.WorldId)

@@ -186,7 +186,7 @@ namespace TW.Vault.Controllers
                     if (!CachedWorldIds.ContainsKey(CurrentWorldName))
                     {
                         _currentWorld = (
-                                from world in context.World.Include(w => w.WorldSettings)
+                                from world in context.World.Include(w => w.WorldSettings).Include(w => w.DefaultTranslation)
                                 where world.Name == CurrentWorldName
                                 select world
                             ).FirstOrDefault();
@@ -248,7 +248,9 @@ namespace TW.Vault.Controllers
             {
                 TranslationRegistry LoadTranslation(short id) => context
                     .TranslationRegistry
+                    .Include(r => r.Language)
                     .Include(r => r.Entries)
+                        .ThenInclude(e => e.Key)
                     .Where(r => r.Id == id)
                     .FirstOrDefault();
 
@@ -263,6 +265,18 @@ namespace TW.Vault.Controllers
                 }
 
                 return _currentTranslation;
+            }
+        }
+
+        private TranslationContext _translation;
+        protected TranslationContext Translation
+        {
+            get
+            {
+                if (_translation == null)
+                    _translation = new TranslationContext(context, CurrentTranslation, CurrentWorld.DefaultTranslationId, Configuration.Translation.BaseTranslationId);
+
+                return _translation;
             }
         }
 
@@ -296,7 +310,7 @@ namespace TW.Vault.Controllers
             if (providedParameters.Count > 0 && key.Parameters == null)
                 throw new InvalidOperationException($"Parameters given for key {keyName} but this key does not take parameters");
 
-            var entry = CurrentTranslation.Entries.Where(e => e.KeyId == key.Id).First();
+            var entry = Translation[key.Id];
             var result = entry.Value;
 
             if (key.Parameters == null)

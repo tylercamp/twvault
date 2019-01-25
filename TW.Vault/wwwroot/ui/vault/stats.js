@@ -65,7 +65,7 @@ function makeUserStatsTab() {
                 })
                 .error(() => {
                     if (!lib.isUnloading())
-                        alert(lib.translate(lib.itlcodes.STATS_LOAD_ERROR));
+                        alert(lib.translate(lib.itlcodes.STATS_LOAD_ERROR, { _escaped: false }));
                 });
         },
 
@@ -144,7 +144,7 @@ function makeHighScoresTab() {
                     });
                 })
                 .error(() => {
-                    alert(lib.translate(lib.itlcodes.RANKINGS_LOAD_ERROR));
+                    alert(lib.translate(lib.itlcodes.RANKINGS_LOAD_ERROR, { _escaped: false }));
                 });
         },
 
@@ -156,7 +156,7 @@ function makeHighScoresTab() {
 
             <div id="high-scores-overview-container"></div>
 
-            <h3 style="margin-top:1.5em">${lib.itlcodes.RANKINGS}</h3>
+            <h3 style="margin-top:1.5em">${lib.translate(lib.itlcodes.RANKINGS)}</h3>
             <div id="high-scores-rankings-container"></div>
         `
     };

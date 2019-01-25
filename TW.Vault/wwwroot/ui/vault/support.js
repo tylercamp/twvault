@@ -18,7 +18,7 @@
 
 function makeVaultSupportInfoTab() {
     return {
-        label: 'Help',
+        label: lib.translate(lib.itlcodes.TAB_HELP),
         containerId: 'vault-user-support-container',
 
         getContent: `
@@ -72,6 +72,7 @@ function makeTranslationsTab() {
     let translations = null;
     let translationKeys = null;
     let translationParameters = null;
+    let translationReference = null;
 
     let currentEditingTranslation = null;
 
@@ -79,6 +80,14 @@ function makeTranslationsTab() {
         console.log('Loading registry editor for: ', registry);
 
         let requests = [];
+
+        if (!registry.entries && registry.id) {
+            requests.push($.get(lib.makeVaultUrl(`api/translation/${registry.id}/contents`)).done((data) => {
+                currentEditingTranslation = data;
+                registry = data;
+                console.log('Loaded registry contents: ', registry);
+            }));
+        }
 
         if (!translationKeys) {
             requests.push($.get(lib.makeVaultUrl('api/translation/translation-keys')).done((data) => translationKeys = data));
@@ -88,8 +97,15 @@ function makeTranslationsTab() {
             requests.push($.get(lib.makeVaultUrl('api/translation/parameters')).done((data) => translationParameters = data));
         }
 
+        if (!translationReference) {
+            requests.push($.get(lib.makeVaultUrl('api/translation/reference')).done((data) => translationReference = data));
+        }
+
         let $entriesContainer = $container.find('#vault-translation-registry-entries');
         let $infoContainer = $container.find('#vault-translation-registry-info');
+
+        $infoContainer.empty();
+        $entriesContainer.empty();
 
         function makeGroupEditor($container, name, group) {
             lib.selectSort(group, (e) => e.name);
@@ -104,9 +120,9 @@ function makeTranslationsTab() {
                     <table id="vault-translation-key-${name}-group-entry-container" style="display:none; width:100%">
                         <thead>
                             <tr>
-                                <th style="width:20%">Key</th>
-                                <th>Value</th>
-                                <th style="width:35%">English Example</th>
+                                <th style="width:20%">${lib.translate(lib.itlcodes.TRANSLATION_EDIT_KEY)}</th>
+                                <th>${lib.translate(lib.itlcodes.TRANSLATION_EDIT_VALUE)}</th>
+                                <th style="width:35%">${lib.translate(lib.itlcodes.TRANSLATION_EDIT_SAMPLE)}</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -121,7 +137,7 @@ function makeTranslationsTab() {
                 $entriesContainer.closest('table').toggle();
             });
 
-            group.forEach((k) => makeKeyEditor($entriesContainer, k, registry));
+            group.forEach((k) => makeKeyEditor($entriesContainer, k, registry, translationReference));
 
             $entriesContainer.find('textarea').change((ev) => {
                 let $el = $(ev.target);
@@ -139,7 +155,11 @@ function makeTranslationsTab() {
                     });
 
                     if (missingParameters.length) {
-                        alert(`The translation for "${keyName}" is missing: ${missingParameters.join(", ")}`);
+                        alert(lib.translate(lib.itlcodes.TRANSLATION_EDIT_MISSING_PARAMS, {
+                            _escaped: false,
+                            keyName: keyName,
+                            parameters: missingParameters.join(", ")
+                        }));
                         return;
                     }
                 }
@@ -154,20 +174,72 @@ function makeTranslationsTab() {
             onLoaded && onLoaded();
         }
 
-        function makeKeyEditor($container, key, registry) {
+        function makeKeyEditor($container, key, registry, reference) {
             $container.append(`
                 <tr data-key-id="${key.id}" data-key-name="${key.name}">
                     <td>${key.name}</td>
                     <td>
                         <textarea style="width:100%;margin:0" rows="2">${registry.entries[key.name] || ''}</textarea>
                     </td>
+                    <td>
+                        <textarea readonly style="width:100%;margin:0" rows="2">${reference.entries[key.name] || ''}</textarea>
+                    </td>
                 </tr>
             `);
+
+            if (key.isTwNative) {
+                $container.append(`
+                    <tr>
+                        <td colspan="3" style="text-align:center">
+                            <em style="padding-bottom:1.5em;display:inline-block;">${lib.translate(lib.itlcodes.TRANSLATION_EDIT_NEEDS_EXACT)}</em>
+                        </td>
+                    </tr>
+                `);
+            }
         }
 
         lib.whenAll$(requests, () => {
 
-            //  TODO - Load general info
+            if (registry.authorPlayerId && registry.authorPlayerId != lib.getCurrentPlayerId()) {
+                alert(lib.translate(lib.itlcodes.TRANSLATION_MAKING_COPY, { _escaped: false }));
+                delete registry.authorPlayerId;
+                delete registry.id;
+            }
+
+            $infoContainer.empty();
+            $entriesContainer.empty();
+
+            $container.css('display', 'block');
+            
+            $infoContainer.append(`<h3>Edit</h3>`);
+            $infoContainer.append(`
+                <table style="display:inline-block">
+                    <tr>
+                        <td>Language: </td>
+                        <td>
+                            <select id="vault-edit-translation-language" ${registry.id ? 'disabled' : ''}>
+                                ${languages.map(l => `<option value="${l.id}" ${l.id == registry.languageId ? 'selected' : ''}>${l.name}</option>`).join('\n')}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Name: </td>
+                        <td><input type="text" id="vault-edit-translation-name"></td>
+                    </tr>
+                </table>
+            `);
+
+            $infoContainer.find('#vault-edit-translation-name').val(registry.name);
+
+            $infoContainer.find('#vault-edit-translation-name').change((e) => {
+                registry.name = $(e.target).val();
+                console.log('Changed registry name to: ', registry.name);
+            });
+
+            $infoContainer.find('#vault-edit-translation-language').change((e) => {
+                registry.translationId = $(e.target).val();
+                console.log('Changed translation ID to: ', registry.translationId);
+            });
 
             let groupedKeys = lib.groupBy(translationKeys, k => k.group);
             lib.selectSort(groupedKeys, (k) => k.key);
@@ -183,11 +255,26 @@ function makeTranslationsTab() {
             });
 
             $entriesContainer.find('textarea').css('box-sizing', 'border-box');
+
+            uilib.applyStyles($infoContainer, {
+                'tr': () => ({
+                    'td:first-of-type': {
+                        'text-align': 'right'
+                    },
+                    'td:last-of-type': {
+                        'text-align': 'left'
+                    },
+                    'select, input': {
+                        'width': '100%',
+                        'box-sizing': 'border-box'
+                    }
+                })
+            });
         });
     }
 
     return {
-        label: 'Translations',
+        label: lib.translate(lib.itlcodes.TAB_TRANSLATIONS),
         containerId: 'vault-translations-container',
 
         init: function($container) {
@@ -208,34 +295,133 @@ function makeTranslationsTab() {
 
                 console.log('Loading translation UI');
 
+                // Create empty list for languages without any translations
+                languages.filter((l) => !translations[l.id]).forEach((l) => translations[l.id] = []);
+
+                let libTranslation = lib.getCurrentTranslation();
+
                 let $currentLanguage = $container.find('#vault-current-language');
                 let $currentTranslation = $container.find('#vault-current-translation');
 
                 languages.forEach(l => {
-                    $currentLanguage.append(`<option selected value="${l.id}">${l.name}</option>`);
+                    $currentLanguage.append(`<option value="${l.id}" ${l.id == libTranslation.languageId ? 'selected' : ''}>${l.name}</option>`);
                 });
 
-                let lang = languages[0].id;
+                loadTranslationOptions(libTranslation.languageId);
 
-                translations[lang].forEach(t => {
-                    $currentTranslation.append(`<option selected value="${t.id}">${t.name} by ${t.author}`);
+                function loadTranslationOptions(languageId) {
+                    $currentTranslation.empty();
+                    translations[languageId].forEach(t => {
+                        let label = lib.translate(lib.itlcodes.TRANSLATION_AUTHOR, { name: t.name, author: t.author });
+                        $currentTranslation.append(`<option value="${t.id}" ${t.id == libTranslation.id ? 'selected' : ''}>${label}</option>`);
+                    });
+                }
+
+                $currentLanguage.change(() => {
+                    loadTranslationOptions(parseInt($currentLanguage.val()));
                 });
 
-                // TODO:
-                // - Create translation button
-                // - Save translation changes
-                // - Inputs for author/etc
-                // - Save language/translation settings
+                $container.find('#vault-save-translation-settings').click(() => {
+                    lib.setCurrentTranslation(parseInt($currentTranslation.val()));
+                    lib.getCurrentTranslationAsync();
+                });
 
                 $container.find('#vault-edit-translation').click(() => {
-                    currentEditingTranslation = lib.getCurrentTranslation();
-                    loadRegistryEditor($container, currentEditingTranslation);
+                    $container.find('#vault-delete-translation').attr('disbaled', false);
+                    let selectedId = parseInt($currentTranslation.val());
+                    loadRegistryEditor($container.find('#vault-translation-registry'), {
+                        id: selectedId
+                    });
                 });
 
-                $container.find('#vault-save-translation-registry-changes').click(() => {
-                    lib.putApi('playertranslation', currentEditingTranslation)
-                        .done(() => alert('Saved changes!'))
-                        .error(() => alert('An error occurred...'));
+                $container.find('#vault-new-translation').click(() => {
+                    $container.find('#vault-delete-translation').attr('disabled', true);
+
+                    currentEditingTranslation = lib.createNewTranslation();
+                    currentEditingTranslation.languageId = parseInt($currentLanguage.val());
+                    loadRegistryEditor($container.find('#vault-translation-registry'), currentEditingTranslation);
+                });
+
+                $container.find('#vault-delete-translation').click(() => {
+                    if (!currentEditingTranslation.id) {
+                        alert(lib.translate(lib.itlcodes.TRANSLATION_NOT_SAVED, { _escaped: false }));
+                        return;
+                    }
+
+                    if (!confirm(lib.translate(lib.itlcodes.TRANSLATION_DELETE_CONFIRM, { _escaped: false, name: currentEditingTranslation.name })))
+                        return;
+
+                    lib.deleteApi(`playertranslation/${currentEditingTranslation.id}`)
+                        .done(() => {
+                            let message = lib.translate(lib.itlcodes.TRANSLATION_DELETED, { _escaped: false });
+                            // Reset the current translation if that's what they deleted
+                            if (lib.getSavedTranslationId() == currentEditingTranslation.id) {
+                                lib.setCurrentTranslation(null);
+                                lib.getCurrentTranslationAsync();
+                            }
+                            alert(message);
+
+                            $container.find('#vault-translation-registry').css('display', 'none');
+
+                            translations[currentEditingTranslation.languageId].removeWhere((t) => t.id == currentEditingTranslation.id);
+                            $container.find('option[value=' + currentEditingTranslation.id + ']').remove();
+                            currentEditingTranslation = null;
+                        })
+                        .error((xhr) => {
+                            switch (xhr.status) {
+                                case 409: alert(lib.translate(lib.itlcodes.TRANSLATION_DELETE_DEFAULT, { _escaped: false })); break;
+                                default: alert(lib.messages.GENERIC_ERROR); break;
+                            }
+                        });
+                });
+
+                $container.find('#vault-save-translation-registry-changes').click((e) => {
+                    let $button = $(e.target);
+                    $button.attr('disabled', true);
+                    let method = currentEditingTranslation.id ? lib.putApi : lib.postApi;
+                    method('playertranslation', currentEditingTranslation)
+                        .done((result) => {
+                            $button.attr('disabled', false);
+                            $container.find('#vault-delete-translation').attr('disabled', false);
+
+                            let translationLabel = lib.translate(lib.itlcodes.TRANSLATION_AUTHOR, {
+                                name: currentEditingTranslation.name,
+                                author: currentEditingTranslation.author || lib.getCurrentPlayerName()
+                            });
+
+                            alert(lib.translate(lib.itlcodes.TRANSLATION_SAVE_CHANGES_SUCCESS, { _escaped: false }))
+                            // Add entry for newly-added translation
+                            if (!currentEditingTranslation.id) {
+                                currentEditingTranslation.id = result.newRegistryId;
+                                translations[currentEditingTranslation.languageId].push({
+                                    id: result.newRegistryId,
+                                    languageId: currentEditingTranslation.languageId,
+                                    authorPlayerId: lib.getCurrentPlayerId(),
+                                    name: currentEditingTranslation.name,
+                                    author: lib.getCurrentPlayerName()
+                                });
+
+                                if (currentEditingTranslation.languageId == $currentLanguage.val()) {
+                                    $currentTranslation.append(`<option value="${result.newRegistryId}">${translationLabel}</option>`);
+                                }
+
+                                $container.find('#vault-edit-translation-language').attr('disabled', true);
+                            } else {
+                                // Update name if necessary
+                                if ($currentLanguage.val() == currentEditingTranslation.languageId) {
+                                    $currentTranslation.find(`option[value=${currentEditingTranslation.id}]`).text(translationLabel);
+                                }
+
+                                translations[currentEditingTranslation.languageId].updateWhere(t => t.id == currentEditingTranslation.id, t => t.name = currentEditingTranslation.name);
+                            }
+                        })
+                        .error((xhr) => {
+                            $button.attr('disabled', false);
+                            switch (xhr.status) {
+                                case 409: alert(lib.translate(lib.itlcodes.TRANSLATION_DUPLICATE, { _escaped: false, name: currentEditingTranslation.name })); break;
+                                default: alert(lib.messages.GENERIC_ERROR); break;
+                            }
+                        });
                 });
 
             });
@@ -243,28 +429,79 @@ function makeTranslationsTab() {
 
         getContent: `
             <hr>
-            <h3>Translations</h3>
+            <h3>${lib.translate(lib.itlcodes.TAB_TRANSLATIONS)}</h3>
 
-            <label for="vault-current-language">Language: </label>
-            <select id="vault-current-language"></select>
+            <table style="display:inline-block" id="vault-select-translation-container">
+                <tr>
+                    <td>
+                        <label for="vault-current-language">${lib.translate(lib.itlcodes.TRANSLATION_LANGUAGE)}</label>
+                    </td>
+                    <td>
+                        <select id="vault-current-language"></select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="vault-current-translation">${lib.translate(lib.itlcodes.TRANSLATION_TRANSLATION)}</label>
+                    </td>
+                    <td>
+                        <select id="vault-current-translation"></select>
+                    </td>
+                </tr>
+            </table>
             <br>
-            <label for="vault-current-translation">Translation: </label>
-            <select id="vault-current-translation"></select>
-            <br>
-            <button id="vault-save-translation-settings">Save</button>
+            <button id="vault-save-translation-settings">${lib.translate(lib.itlcodes.TRANSLATION_SAVE_SETTINGS)}</button>
             <br>
             <br>
-            <button id="vault-edit-translation">Edit Translation</button>
-            <button id="vault-new-translation">New Translation</button>
-            <div id="vault-translation-registry-info">
-                <div id="vault-translation-registry-info">
+            <button id="vault-edit-translation">${lib.translate(lib.itlcodes.TRANSLATION_EDIT)}</button>
+            <button id="vault-new-translation">${lib.translate(lib.itlcodes.TRANSLATION_NEW)}</button>
+            <div id="vault-translation-registry" style="display:none">
+                <hr>
+
+                <div id="vault-translation-registry-info" style="margin-top:2em">
                 </div>
             
-                <div id="vault-translation-registry-entries" style="text-align:left;max-height:600px;overflow-y:scroll"></div>
+                <div id="vault-translation-registry-entries"></div>
                 
-                <button id="vault-save-translation-registry-changes">Save Changes</button>
+                <button id="vault-save-translation-registry-changes">${lib.translate(lib.itlcodes.TRANSLATION_SAVE_CHANGES)}</button>
+                <button id="vault-delete-translation">${lib.translate(lib.itlcodes.TRANSLATION_DELETE)}</button>
             </div>
-            
-        `
+        `,
+
+        getStyle: {
+            '#vault-select-translation-container': () => ({
+                'tr': () => ({
+                    'td:first-of-type': {
+                        'text-align': 'right'
+                    },
+                    'td:last-of-type': {
+                        'text-align': 'left'
+                    }
+                }),
+
+                'select': {
+                    'width': '100%'
+                }
+            }),
+
+            '#vault-translation-registry-info': {
+                'margin-top': '2em'
+            },
+
+            '#vault-translation-registry-entries': {
+                'margin-top': '1em',
+                'text-align': 'left',
+                'max-height': '600px',
+                'overflow-y': 'scroll'
+            },
+
+            '#vault-translation-registry > hr': {
+                'margin': '1.5em 2em',
+            },
+
+            '#vault-save-translation-registry-changes': {
+                'margin-top': '1.5em'
+            }
+        }
     };
 }

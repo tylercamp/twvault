@@ -153,6 +153,6 @@ namespace TW.Vault
 
     public class TranslationConfiguration
     {
-        public int BaseTranslationId { get; set; }
+        public short BaseTranslationId { get; set; }
     }
 }

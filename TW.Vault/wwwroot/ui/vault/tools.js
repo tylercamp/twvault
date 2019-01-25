@@ -238,7 +238,7 @@ function makeBacktimeListTab() {
             .filter((cmd) => !settings.ignoreStacked || !cmd.isStacked)
         ;
 
-        let builder = new BBTableBuilder();
+        let builder = new BBTableBuilder(lib.translate(lib.itlcodes.BB_TABLE));
         builder.setColumnNames(
             lib.translate(lib.itlcodes.SOURCE_VILLAGE),
             lib.translate(lib.itlcodes.LAUNCH_TIME),
@@ -283,10 +283,10 @@ function makeBacktimeListTab() {
 
         displayedCommands.forEach((i) => {
             builder.addRow(
-                `[url=${lib.makeTwUrl(`village=${i.sourceVillageId}&screen=place&from=simulator&att_${i.troopType}=1&target_village_id=${i.targetVillageId}`)}]${i.sourceVillageName} (${i.sourceVillageX}|${i.sourceVillageY})[/url]`,
+                `[${lib.translate(lib.itlcodes.BB_URL)}=${lib.makeTwUrl(`village=${i.sourceVillageId}&screen=place&from=simulator&att_${i.troopType}=1&target_village_id=${i.targetVillageId}`)}]${i.sourceVillageName} (${i.sourceVillageX}|${i.sourceVillageY})[/${lib.translate(lib.itlcodes.BB_URL)}]`,
                 lib.formatDateTime(i.launchAt),
                 lib.formatDateTime(i.landsAt),
-                `[unit]${i.troopType}[/unit]`
+                `[${lib.translate(lib.itlcodes.BB_UNIT)}]${i.troopType}[/${lib.translate(lib.itlcodes.BB_UNIT)}]`
             );
         });
 

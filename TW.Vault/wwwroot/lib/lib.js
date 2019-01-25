@@ -18,6 +18,7 @@ var lib = (() => {
     var authToken = window.vaultToken || null;
     var authUserId = null;
     var authTribeId = null;
+    var userName = null;
     var wasPageHandled = false;
     var utcTimeOffset = null;
     var isUnloading = false;
@@ -379,7 +380,8 @@ var lib = (() => {
 
         getCurrentTranslationAsync: function (callback) {
             if (currentTranslation) {
-                callback(currentTranslation);
+                callback && callback(currentTranslation);
+                return;
             }
 
             let translationId = lib.getLocalStorage('currentTranslationId');
@@ -395,7 +397,7 @@ var lib = (() => {
             lib.getApi('playertranslation')
                 .done((translation) => {
                     currentTranslation = translation;
-                    callback(currentTranslation);
+                    callback && callback(currentTranslation);
                 });
         },
 
@@ -412,15 +414,27 @@ var lib = (() => {
             currentTranslation = null;
         },
 
+        createNewTranslation: function () {
+            return {
+                name: 'My New Translation',
+                languageId: lib.getCurrentTranslation().languageId,
+                entries: {}
+            };
+        },
+
         translate: function (key, params_, breakNewlines_) {
             if (currentTranslation == null)
                 throw "No translation loaded";
+
+            if (window.location.search.contains("notranslate")) {
+                return "_TL_";
+            }
 
             let reservedParams = [
                 '_escaped'
             ];
 
-            let needsEscaping = !params_ || params_._escaped;
+            let needsEscaping = !params_ || (typeof params_._escaped == 'undefined' || params_._escaped);
             if (params_ && typeof params_._escaped != 'undefined')
                 delete params_._escaped;
 
@@ -706,16 +720,21 @@ var lib = (() => {
 
                 let $playerInfo = $doc.find('.lit a');
                 let playerId = parseInt($($playerInfo[0]).prop('href').match(/id\=(\w+)/)[1]);
+                let playerName = $playerInfo.text().trim();
                 let tribeId = null;
                 if ($playerInfo.length > 1)
                     tribeId = parseInt($($playerInfo[1]).prop('href').match(/id\=(\w+)/)[1]);
 
-                callback(playerId, tribeId);
+                callback(playerId, tribeId, playerName);
             });
         },
 
         getCurrentPlayerId: function () {
             return authUserId;
+        },
+
+        getCurrentPlayerName: function () {
+            return userName;
         },
 
         getCurrentTribeId: function () {
@@ -1078,9 +1097,10 @@ var lib = (() => {
         },
 
         init: function init(callback) {
-            lib.queryCurrentPlayerInfo((playerId, tribeId) => {
+            lib.queryCurrentPlayerInfo((playerId, tribeId, playerName) => {
                 authUserId = playerId;
                 authTribeId = tribeId;
+                userName = playerName;
 
                 function checkDone() {
                     if (utcTimeOffset != null && serverSettings != null && currentTranslation != null && translationParameters != null) {
@@ -1245,6 +1265,25 @@ var lib = (() => {
             }
         });
         return result;
+    };
+
+    Array.prototype.removeWhere = function removeWhere(predicate) {
+        var removedIndexes = [];
+        this.forEach((val, i) => {
+            if (predicate(val))
+                removedIndexes.push(i);
+        });
+
+        for (let i = 0; i < removedIndexes.length; i++) {
+            this.splice(removedIndexes[i] - i, 1);
+        }
+    };
+
+    Array.prototype.updateWhere = function updateWhere(predicate, updater) {
+        this.forEach((val) => {
+            if (predicate(val))
+                updater(val);
+        });
     };
 
     //  Utility additions to Math

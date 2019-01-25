@@ -10,7 +10,7 @@
             <button id="vault-show-main">${lib.translate(lib.itlcodes.OPEN_VAULT)}</button>
             <table class="vis" width="100%">
                 <tr>
-                    <th width="52%">Vault - commands from here</th>
+                    <th width="52%">${lib.translate(lib.itlcodes.COMMANDS_FROM_HERE)}</th>
                     <th width="33%">${lib.translate(lib.itlcodes.ARRIVAL_TIME)}</th>
                     <th width="15%">${lib.translate(lib.itlcodes.ARRIVES_IN)}</th>
                 </tr>
@@ -246,7 +246,7 @@
 
 
     function makePlanBbCode(instructions) {
-        const tableBuilder = new BBTableBuilder();
+        const tableBuilder = new BBTableBuilder(lib.translate(lib.itlcodes.BB_TABLE));
         tableBuilder.setColumnNames(
             lib.translate(lib.itlcodes.SOURCE_VILLAGE),
             lib.translate(lib.itlcodes.LAUNCH_TIME),
@@ -256,10 +256,10 @@
 
         instructions.forEach((i) => {
             tableBuilder.addRow(
-                `[url=${lib.makeTwUrl(`village=${i.sourceVillageId}&screen=place&from=simulator&att_${i.troopType}=1&target_village_id=${i.targetVillageId}`)}]${i.sourceVillageName} (${i.sourceVillageX}|${i.sourceVillageY})[/url]`,
+                `[${lib.translate(lib.itlcodes.BB_URL)}=${lib.makeTwUrl(`village=${i.sourceVillageId}&screen=place&from=simulator&att_${i.troopType}=1&target_village_id=${i.targetVillageId}`)}]${i.sourceVillageName} (${i.sourceVillageX}|${i.sourceVillageY})[/${lib.translate(lib.itlcodes.BB_URL)}]`,
                 lib.formatDateTime(i.launchAt),
                 lib.formatDateTime(i.landsAt),
-                `[unit]${i.troopType}[/unit]`
+                `[${lib.translate(lib.itlcodes.BB_UNIT)}]${i.troopType}[/${lib.translate(lib.itlcodes.BB_UNIT)}]`
             );
         });
 

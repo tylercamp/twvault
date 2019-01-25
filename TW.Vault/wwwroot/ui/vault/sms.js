@@ -37,7 +37,7 @@ function makeSmsDisplayTab() {
 
             $container.find('#notification-time-formats').click((e) => {
                 e.originalEvent.preventDefault();
-                alert(lib.translate(lib.itlcodes.SMS_TIME_FORMAT_DESCRIPTION));
+                alert(lib.translate(lib.itlcodes.SMS_TIME_FORMAT_DESCRIPTION, { _escaped: false }));
             });
 
             $container.find('#add-notification').click(() => {
@@ -47,24 +47,25 @@ function makeSmsDisplayTab() {
                 let notificationTimeText = $notificationTime.val().trim();
                 let message = $message.val().trim();
 
-                if (!message.length) {                    alert(lib.translate(lib.itlcodes.SMS_MESSAGE_REQUIRED));
+                if (!message.length) {
+                    alert(lib.translate(lib.itlcodes.SMS_MESSAGE_REQUIRED, { _escaped: false }));
                     return;
                 }
 
                 if (message.length > 256) {
-                    alert(lib.translate(lib.itlcodes.SMS_CHARACTER_LIMIT, { length: message.length }));
+                    alert(lib.translate(lib.itlcodes.SMS_CHARACTER_LIMIT, { length: message.length, _escaped: false }));
                     return;
                 }
 
                 let notificationTime = lib.parseTimeString(notificationTimeText);
                 if (!notificationTime) {
-                    alert(lib.translate(lib.itlcodes.SMS_INVALID_TIME));
+                    alert(lib.translate(lib.itlcodes.SMS_INVALID_TIME, { _escaped: false }));
                     return;
                 }
 
                 let serverTime = lib.getServerDateTime();
                 if (serverTime.valueOf() >= notificationTime.valueOf()) {
-                    alert(lib.translate(lib.itlcodes.SMS_TIME_TOO_EARLY));
+                    alert(lib.translate(lib.itlcodes.SMS_TIME_TOO_EARLY, { _escaped: false }));
                     return;
                 }
 
@@ -148,12 +149,12 @@ function makeSmsPhoneNumbersTab() {
 
                 let trimmedNumber = phoneNumber.replace(/[^\d]/g, '');
                 if (trimmedNumber.length < 11) {
-                    alert(lib.translate(lib.itlcodes.SMS_INVALID_PHONE_NUMBER));
+                    alert(lib.translate(lib.itlcodes.SMS_INVALID_PHONE_NUMBER, { _escaped: false }));
                     return;
                 }
 
                 if (label.length > 128) {
-                    alert(lib.translate(lib.itlcodes.SMS_PHONE_NAME_TOO_LONG));
+                    alert(lib.translate(lib.itlcodes.SMS_PHONE_NAME_TOO_LONG, { _escaped: false }));
                     return;
                 }
 
@@ -263,7 +264,7 @@ function updatePhoneNumbers($container) {
                             updatePhoneNumbers($container);
                         })
                         .error(() => {
-                            alert(lib.GENERIC_ERROR);
+                            alert(lib.messages.GENERIC_ERROR);
                         });
                 });
             });
@@ -272,7 +273,7 @@ function updatePhoneNumbers($container) {
             if (lib.isUnloading())
                 return;
 
-            alert(lib.translate(lib.itlcodes.SMS_PHONE_NUMBERS_ERROR));
+            alert(lib.translate(lib.itlcodes.SMS_PHONE_NUMBERS_ERROR, { _escaped: false }));
         });
 }
 
@@ -285,7 +286,7 @@ function loadNotificationSettings($container) {
             if (lib.isUnloading())
                 return;
 
-            alert(lib.translate(lib.messages.GENERIC_ERROR));
+            alert(ib.messages.GENERIC_ERROR);
         });
 }
 
@@ -293,12 +294,12 @@ function saveNotificationSettings($container) {
     let $notificationWindow = $container.find('#notify-window-minutes');
     let notificationWindow = $notificationWindow.val().trim();
     if (!notificationWindow.length) {
-        alert(lib.translate(lib.itlcodes.SMS_SETTINGS_EMPTY_VALUE));
+        alert(lib.translate(lib.itlcodes.SMS_SETTINGS_EMPTY_VALUE, { _escaped: false }));
         return;
     }
 
     if (notificationWindow.match(/[^\d]/)) {
-        alert(lib.translate(lib.itlcodes.SMS_SETTINGS_INVALID_VALUE));
+        alert(lib.translate(lib.itlcodes.SMS_SETTINGS_INVALID_VALUE, { _escaped: false }));
         return;
     }
 
@@ -369,6 +370,6 @@ function loadNotifications($container) {
             if (lib.isUnloading())
                 return;
 
-            alert(lib.translate(lib.itlcodes.SMS_NOTIFICATIONS_ERROR));
+            alert(lib.translate(lib.itlcodes.SMS_NOTIFICATIONS_ERROR, { _escaped: false }));
         });
 }

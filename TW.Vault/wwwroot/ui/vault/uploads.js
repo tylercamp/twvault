@@ -24,7 +24,7 @@ function makeUploadsTab() {
                 lib.deleteLocalStorage('reports-history');
                 lib.deleteLocalStorage('commands-history');
 
-                alert(lib.translate(lib.itlcodes.UPLOAD_CACHE_CLEARED));
+                alert(lib.translate(lib.itlcodes.UPLOAD_CACHE_CLEARED, { _escaped: false }));
             });
 
             $container.find('.upload-button').click((ev) => {
@@ -53,7 +53,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter(lib.translate(lib.itlcodes.REPORTS));
+                                    alertFilter(lib.translate(lib.itlcodes.REPORTS, { _escaped: false }));
                                 }
                             }
                         });
@@ -66,7 +66,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter(lib.translate(lib.itlcodes.INCOMINGS));
+                                    alertFilter(lib.translate(lib.itlcodes.INCOMINGS, { _escaped: false }));
                                 }
                             }
                         });
@@ -79,7 +79,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter(lib.translate(lib.itlcodes.COMMANDS));
+                                    alertFilter(lib.translate(lib.itlcodes.COMMANDS, { _escaped: false }));
                                 }
                             }
                         });
@@ -92,7 +92,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter(lib.translate(lib.itlcodes.TROOPS));
+                                    alertFilter(lib.translate(lib.itlcodes.TROOPS, { _escaped: false }));
                                 }
                             }
                         });
@@ -102,7 +102,7 @@ function makeUploadsTab() {
                         $('.status-container').html(`<em>${lib.translate(lib.itlcodes.WAITING)}...</em>`);
 
                         let resetStatusContainers = () => {
-                            $('.status-container').filter((i, el) => $(el).text().toLowerCase().contains(lib.translate(lib.itlcodes.WAITING))).empty();
+                            $('.status-container').filter((i, el) => $(el).text().toLowerCase().contains(lib.translate(lib.itlcodes.WAITING, { _escaped: false }))).empty();
                         };
 
                         let runReports = () => {
@@ -113,7 +113,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter(lib.translate(lib.itlcodes.REPORTS));
+                                    alertFilter(lib.translate(lib.itlcodes.REPORTS, { _escaped: false }));
                                 } else if (!lib.isUnloading()) {
                                     alert(lib.messages.GENERIC_ERROR + ': ' + didFail);
                                 }
@@ -128,7 +128,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter(lib.translate(lib.itlcodes.INCOMINGS));
+                                    alertFilter(lib.translate(lib.itlcodes.INCOMINGS, { _escaped: false }));
                                 } else if (!lib.isUnloading()) {
                                     alert(lib.messages.GENERIC_ERROR + ': ' + didFail);
                                 }
@@ -143,7 +143,7 @@ function makeUploadsTab() {
                                 if (didFail == lib.errorCodes.CAPTCHA) {
                                     alertCaptcha();
                                 } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                    alertFilter(lib.translate(lib.itlcodes.TROOPS));
+                                    alertFilter(lib.translate(lib.itlcodes.TROOPS, { _escaped: false }));
                                 } else if (!lib.isUnloading()) {
                                     alert(lib.messages.GENERIC_ERROR + ': ' + didFail);
                                 }
@@ -156,7 +156,7 @@ function makeUploadsTab() {
                                     if (didFail == lib.errorCodes.CAPTCHA) {
                                         alertCaptcha();
                                     } else if (didFail == lib.errorCodes.FILTER_APPLIED) {
-                                        alertFilter(lib.translate(lib.itlcodes.COMMANDS));
+                                        alertFilter(lib.translate(lib.itlcodes.COMMANDS, { _escaped: false }));
                                     } else if (!lib.isUnloading()) {
                                         alert(lib.messages.GENERIC_ERROR + ': ' + didFail);
                                     }
@@ -183,7 +183,7 @@ function makeUploadsTab() {
 
                             let $doc = lib.parseHtml(data);
                             parseAllReports($doc, (msg) => {
-                                $statusContainer.text(msg);
+                                $statusContainer.html(msg);
                             }, (didFail) => {
                                 onDone(didFail);
                             });
@@ -205,7 +205,7 @@ function makeUploadsTab() {
 
                             let $doc = lib.parseHtml(data);
                             parseAllIncomings($doc, (msg) => {
-                                $statusContainer.text(msg);
+                                $statusContainer.html(msg);
                             }, (didFail) => {
                                 onDone(didFail);
                             });
@@ -227,7 +227,7 @@ function makeUploadsTab() {
 
                             let $doc = lib.parseHtml(data);
                             parseAllCommands($doc, (msg) => {
-                                $statusContainer.text(msg);
+                                $statusContainer.html(msg);
                             }, (didFail) => {
                                 onDone(didFail);
                             });
@@ -249,7 +249,7 @@ function makeUploadsTab() {
 
                             let $doc = lib.parseHtml(data);
                             parseAllTroops($doc, (msg) => {
-                                $statusContainer.text(msg);
+                                $statusContainer.html(msg);
                             }, (didFail) => {
                                 onDone(didFail);
                             });

@@ -217,14 +217,14 @@
         requestManager.setFinishedHandler(() => {
             let stats = requestManager.getStats();
 
-            let statusMessage = lib.translate(lib.itlcodes.REPORTS_FINISHED, { numDone: stats.done, numFailed: stats.numFailed, numTotal: stats.total });
+            let statusMessage = lib.translate(lib.itlcodes.REPORTS_FINISHED, { numDone: stats.done, numFailed: stats.numFailed, numTotal: stats.total, _escaped: false });
             if (onProgress_)
-                onProgress_(statusMessage);
+                onProgress_(lib.escapeHtml(statusMessage));
 
             if (!onDone_) {
                 alert(statusMessage);
                 let stats = requestManager.getStats();
-                setUploadsDisplay(statusMessage);
+                setUploadsDisplay(lib.escapeHtml(statusMessage));
             } else {
                 onDone_(false);
             }
@@ -233,14 +233,14 @@
         if (!requestManager.getStats().total) {
             lib.postApi('report/finished-report-uploads');
 
-            let noNewReportsMessage = lib.translate(lib.itlcodes.REPORTS_NONE_NEW);
+            let noNewReportsMessage = lib.translate(lib.itlcodes.REPORTS_NONE_NEW, { _escaped: false });
 
             if (!onDone_) {
                 setUploadsDisplay(noNewReportsMessage);
                 alert(noNewReportsMessage);
             } else {
                 if (onProgress_)
-                    onProgress_(noNewReportsMessage);
+                    onProgress_(lib.escapeHtml(noNewReportsMessage));
                 if (onDone_)
                     onDone_(false);
             }

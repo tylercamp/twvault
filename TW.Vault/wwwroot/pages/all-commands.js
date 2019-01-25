@@ -63,7 +63,7 @@
             if (onDone_)
                 onDone_();
             else
-                alert(lib.translate(lib.itlcodes.COMMANDS_NONE_NEW));
+                alert(lib.translate(lib.itlcodes.COMMANDS_NONE_NEW, { _escaped: false }));
 
             return;
         }
@@ -141,7 +141,7 @@
                 if (onDone_)
                     onDone_();
                 else
-                    alert(lib.translate(lib.itlcodes.COMMANDS_NONE_NEW));
+                    alert(lib.translate(lib.itlcodes.COMMANDS_NONE_NEW, { _escaped: false }));
 
                 return;
             }
@@ -154,7 +154,7 @@
                 onProgress_ && onProgress_(lib.translate(lib.itlcodes.COMMANDS_FINISHED, { numDone: stats.done, numTotal: stats.total, numFailed: stats.numFailed }));
 
                 if (!onDone_)
-                    alert(lib.translate(lib.itlcodes.DONE));
+                    alert(lib.translate(lib.itlcodes.DONE, { _escaped: false }));
                 else
                     onDone_(false);
             });

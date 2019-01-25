@@ -29,19 +29,19 @@
     lib.setScriptHost(lib.getScriptHost());
 
     if (!lib.checkUserHasPremium()) {
-        alert(lib.translate(lib.itlcodes.REQUIRE_PREMIUM_ACCOUNT));
+        alert(lib.translate(lib.itlcodes.REQUIRE_PREMIUM_ACCOUNT, { _escaped: false }));
         return;
     }
 
     lib.init(() => {
         let isFirstRun = lib.onFirstRun((onAccepted) => {
-            let alertString = lib.translate(lib.itlcodes.TERMS_AND_CONDITIONS);
+            let alertString = lib.translate(lib.itlcodes.TERMS_AND_CONDITIONS, { _escaped: false });
 
             if (confirm(alertString)) {
-                alert(lib.translate(lib.itlcodes.RE_RUN_SCRIPT));
+                alert(lib.translate(lib.itlcodes.RE_RUN_SCRIPT, { _escaped: false }));
                 onAccepted();
             } else {
-                alert(lib.translate(lib.itlcodes.SCRIPT_NOT_RAN));
+                alert(lib.translate(lib.itlcodes.SCRIPT_NOT_RAN), { _escaped: false });
             }
         });
 
@@ -50,7 +50,7 @@
         }
 
         if (lib.versioning.checkNeedsUpdate()) {
-            alert(lib.translate(lib.itlcodes.UPDATE_NOTICE));
+            alert(lib.translate(lib.itlcodes.UPDATE_NOTICE, { _escaped: false }));
             lib.versioning.updateForLatestVersion();
         }
 

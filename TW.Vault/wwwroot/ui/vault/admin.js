@@ -65,7 +65,7 @@ function makeEnemyTribesTab() {
                 })
                 .error(() => {
                     if (!lib.isUnloading())
-                        alert(lib.translate(lib.itlcodes.ERROR_OCCURRED));
+                        alert(lib.messages.GENERIC_ERROR);
                 });
         });
 
@@ -90,7 +90,7 @@ function makeEnemyTribesTab() {
                 })
                 .error(() => {
                     if (!lib.isUnloading()) {
-                        alert(lib.translate(lib.itlcodes.ERROR_LOADING_ENEMY_TRIBES));
+                        alert(lib.translate(lib.itlcodes.ERROR_LOADING_ENEMY_TRIBES, { _escaped: false }));
                     }
                 });
 
@@ -106,13 +106,13 @@ function makeEnemyTribesTab() {
                             switch (xhr.status) {
                                 case 401: break;
                                 case 404:
-                                    alert(lib.translate(lib.itlcodes.ADMIN_TRIBE_NOT_FOUND));
+                                    alert(lib.translate(lib.itlcodes.ADMIN_TRIBE_NOT_FOUND, { _escaped: false }));
                                     break;
                                 case 409:
-                                    alert(lib.translate(lib.itlcodes.ADMIN_TRIBE_ALREADY_EXISTS));
+                                    alert(lib.translate(lib.itlcodes.ADMIN_TRIBE_ALREADY_EXISTS, { _escaped: false }));
                                     break;
                                 default:
-                                    alert(lib.translate(lib.itlcodes.ERROR_OCCURRED));
+                                    alert(lib.messages.GENERIC_ERROR);
                                     break;
                             }
                         }
@@ -183,7 +183,7 @@ function makeAdminStatsTab() {
                 let $downloadButton = $container.find('#download-army-stats');
                 let originalText = $downloadButton.val();
 
-                let loading = () => { $downloadButton.val(lib.translate(lib.itlcodes.WORKING)); $downloadButton.prop('disabled', true); };
+                let loading = () => { $downloadButton.val(lib.translate(lib.itlcodes.WORKING, { _escaped: false })); $downloadButton.prop('disabled', true); };
                 let loadingDone = () => { $downloadButton.val(originalText); $downloadButton.prop('disabled', false); };
 
                 loading();
@@ -258,8 +258,8 @@ function makeAdminUsersInterface($container) {
             logs.forEach((log) => {
                 $table.append(`
                             <tr>
-                                <td>${log.adminUserName}</td>
-                                <td>${log.eventDescription}</td>
+                                <td>${lib.escapeHtml(log.adminUserName)}</td>
+                                <td>${lib.escapeHtml(log.eventDescription)}</td>
                                 <td>${lib.formatDateTime(log.occurredAt)}</td>
                             </tr>
                         `.trim());
@@ -490,18 +490,25 @@ function makeArmySummaryCsv(armyData, options) {
     var csvBuilder = new CsvBuilder();
     supportedTribeNames.sort();
 
-    let nukeBreakdownHeaders = [lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_25_NUKES), lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_50_NUKES), lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_75_NUKES)];
+    const NOESC = { _escaped: false };
+
+    let nukeBreakdownHeaders = [
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_25_NUKES, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_50_NUKES, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_75_NUKES, NOESC)
+    ];
+
     if (!options.includeNukeBreakdown)
         nukeBreakdownHeaders = [];
 
     csvBuilder.addRow(
         '', '', '', '',
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_FULL_NUKES),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_NOBLES),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_POSSIBLE_NOBLES),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_DVS),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_INCS),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_ATTACKS)
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_FULL_NUKES, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_NOBLES, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_POSSIBLE_NOBLES, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_DVS, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_INCS, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_ATTACKS, NOESC)
     );
 
     csvBuilder.addRow('', '', '', '', totalNukes, totalNobles, totalPossibleNobles, totalDVs, totalIncomings, totalAttacks);
@@ -509,27 +516,27 @@ function makeArmySummaryCsv(armyData, options) {
     csvBuilder.addBlank(2);
 
     csvBuilder.addRow(
-        lib.translate(lib.itlcodes.TIME),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NEEDS_UPLOAD),
-        lib.translate(lib.itlcodes.TRIBE),
-        lib.translate(lib.itlcodes.PLAYER),
+        lib.translate(lib.itlcodes.TIME, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NEEDS_UPLOAD, NOESC),
+        lib.translate(lib.itlcodes.TRIBE, NOESC),
+        lib.translate(lib.itlcodes.PLAYER, NOESC),
         ...nukeBreakdownHeaders,
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_FULL_NUKES),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NUKES_TRAVELING),
-        lib.translate(lib.itlcodes.NOBLES),
-        lib.translate(lib.itlcodes.POSSIBLE_NOBLES),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_OWNED_DVS),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_HOME),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_BACKLINE_DVS_HOME),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_TRAVELING),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_TO_SELF),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_TO_OTHERS),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_OFF_VILLAS),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DEF_VILLAS),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NUM_INCS),
-        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NUM_ATTACKS),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_FULL_NUKES, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NUKES_TRAVELING, NOESC),
+        lib.translate(lib.itlcodes.NOBLES, NOESC),
+        lib.translate(lib.itlcodes.POSSIBLE_NOBLES, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_OWNED_DVS, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_HOME, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_BACKLINE_DVS_HOME, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_TRAVELING, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_TO_SELF, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_TO_OTHERS, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_OFF_VILLAS, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DEF_VILLAS, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NUM_INCS, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NUM_ATTACKS, NOESC),
         '',
-        ...supportedTribeNames.map((tn) => lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_TO_TRIBE, { tribeName: tn }))
+        ...supportedTribeNames.map((tn) => lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_TO_TRIBE, { tribeName: tn, _escaped: false }))
     );
 
     playerSummaries.forEach((s) => {

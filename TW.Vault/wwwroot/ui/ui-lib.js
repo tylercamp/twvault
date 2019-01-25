@@ -38,6 +38,15 @@
                     tabInfo.tab.$container = $container;
                     tabInfo.tab.$tabButton = $tabButton;
                     $tabButton.click(() => selectTab($ui, tabInfo.tabId, tabIds));
+
+                    if (tabInfo.tab.getStyle) {
+                        let tabStyle = tabInfo.tab.getStyle;
+                        if (typeof tabStyle == 'function')
+                            tabStyle = tabStyle();
+
+                        uilib.applyStyles($container, tabStyle);
+                    }
+
                     tabInfo.tab.btnId = tabInfo.btnId;
                     tabInfo.tab.init && tabInfo.tab.init.call(tabInfo.tab, $container);
                     tabInfo.tab.initialized = true;
@@ -80,6 +89,20 @@
             }
 
             return resultHtml;
+        },
+
+        applyStyles: function ($container, styles) {
+            lib.objForEach(styles, (selector, css) => {
+                let $selection = $container.find(selector);
+                if (!$selection.length) {
+                    console.warn('Selector "' + selector + '" for tab "' + tabInfo.tab.name + '" did not select any elements');
+                }
+                if (typeof css == 'function') {
+                    uilib.applyStyles($selection, css());
+                } else {
+                    $selection.css(css);
+                }
+            });
         },
 
         // onChange(newVal) => null

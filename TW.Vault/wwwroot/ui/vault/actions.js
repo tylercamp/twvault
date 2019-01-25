@@ -19,7 +19,7 @@ function makeActionsTab() {
         init: function () {
             let self = this;
             suggestionsTab.onLoaded = (data, count) => {
-                self.$tabButton.text(self.label + ' (' + count + ')');
+                self.$tabButton.html(self.label + ' (' + count + ')');
             };
         },
 
@@ -51,7 +51,7 @@ function makeSuggestedActionsTab() {
     ];
 
     return {
-        label: 'Alerts',
+        label: lib.translate(lib.itlcodes.TAB_ALERTS),
         containerId: 'vault-suggested-actions-container',
 
         init: function ($container) {
@@ -106,7 +106,7 @@ function makeSuggestedActionsTab() {
 
             _init: function ($container, data) {
                 if (data.length)
-                    this.$tabButton.text(this.label + ' (' + data.filter(_ => _.isNearby).length + ')');
+                    this.$tabButton.html(this.label + ' (' + data.filter(_ => _.isNearby).length + ')');
 
                 let self = this;
                 uilib.syncProp('#vault-suggested-recaps-only-nearby', settings, 'onlyShowNearby', () => {
@@ -171,7 +171,7 @@ function makeSuggestedActionsTab() {
 
             _init: function ($container, data) {
                 if (data.length)
-                    this.$tabButton.text(this.label + ' (' + data.length + ')');
+                    this.$tabButton.html(this.label + ' (' + data.length + ')');
 
                 let $table = $container.find('table');
 
@@ -214,7 +214,7 @@ function makeSuggestedActionsTab() {
 
             _init: function ($container, data) {
                 if (data.length)
-                    this.$tabButton.text(this.label + ' (' + data.length + ')');
+                    this.$tabButton.html(this.label + ' (' + data.length + ')');
 
                 let $table = $container.find('table');
 
@@ -258,7 +258,7 @@ function makeSuggestedActionsTab() {
 
             _init: function ($container, data) {
                 if (data.length)
-                    this.$tabButton.text(this.label + ' (' + data.length + ')');
+                    this.$tabButton.html(this.label + ' (' + data.length + ')');
 
                 let $table = $container.find('table');
 
@@ -309,7 +309,7 @@ function makeSuggestedActionsTab() {
 
             _init: function ($container, data) {
                 if (data.length)
-                    this.$tabButton.text(this.label + ' (' + data.length + ')');
+                    this.$tabButton.html(this.label + ' (' + data.length + ')');
 
                 let $table = $container.find('table');
 
@@ -390,7 +390,7 @@ function makeRequestLocalSupportTab() {
                     .done((players) => {
                         $searchButton.prop('disabled', false);
                         if (!players.length) {
-                            alert(lib.translate(lib.itlcodes.NO_PLAYERS_FOUND));
+                            alert(lib.translate(lib.itlcodes.NO_PLAYERS_FOUND, { _escaped: false }));
                             return;
                         }
 
@@ -407,7 +407,7 @@ function makeRequestLocalSupportTab() {
                     })
                     .error(() => {
                         $searchButton.prop('disabled', false);
-                        alert(lib.translate(lib.itlcodes.ERROR_OCCURRED));
+                        alert(lib.messages.GENERIC_ERROR);
                     });
 
                 return false;
@@ -498,7 +498,7 @@ function makeRequestStackTab() {
                     .done((players) => {
                         $searchButton.prop('disabled', false);
                         if (!players.length) {
-                            alert(lib.translate(lib.itlcodes.NO_PLAYERS_FOUND));
+                            alert(lib.translate(lib.itlcodes.NO_PLAYERS_FOUND, { _escaped: false }));
                             return;
                         }
 
@@ -515,7 +515,7 @@ function makeRequestStackTab() {
                     })
                     .error(() => {
                         $searchButton.prop('disabled', false);
-                        alert(lib.translate(lib.itlcodes.ERROR_OCCURRED));
+                        alert(lib.messages.GENERIC_ERROR);
                     });
 
                 return false;

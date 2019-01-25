@@ -1,4 +1,8 @@
-﻿function BBTableBuilder() {
+﻿function BBTableBuilder(tableCode) {
+    if (!tableCode)
+        throw "Param tableCode not provided!";
+
+    this._tableCode = tableCode;
     this._header = [];
     this._rows = [];
 }
@@ -14,7 +18,6 @@ BBTableBuilder.prototype.addRow = function addRow(...data) {
 BBTableBuilder.prototype.toString = function toString() {
     let headerRow = `[**]${this._header.join('[||]')}[/**]`;
     let tableContents = this._rows.map(r => `[*]${r.join('[|]')}`).join('\n');
-
-    // BB_TABLE
-    return `[table]\n${headerRow}\n${tableContents}\n[/table]`;
+    
+    return `[${this._tableCode}]\n${headerRow}\n${tableContents}\n[/${this._tableCode}]`;
 };

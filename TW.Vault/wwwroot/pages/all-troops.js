@@ -141,7 +141,7 @@
                 if (onProgress_)
                     onProgress_(lib.translate(lib.itlcodes.TROOPS_ERROR_FINDING_ACADEMY));
                 else
-                    alert(lib.translate(lib.itlcodes.TROOPS_ERROR_FINDING_ACADEMY));
+                    alert(lib.translate(lib.itlcodes.TROOPS_ERROR_FINDING_ACADEMY, { _escaped: false }));
 
                 if (onDone_)
                     onDone_(false);
@@ -152,8 +152,8 @@
         $.get(lib.makeTwUrl(`village=${villaIdWithAcademy}&screen=snob`))
             .done((data) => {
                 let docText = lib.parseHtml(data).text();
-                let limit = docText.match(new RegExp(`${lib.translate(lib.itlcodes.TROOPS_NOBLES_LIMIT)}\s*(\d+)`));
-                let current = docText.match(new RegExp(`${lib.translate(lib.itlcodes.TROOPS_NOBLES_NUM_VILLAGES)}\s*(\d+)`));
+                let limit = docText.match(new RegExp(lib.translate(lib.itlcodes.TROOPS_NOBLES_LIMIT, { numNobles: String.raw`\s*(\d+)`, _escaped: false })));
+                let current = docText.match(new RegExp(lib.translate(lib.itlcodes.TROOPS_NOBLES_NUM_VILLAGES, { numVillages: String.raw`\s*(\d+)`, _escaped: false })));
 
                 console.log('Got limit: ', limit);
                 console.log('Got current: ', current);
@@ -171,7 +171,7 @@
                 if (onProgress_)
                     onProgress_(lib.translate(lib.itlcodes.TROOPS_ERROR_GETTING_NOBLES));
                 else
-                    alert(lib.translate(lib.itlcodes.TROOPS_ERROR_GETTING_NOBLES));
+                    alert(lib.translate(lib.itlcodes.TROOPS_ERROR_GETTING_NOBLES, { _escaped: false }));
 
                 if (onDone_)
                     onDone_(false);
