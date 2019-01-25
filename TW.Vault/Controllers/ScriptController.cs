@@ -22,13 +22,13 @@ namespace TW.Vault.Controllers
     [EnableCors("AllOrigins")]
     public class ScriptController : BaseController
     {
-        IHostingEnvironment environment;
+        ASPUtil asputil;
 
         private const String ScriptsBasePath = "";
 
         public ScriptController(IHostingEnvironment environment, VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
         {
-            this.environment = environment;
+            asputil = new ASPUtil(environment, ScriptsBasePath);
         }
 
         private static AsyncCachingMap<String> CachedFakeScripts = new AsyncCachingMap<String> { MaxCacheAge = TimeSpan.FromMinutes(5) };
@@ -202,18 +202,11 @@ namespace TW.Vault.Controllers
         {
             if (String.IsNullOrWhiteSpace(name))
                 return null;
-            
-            String rootPath = Path.Combine(environment.WebRootPath, ScriptsBasePath);
 
-            String fullPath = Path.Combine(rootPath, name);
-            String absolutePath = Path.GetFullPath(fullPath);
+            var resolvedPath = asputil.GetFilePath(name);
 
-            //  Prevent directory traversal
-            if (!absolutePath.StartsWith(rootPath))
-                return null;
-
-            if (System.IO.File.Exists(fullPath))
-                return System.IO.File.ReadAllText(fullPath);
+            if (resolvedPath != null && System.IO.File.Exists(resolvedPath))
+                return System.IO.File.ReadAllText(resolvedPath);
             else
                 return null;
         }
@@ -229,21 +222,16 @@ namespace TW.Vault.Controllers
                 {
                     var fileName = Path.GetFileName(externalFile);
                     if (name == fileName)
-                        return System.IO.File.ReadAllText(Path.GetFullPath(Path.Combine(environment.WebRootPath, externalFile)));
+                        return System.IO.File.ReadAllText(Path.GetFullPath(Path.Combine(asputil.HostingEnvironment.WebRootPath, externalFile)));
                 }
+
+                throw new FileNotFoundException("Could not find required file: " + name);
             }
 
-            String rootPath = Path.Combine(environment.WebRootPath, ScriptsBasePath);
+            var resolvedPath = asputil.GetFilePath(name);
 
-            String fullPath = Path.Combine(rootPath, name);
-            String absolutePath = Path.GetFullPath(fullPath);
-
-            //  Prevent directory traversal
-            if (!absolutePath.StartsWith(rootPath))
-                return null;
-
-            if (System.IO.File.Exists(fullPath))
-                return System.IO.File.ReadAllText(fullPath);
+            if (System.IO.File.Exists(resolvedPath))
+                return System.IO.File.ReadAllText(resolvedPath);
             else
                 return null;
         }

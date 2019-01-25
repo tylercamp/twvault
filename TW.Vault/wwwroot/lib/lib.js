@@ -807,19 +807,8 @@ var lib = (() => {
 
         troopsArrayToObject: function troopsArrayToNamedObject(array) {
             let result = {};
-            let archerIndex = 3, mountedArcherIndex = 6, paladinIndex = 10;
-            for (var i = 0, ei = 0; ei < array.length && i < lib.twstats.unitTypes.length; i++ , ei++) {
-                if ((i == archerIndex || i == mountedArcherIndex) && !serverSettings.archersEnabled) {
-                    --ei;
-                    continue;
-                }
-
-                if (i == paladinIndex && !serverSettings.paladinEnabled) {
-                    --ei;
-                    continue;
-                }
-
-                result[lib.twstats.unitTypes[i].canonicalName] = array[ei];
+            for (var i = 0; i < array.length && i < lib.twstats.unitTypes.length; i++) {
+                result[lib.twstats.unitTypes[i].canonicalName] = array[i];
             }
             return result;
         },

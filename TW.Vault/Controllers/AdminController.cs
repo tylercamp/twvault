@@ -499,10 +499,13 @@ namespace TW.Vault.Controllers
 
             );
 
+            var currentPlayerIds = currentPlayers.Select(p => p.PlayerId).ToList();
+
             var villageIds = tribeVillages.Select(v => v.currentVillage.VillageId).Distinct().ToList();
             var attackedVillageIds = await Profile("Get incomings", () => (
                     from command in CurrentSets.Command
-                    where villageIds.Contains(command.TargetVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime
+                    where villageIds.Contains(command.TargetVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime && !command.IsReturning
+                    where !currentPlayerIds.Contains(command.SourcePlayerId)
                     select command.TargetVillageId
                 ).ToListAsync());
 
@@ -648,7 +651,7 @@ namespace TW.Vault.Controllers
                     select new { tribe.Tag, tribe.TribeId }
                 ).ToListAsync();
 
-            var tribeNamesById = tribeNames.ToDictionary(tn => tn.TribeId, tn => tn.Tag);
+            var tribeNamesById = tribeNames.ToDictionary(tn => tn.TribeId, tn => tn.Tag.UrlDecode());
 
             var jsonData = new List<JSON.PlayerSummary>();
             foreach (var kvp in villagesByPlayer.OrderBy(kvp => kvp.Key.TribeId).ThenBy(kvp => kvp.Key.PlayerName))

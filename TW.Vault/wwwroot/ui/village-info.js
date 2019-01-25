@@ -172,9 +172,9 @@
 
         if (!troops) {
             if (isReturning) {
-                return 'https://dsen.innogamescdn.com/8.143/38747/graphic/command/return.png';
+                return 'https://tylercamp.me/tw/img/return_attack.png';
             } else {
-                return 'https://dsen.innogamescdn.com/8.143/38747/graphic/command/attack.png';
+                return 'https://tylercamp.me/tw/img/attack.png';
             }
         }
 
@@ -192,7 +192,7 @@
             type = 'large';
         }
 
-        let img = `https://dsen.innogamescdn.com/8.143/38747/graphic/command/`;
+        let img = `https://tylercamp.me/tw/img/`;
         if (isReturning) {
             img += 'return_attack_';
         }
