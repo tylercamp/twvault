@@ -24,7 +24,7 @@ namespace TW.Vault.Controllers
 
         [HttpGet]
         public IActionResult GetAllTranslations() => Ok(
-            context.TranslationRegistry.OrderBy(r => r.Author).ThenBy(r => r.Name).Select(r => new
+            context.TranslationRegistry.Where(r => !r.IsSystemInternal).OrderBy(r => r.Author).ThenBy(r => r.Name).Select(r => new
             {
                 r.Author, r.AuthorPlayerId, r.Id, r.Name, r.LanguageId
             })
@@ -82,6 +82,7 @@ namespace TW.Vault.Controllers
 
             return Ok(
                 language.Translations
+                    .Where(t => !t.IsSystemInternal)
                     .Select(t => new { t.Id, t.Name, t.Author, t.AuthorPlayerId })
                     .OrderBy(r => r.Author).ThenBy(r => r.Name)
                     .ToList()

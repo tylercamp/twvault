@@ -1160,6 +1160,7 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.Author).IsRequired().HasColumnName("author");
                 entity.Property(e => e.AuthorPlayerId).IsRequired().HasColumnName("author_player_id");
                 entity.Property(e => e.LanguageId).IsRequired().HasColumnName("language_id");
+                entity.Property(e => e.IsSystemInternal).IsRequired().HasDefaultValue(false).HasColumnName("is_system_internal");
 
                 entity.HasOne(e => e.Language)
                     .WithMany(e => e.Translations)

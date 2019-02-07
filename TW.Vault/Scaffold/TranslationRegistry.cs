@@ -12,6 +12,7 @@ namespace TW.Vault.Scaffold
         public string Author { get; set; }
         public long AuthorPlayerId { get; set; }
         public short LanguageId { get; set; }
+        public bool IsSystemInternal { get; set; }
 
         public TranslationLanguage Language { get; set; }
 
