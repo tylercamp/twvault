@@ -27,7 +27,12 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     }
     
     reportInfo.luck = parseInt($doc.find('#attack_luck').text().match(/(\-?\d.+)\%/)[1]);
-    reportInfo.morale = parseInt($doc.find('.report_ReportAttack h4:nth-of-type(2)').text().match(/(\d+)\%/)[1]);
+    var morale = $doc.find('.report_ReportAttack h4:nth-of-type(2)').text().match(/(\d+)\%/);
+    if (morale) {
+        reportInfo.morale = parseInt(morale[1]);
+    } else {
+        reportInfo.morale = 100;
+    }
 
     var loyalty = $doc.find('#attack_results tr').filter((i, el) => $(el).text().indexOf('Loyalty') >= 0).text().match(/from\s+\d+\s+to\s+(\-?\d+)/);
     if (loyalty)
