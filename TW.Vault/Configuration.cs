@@ -90,6 +90,7 @@ namespace TW.Vault
         public bool AllowUploadArmyForNonOwner { get; set; }
         public bool ReportIgnoreExpectedPopulationBounds { get; set; }
         public bool AllowCommandArrivalBeforeServerTime { get; set; }
+        public bool RestrictSitterAccess { get; set; }
         public bool RestrictAccessWithinTribes { get; set; }
 
         public short MinimumRequiredPriveleges { get; set; }

@@ -1,7 +1,6 @@
 ﻿function displayMainVaultUI($doc) {
 
     //# REQUIRE ui/vault/admin.js
-    //# REQUIRE ui/vault/sms.js
     //# REQUIRE ui/vault/terms.js
     //# REQUIRE ui/vault/uploads.js
     //# REQUIRE ui/vault/tools.js
@@ -12,7 +11,6 @@
     $doc = $doc || $(document);
 
     let uploadsTab = makeUploadsTab();
-    //let smsTab = makeSmsTab();
     let adminTab = makeAdminTab();
     let termsTab = makeTermsTab();
     let toolsTab = makeToolsTab();
@@ -25,7 +23,6 @@
     let tabs = [
         uploadsTab,
         statsTab,
-        //smsTab,
         actionsTab,
         toolsTab,
         adminTab,
