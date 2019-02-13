@@ -218,7 +218,7 @@ namespace TW.Vault.Model.Native
         public static bool IsNuke(JSON.Army army) => CalculateTotalPopulation(army, OffensiveTroopTypes) >= FullNukePopulation;
         public static bool IsNuke(JSON.Army army, double nukePercent) => CalculateTotalPopulation(army, OffensiveTroopTypes) >= FullNukePopulation * nukePercent;
         public static bool IsFang(JSON.Army army) => !IsOffensive(army) && army[JSON.TroopType.Catapult] > 75;
-        public static bool IsFake(JSON.Army army) => CalculateTotalPopulation(army) < 100;
+        public static bool IsFake(JSON.Army army) => CalculateTotalPopulation(army) < 350;
 
         /*
             { JSON.TroopType.Spear,  },

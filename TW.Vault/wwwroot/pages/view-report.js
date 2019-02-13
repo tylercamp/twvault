@@ -46,7 +46,12 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     }
     
     reportInfo.luck = parseInt($doc.find('#attack_luck').text().match(/(\-?\d.+)\%/)[1]);
-    reportInfo.morale = parseInt($doc.find('.report_ReportAttack h4:nth-of-type(2)').text().match(/(\d+)\%/)[1]);
+    var morale = $doc.find('.report_ReportAttack h4:nth-of-type(2)').text().match(/(\d+)\%/);
+    if (morale) {
+        reportInfo.morale = parseInt(morale[1]);
+    } else {
+        reportInfo.morale = 100;
+    }
 
     let loyaltyRegex = lib.translate(lib.itlcodes.REPORT_LOYALTY_FROM_TO, { oldLoyalty: String.raw`\d+`, newLoyalty: String.raw`(\-?\d+)` });
     var loyalty = $doc.find('#attack_results tr').filter((i, el) => $(el).text().toLowerCase().indexOf(lib.translate(lib.itlcodes.LOYALTY).toLowerCase()) >= 0).text().match(new RegExp(loyaltyRegex));
