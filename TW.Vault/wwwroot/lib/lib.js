@@ -127,7 +127,11 @@ var lib = (() => {
 
             $doc_ = $doc_ || $(document);
 
-            var monthStrings = lib.translate(lib.itlcodes.ORDERED_MONTHS).split(',').map(m => m.trim());
+            var monthStrings = lib
+                .translate(lib.itlcodes.ORDERED_MONTHS)
+                .splitMany(',', ' ', '\n')
+                .map(m => m.trim())
+                ;
 
             var result;
 
@@ -167,7 +171,7 @@ var lib = (() => {
                     time: match[4].splitMany(timeSeparators)
                 };
 
-            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_TODAY_AT, { time: timeRegex })))) {
+            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_TODAY_AT, { time: timeRegex, _escaped: false })))) {
                 // TIME_TODAY_AT
                 // today at (Hours:Minute:Second:Ms)
                 result = {
@@ -175,7 +179,7 @@ var lib = (() => {
                     time: match[1].splitMany(timeSeparators)
                 }
 
-            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_TOMORROW_AT, { time: timeRegex })))) {
+            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_TOMORROW_AT, { time: timeRegex, _escaped: false })))) {
                 // TIME_TOMORROW_AT
                 // tomorrow at (Hours:Minute:Second:Ms)
                 result = {
@@ -187,7 +191,7 @@ var lib = (() => {
                     time: match[1].splitMany(timeSeparators)
                 };
 
-            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_ON, { time: timeRegex, date: dateRegex })))) {
+            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_ON, { time: timeRegex, date: dateRegex, _escaped: false })))) {
                 // TIME_ON
                 // (Hours:Minutes:Seconds:Ms) on (Day/Month/Year)
                 result = {
@@ -196,7 +200,7 @@ var lib = (() => {
                 };
 
                 //  TODO - Update this one
-            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_ON_AT, { date: String.raw`(\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)`, time: String.raw`(\d+:\d+:\d+:\d+)` })))) {
+            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_ON_AT, { _escaped: false, date: String.raw`(\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)`, time: String.raw`(\d+:\d+:\d+:\d+)` })))) {
                 //  /on (\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)\s+at\s+(\d+:\d+:\d+:\d+)/
                 // TIME_ON_AT
                 // on (Day/Month/Year) at (Hours:Minute:Second:Ms)
@@ -1101,7 +1105,7 @@ var lib = (() => {
 
                         lib.messages.TRIGGERED_CAPTCHA = lib.translate(lib.itlcodes.TRIGGERED_CAPTCHA, { _escaped: false });
                         lib.messages.IS_IN_GROUP = lib.translate(lib.itlcodes.IS_IN_GROUP, { _escaped: false });
-                        lib.messages.FILTER_APPLIED = (type) => lib.translate(lib.itlcodes.FILTER_APPLIED, { type: type, _escaped: false });
+                        lib.messages.FILTER_APPLIED = (type) => lib.translate(lib.itlcodes.FILTER_APPLIED, { dataType: type, _escaped: false });
                         lib.messages.GENERIC_ERROR = lib.translate(lib.itlcodes.ERROR_OCCURRED, { _escaped: false });
                         callback();
                     }
