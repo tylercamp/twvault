@@ -32,6 +32,7 @@
 
     //  Villages in any tribe: ___ANY___
     //  Villages not in a tribe: ___NONE___
+    //  Villages in enemy tribes: ___ENEMY___
     let selectedHighlightTribeName = "___ANY___";
 
     const TAG_TYPES = {
@@ -96,6 +97,7 @@
 
             $highlightTribeSelect.append('<option value="___ANY___" selected>Any</option>');
             $highlightTribeSelect.append('<option value="___NONE___">No</option>');
+            $highlightTribeSelect.append('<option value="___ENEMY___">Enemies</option>')
 
             tribeNames.forEach((n) => {
                 if (!n) {
@@ -304,6 +306,8 @@
     function selectedTribeTag(tag) {
         if (selectedHighlightTribeName != "___ANY___") {
             if (selectedHighlightTribeName == "___NONE___" && tag.tribeName) {
+                return false;
+            } else if (selectedHighlightTribeName == "___ENEMY___" && !tag.isEnemyTribe) {
                 return false;
             } else if (selectedHighlightTribeName != tag.tribeName) {
                 return false;

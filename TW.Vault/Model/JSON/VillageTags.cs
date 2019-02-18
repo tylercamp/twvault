@@ -29,5 +29,6 @@ namespace TW.Vault.Model.JSON
         public int? ReturningTroopsPopulation { get; set; }
 
         public String TribeName { get; set; }
+        public bool IsEnemyTribe { get; set; }
     }
 }
