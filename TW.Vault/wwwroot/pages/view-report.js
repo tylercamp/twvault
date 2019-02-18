@@ -148,11 +148,12 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
         var attack_results = null;
         if (attack_results = $doc.find('#attack_results').text()) {
             reportInfo.buildingLevels = {};
+            console.warn("Building parsing in reports doesn't support more than 1 damaged building!")
             var building_names = attack_results.match(new RegExp(lib.translate(lib.itlcodes.REPORT_BUILDING_DAMAGE_NAMES, { buildingName: '(.*)' })));
             var building_levels = attack_results.match(new RegExp(lib.translate(lib.itlcodes.REPORT_BUILDING_DAMAGE_LEVELS, { newLevel: '(.*)' })));
             if(building_names) {
                 for (i=1; i < building_names.length; i++) {
-                    reportInfo.buildingLevels[building_to_canonical_name[building_names[i].split(" ")[1]]] = parseInt(building_levels[i].split(" ")[2]);
+                    reportInfo.buildingLevels[building_to_canonical_name[building_names[i]]] = parseInt(building_levels[i]);
                 }
             }
         }
