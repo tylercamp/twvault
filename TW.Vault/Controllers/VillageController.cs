@@ -502,6 +502,8 @@ namespace TW.Vault.Controllers
                 select player.TribeId.Value
             ).Distinct().ToListAsync());
 
+            var enemyTribes = await CurrentSets.EnemyTribe.Select(et => et.EnemyTribeId).ToListAsync();
+
             var villageData = await Profile("Get village data", () => (
                 from currentVillage in CurrentSets.CurrentVillage
                                                   .Include(cv => cv.ArmyOwned)
@@ -557,6 +559,7 @@ namespace TW.Vault.Controllers
                     var village = data.CurrentVillage;
                     var tag = new JSON.VillageTags();
                     tag.TribeName = data.TribeId == null ? null : tribeNamesById[data.TribeId.Value];
+                    tag.IsEnemyTribe = data.TribeId == null ? false : enemyTribes.Contains(data.TribeId.Value);
 
                     tag.WallLevel = data.CurrentVillage.CurrentBuilding?.Wall;
                     tag.WallLevelSeenAt = data.CurrentVillage.CurrentBuilding?.LastUpdated;
