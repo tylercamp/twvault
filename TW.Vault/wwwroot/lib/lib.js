@@ -228,6 +228,25 @@ var lib = (() => {
             result.date.forEach((val, i) => result.date[i] = parseInt(val));
             result.time.forEach((val, i) => result.time[i] = parseInt(val));
 
+            // Reorder date parts based on translated order
+            let dateOrder = lib.translate(lib.itlcodes.TIME_NUMERIC_DATE, { _verbatim: true });
+            let dateParts = (() => {
+                const paramRegex = /\{(\w+)\}/g
+                let match, result = [];
+                while (match = paramRegex.exec(dateOrder)) {
+                    result.push(match[1]);
+                }
+                return result;
+            })();
+
+            result.date = (() => {
+                let newDate = [];
+                newDate.push(result.date[dateParts.indexOf('day')]);
+                newDate.push(result.date[dateParts.indexOf('month')]);
+                newDate.push(result.date[dateParts.indexOf('year')]);
+                return newDate;
+            })();
+
             result.date[2] = result.date[2] || parseInt(serverDate[2]);
             result.time[2] = result.time[2] || 0;
             result.time[3] = result.time[3] || 0;
@@ -452,27 +471,29 @@ var lib = (() => {
             } else {
                 let keyParams = translationParameters[key];
                 if (keyParams) {
-                    let visitedParams = [];
-                    params_ && lib.objForEach(params_, (prop, val) => {
-                        if (reservedParams.contains(prop))
-                            return;
+                    if (!params_ || !params_._verbatim) {
+                        let visitedParams = [];
+                        params_ && lib.objForEach(params_, (prop, val) => {
+                            if (reservedParams.contains(prop))
+                                return;
 
-                        if (!keyParams.contains(prop)) {
-                            let msg = `Translation code ${key} does not have a parameter named '${prop}'`;
+                            if (!keyParams.contains(prop)) {
+                                let msg = `Translation code ${key} does not have a parameter named '${prop}'`;
+                                console.error(msg);
+                                throw msg;
+                            } else {
+                                result = result.replace(`{${prop}}`, val);
+                                visitedParams.push(prop);
+                            }
+                        });
+
+                        if (visitedParams.length != keyParams.length) {
+                            let msg = `Translation code ${key} requires params ${keyParams.length} - "${keyParams.join(", ")}",` +
+                                ` but only got ${visitedParams.length} - "${visitedParams.join(", ")}"` +
+                                ` (missing: ${keyParams.except(visitedParams).join(", ")})`;
                             console.error(msg);
                             throw msg;
-                        } else {
-                            result = result.replace(`{${prop}}`, val);
-                            visitedParams.push(prop);
                         }
-                    });
-
-                    if (visitedParams.length != keyParams.length) {
-                        let msg = `Translation code ${key} requires params ${keyParams.length} - "${keyParams.join(", ")}",` +
-                            ` but only got ${visitedParams.length} - "${visitedParams.join(", ")}"` +
-                            ` (missing: ${keyParams.except(visitedParams).join(", ")})`;
-                        console.error(msg);
-                        throw msg;
                     }
                 } else if (params_) {
                     console.warn('Parameters provided for translation code ' + key + ' but no parameters exist for that code');
