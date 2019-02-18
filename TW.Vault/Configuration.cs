@@ -59,7 +59,6 @@ namespace TW.Vault
                 Instance.GetSection("Behavior").Bind(cfg);
                 Instance.GetSection("Behavior:Map").Bind(cfg.Map);
                 Instance.GetSection("Behavior:Tagging").Bind(cfg.Tagging);
-                Instance.GetSection("Behavior:Notifications").Bind(cfg.Notifications);
                 return cfg;
             }
         }
@@ -109,7 +108,6 @@ namespace TW.Vault
     {
         public MapBehaviorConfiguration Map { get; set; }
         public TaggingBehaviorConfiguration Tagging { get; set; }
-        public NotificationBehaviorConfiguration Notifications { get; set; }
     }
 
     public class MapBehaviorConfiguration
@@ -127,19 +125,7 @@ namespace TW.Vault
         public int MaxDaysSinceCommandUpload { get; set; } = 3;
         public int MaxDaysSinceIncomingsUpload { get; set; } = 3;
     }
-
-    public class NotificationBehaviorConfiguration
-    {
-        public bool NotificationsEnabled { get; set; } = true;
-
-        public String TwilioSourcePhoneNumber { get; set; }
-        public String TwilioClientKey { get; set; }
-        public String TwilioClientSecret { get; set; }
-
-        public int NotificationCheckInterval { get; set; } = 1000;
-        public int MaxNotificationsPerMessage { get; set; } = 3;
-    }
-
+    
     public class InitializationConfiguration
     {
         public bool EnableRequiredFiles { get; set; }

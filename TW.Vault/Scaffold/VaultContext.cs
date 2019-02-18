@@ -30,9 +30,6 @@ namespace TW.Vault.Scaffold
         public virtual DbSet<FailedAuthorizationRecord> FailedAuthorizationRecord { get; set; }
         public virtual DbSet<IgnoredReport> IgnoredReport { get; set; }
         public virtual DbSet<InvalidDataRecord> InvalidDataRecord { get; set; }
-        public virtual DbSet<NotificationPhoneNumber> NotificationPhoneNumber { get; set; }
-        public virtual DbSet<NotificationRequest> NotificationRequest { get; set; }
-        public virtual DbSet<NotificationUserSettings> NotificationUserSettings { get; set; }
         public virtual DbSet<PerformanceRecord> PerformanceRecord { get; set; }
         public virtual DbSet<Player> Player { get; set; }
         public virtual DbSet<Report> Report { get; set; }
@@ -658,109 +655,7 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey(d => d.UserId)
                     .HasConstraintName("fk_user_id");
             });
-
-            modelBuilder.Entity<NotificationPhoneNumber>(entity =>
-            {
-                entity.ToTable("notification_phone_number", "feature");
-
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .HasColumnName("id")
-                    .HasDefaultValueSql("nextval('feature.notification_phone_number_id_seq'::regclass)");
-
-                entity.Property(e => e.Enabled).HasColumnName("enabled");
-
-                entity.Property(e => e.Label)
-                    .HasColumnName("label")
-                    .HasMaxLength(128);
-
-                entity.Property(e => e.PhoneNumber)
-                    .IsRequired()
-                    .HasColumnName("phone_number")
-                    .HasMaxLength(20);
-
-                entity.Property(e => e.TxId).HasColumnName("tx_id");
-
-                entity.Property(e => e.Uid).HasColumnName("uid");
-
-                entity.HasOne(d => d.Tx)
-                    .WithMany(p => p.NotificationPhoneNumber)
-                    .HasForeignKey(d => d.TxId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_tx_id");
-
-                entity.HasOne(d => d.U)
-                    .WithMany(p => p.NotificationPhoneNumber)
-                    .HasForeignKey(d => d.Uid)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_user_id");
-            });
-
-            modelBuilder.Entity<NotificationRequest>(entity =>
-            {
-                entity.ToTable("notification_request", "feature");
-
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                    .HasColumnName("id")
-                    .HasDefaultValueSql("nextval('feature.notification_request_id_seq'::regclass)");
-
-                entity.Property(e => e.Enabled).HasColumnName("enabled");
-
-                entity.Property(e => e.EventOccursAt).HasColumnName("event_occurs_at");
-
-                entity.Property(e => e.Message)
-                    .IsRequired()
-                    .HasColumnName("message")
-                    .HasMaxLength(256);
-
-                entity.Property(e => e.TxId).HasColumnName("tx_id");
-
-                entity.Property(e => e.Uid).HasColumnName("uid");
-
-                entity.HasOne(d => d.Tx)
-                    .WithMany(p => p.NotificationRequest)
-                    .HasForeignKey(d => d.TxId)
-                    .HasConstraintName("fk_tx_id");
-
-                entity.HasOne(d => d.U)
-                    .WithMany(p => p.NotificationRequest)
-                    .HasForeignKey(d => d.Uid)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_user_id");
-            });
-
-            modelBuilder.Entity<NotificationUserSettings>(entity =>
-            {
-                entity.HasKey(e => e.Uid);
-
-                entity.ToTable("notification_user_settings", "feature");
-
-                entity.Property(e => e.Uid)
-                    .HasColumnName("uid")
-                    .ValueGeneratedNever();
-
-                entity.Property(e => e.NotificationHeadroom)
-                    .HasColumnName("notification_headroom")
-                    .HasDefaultValueSql("make_interval(0, 0, 0, 0, 0, 3)");
-
-                entity.Property(e => e.TxId).HasColumnName("tx_id");
-
-                entity.HasOne(d => d.Tx)
-                    .WithMany(p => p.NotificationUserSettings)
-                    .HasForeignKey(d => d.TxId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_tx_id");
-
-                entity.HasOne(d => d.U)
-                    .WithOne(p => p.NotificationUserSettings)
-                    .HasForeignKey<NotificationUserSettings>(d => d.Uid)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk_uid");
-            });
-
+            
             modelBuilder.Entity<PerformanceRecord>(entity =>
             {
                 entity.ToTable("performance_record", "tw");
@@ -1417,10 +1312,6 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey<WorldSettings>(d => d.WorldId)
                     .HasConstraintName("fk_world_id");
             });
-
-            modelBuilder.HasSequence<int>("notification_phone_number_id_seq");
-
-            modelBuilder.HasSequence("notification_request_id_seq");
 
             modelBuilder.HasSequence("conflicting_data_record_id_seq");
 

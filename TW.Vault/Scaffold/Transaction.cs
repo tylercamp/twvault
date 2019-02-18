@@ -11,9 +11,6 @@ namespace TW.Vault.Scaffold
             Command = new HashSet<Command>();
             ConflictingDataRecordConflictingTx = new HashSet<ConflictingDataRecord>();
             ConflictingDataRecordOldTx = new HashSet<ConflictingDataRecord>();
-            NotificationPhoneNumber = new HashSet<NotificationPhoneNumber>();
-            NotificationRequest = new HashSet<NotificationRequest>();
-            NotificationUserSettings = new HashSet<NotificationUserSettings>();
             Report = new HashSet<Report>();
         }
 
@@ -28,9 +25,6 @@ namespace TW.Vault.Scaffold
         public ICollection<Command> Command { get; set; }
         public ICollection<ConflictingDataRecord> ConflictingDataRecordConflictingTx { get; set; }
         public ICollection<ConflictingDataRecord> ConflictingDataRecordOldTx { get; set; }
-        public ICollection<NotificationPhoneNumber> NotificationPhoneNumber { get; set; }
-        public ICollection<NotificationRequest> NotificationRequest { get; set; }
-        public ICollection<NotificationUserSettings> NotificationUserSettings { get; set; }
         public ICollection<Report> Report { get; set; }
         public ICollection<CurrentVillageSupport> CurrentVillageSupport { get; set; }
         public ICollection<User> User { get; set; }
