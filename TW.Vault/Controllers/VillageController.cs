@@ -277,7 +277,7 @@ namespace TW.Vault.Controllers
 
                     bool isFake = false;
                     bool isNuke = false;
-                    if (!army.Values.Any(cnt => cnt > 1))
+                    if (!army.Values.Any(cnt => cnt > 1) && !isNoble)
                     {
                         isFake = true;
                     }
