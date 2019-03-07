@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -16,9 +17,10 @@ namespace TW.Vault.MapDataFetcher
 {
     public class DataFetchingService : BackgroundService
     {
-        public DataFetchingService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(scopeFactory, loggerFactory)
+        public DataFetchingService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory, IApplicationLifetime applicationLifetime) : base(scopeFactory, loggerFactory)
         {
             Instance = this;
+            this.applicationLifetime = applicationLifetime;
         }
 
         public static DataFetchingService Instance { get; private set; }
@@ -26,6 +28,7 @@ namespace TW.Vault.MapDataFetcher
         private bool forceReApply = false;
         private FetchJobStats pendingStats = null;
         private DateTime lastCheckedAt = DateTime.MinValue;
+        private IApplicationLifetime applicationLifetime;
 
         public FetchJobStats LatestStats { get; private set; } = null;
 
@@ -51,8 +54,7 @@ namespace TW.Vault.MapDataFetcher
             catch (Exception e)
             {
                 logger.LogError(e, $"An exception occurred in {nameof(DataFetchingService)}, terminating");
-                Serilog.Log.CloseAndFlush();
-                Environment.Exit(1);
+                applicationLifetime.StopApplication();
             }
         }
 
