@@ -30,6 +30,30 @@ namespace TW.Vault
             }
         }
 
+        public static String ConnectionString
+        {
+            get
+            {
+                var connectionStrings = Instance.GetSection("ConnectionStrings");
+                var directConnectionString = connectionStrings.GetValue<String>("Vault");
+                if (directConnectionString != null)
+                    return directConnectionString;
+
+                var connectionOptions = connectionStrings.GetSection("Vault");
+
+                var paramParts = new Dictionary<String, String>
+                {
+                    { "Server", connectionOptions["Server"] },
+                    { "Port", connectionOptions["Port"] },
+                    { "Database", connectionOptions["Database"] },
+                    { "User Id", connectionOptions["User"] },
+                    { "Password", connectionOptions["Password"] }
+                };
+
+                return String.Join("; ", paramParts.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+            }
+        }
+
         public static SecurityConfiguration Security
         {
             get
