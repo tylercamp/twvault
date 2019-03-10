@@ -304,14 +304,25 @@
     }
 
     function selectedTribeTag(tag) {
-        if (selectedHighlightTribeName != "___ANY___") {
-            if (selectedHighlightTribeName == "___NONE___" && tag.tribeName) {
-                return false;
-            } else if (selectedHighlightTribeName == "___ENEMY___" && !tag.isEnemyTribe) {
-                return false;
-            } else if (selectedHighlightTribeName != tag.tribeName) {
-                return false;
-            }
+        switch (selectedHighlightTribeName) {
+            case "___ANY___": break;
+            case "___NONE___":
+                if (tag.tribeName) {
+                    return false;
+                }
+                break;
+
+            case "___ENEMY___":
+                if (!tag.isEnemyTribe) {
+                    return false;
+                }
+                break;
+
+            default:
+                if (selectedHighlightTribeName != tag.tribeName) {
+                    return false;
+                }
+                break;
         }
 
         return true;
