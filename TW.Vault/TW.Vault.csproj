@@ -29,6 +29,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TW.Vault.Lib\TW.Vault.Lib.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <Compile Remove="Logs\**" />
     <Content Remove="Logs\**" />
     <EmbeddedResource Remove="Logs\**" />
