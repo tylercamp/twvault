@@ -1,4 +1,4 @@
-FROM microsoft/aspnetcore:2.0
+FROM microsoft/dotnet:aspnetcore-runtime
 WORKDIR /app/
 COPY out/* ./
 RUN mkdir /opt/twvault
