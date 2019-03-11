@@ -5,16 +5,53 @@
 replicaCount: 1
 
 image:
-  repository: nginx
-  tag: stable
-  pullPolicy: IfNotPresent
+  app:
+    repository: localhost:5000/twv-app:1.0
+    pullPolicy: IfNotPresent
+  mdf:
+    repository: localhost:5000/twv-mdf:1.0
+    pullPolicy: IfNotPresent
 
-nameOverride: ""
-fullnameOverride: ""
+script:
+  vault: vault.js
+  main: main.js
 
-service:
-  type: ClusterIP
-  port: 80
+env:
+  app:
+    urls: "http://*:5000"
+    ConnectionStrings__Vault__Database: "vault"
+    ConnectionStrings__Vault__User: "twu_vault"
+    ConnectionStrings__Vault__Password: "!!TWV@ult4Us??"
+    Security__AllowUploadArmyForNonOwner: "true"
+    Security__ReportIgnoreExpectedPopulationBounds: "true"
+    Security__AllowCommandArrivalBeforeServerTime: "true"
+    Security__MinimumRequiredPriveleges: "1"
+    Security__RestrictSitterAccess: "true"
+    Security__RestrictAccessWithinTribe: "false"
+    Security__EnableScriptFilter: "true"
+    Security__PublicScripts__0: "main.js"
+    Security__PublicScripts__1: "vault.js"
+    Initialization__EnableRequiredFiles: "true"
+    Initialization__RequiredFiles__0: "/opt/twvault/script/vault.js"
+    Initialization__RequiredFiles__1: "/opt/twvault/script/main.js"
+    Behavior__Map__MaxDaysSinceReportUpload: "1"
+    Behavior__Map__MaxDaysSinceTroopUpload: "3"
+    Behavior__Map__MaxDaysSinceCommandUpload: "3"
+    Behavior__Map__MaxDaysSinceIncomingUpload: "1"
+    Behavior__Tagging__MaxDaysSinceReportUpload: "3"
+    Behavior__Tagging__MaxDaysSinceTroopUpload: "3"
+    Behavior__Tagging__MaxDaysSinceCommandUpload: "3"
+    Behavior__Tagging__MaxDaysSinceIncomingUpload: "1"
+    Rankings__EnableRankingsService: "true"
+    Rankings__RefreshCheckIntervalSeconds: "300"
+    Translation__BaseTranslationId: "1"
+  mdf:
+    ConnectionStrings__Vault__Database: "vault"
+    ConnectionStrings__Vault__User: "twu_vault"
+    ConnectionStrings__Vault__Password: "!!TWV@ult4Us??"
+    CachingFilePath: "/opt/mdf/cache"
+    DataBatchSize: "500"
+    CheckDelaySeconds: "10"
 
 ingress:
   enabled: false
@@ -41,8 +78,3 @@ resources: {}
   #  cpu: 100m
   #  memory: 128Mi
 
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}

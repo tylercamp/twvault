@@ -1,0 +1,13 @@
+# PVC for log files and map data cache
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "twvault.name" "mdf" }}
+  labels:
+    {{- include "twvault.commonLabels" "mdf" | nindent 4 }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

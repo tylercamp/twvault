@@ -18,7 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TW.Vault\TW.Vault.csproj" />
+    <ProjectReference Include="..\TW.Vault.App\TW.Vault.App.csproj" />
+    <ProjectReference Include="..\TW.Vault.Lib\TW.Vault.Lib.csproj" />
   </ItemGroup>
 
   <ItemGroup>

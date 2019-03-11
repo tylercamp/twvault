@@ -1,0 +1,13 @@
+# PVC for log files
+piVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "twvault.name" "app" }}
+  labels:
+    {{- include "twvault.commonLabels" "app" | nindent 4 }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
