@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "twvault.fullname" . }}-postgres
+  labels:
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}-postgres
+spec:
+  type: {{ .Values.service.postgres }}
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: psql
+  selector:
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}

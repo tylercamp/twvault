@@ -4,13 +4,21 @@
 
 replicaCount: 1
 
+postgresOnly: true
+
 image:
   app:
-    repository: localhost:5000/twv-app:1.0
+    fullname: localhost:5000/twv-app:1.0
     pullPolicy: IfNotPresent
   mdf:
-    repository: localhost:5000/twv-mdf:1.0
+    fullname: localhost:5000/twv-mdf:1.0
     pullPolicy: IfNotPresent
+  postgres:
+    fullname: postgres:10
+    pullPolicy: IfNotPresent
+
+service:
+  postgres: NodePort
 
 script:
   vault: vault.js

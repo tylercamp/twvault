@@ -15,6 +15,14 @@ namespace TW.Vault.Scaffold
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseNpgsql("Server=localhost; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??");
+            }
+        }
+
         public virtual DbSet<AccessGroup> AccessGroup { get; set; }
         public virtual DbSet<Ally> Ally { get; set; }
         public virtual DbSet<Command> Command { get; set; }
@@ -50,8 +58,6 @@ namespace TW.Vault.Scaffold
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasPostgresExtension("postgis");
-
             modelBuilder.Entity<AccessGroup>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -1313,45 +1319,29 @@ namespace TW.Vault.Scaffold
                     .HasConstraintName("fk_world_id");
             });
 
-            modelBuilder.HasSequence("conflicting_data_record_id_seq");
+            modelBuilder.HasSequence("conflicting_data_record_id_seq", "security");
+            modelBuilder.HasSequence("invalid_data_record_id_seq", "security");
+            modelBuilder.HasSequence("user_log_id_seq", "security");
+            modelBuilder.HasSequence("user_upload_history_id_seq", "security");
+            modelBuilder.HasSequence("access_group_id_seq", "security");
 
-            modelBuilder.HasSequence("invalid_data_record_id_seq");
+            modelBuilder.HasSequence("command_army_id_seq", "tw");
+            modelBuilder.HasSequence("current_village_support_id_seq", "tw");
+            modelBuilder.HasSequence("failed_auth_id_seq", "tw");
+            modelBuilder.HasSequence("performance_record_id_seq", "tw");
+            modelBuilder.HasSequence("report_armies_army_id_seq", "tw");
+            modelBuilder.HasSequence("report_building_report_building_id_seq", "tw");
+            modelBuilder.HasSequence("tx_id_seq", "tw");
+            modelBuilder.HasSequence("users_uid_seq", "tw");
+            modelBuilder.HasSequence("enemy_tribe_id_seq", "tw");
 
-            modelBuilder.HasSequence("user_log_id_seq");
+            modelBuilder.HasSequence<int>("conquers_vault_id_seq", "tw_provided");
+            modelBuilder.HasSequence<short>("world_id_seq", "tw_provided");
 
-            modelBuilder.HasSequence("user_upload_history_id_seq");
-
-            modelBuilder.HasSequence("command_army_id_seq");
-
-            modelBuilder.HasSequence("current_village_support_id_seq");
-
-            modelBuilder.HasSequence("failed_auth_id_seq");
-
-            modelBuilder.HasSequence("performance_record_id_seq");
-
-            modelBuilder.HasSequence("report_armies_army_id_seq");
-
-            modelBuilder.HasSequence("report_building_report_building_id_seq");
-
-            modelBuilder.HasSequence("tx_id_seq");
-
-            modelBuilder.HasSequence("users_uid_seq");
-
-            modelBuilder.HasSequence("custom_info_id_seq");
-
-            modelBuilder.HasSequence<int>("conquers_vault_id_seq");
-
-            modelBuilder.HasSequence<short>("world_id_seq");
-
-            modelBuilder.HasSequence("enemy_tribe_id_seq");
-
-            modelBuilder.HasSequence("access_group_id_seq");
-
-            modelBuilder.HasSequence<short>("translation_key_id_seq");
-
-            modelBuilder.HasSequence<short>("translation_language_id_seq");
-
-            modelBuilder.HasSequence<short>("translation_registry_id_seq");
+            modelBuilder.HasSequence<short>("translation_key_id_seq", "feature");
+            modelBuilder.HasSequence<short>("translation_language_id_seq", "feature");
+            modelBuilder.HasSequence<short>("translation_registry_id_seq", "feature");
+            modelBuilder.HasSequence<short>("translation_parameter_id_seq", "feature");
         }
     }
 }

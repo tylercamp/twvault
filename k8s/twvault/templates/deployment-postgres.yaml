@@ -1,51 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "twvault.fullname" . }}
+  name: {{ include "twvault.fullname" . }}-postgres
   labels:
-    app.kubernetes.io/name: {{ include "twvault.name" . }}
-    helm.sh/chart: {{ include "twvault.chart" . }}
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-postgres
     app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "twvault.name" . }}
+      app.kubernetes.io/name: {{ include "twvault.name" . }}-postgres
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "twvault.name" . }}
+        app.kubernetes.io/name: {{ include "twvault.name" . }}-postgres
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: postgres:10
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+      - name: {{ .Chart.Name }}-postgres
+        image: {{ .Values.image.postgres.fullname }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        hostNetwork: true
+        ports:
+        - name: psql
+          containerPort: 5432
+          protocol: TCP
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.env.app.ConnectionStrings__Vault__User | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.env.app.ConnectionStrings__Vault__Password | quote }}
+        - name: POSTGRES_DB
+          value: {{ .Values.env.app.ConnectionStrings__Vault__Database | quote }}
+      # - name: {{ .Chart.Name }}-postgres-init
+      #   image: {{ .Values.image.app.image }}

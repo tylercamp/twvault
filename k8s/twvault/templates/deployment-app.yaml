@@ -1,19 +1,21 @@
+{{- if not .Values.postgresOnly -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "twvault.fullname" . }}
+  name: {{ include "twvault.fullname" . }}-app
   labels:
-    {{- include "twvault.commonLabels" "app" | nindent 4 }}
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-app
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "twvault.name" "app" }}
+      app.kubernetes.io/name: {{ include "twvault.name" . }}-app
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "twvault.name" "app" }}
+        app.kubernetes.io/name: {{ include "twvault.name" . }}-app
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
@@ -48,3 +50,4 @@ spec:
       - name: logs
         persistentVolumeClaim:
           claimName: {{ include "twvault.name" "app" }}
+{{- end -}}

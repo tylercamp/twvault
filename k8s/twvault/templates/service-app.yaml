@@ -1,12 +1,11 @@
+{{- if not .Values.postgresOnly -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "twvault.fullname" . }}
+  name: {{ include "twvault.fullname" . }}-app
   labels:
-    app.kubernetes.io/name: {{ include "twvault.name" . }}
-    helm.sh/chart: {{ include "twvault.chart" . }}
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-app
     app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -15,5 +14,6 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app.kubernetes.io/name: {{ include "twvault.name" . }}
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-app
     app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
