@@ -81,6 +81,8 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.WorldId, e.TribeId });
 
                 entity.ToTable("ally", "tw_provided");
+
+                entity.HasIndex(e => new { e.WorldId, e.TribeId });
                 
                 entity.Property(e => e.TribeId)
                     .HasColumnName("tribe_id")
@@ -118,6 +120,17 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("command", "tw");
 
                 entity.HasKey(e => new { e.WorldId, e.AccessGroupId, e.CommandId });
+
+                entity.HasIndex(e => e.ArmyId).IsUnique();
+                entity.HasIndex(e => new { e.WorldId, e.AccessGroupId });
+                entity.HasIndex(e => e.FirstSeenAt);
+                entity.HasIndex(e => e.LandsAt);
+                entity.HasIndex(e => e.ReturnsAt);
+                entity.HasIndex(e => e.SourcePlayerId);
+                entity.HasIndex(e => e.SourceVillageId);
+                entity.HasIndex(e => e.TargetPlayerId);
+                entity.HasIndex(e => e.TargetVillageId);
+                entity.HasIndex(e => new { e.WorldId, e.CommandId, e.AccessGroupId });
                 
                 entity.Property(e => e.CommandId)
                     .HasColumnName("command_id")
@@ -203,6 +216,9 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("command_army", "tw");
 
+                entity.HasIndex(e => new { e.WorldId, e.ArmyId }).IsUnique();
+                entity.HasIndex(e => e.Snob);
+
                 entity.Property(e => e.ArmyId)
                     .HasColumnName("army_id")
                     .HasDefaultValueSql("nextval('tw.command_army_id_seq'::regclass)");
@@ -273,6 +289,8 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("conquer", "tw_provided");
 
+                entity.HasIndex(e => new { e.WorldId, e.VillageId });
+
                 entity.Property(e => e.VaultId)
                     .HasColumnName("vault_id")
                     .HasDefaultValueSql("nextval('tw_provided.conquers_vault_id_seq'::regclass)");
@@ -299,6 +317,10 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.WorldId, e.ArmyId });
 
                 entity.ToTable("current_army", "tw");
+
+                entity.HasIndex(e => e.ArmyId).IsUnique();
+                entity.HasIndex(e => e.Snob);
+                entity.HasIndex(e => e.WorldId);
 
                 entity.Property(e => e.ArmyId)
                     .HasColumnName("army_id")
@@ -340,6 +362,9 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.WorldId, e.VillageId, e.AccessGroupId });
 
                 entity.ToTable("current_building", "tw");
+
+                entity.HasIndex(e => e.VillageId);
+                entity.HasIndex(e => new { e.WorldId, e.AccessGroupId });
 
                 entity.Property(e => e.VillageId)
                     .HasColumnName("village_id")
@@ -408,6 +433,8 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("current_player", "tw");
 
+                entity.HasIndex(e => new { e.WorldId, e.PlayerId, e.AccessGroupId });
+
                 entity.Property(e => e.PlayerId)
                     .HasColumnName("player_id")
                     .ValueGeneratedNever();
@@ -430,6 +457,8 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.WorldId, e.VillageId, e.AccessGroupId });
 
                 entity.ToTable("current_village", "tw");
+
+                entity.HasIndex(e => new { e.WorldId, e.VillageId, e.AccessGroupId });
 
                 entity.Property(e => e.VillageId)
                     .HasColumnName("village_id")
@@ -507,6 +536,9 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("current_village_support", "tw");
 
                 entity.HasKey(e => new { e.WorldId, e.Id, e.AccessGroupId });
+
+                entity.HasIndex(e => new { e.WorldId, e.SourceVillageId, e.AccessGroupId });
+                entity.HasIndex(e => new { e.WorldId, e.TargetVillageId, e.AccessGroupId });
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
@@ -622,6 +654,8 @@ namespace TW.Vault.Scaffold
 
                 entity.HasKey(e => new { e.ReportId, e.WorldId, e.AccessGroupId });
 
+                entity.HasIndex(e => new { e.ReportId, e.WorldId, e.AccessGroupId });
+
                 entity.Property(e => e.ReportId)
                     .HasColumnName("report_id");
 
@@ -694,6 +728,9 @@ namespace TW.Vault.Scaffold
 
                 entity.HasKey(e => new { e.WorldId, e.PlayerId });
 
+                entity.HasIndex(e => e.PlayerId);
+                entity.HasIndex(e => e.TribeId);
+
                 entity.Property(e => e.PlayerId)
                     .HasColumnName("player_id")
                     .ValueGeneratedNever();
@@ -724,6 +761,12 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("report", "tw");
 
                 entity.HasKey(e => new { e.WorldId, e.ReportId, e.AccessGroupId });
+
+                entity.HasIndex(e => e.BuildingId);
+                entity.HasIndex(e => e.AttackerPlayerId);
+                entity.HasIndex(e => e.DefenderPlayerId);
+                entity.HasIndex(e => e.AccessGroupId);
+                entity.HasIndex(e => e.OccuredAt);
                 
                 entity.Property(e => e.ReportId)
                     .HasColumnName("report_id")
@@ -834,6 +877,8 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.WorldId, e.ArmyId });
 
                 entity.ToTable("report_army", "tw");
+
+                entity.HasIndex(e => e.ArmyId).IsUnique();
                 
                 entity.Property(e => e.ArmyId)
                     .HasColumnName("army_id")
@@ -879,6 +924,8 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("report_building", "tw");
 
                 entity.HasKey(e => new { e.WorldId, e.ReportBuildingId });
+
+                entity.HasIndex(e => e.ReportBuildingId).IsUnique();
                 
                 entity.Property(e => e.ReportBuildingId)
                     .HasColumnName("report_building_id")
@@ -937,6 +984,9 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("transaction", "security");
 
+                entity.HasIndex(e => e.TxId);
+                entity.HasIndex(e => e.WorldId);
+
                 entity.Property(e => e.TxId)
                     .HasColumnName("tx_id")
                     .HasDefaultValueSql("nextval('tw.tx_id_seq'::regclass)");
@@ -965,6 +1015,9 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => new { e.TranslationId, e.KeyId });
 
                 entity.ToTable("translation", "feature");
+
+                entity.HasIndex(e => e.TranslationId).ForNpgsqlHasMethod("hash");
+                entity.HasIndex(e => e.KeyId).ForNpgsqlHasMethod("hash");
 
                 entity.Property(e => e.TranslationId)
                     .IsRequired()
@@ -1076,6 +1129,13 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("user", "security");
 
+                entity.HasIndex(e => e.Enabled);
+                entity.HasIndex(e => e.PlayerId);
+                entity.HasIndex(e => e.AuthToken);
+                entity.HasIndex(e => e.AccessGroupId);
+                entity.HasIndex(e => e.Uid);
+                entity.HasIndex(e => e.WorldId);
+
                 entity.Property(e => e.Uid)
                     .HasColumnName("uid")
                     .HasDefaultValueSql("nextval('tw.users_uid_seq'::regclass)");
@@ -1173,6 +1233,8 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("user_upload_history", "security");
 
+                entity.HasIndex(e => e.Uid);
+
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
                     .HasDefaultValueSql("nextval('security.user_upload_history_id_seq'::regclass)");
@@ -1199,6 +1261,11 @@ namespace TW.Vault.Scaffold
                 entity.ToTable("village", "tw_provided");
 
                 entity.HasKey(e => new { e.WorldId, e.VillageId });
+
+                entity.HasIndex(e => e.VillageId);
+                entity.HasIndex(e => e.PlayerId);
+                entity.HasIndex(e => new { e.WorldId, e.PlayerId });
+                entity.HasIndex(e => new { e.WorldId, e.VillageId }).IsUnique();
                 
                 entity.Property(e => e.VillageId)
                     .HasColumnName("village_id")

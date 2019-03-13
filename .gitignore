@@ -2,6 +2,7 @@
 Logs/
 .DS_Store
 out/
+Migrations/
 
 
 ## Ignore Visual Studio temporary files, build results, and
