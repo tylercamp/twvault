@@ -1016,6 +1016,8 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("translation", "feature");
 
+                entity.HasData(Seed.TranslationEntryData.Contents);
+
                 entity.HasIndex(e => e.TranslationId).ForNpgsqlHasMethod("hash");
                 entity.HasIndex(e => e.KeyId).ForNpgsqlHasMethod("hash");
 
@@ -1050,6 +1052,8 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("translation_key", "feature");
 
+                entity.HasData(Seed.TranslationKeyData.Contents);
+
                 entity.Property(e => e.Id)
                     .IsRequired()
                     .HasColumnName("id")
@@ -1066,6 +1070,8 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("translation_language", "feature");
 
+                entity.HasData(Seed.TranslationLanguageData.Contents);
+
                 entity.Property(e => e.Id)
                     .IsRequired()
                     .HasColumnName("id")
@@ -1079,6 +1085,8 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => e.Id);
 
                 entity.ToTable("translation_parameter", "feature");
+
+                entity.HasData(Seed.TranslationParameterData.Contents);
 
                 entity.Property(e => e.Id)
                     .IsRequired()
@@ -1104,6 +1112,8 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => e.Id);
 
                 entity.ToTable("translation_registry", "feature");
+
+                entity.HasData(Seed.TranslationRegistryData.Contents);
 
                 entity.Property(e => e.Id)
                     .IsRequired()
