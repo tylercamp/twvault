@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using TW.Vault.Scaffold;
 
 namespace TW.ConfigurationFetcher.Fetcher
 {
@@ -11,13 +12,9 @@ namespace TW.ConfigurationFetcher.Fetcher
 
         public override string Label => "buildings";
 
-        public override void Process(String source, string fetchedContents)
+        public override void Process(VaultContext context, World world, string fetchedContents)
         {
             var xml = ParseXml(fetchedContents);
-
-            File.WriteAllText($"{source}_buildings.csv", new XmlToCsvWriter(xml)
-                //.add
-                .ToString());
         }
     }
 }

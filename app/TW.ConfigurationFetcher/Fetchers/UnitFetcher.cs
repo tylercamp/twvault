@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TW.Vault.Scaffold;
 
 namespace TW.ConfigurationFetcher.Fetcher
 {
@@ -10,7 +11,7 @@ namespace TW.ConfigurationFetcher.Fetcher
 
         public override string Label => "units";
 
-        public override void Process(String source, string fetchedContents)
+        public override void Process(VaultContext context, World world, string fetchedContents)
         {
             var xml = ParseXml(fetchedContents);
         }

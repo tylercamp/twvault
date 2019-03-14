@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using System.Xml.XPath;
+using TW.Vault.Scaffold;
 
 namespace TW.ConfigurationFetcher.Fetcher
 {
@@ -11,12 +12,9 @@ namespace TW.ConfigurationFetcher.Fetcher
     {
         public abstract String Endpoint { get; }
         public abstract String Label { get; }
-        public abstract void Process(String source, String fetchedContents);
+        public abstract void Process(VaultContext context, World world, String fetchedContents);
 
-
-        protected object IntToBool(int value) => value == 0 ? false : true;
-
-        protected XPathNavigator ParseXml(String xml)
+        protected XmlParser ParseXml(String xml)
         {
             var readerSettings = new XmlReaderSettings
             {
@@ -24,7 +22,7 @@ namespace TW.ConfigurationFetcher.Fetcher
             };
 
             var doc = new XPathDocument(XmlReader.Create(new StringReader(xml), readerSettings));
-            return doc.CreateNavigator();
+            return new XmlParser(doc.CreateNavigator());
         }
     }
 }
