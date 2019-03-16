@@ -20,7 +20,7 @@ namespace TW.ConfigurationFetcher.Fetcher
             {
                 world.WorldSettings = new WorldSettings
                 {
-                    CanDemolishBuildings = xml.Get<bool>("/config/building/destroy"),
+                    CanDemolishBuildings = xml.Get<bool>("/config/build/destroy"),
                     AccountSittingEnabled = xml.Get<bool>("/config/sitter/allow"),
                     ArchersEnabled = xml.Get<bool>("/config/game/archer"),
                     BonusVillagesEnabled = xml.Get<bool>("/config/coord/bonus_villages"),
@@ -47,6 +47,9 @@ namespace TW.ConfigurationFetcher.Fetcher
                     // TODO - Need to find a good way to auto-retrieve UTC offset
                     UtcOffset = TimeSpan.Zero
                 };
+
+                context.Add(world.WorldSettings);
+                context.SaveChanges();
             }
         }
     }

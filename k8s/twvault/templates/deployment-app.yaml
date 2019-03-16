@@ -17,13 +17,19 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "twvault.name" . }}-app
         app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-app.yaml") . | sha256sum }}
     spec:
       containers:
       - name: {{ .Chart.Name }}
-        image: "{{ .Values.image.app.repository }}"
+        image: "{{ .Values.image.app.fullname }}"
         imagePullPolicy: {{ .Values.image.app.pullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "twvault.fullname" . }}-app
         env:
-          {{- toYaml .Values.env.app | nindent -}}
+        - name: ConnectionStrings__Vault__Server
+          value: {{ include "twvault.dbHostname" . | quote }}
         ports:
           - name: http
             containerPort: 5000
@@ -42,12 +48,19 @@ spec:
         - mountPath: /opt/twvault/script
           name: scripts
         - mountPath: /opt/twvault/logs
-          name: logs 
+          name: logs
+      initContainers:
+        {{- include "twvault.waitForDb.available" . | nindent 6 }}
+      - name: run-migrations
+        image: {{ .Values.image.migrate.fullname }}
+        imagePullPolicy: {{ .Values.image.app.pullPolicy }}
+        args:
+        - {{ include "twvault.connectionString" . | quote }}
       volumes:
       - name: scripts
         secret:
-          secretName: {{ include "twvault.scripts.secretName" }}
+          secretName: {{ include "twvault.scripts.secretName" . }}
       - name: logs
         persistentVolumeClaim:
-          claimName: {{ include "twvault.name" "app" }}
+          claimName: {{ include "twvault.fullname" . }}-app
 {{- end -}}

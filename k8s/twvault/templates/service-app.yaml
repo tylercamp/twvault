@@ -7,10 +7,10 @@ metadata:
     app.kubernetes.io/name: {{ include "twvault.name" . }}-app
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  type: {{ .Values.service.type }}
+  type: ClusterIP
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: 5000
+      targetPort: 5000
       protocol: TCP
       name: http
   selector:

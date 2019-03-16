@@ -7,11 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.App", "TW.Vault.Ap
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Testing", "TW.Testing\TW.Testing.csproj", "{5DE5A0DB-6C67-48F3-B65C-374706DE0058}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TW.ConfigurationFetcher", "TW.ConfigurationFetcher\TW.ConfigurationFetcher.csproj", "{9116426F-5D10-47F8-84E0-35DDCC8FDDE6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.ConfigurationFetcher", "TW.ConfigurationFetcher\TW.ConfigurationFetcher.csproj", "{9116426F-5D10-47F8-84E0-35DDCC8FDDE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TW.Vault.Lib", "TW.Vault.Lib\TW.Vault.Lib.csproj", "{44699EFB-0BCF-42FD-A17F-51A27C531B3E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.Lib", "TW.Vault.Lib\TW.Vault.Lib.csproj", "{44699EFB-0BCF-42FD-A17F-51A27C531B3E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TW.Vault.MapDataFetcher", "TW.Vault.MapDataFetcher\TW.Vault.MapDataFetcher.csproj", "{D965091C-A23E-47BE-8012-6F1263B6404A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.MapDataFetcher", "TW.Vault.MapDataFetcher\TW.Vault.MapDataFetcher.csproj", "{D965091C-A23E-47BE-8012-6F1263B6404A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.Migration", "TW.Vault.Migration\TW.Vault.Migration.csproj", "{04EC02DB-142E-4481-B28D-D39BEBE35615}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +63,14 @@ Global
 		{D965091C-A23E-47BE-8012-6F1263B6404A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D965091C-A23E-47BE-8012-6F1263B6404A}.Release|x64.ActiveCfg = Release|x64
 		{D965091C-A23E-47BE-8012-6F1263B6404A}.Release|x64.Build.0 = Release|x64
+		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Debug|x64.ActiveCfg = Debug|x64
+		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Debug|x64.Build.0 = Debug|x64
+		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Release|x64.ActiveCfg = Release|x64
+		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

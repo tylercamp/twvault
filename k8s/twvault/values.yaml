@@ -4,14 +4,20 @@
 
 replicaCount: 1
 
-postgresOnly: true
+postgresOnly: false
 
 image:
   app:
-    fullname: localhost:5000/twv-app:1.0
+    fullname: twv-app:1.0
     pullPolicy: IfNotPresent
   mdf:
-    fullname: localhost:5000/twv-mdf:1.0
+    fullname: twv-mdf:1.0
+    pullPolicy: IfNotPresent
+  cf:
+    fullname: twv-cf:1.0
+    pullPolicy: IfNotPresent
+  migrate:
+    fullname: twv-migrate:1.0
     pullPolicy: IfNotPresent
   postgres:
     fullname: postgres:10
@@ -23,6 +29,14 @@ service:
 script:
   vault: vault.js
   main: main.js
+
+worlds:
+- en100.tribalwars.net
+- en101.tribalwars.net
+- en102.tribalwars.net
+- en103.tribalwars.net
+- en104.tribalwars.net
+- en105.tribalwars.net
 
 env:
   app:

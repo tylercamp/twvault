@@ -33,5 +33,3 @@ spec:
           value: {{ .Values.env.app.ConnectionStrings__Vault__Password | quote }}
         - name: POSTGRES_DB
           value: {{ .Values.env.app.ConnectionStrings__Vault__Database | quote }}
-      # - name: {{ .Chart.Name }}-postgres-init
-      #   image: {{ .Values.image.app.image }}

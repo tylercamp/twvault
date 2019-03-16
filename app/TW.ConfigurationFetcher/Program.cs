@@ -35,7 +35,7 @@ namespace TW.ConfigurationFetcher
                 return;
             }
 
-            var invalidHostnames = worlds.Where(h => Regex.IsMatch(h, @"^\w+\.\w+\.\w+$")).ToList();
+            var invalidHostnames = worlds.Where(h => !Regex.IsMatch(h, @"^\w+\.\w+\.\w+$")).ToList();
             if (invalidHostnames.Any())
             {
                 Console.WriteLine("Invalid worlds were given, they should be e.g. en100.tribalwars.net");

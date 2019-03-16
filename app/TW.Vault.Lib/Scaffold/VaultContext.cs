@@ -19,7 +19,10 @@ namespace TW.Vault.Scaffold
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseNpgsql("Server=localhost; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??");
+                optionsBuilder.UseNpgsql(
+                    "Server=localhost; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??",
+                    x => x.MigrationsAssembly("TW.Vault.Migration")
+                );
             }
         }
 

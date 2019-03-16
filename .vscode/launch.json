@@ -5,13 +5,13 @@
    "version": "0.2.0",
    "configurations": [
        {
-           "name": ".NET Core Launch (web)",
+           "name": "TW.Vault.App",
            "type": "coreclr",
            "request": "launch",
            "preLaunchTask": "buildweb",
-           "program": "${workspaceFolder}/TW.Vault/bin/Debug/netcoreapp2.0/TW.Vault.dll",
+           "program": "${workspaceFolder}/app/TW.Vault.App/bin/Debug/netcoreapp2.0/TW.Vault/.App.dll",
            "args": [],
-           "cwd": "${workspaceFolder}/TW.Vault",
+           "cwd": "${workspaceFolder}/app/TW.Vault.App",
            "stopAtEntry": false,
            "launchBrowser": {
                "enabled": true,
@@ -35,14 +35,30 @@
            }
        },
         {
-            "name": ".NET Core Launch (console)",
+            "name": "TW.Testing",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "buildconsole",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/TW.Testing/bin/Debug/netcoreapp2.0/TW.Testing.dll",
+            "program": "${workspaceFolder}/app/TW.Testing/bin/Debug/netcoreapp2.0/TW.Testing.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/TW.Testing",
+            "cwd": "${workspaceFolder}/app/TW.Testing",
+            // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "TW.ConfigurationFetcher",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "buildconsole",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/app/TW.ConfigurationFetcher/bin/Debug/netcoreapp2.0/TW.ConfigurationFetcher.dll",
+            "args": [
+                ""
+            ],
+            "cwd": "${workspaceFolder}/app/TW.ConfigurationFetcher",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
             "console": "internalConsole",
             "stopAtEntry": false,
