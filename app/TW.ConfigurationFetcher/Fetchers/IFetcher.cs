@@ -18,8 +18,11 @@ namespace TW.ConfigurationFetcher.Fetcher
         {
             var readerSettings = new XmlReaderSettings
             {
-                ConformanceLevel = ConformanceLevel.Fragment
+                ConformanceLevel = ConformanceLevel.Fragment,
+                DtdProcessing = DtdProcessing.Ignore
             };
+
+            Console.WriteLine("Parsing XML: " + xml?.Substring(0, 50) + "...");
 
             var doc = new XPathDocument(XmlReader.Create(new StringReader(xml), readerSettings));
             return new XmlParser(doc.CreateNavigator());

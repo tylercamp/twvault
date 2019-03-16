@@ -58,7 +58,10 @@ namespace TW.ConfigurationFetcher
                 new UnitFetcher()
             };
 
-            var httpClient = new HttpClient();
+            var httpClient = new HttpClient(new HttpClientHandler
+            {
+                AllowAutoRedirect = false
+            });
 
             using (vaultContext)
             using (httpClient)
@@ -90,6 +93,12 @@ namespace TW.ConfigurationFetcher
                         var url = $"{baseUrl}{fetcher.Endpoint}";
                         Console.Write("Fetching {0} ... ", url);
                         var response = httpClient.GetAsync(url).Result;
+                        if ((int)response.StatusCode >= 300 && (int)response.StatusCode < 400)
+                        {
+                            Console.WriteLine("Warning: server {0} seems to have ended (redirection occurred)", hostname);
+                            break;
+                        }
+                        
                         if (!response.IsSuccessStatusCode)
                         {
                             Console.WriteLine("ERROR: Request failed with code {0}", response.StatusCode);

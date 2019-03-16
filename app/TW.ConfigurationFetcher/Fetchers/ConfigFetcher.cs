@@ -23,7 +23,7 @@ namespace TW.ConfigurationFetcher.Fetcher
                     CanDemolishBuildings = xml.Get<bool>("/config/build/destroy"),
                     AccountSittingEnabled = xml.Get<bool>("/config/sitter/allow"),
                     ArchersEnabled = xml.Get<bool>("/config/game/archer"),
-                    BonusVillagesEnabled = xml.Get<bool>("/config/coord/bonus_villages"),
+                    BonusVillagesEnabled = xml.Get<int, bool>("/config/coord/bonus_villages", i => i > 0),
                     ChurchesEnabled = xml.Get<bool>("/config/game/church"),
                     // I think this one's right? There's no obvious XML property for flags
                     FlagsEnabled = xml.Get<int, bool>("/config/game/event", i => i > 0),
