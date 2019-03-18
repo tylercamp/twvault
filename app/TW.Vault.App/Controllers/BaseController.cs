@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -20,15 +21,15 @@ namespace TW.Vault.Controllers
         public static int PageSize => Configuration.Instance.GetValue("PageSize", 100);
         protected readonly VaultContext context;
         protected readonly ILogger logger;
+        private readonly IServiceScopeFactory scopeFactory;
 
         protected ConcurrentDictionary<String, TimeSpan> ProfilingEntries { get; } = new ConcurrentDictionary<string, TimeSpan>();
 
-        public BaseController(VaultContext context, ILoggerFactory loggerFactory)
+        public BaseController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory)
         {
             this.context = context;
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
-
-            
+            this.scopeFactory = scopeFactory;
         }
 
 
@@ -50,12 +51,12 @@ namespace TW.Vault.Controllers
 
             return set.Skip(PageSize * page).Take(PageSize);
         }
-        
+
         //  Searches the given table (DbSet) with the given query (enhancer) and converts it to some time via 'selector'
         protected async Task<IActionResult> SelectOr404<T>(Func<DbSet<T>, IQueryable<T>> enhancer, Func<T, object> selector) where T : class
         {
             var query = enhancer(context.Set<T>());
-            
+
             T entity = await (
                     from entry in query
                     select entry
@@ -206,13 +207,18 @@ namespace TW.Vault.Controllers
         }
 
         protected WorldSettings CurrentWorldSettings => CurrentWorld.WorldSettings;
-        
+
         protected DateTime CurrentServerTime => DateTime.UtcNow + CurrentWorldSettings.UtcOffset;
 
         //  In case world data needs to be pre-loaded
-        protected void LoadWorldData()
+        protected void PreloadWorldData()
         {
             _currentWorld = CurrentWorld;
+        }
+
+        protected void PreloadTranslationData()
+        {
+            _currentTranslation = CurrentTranslation;
         }
 
 
@@ -280,7 +286,9 @@ namespace TW.Vault.Controllers
             }
         }
 
-        protected String Translate(String keyName, object parameters = null)
+        protected String Translate(String keyName, object parameters = null) => TranslateAsync(keyName, parameters).Result;
+
+        protected async Task<String> TranslateAsync(String keyName, object parameters = null)
         {
             Dictionary<String, String> ParametersAsDictionary()
             {
@@ -297,11 +305,11 @@ namespace TW.Vault.Controllers
                 return dict;
             }
 
-            var key = context
+            var key = await context
                         .TranslationKey
                         .Include(k => k.Parameters)
                         .Where(k => k.Name == keyName)
-                        .FirstOrDefault();
+                        .FirstOrDefaultAsync();
 
             if (key == null)
                 throw new KeyNotFoundException("No key exists named: " + keyName);
@@ -328,6 +336,22 @@ namespace TW.Vault.Controllers
                 result = result.Replace($"{{{paramName}}}", paramValue);
 
             return result;
+        }
+
+        protected async Task<T> WithTemporaryContext<T>(Func<VaultContext, Task<T>> op)
+        {
+            using (var scope = scopeFactory.CreateScope())
+            using (var tempContext = scope.ServiceProvider.GetRequiredService<VaultContext>())
+                return await op(tempContext);
+        }
+
+        protected Task<T> WithTemporarySets<T>(Func<CurrentContextDbSets, Task<T>> op)
+        {
+            return WithTemporaryContext((ctx) =>
+            {
+                var tempSets = new CurrentContextDbSets(ctx, CurrentWorldId, CurrentAccessGroupId);
+                return op(tempSets);
+            });
         }
 
 

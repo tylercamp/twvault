@@ -19,6 +19,8 @@ using TW.Vault.Features.Planning;
 using System.Net;
 using TW.Vault.Features.Simulation;
 using TW.Vault.Model.Native;
+using Microsoft.Extensions.DependencyInjection;
+using TW.Vault.Scaffold;
 
 namespace TW.Vault.Controllers
 {
@@ -28,10 +30,10 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class CommandController : BaseController
     {
-        public CommandController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public CommandController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
-        
+
         [HttpGet("{id}", Name = "Get")]
         public Task<IActionResult> Get(long id)
         {
@@ -286,7 +288,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> GetIncomingTags([FromBody]List<long> incomingsIds)
         {
             // Preload world data since we need world settings within queries below
-            LoadWorldData();
+            PreloadWorldData();
             //  Lots of data read but only updating some of it; whenever we do SaveChanges it checks
             //  for changes against all queried objects. Disable tracking by default and track explicitly if necessary
             context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;

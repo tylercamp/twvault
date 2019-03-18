@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TW.Vault.Scaffold;
 using TW.Vault.Security;
@@ -25,7 +26,7 @@ namespace TW.Vault.Controllers
     [EnableCors("AllOrigins")]
     public class ServerController : BaseController
     {
-        public ServerController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public ServerController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
 

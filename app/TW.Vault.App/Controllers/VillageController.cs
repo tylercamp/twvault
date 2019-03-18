@@ -17,6 +17,8 @@ using TW.Vault.Model;
 using TW.Vault.Model.Validation;
 using System.Net;
 using TW.Vault.Model.JSON;
+using Microsoft.Extensions.DependencyInjection;
+using TW.Vault.Scaffold;
 
 namespace TW.Vault.Controllers
 {
@@ -26,10 +28,10 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class VillageController : BaseController
     {
-        public VillageController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public VillageController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
-        
+
         [HttpGet(Name = "GetVillages")]
         public async Task<IActionResult> Get()
         {
@@ -73,7 +75,7 @@ namespace TW.Vault.Controllers
             if (!await CanReadVillage(villageId))
                 return StatusCode(401);
 
-            LoadWorldData();
+            PreloadWorldData();
 
             var uploadHistory = await Profile("Get user upload history", () =>
                 context.UserUploadHistory.Where(h => h.Uid == CurrentUserId).FirstOrDefaultAsync()

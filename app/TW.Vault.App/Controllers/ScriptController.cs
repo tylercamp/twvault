@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TW.Vault.Caching;
 using TW.Vault.Scaffold;
@@ -25,7 +26,7 @@ namespace TW.Vault.Controllers
 
         private const String ScriptsBasePath = "";
 
-        public ScriptController(IHostingEnvironment environment, VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public ScriptController(IHostingEnvironment environment, IServiceScopeFactory scopeFactory, VaultContext context, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
             asputil = new ASPUtil(environment, ScriptsBasePath);
         }

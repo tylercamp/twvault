@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TW.Vault.Features.Planning.Requirements;
 using TW.Vault.Features.Planning.Requirements.Modifiers;
@@ -23,13 +24,16 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class AlertController : BaseController
     {
-        public AlertController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public AlertController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
 
         [HttpGet("suggestions")]
         public async Task<IActionResult> GetSuggestedActions()
         {
+            PreloadWorldData();
+            PreloadTranslationData();
+
             var serverTime = CurrentServerTime;
             var twoDaysAgo = serverTime - TimeSpan.FromDays(2);
             var twoDaysAgoTimestamp = new DateTimeOffset(twoDaysAgo).ToUnixTimeSeconds();
@@ -45,7 +49,7 @@ namespace TW.Vault.Controllers
             var vaultPlayerIds = await CurrentSets.ActiveUser.Select(u => u.PlayerId).ToListAsync();
             var ownVillageMap = new Features.Spatial.Quadtree(ownVillageData.Select(v => new Coordinate { X = v.X, Y = v.Y }));
 
-            async Task<object> GetRecapSuggestions()
+            async Task<object> GetRecapSuggestions(CurrentContextDbSets CurrentSets)
             {
                 var capturedVillages = await (
                     from conquer in CurrentSets.Conquer
@@ -90,6 +94,8 @@ namespace TW.Vault.Controllers
                     v => loyaltyCalculator.PossibleLoyalty(25, serverTime - v.OccurredAt)
                 );
 
+                var tlNONE = await TranslateAsync("NONE");
+
                 return capturedVillages
                     .Where(v => possibleLoyalties[v.VillageId] < 100)
                     .Where(v => noblesToVillagesById.GetValueOrDefault(v.VillageId, 0) * CurrentWorldSettings.NoblemanLoyaltyMax < possibleLoyalties[v.VillageId])
@@ -99,8 +105,8 @@ namespace TW.Vault.Controllers
                         v.X, v.Y, v.VillageId,
                         VillageName = v.VillageName.UrlDecode(), 
                         OldOwnerId = v.OldOwner, NewOwnerId = v.NewOwner,
-                        OldOwnerName = playerNamesById.GetValueOrDefault(v.OldOwner ?? -1, Translate("NONE")).UrlDecode(),
-                        NewOwnerName = playerNamesById.GetValueOrDefault(v.NewOwner ?? -1, Translate("NONE")).UrlDecode(),
+                        OldOwnerName = playerNamesById.GetValueOrDefault(v.OldOwner ?? -1, tlNONE).UrlDecode(),
+                        NewOwnerName = playerNamesById.GetValueOrDefault(v.NewOwner ?? -1, tlNONE).UrlDecode(),
                         IsNearby = ownVillageMap.ContainsInRange(v.X, v.Y, 5),
                         Loyalty = possibleLoyalties[v.VillageId]
                     })
@@ -108,7 +114,7 @@ namespace TW.Vault.Controllers
                     .ToList();
             }
 
-            async Task<object> GetSnipeSuggestions()
+            async Task<object> GetSnipeSuggestions(CurrentContextDbSets CurrentSets)
             {
                 var incomingNobles = await (
                     from user in CurrentSets.ActiveUser
@@ -194,7 +200,7 @@ namespace TW.Vault.Controllers
                     .ToList();
             }
 
-            async Task<object> GetStackSuggestions()
+            async Task<object> GetStackSuggestions(CurrentContextDbSets CurrentSets)
             {
                 var enemyVillages = await ManyTasks.RunToList(
                     from enemy in CurrentSets.EnemyTribe
@@ -275,7 +281,7 @@ namespace TW.Vault.Controllers
                     .ToList();
             }
 
-            async Task<object> GetNobleTargetSuggestions()
+            async Task<object> GetNobleTargetSuggestions(CurrentContextDbSets CurrentSets)
             {
                 (var villasWithNobles, var enemyCurrentVillas) = await ManyTasks.RunToList(
                     from village in CurrentSets.Village.Include(v => v.Player)
@@ -360,7 +366,7 @@ namespace TW.Vault.Controllers
                     .ToList();
             }
 
-            async Task<object> GetUselessStackSuggestions()
+            async Task<object> GetUselessStackSuggestions(CurrentContextDbSets CurrentSets)
             {
                 (var enemyVillages, var ownSupport) = await ManyTasks.RunToList(
                     from enemy in CurrentSets.EnemyTribe
@@ -430,11 +436,11 @@ namespace TW.Vault.Controllers
             }
 
             (var recaps, var snipes, var stacks, var nobles, var uselessStacks) = await ManyTasks.Run(
-                    GetRecapSuggestions(),
-                    GetSnipeSuggestions(),
-                    GetStackSuggestions(),
-                    GetNobleTargetSuggestions(),
-                    GetUselessStackSuggestions()
+                    WithTemporarySets(GetRecapSuggestions),
+                    WithTemporarySets(GetSnipeSuggestions),
+                    WithTemporarySets(GetStackSuggestions),
+                    WithTemporarySets(GetNobleTargetSuggestions),
+                    WithTemporarySets(GetUselessStackSuggestions)
                 );
 
             return Ok(new
