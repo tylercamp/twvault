@@ -15,6 +15,7 @@ spec:
         imagePullPolicy: {{ .Values.image.cf.pullPolicy }}
         args:
         - {{ include "twvault.connectionString" . | quote }}
+        - "-clean"
           {{- toYaml .Values.worlds | nindent 8 }}
       initContainers:
         {{- include "twvault.waitForApp.running" . | nindent 8 }}

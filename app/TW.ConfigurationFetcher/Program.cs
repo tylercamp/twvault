@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using TW.ConfigurationFetcher.Fetcher;
 using TW.Vault.Scaffold;
+using TW.Vault;
 
 namespace TW.ConfigurationFetcher
 {
@@ -13,7 +14,7 @@ namespace TW.ConfigurationFetcher
     {
         static void Main(string[] args)
         {
-            if (args.Length < 2)
+            if (args.Length < 1)
             {
                 Console.WriteLine("Connection string must be provided as first argument");
                 Environment.ExitCode = 1;
@@ -21,7 +22,7 @@ namespace TW.ConfigurationFetcher
             }
 
             var connectionString = args[0];
-            var worlds = args.Skip(1).Select(a => a.ToLower()).ToArray();
+            var worlds = args.Skip(1).Select(a => a.ToLower()).Where(a => !a.StartsWith("-")).ToArray();
 
 #if DEBUG
             if (worlds.Length == 0)
@@ -45,6 +46,9 @@ namespace TW.ConfigurationFetcher
                 return;
             }
 
+            var deleteOldWorlds = args.Contains("-clean");
+            Console.WriteLine("deleteOldWorlds ('-clean'): " + deleteOldWorlds);
+
             var vaultContext = new VaultContext(
                 new DbContextOptionsBuilder<VaultContext>()
                     .UseNpgsql(connectionString)
@@ -66,6 +70,7 @@ namespace TW.ConfigurationFetcher
             using (vaultContext)
             using (httpClient)
             {
+                Console.WriteLine("Creating and pulling new worlds...");
                 foreach (var hostname in worlds)
                 {
                     var world = vaultContext.World
@@ -86,12 +91,15 @@ namespace TW.ConfigurationFetcher
                         vaultContext.SaveChanges();
                     }
 
+                    Console.WriteLine("Pulling for world {0}...", hostname);
+
                     var baseUrl = $"https://{hostname}";
 
                     foreach (var fetcher in fetchers)
                     {
                         var url = $"{baseUrl}{fetcher.Endpoint}";
-                        Console.Write("Fetching {0} ... ", url);
+                        Console.Write("Fetching {0} ... ", url); Console.Out.Flush();
+
                         var response = httpClient.GetAsync(url).Result;
                         if ((int)response.StatusCode >= 300 && (int)response.StatusCode < 400)
                         {
@@ -106,7 +114,7 @@ namespace TW.ConfigurationFetcher
                             continue;
                         }
 
-                        Console.Write("Processing... ");
+                        Console.Write("Processing... "); Console.Out.Flush();
 
                         var data = response.Content.ReadAsStringAsync().Result;
                         fetcher.Process(vaultContext, world, data);
@@ -114,10 +122,93 @@ namespace TW.ConfigurationFetcher
                         Console.WriteLine("Done.");
                     }
                 }
+
+                if (deleteOldWorlds)
+                {
+                    Console.WriteLine("Cleaning old world data...");
+                    var oldWorlds = vaultContext.World.Where(w => !worlds.Contains(w.Hostname)).Include(w => w.WorldSettings).ToList();
+                    Console.WriteLine("Found {0} old worlds to be cleaned:", oldWorlds.Count);
+                    foreach (var w in oldWorlds)
+                        Console.WriteLine("- " + w.Hostname);
+
+                    foreach (var w in oldWorlds)
+                    {
+                        Console.WriteLine("Deleting data for {0}...", w.Hostname);
+                        
+                        DeleteBatched(vaultContext, vaultContext.UserUploadHistory.Include(h => h.U).Where(h => h.U.WorldId == w.Id));
+                        DeleteBatched(vaultContext, vaultContext.User.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.UserLog.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.Command.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.CurrentBuilding.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.CurrentVillage.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.CurrentVillageSupport.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.CurrentArmy.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.CommandArmy.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.CurrentPlayer.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.EnemyTribe.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.IgnoredReport.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.Report.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.ReportArmy.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.ReportBuilding.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.Transaction.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.Village.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.Player.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.Ally.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.Conquer.FromWorld(w.Id));
+                        DeleteBatched(vaultContext, vaultContext.AccessGroup.Where(g => g.WorldId == w.Id));
+
+                        Console.WriteLine("Deleting world settings...");
+                        vaultContext.Remove(w.WorldSettings);
+                        vaultContext.SaveChanges();
+
+                        Console.WriteLine("Deleting world...");
+                        vaultContext.Remove(w);
+                        vaultContext.SaveChanges();
+
+                        Console.WriteLine("Deleted all data for {0}.", w.Hostname);
+                    }
+                }
             }
 
             Console.WriteLine("FINISHED.");
             Console.ReadLine();
+        }
+
+        private static void DeleteBatched<T>(VaultContext context, IQueryable<T> query)
+        {
+            var batchSize = 1000;
+            var didDelete = true;
+
+            var numDeleted = 0;
+
+            var numTotal = query.Count();
+            Console.Write("Deleting {0} entries of type {1}... ", numTotal, typeof(T).Name); Console.Out.Flush();
+
+            var lastOutputCount = 0;
+
+            do
+            {
+                var batch = query.Take(batchSize).ToList();
+                if (batch.Any())
+                {
+                    context.Remove(batch);
+                    context.SaveChangesAsync();
+                    numDeleted += batch.Count;
+
+                    // Write progress every 20% or so
+                    if ((numDeleted - lastOutputCount) / (float)numTotal > 0.2f)
+                    {
+                        lastOutputCount = numDeleted;
+                        Console.Write("{0}%... ", numDeleted * 100 / numTotal); Console.Out.Flush();
+                    }
+                }
+                else
+                {
+                    didDelete = false;
+                }
+            } while (didDelete);
+
+            Console.WriteLine("Done.");
         }
     }
 }
