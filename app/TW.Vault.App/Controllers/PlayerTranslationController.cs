@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TW.Vault.Scaffold;
 using JSON = TW.Vault.Model.JSON;
 
 namespace TW.Vault.Controllers
@@ -22,9 +24,6 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class PlayerTranslationController : BaseController
     {
-        public PlayerTranslationController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
-        {
-        }
 
         [HttpGet]
         public IActionResult GetCurrentTranslation()
@@ -217,6 +216,10 @@ namespace TW.Vault.Controllers
         }
 
         private static readonly Regex ParameterExtractor = new Regex(@"\{([^\}]+)\}");
+
+        public PlayerTranslationController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
+        {
+        }
 
         private bool ValidateRegistry(Dictionary<String, String> checkedEntries, out TranslationValidationResult validationResult)
         {

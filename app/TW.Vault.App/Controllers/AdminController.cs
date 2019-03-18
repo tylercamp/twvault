@@ -7,10 +7,12 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TW.Vault.Features.Simulation;
 using TW.Vault.Model.Convert;
 using TW.Vault.Model.Native;
+using TW.Vault.Scaffold;
 using JSON = TW.Vault.Model.JSON;
 
 namespace TW.Vault.Controllers
@@ -21,7 +23,7 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class AdminController : BaseController
     {
-        public AdminController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public AdminController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
 

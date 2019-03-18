@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -13,6 +14,7 @@ using TW.Vault.Features.Spatial;
 using TW.Vault.Model;
 using TW.Vault.Model.Convert;
 using TW.Vault.Model.Native;
+using TW.Vault.Scaffold;
 using JSON = TW.Vault.Model.JSON;
 
 namespace TW.Vault.Controllers
@@ -23,10 +25,10 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class PlayerController : BaseController
     {
-        public PlayerController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public PlayerController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
-        
+
         [HttpGet(Name = "GetPlayers")]
         public async Task<IActionResult> Get()
         {

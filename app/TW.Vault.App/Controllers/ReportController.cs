@@ -12,6 +12,8 @@ using Native = TW.Vault.Model.Native;
 using TW.Vault.Model.Convert;
 using TW.Vault.Model.Validation;
 using Newtonsoft.Json;
+using Microsoft.Extensions.DependencyInjection;
+using TW.Vault.Scaffold;
 
 namespace TW.Vault.Controllers
 {
@@ -21,7 +23,7 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class ReportController : BaseController
     {
-        public ReportController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public ReportController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
 

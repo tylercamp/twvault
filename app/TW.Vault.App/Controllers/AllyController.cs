@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using TW.Vault.Scaffold;
 using TW;
 using TW.Vault.Model.Convert;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TW.Vault.Controllers
 {
@@ -19,10 +20,10 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class AllyController : BaseController
     {
-        public AllyController(VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public AllyController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
-        
+
         [HttpGet]
         public async Task<IActionResult> Get()
         {

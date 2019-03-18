@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TW.Vault.Features.Planning.Requirements.Modifiers;
+using TW.Vault.Scaffold;
 using JSON = TW.Vault.Model.JSON;
 using Planning = TW.Vault.Features.Planning;
 
@@ -22,7 +24,7 @@ namespace TW.Vault.Controllers
     [ServiceFilter(typeof(Security.RequireAuthAttribute))]
     public class PlanController : BaseController
     {
-        public PlanController(Scaffold.VaultContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory)
+        public PlanController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
 
