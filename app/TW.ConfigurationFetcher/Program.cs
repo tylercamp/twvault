@@ -95,7 +95,7 @@ namespace TW.ConfigurationFetcher
 
                     var baseUrl = $"https://{hostname}";
 
-                    foreach (var fetcher in fetchers)
+                    foreach (var fetcher in fetchers.Where(f => f.NeedsUpdate(world)))
                     {
                         var url = $"{baseUrl}{fetcher.Endpoint}";
                         Console.Write("Fetching {0} ... ", url); Console.Out.Flush();
