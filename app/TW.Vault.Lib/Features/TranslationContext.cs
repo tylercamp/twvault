@@ -52,7 +52,7 @@ namespace TW.Vault.Features
 
             foreach (var registry in AvailableRegistries)
             {
-                foreach (var entry in registry.Entries.Where(e => !result.ContainsKey(KeyNames[e.KeyId])))
+                foreach (var entry in registry.Entries.Where(e => e.Value.Length > 0 && !result.ContainsKey(KeyNames[e.KeyId])))
                 {
                     result.Add(KeyNames[entry.KeyId], entry.Value);
                 }

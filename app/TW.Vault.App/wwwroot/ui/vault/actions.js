@@ -276,7 +276,7 @@ function makeSuggestedActionsTab() {
                             <td>${makePlayerLink(target.playerName, target.playerId)}</td>
                             <td>${target.loyalty}</td>
                             <td>${Math.roundTo(target.stationedDVs, 2)}</td>
-                            <td>${target.dVsSeenAt ? lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_DV_AGE, { age: lib.formatDuration(target.dVsSeenAt) } ) : '-'}</td >
+                            <td>${target.dVsSeenAt ? lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_DV_AGE, { duration: lib.formatDuration(target.dVsSeenAt) } ) : '-'}</td >
                         </tr>
                     `.trim());
                 });
