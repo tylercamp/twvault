@@ -12,6 +12,8 @@ namespace TW.ConfigurationFetcher.Fetcher
 
         public override string Label => "buildings";
 
+        public override bool NeedsUpdate(World world) => false;
+
         public override void Process(VaultContext context, World world, string fetchedContents)
         {
             var xml = ParseXml(fetchedContents);

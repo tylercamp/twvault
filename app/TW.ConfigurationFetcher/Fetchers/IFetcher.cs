@@ -14,6 +14,8 @@ namespace TW.ConfigurationFetcher.Fetcher
         public abstract String Label { get; }
         public abstract void Process(VaultContext context, World world, String fetchedContents);
 
+        public abstract bool NeedsUpdate(World world);
+
         protected XmlParser ParseXml(String xml)
         {
             var readerSettings = new XmlReaderSettings
