@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -55,41 +56,46 @@ namespace TW.Vault.Features
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                var sw = Stopwatch.StartNew();
                 try
                 {
-                    await WithVaultContext(async (context) =>
+                    var accessGroups = await WithVaultContext(async (ctx) => await ctx.AccessGroup.ToListAsync()).ConfigureAwait(false);
+                    IsUpdating = true;
+
+                    var updateTasks = accessGroups.Select(async (group) =>
                     {
-                        IsUpdating = true;
+                        if (stoppingToken.IsCancellationRequested)
+                            return;
 
-                        var accessGroups = await context.AccessGroup.ToListAsync();
-                        foreach (var group in accessGroups)
+                        Dictionary<String, UserStats> highScores = null;
+
+                        try
                         {
-                            if (stoppingToken.IsCancellationRequested)
-                                break;
-
-                            Dictionary<String, UserStats> highScores = null;
-
-                            try
+                            highScores = await WithVaultContext(async (context) =>
                             {
-                                highScores = await GenerateHighScores(context, group.WorldId, group.Id, stoppingToken);
-                            }
-                            catch (Exception e)
-                            {
-                                logger.LogError("Exception occurred while processing high scores for access group {0}: {1}", group.Id, e);
-                                continue;
-                            }
+                                return await GenerateHighScores(context, group.WorldId, group.Id, stoppingToken).ConfigureAwait(false);
+                            }).ConfigureAwait(false);
 
                             if (highScores != null)
                                 cachedHighScores[group.Id] = highScores;
                         }
-
-                        IsUpdating = false;
+                        catch (Exception e)
+                        {
+                            logger.LogError("Exception occurred while processing high scores for access group {0}: {1}", group.Id, e);
+                        }
                     });
+
+                    await ManyTasks.RunThrottled(updateTasks).ConfigureAwait(false);
+
+                    IsUpdating = false;
                 }
                 catch (Exception e)
                 {
                     logger.LogError("Exception occurred: {0}", e);
                 }
+
+                var elapsed = sw.Elapsed;
+                logger.LogInformation("Updating access groups took {minutes}m {seconds}s {ms}ms", (int)elapsed.TotalMinutes, elapsed.Seconds, elapsed.Milliseconds);
 
                 await Task.Delay(refreshDelay * 1000, stoppingToken);
             }
@@ -233,7 +239,7 @@ namespace TW.Vault.Features
                     join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                     select new { X = village.X.Value, Y = village.Y.Value }
                 ).ToListAsync(ct)
-            );
+            ).ConfigureAwait(false);
 
             if (ct.IsCancellationRequested)
                 return null;
