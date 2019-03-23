@@ -768,7 +768,7 @@
                                 <option value="limited">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_HIGHLIGHTS_HAS_GROUP)}</option>
                                 <option value="all">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_HIGHLIGHTS_HAS_INTEL)}</option>
                             </select>
-                            <label for="vault-overlay-highlight-method">=${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_HIGHLIGHTS)}</label>
+                            <label for="vault-overlay-highlight-method">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_HIGHLIGHTS)}</label>
                         </span>
 
                         <span style="display:inline-block">
@@ -830,9 +830,12 @@
             </div>
         `.trim());
 
-        $container.find('label:not([for^=vault-overlay-stack-]):not([for=vault-overlay-max-age])').css({
-            'margin-right': '1.5em'
-        });
+        //$container.find('label:not([for^=vault-overlay-stack-]):not([for=vault-overlay-max-age])').css({
+        //    'margin-right': '1.5em'
+        //});
+
+        $container.find('p > span').css({ 'margin-right': '1.5em' });
+        $container.find('input[type=checkbox]').css({ 'vertical-align': 'sub' })
 
         $('#content_value > h2').after($container);
 

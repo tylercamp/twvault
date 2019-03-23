@@ -135,7 +135,7 @@ function makeSuggestedActionsTab() {
                         <tr class="${rowClass}">
                             <td>${makeVillageLink(recap.villageName, recap.villageId, recap.x, recap.y)}</td>
                             <td>${recap.loyalty}</td>
-                            <td>${lib.translate(lib.itlcodes.ACTIONS_RECAPS_AGE, { age: lib.formatDuration(recap.occurredAt) })}</td>
+                            <td>${lib.translate(lib.itlcodes.ACTIONS_RECAPS_AGE, { duration: lib.formatDuration(recap.occurredAt) })}</td>
                             <td>${makePlayerLink(recap.oldOwnerName, recap.oldOwnerId)}</td>
                             <td>${makePlayerLink(recap.newOwnerName, recap.newOwnerId)}</td>
                         </tr>
