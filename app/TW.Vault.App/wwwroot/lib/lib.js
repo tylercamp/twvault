@@ -255,9 +255,9 @@ var lib = (() => {
                 return result;
             } else {
                 var dateTime = new Date();
-                dateTime.setUTCDate(result.date[0]);
-                dateTime.setUTCMonth(result.date[1] - 1);
                 dateTime.setUTCFullYear(result.date[2]);
+                dateTime.setUTCMonth(result.date[1] - 1);
+                dateTime.setUTCDate(result.date[0]);
                 dateTime.setUTCHours(result.time[0]);
                 dateTime.setUTCMinutes(result.time[1]);
                 dateTime.setUTCSeconds(result.time[2]);
