@@ -199,14 +199,9 @@ var lib = (() => {
             if (separated_) {
                 return result;
             } else {
-                var dateTime = new Date();
-                dateTime.setUTCFullYear(result.date[2]);
-                dateTime.setUTCMonth(result.date[1] - 1);
-                dateTime.setUTCDate(result.date[0]);
-                dateTime.setUTCHours(result.time[0]);
-                dateTime.setUTCMinutes(result.time[1]);
-                dateTime.setUTCSeconds(result.time[2]);
-                dateTime.setUTCMilliseconds(result.time[3] || 0);
+                var dateTime = new Date(
+                    Date.UTC(result.date[2], result.date[1] - 1, result.date[0], result.time[0], result.time[1], result.time[2], result.time[3] || 0)
+                );
                 return dateTime;
             }
         },
