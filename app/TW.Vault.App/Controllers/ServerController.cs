@@ -14,7 +14,8 @@ namespace TW.Vault.Controllers
 {
     public class AccessGroupRequest
     {
-        public int FirstPlayerId { get; set; }
+        public int? FirstPlayerId { get; set; }
+        public String FirstPlayerName { get; set; }
         public short PermissionsLevel { get; set; }
     }
 
@@ -51,7 +52,7 @@ namespace TW.Vault.Controllers
             CurrentWorldSettings.FlagsEnabled,
             CurrentWorldSettings.NightBonusEnabled
         });
-
+        
         [HttpPost("access-group/{systemToken}")]
         public IActionResult CreateAccessGroup(String systemToken, [FromBody] AccessGroupRequest groupRequest)
         {
@@ -63,6 +64,12 @@ namespace TW.Vault.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (groupRequest.FirstPlayerId == null && groupRequest.FirstPlayerName == null)
+                return BadRequest("Need to define at least either firstPlayerId or firstPlayerName");
+
+            var escapedName = groupRequest.FirstPlayerName?.UrlEncode();
+            var playerId = groupRequest.FirstPlayerId ?? context.Player.FromWorld(CurrentWorldId).Where(p => p.PlayerName == escapedName).First().PlayerId;
+
             var newGroup = new Scaffold.AccessGroup();
             newGroup.WorldId = CurrentWorldId;
             context.Add(newGroup);
@@ -72,7 +79,7 @@ namespace TW.Vault.Controllers
             newUser.TransactionTime = DateTime.UtcNow;
             newUser.AccessGroupId = newGroup.Id;
             newUser.AuthToken = Guid.NewGuid();
-            newUser.PlayerId = groupRequest.FirstPlayerId;
+            newUser.PlayerId = playerId;
             newUser.PermissionsLevel = groupRequest.PermissionsLevel;
             newUser.Enabled = true;
             newUser.IsReadOnly = false;
