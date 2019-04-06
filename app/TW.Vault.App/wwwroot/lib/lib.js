@@ -130,6 +130,7 @@ var lib = (() => {
             var monthStrings = lib
                 .translate(lib.itlcodes.ORDERED_MONTHS)
                 .splitMany(',', ' ', '\n')
+                .filter(t => t.length > 0)
                 .map(m => m.trim())
                 ;
 
