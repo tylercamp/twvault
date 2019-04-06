@@ -37,7 +37,7 @@
         userLabel: userLabel,
         sourcePlayerId: parseInt(sourcePlayerId),
         sourceVillageId: parseInt(sourceVillageId),
-        targetPlayerId: parseInt(targetPlayerId),
+        targetPlayerId: targetPlayerId ? parseInt(targetPlayerId) : null,
         targetVillageId: parseInt(targetVillageId),
         landsAt: landsAt.toISOString(),
         troops: troopCounts,
