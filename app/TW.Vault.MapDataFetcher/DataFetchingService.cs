@@ -455,8 +455,8 @@ namespace TW.Vault.MapDataFetcher
                         return;
 
                     context.ChangeTracker.DetectChanges();
-                    currentStats.NumPlayersCreated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).Count();
-                    currentStats.NumPlayersUpdated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Modified).Count();
+                    currentStats.NumTribesCreated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).Count();
+                    currentStats.NumTribesUpdated += context.ChangeTracker.Entries().Where(e => e.State == EntityState.Modified).Count();
 
                     await context.SaveChangesAsync(stoppingToken);
                 });

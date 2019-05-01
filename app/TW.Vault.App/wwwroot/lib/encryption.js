@@ -56,8 +56,7 @@
             }
 
             let seed = getCurrentSeed(currentTime);
-            //console.log('UTC time is: ', currentTime);
-            //console.log('Using seed: ', seed);
+            //console.log('UTC time is ', currentTime, ' with seed ', seed);
 
             //  Prefix all encrypted data with "vault:" as a validation measure during
             //  decryption

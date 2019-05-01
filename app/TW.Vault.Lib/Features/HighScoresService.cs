@@ -316,13 +316,13 @@ namespace TW.Vault.Features
             logger.LogDebug("Sorted support by tribe");
 
             
-            var reportsBySourcePlayer = tribePlayers.ToDictionary(p => p.PlayerId, _ => new Dictionary<DateTime, List<SlimReport>>());
+            var reportsBySourcePlayer = tribePlayers.ToDictionary(p => p.PlayerId, _ => new Dictionary<long, List<SlimReport>>());
             foreach (var report in tribeAttackingReports)
             {
                 var playerReports = reportsBySourcePlayer[report.AttackerPlayerId];
-                if (!playerReports.ContainsKey(report.OccuredAt))
-                    playerReports.Add(report.OccuredAt, new List<SlimReport>());
-                playerReports[report.OccuredAt].Add(report);
+                if (!playerReports.ContainsKey(report.OccuredAt.Ticks))
+                    playerReports.Add(report.OccuredAt.Ticks, new List<SlimReport>());
+                playerReports[report.OccuredAt.Ticks].Add(report);
             }
 
             logger.LogDebug("Sorted reports by source player");
@@ -331,7 +331,7 @@ namespace TW.Vault.Features
 
             foreach (var command in tribeAttackCommands.Where(cmd => reportsBySourcePlayer.ContainsKey(cmd.SourcePlayerId)))
             {
-                var matchingReport = reportsBySourcePlayer[command.SourcePlayerId].GetValueOrDefault(command.LandsAt)?.FirstOrDefault(c => c.DefenderVillageId == command.TargetVillageId);
+                var matchingReport = reportsBySourcePlayer[command.SourcePlayerId].GetValueOrDefault(command.LandsAt.Ticks)?.FirstOrDefault(c => c.DefenderVillageId == command.TargetVillageId);
                 if (matchingReport != null)
                     commandArmiesWithReports.Add(command.Army, matchingReport);
             }

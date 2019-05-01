@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
 using TW.Vault.Features;
@@ -121,8 +123,23 @@ namespace TW.Vault.Security
                 }
                 else
                 {
+                    var disablingEvent = dbContext.UserLog.Where(u => u.Id == discoveredUser.Uid).OrderByDescending(l => l.TransactionTime).FirstOrDefault();
+                    var disablingAdmin = disablingEvent?.AdminPlayerId == null
+                        ? null
+                        : dbContext.Player.Where(p => p.PlayerId == disablingEvent.AdminPlayerId.Value).FirstOrDefault();
+
                     failedRequest.Reason = "Requested by disabled user";
-                    context.Result = new StatusCodeResult(401);
+                    context.Result = new ContentResult
+                    {
+                        Content = JsonConvert.SerializeObject(new
+                        {
+                            Enabled = false,
+                            DisabledBy = disablingAdmin?.PlayerName ?? "Unknown",
+                            DisabledAt = disablingEvent?.TransactionTime
+                        }),
+                        ContentType = MediaTypeNames.Application.Json,
+                        StatusCode = 401
+                    };
                 }
 
                 dbContext.Add(failedRequest);

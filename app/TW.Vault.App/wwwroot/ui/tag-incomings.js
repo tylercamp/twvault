@@ -383,7 +383,7 @@
 
         $container.find('#v-tag-all').click((e) => {
             e.originalEvent.preventDefault();
-            if (settings.autoLabelFakes && !confirm(lib.translate(lib.itlcodes.FAKE_DETECTION_CONFIRM)))
+            if (settings.autoLabelFakes && !confirm(lib.translate(lib.itlcodes.FAKE_DETECTION_CONFIRM, { _escaped: false })))
                 return;
 
             beginTagging(incomings.filter(i => !settings.onlyTagUnlabeled || i.$row.find('.quickedit-label').text().trim() == UNLABELED_TAG_NAME).map((i) => i.id));
@@ -391,7 +391,7 @@
 
         $container.find('#v-tag-selected').click((e) => {
             e.originalEvent.preventDefault();
-            if (settings.autoLabelFakes && !confirm(lib.translate(lib.itlcodes.FAKE_DETECTION_CONFIRM)))
+            if (settings.autoLabelFakes && !confirm(lib.translate(lib.itlcodes.FAKE_DETECTION_CONFIRM, { _escaped: false })))
                 return;
 
             let selectedIds = getSelectedIncomingIds();

@@ -22,6 +22,7 @@ var lib = (() => {
     var wasPageHandled = false;
     var utcTimeOffset = null;
     var isUnloading = false;
+    var handledDisabledScript = false;
 
     window.addEventListener('unload', () => isUnloading = true);
 
@@ -54,6 +55,18 @@ var lib = (() => {
             });
         }
     })();
+
+    function handleDisabledScript(xhr) {
+        var info = null;
+        if (xhr.responseText && (info = JSON.parse(xhr.responseText)) && info.enabled === false) {
+            if (!handledDisabledScript) {
+                alert(`You're using a script that was disabled by '${info.disabledBy}' at ${lib.formatDateTime(info)}`);
+                handledDisabledScript = true;
+            }
+
+            throw "Using a disabled script";
+        }
+    }
 
     let lib = {
 
@@ -1132,7 +1145,10 @@ var lib = (() => {
                     .done((data) => {
                         let serverUtcTime = data.utcTime;
                         utcTimeOffset = serverUtcTime - Date.now();
+                        console.log('Got UTC offset as ' + utcTimeOffset + 'ms');
                         checkDone();
+
+                        lib.getCurrentTranslationAsync(checkDone);
                     });
 
                 $.get(lib.makeApiUrl('server/settings'))
@@ -1146,8 +1162,6 @@ var lib = (() => {
                         translationParameters = data;
                         checkDone();
                     });
-
-                lib.getCurrentTranslationAsync(checkDone);
             });
         }
     };

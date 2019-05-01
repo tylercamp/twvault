@@ -59,7 +59,7 @@ namespace TW.Vault.Features
 
                 if (result == null)
                 {
-                    //Serilog.Log.Information("Couldn't decrypt with any of these seeds: " + string.Join(',', seeds) + " at timestamp: " + new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds());
+                    Serilog.Log.Debug("Couldn't decrypt with any of these seeds: " + string.Join(',', seeds) + " at timestamp: " + new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds());
                     throw new InvalidStringEncryptionException(text);
                 }
 

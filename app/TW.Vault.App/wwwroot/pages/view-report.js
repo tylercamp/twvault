@@ -39,9 +39,11 @@ function parseReportPage($doc, href_, showNotice_, onError_) {
     console.log('Processing report ' + reportInfo.reportId);
 
     if (!$attackInfo.length) {
+        console.warn(`Report ${reportInfo.reportId} ignored - unsupported report type`)
         if (showNotice_) {
             alert("This kind of report can't be uploaded!");
         }
+        ignoreReport();
         return;
     }
     
