@@ -35,23 +35,36 @@ namespace TW.Vault.Controllers
         public IActionResult GetCurrentUtcTime() => Ok(new { UtcTime = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds() });
 
         [HttpGet("time")]
-        public IActionResult GetCurrentServerTime() => Ok(new { TwTime = CurrentServerTime });
+        public IActionResult GetCurrentServerTime()
+        {
+            if (!PreloadWorldData())
+                return NotFound();
+            else
+                return Ok(new { TwTime = CurrentServerTime });
+        }
 
         [HttpGet("settings")]
-        public IActionResult GetCurrentServerSettings() => Ok(new {
-            CurrentWorldSettings.ArchersEnabled,
-            CurrentWorldSettings.PaladinEnabled,
-            CurrentWorldSettings.MilitiaEnabled,
-            CurrentWorldSettings.WatchtowerEnabled,
-            CurrentWorldSettings.GameSpeed,
-            CurrentWorldSettings.UnitSpeed,
-            CurrentWorldSettings.UtcOffset,
-            CurrentWorldSettings.MoraleEnabled,
-            CurrentWorldSettings.ChurchesEnabled,
-            CurrentWorldSettings.BonusVillagesEnabled,
-            CurrentWorldSettings.FlagsEnabled,
-            CurrentWorldSettings.NightBonusEnabled
-        });
+        public IActionResult GetCurrentServerSettings()
+        {
+            if (!PreloadWorldData())
+                return NotFound();
+            else
+                return Ok(new
+                {
+                    CurrentWorldSettings.ArchersEnabled,
+                    CurrentWorldSettings.PaladinEnabled,
+                    CurrentWorldSettings.MilitiaEnabled,
+                    CurrentWorldSettings.WatchtowerEnabled,
+                    CurrentWorldSettings.GameSpeed,
+                    CurrentWorldSettings.UnitSpeed,
+                    CurrentWorldSettings.UtcOffset,
+                    CurrentWorldSettings.MoraleEnabled,
+                    CurrentWorldSettings.ChurchesEnabled,
+                    CurrentWorldSettings.BonusVillagesEnabled,
+                    CurrentWorldSettings.FlagsEnabled,
+                    CurrentWorldSettings.NightBonusEnabled
+                });
+        }
         
         [HttpPost("access-group/{systemToken}")]
         public IActionResult CreateAccessGroup(String systemToken, [FromBody] AccessGroupRequest groupRequest)

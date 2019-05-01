@@ -211,9 +211,10 @@ namespace TW.Vault.Controllers
         protected DateTime CurrentServerTime => DateTime.UtcNow + CurrentWorldSettings.UtcOffset;
 
         //  In case world data needs to be pre-loaded
-        protected void PreloadWorldData()
+        protected bool PreloadWorldData()
         {
             _currentWorld = CurrentWorld;
+            return _currentWorld != null;
         }
 
         protected void PreloadTranslationData()
