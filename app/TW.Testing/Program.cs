@@ -8,6 +8,7 @@ using TW.Vault.Features.Simulation;
 using TW.Vault.Model.JSON;
 using TW.Vault;
 using Microsoft.EntityFrameworkCore;
+using TW.Vault.Model.Native;
 
 namespace TW.Testing
 {
@@ -22,9 +23,35 @@ namespace TW.Testing
             //for (int i = 0; i < 10; i++)
             //    TestHighScores();
 
-            DoSomeQuery();
+            //DoSomeQuery();
+            TestTravelTime();
 
             Console.ReadLine();
+        }
+
+        static void TestTravelTime()
+        {
+            var calculator = new TravelCalculator(1.0f, 1.0f);
+            var start = new Village { X = 200, Y = 200 };
+            var end = new Village { X = 210, Y = 220 };
+
+            var troopsWithTimes = Enum.GetValues(typeof(TroopType)).Cast<TroopType>().Where(t => t != TroopType.Militia).ToDictionary(t => t, t => calculator.CalculateTravelTime(t, start, end));
+
+            var offsets = new[] { TimeSpan.FromSeconds(5), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(60) };
+
+            foreach (var o in offsets)
+            {
+                Console.WriteLine("With offset of {0} minutes", o.TotalMinutes);
+                foreach (var kvp in troopsWithTimes)
+                {
+                    var type = kvp.Key;
+                    var time = kvp.Value;
+                    var modifiedTime = time - o;
+
+                    var estimate = calculator.EstimateTroopType(modifiedTime, start, end);
+                    Console.WriteLine("- For {0} (speed={1}) estimated as {2} (speed={3})", type, ArmyStats.TravelSpeed[type], estimate, ArmyStats.TravelSpeed[estimate]);
+                }
+            }
         }
 
         static void TestHighScores()
