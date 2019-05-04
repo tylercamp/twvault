@@ -1,0 +1,102 @@
+# Default values for twvault.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+postgresOnly: false
+
+image:
+  app:
+    fullname: twv-app:1.0
+    pullPolicy: IfNotPresent
+  mdf:
+    fullname: twv-mdf:1.0
+    pullPolicy: IfNotPresent
+  cf:
+    fullname: twv-cf:1.0
+    pullPolicy: IfNotPresent
+  migrate:
+    fullname: twv-migrate:1.0
+    pullPolicy: IfNotPresent
+  postgres:
+    fullname: postgres:10
+    pullPolicy: IfNotPresent
+
+service:
+  postgres: NodePort
+
+script:
+  vault: vault.js
+  main: main.js
+
+worlds:
+- en100.tribalwars.net
+- en101.tribalwars.net
+- en102.tribalwars.net
+- en103.tribalwars.net
+- en104.tribalwars.net
+- en105.tribalwars.net
+
+env:
+  app:
+    urls: "http://*:5000"
+    ConnectionStrings__Vault__Database: "vault"
+    ConnectionStrings__Vault__User: "twu_vault"
+    ConnectionStrings__Vault__Password: "!!TWV@ult4Us??"
+    Security__AllowUploadArmyForNonOwner: "true"
+    Security__ReportIgnoreExpectedPopulationBounds: "true"
+    Security__AllowCommandArrivalBeforeServerTime: "true"
+    Security__MinimumRequiredPriveleges: "1"
+    Security__RestrictSitterAccess: "true"
+    Security__RestrictAccessWithinTribe: "false"
+    Security__EnableScriptFilter: "true"
+    Security__PublicScripts__0: "main.js"
+    Security__PublicScripts__1: "vault.js"
+    Initialization__EnableRequiredFiles: "true"
+    Initialization__RequiredFiles__0: "/opt/twvault/script/vault.js"
+    Initialization__RequiredFiles__1: "/opt/twvault/script/main.js"
+    Behavior__Map__MaxDaysSinceReportUpload: "1"
+    Behavior__Map__MaxDaysSinceTroopUpload: "3"
+    Behavior__Map__MaxDaysSinceCommandUpload: "3"
+    Behavior__Map__MaxDaysSinceIncomingUpload: "1"
+    Behavior__Tagging__MaxDaysSinceReportUpload: "3"
+    Behavior__Tagging__MaxDaysSinceTroopUpload: "3"
+    Behavior__Tagging__MaxDaysSinceCommandUpload: "3"
+    Behavior__Tagging__MaxDaysSinceIncomingUpload: "1"
+    Rankings__EnableRankingsService: "true"
+    Rankings__RefreshCheckIntervalSeconds: "300"
+    Translation__BaseTranslationId: "1"
+  mdf:
+    ConnectionStrings__Vault__Database: "vault"
+    ConnectionStrings__Vault__User: "twu_vault"
+    ConnectionStrings__Vault__Password: "!!TWV@ult4Us??"
+    CachingFilePath: "/opt/mdf/cache"
+    DataBatchSize: "500"
+    CheckDelaySeconds: "10"
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  paths: []
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+

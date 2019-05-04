@@ -1,0 +1,24 @@
+{{- if not .Values.postgresOnly -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "twvault.fullname" . }}-cf
+  labels:
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-cf
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: configuration-fetcher
+        image: {{ .Values.image.cf.fullname }}
+        imagePullPolicy: {{ .Values.image.cf.pullPolicy }}
+        args:
+        - {{ include "twvault.connectionString" . | quote }}
+        - "-clean"
+          {{- toYaml .Values.worlds | nindent 8 }}
+      initContainers:
+        {{- include "twvault.waitForApp.running" . | nindent 8 }}
+      restartPolicy: OnFailure
+  backoffLimit: 4
+{{- end -}}

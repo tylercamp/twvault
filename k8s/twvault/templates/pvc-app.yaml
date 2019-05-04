@@ -1,0 +1,16 @@
+{{- if not .Values.postgresOnly -}}
+# PVC for log files
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "twvault.fullname" . }}-app
+  labels:
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-app
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+{{- end -}}

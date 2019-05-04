@@ -1,0 +1,11 @@
+{{- if not .Values.postgresOnly -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "twvault.fullname" . }}-app
+  labels:
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-app
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+{{- toYaml .Values.env.app | nindent 2 }}
+{{- end -}}

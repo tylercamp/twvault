@@ -1,0 +1,16 @@
+{{- if not .Values.postgresOnly -}}
+# PVC for log files and map data cache
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "twvault.fullname" . }}-mdf
+  labels:
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-mdf
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+{{- end -}}

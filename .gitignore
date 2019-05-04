@@ -1,5 +1,7 @@
 ## Custom
 Logs/
+.DS_Store
+out/
 
 
 ## Ignore Visual Studio temporary files, build results, and

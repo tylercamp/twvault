@@ -1,0 +1,19 @@
+{{- if not .Values.postgresOnly -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "twvault.fullname" . }}-app
+  labels:
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-app
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "twvault.name" . }}-app
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
