@@ -276,12 +276,13 @@ var lib = (() => {
         },
 
         formatDateTime: function (dateTime) {
-            let minLength = (str) => '0'.repeat(2 - str.toString().length) + str.toString();
+            let minLength = (str, len_) => '0'.repeat((len_ || 2) - str.toString().length) + str.toString();
 
             return lib.translate(lib.itlcodes.TIME_DATE_FORMAT, {
                 hour: minLength(dateTime.getUTCHours()),
                 minute: minLength(dateTime.getUTCMinutes()),
                 second: minLength(dateTime.getUTCSeconds()),
+                millisecond: minLength(dateTime.getUTCMilliseconds(), 3),
 
                 day: minLength(dateTime.getUTCDate()),
                 month: minLength(dateTime.getUTCMonth() + 1),
