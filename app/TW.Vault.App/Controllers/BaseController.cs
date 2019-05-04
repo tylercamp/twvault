@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NodaTime;
+using NodaTime.Extensions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -208,7 +210,17 @@ namespace TW.Vault.Controllers
 
         protected WorldSettings CurrentWorldSettings => CurrentWorld.WorldSettings;
 
-        protected DateTime CurrentServerTime => DateTime.UtcNow + CurrentWorldSettings.UtcOffset;
+        protected DateTime CurrentServerTime => CurrentWorldSettings.ServerTime;
+
+        protected TimeSpan TimeUntil(DateTime serverTime)
+        {
+            // Strip time specification
+            var timeZone = DateTimeZoneProviders.Tzdb[CurrentWorldSettings.TimeZoneId];
+            var currentServerTime = SystemClock.Instance.InZone(timeZone).GetCurrentZonedDateTime();
+            var instant = Instant.FromDateTimeUtc(serverTime);
+            var zonedTime = new ZonedDateTime(instant, timeZone);
+            return (zonedTime - currentServerTime).ToTimeSpan();
+        }
 
         //  In case world data needs to be pre-loaded
         protected bool PreloadWorldData()

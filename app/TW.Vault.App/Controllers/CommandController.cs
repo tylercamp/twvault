@@ -403,7 +403,7 @@ namespace TW.Vault.Controllers
                 relevantVillages[command.TargetVillageId].X, relevantVillages[command.TargetVillageId].Y
             );
 
-            var earliestLaunchTime = incomingData.Select(inc => CommandLaunchedAt(inc.Command)).DefaultIfEmpty(DateTime.UtcNow).Min() - CurrentWorldSettings.UtcOffset;
+            var earliestLaunchTime = incomingData.Select(inc => CommandLaunchedAt(inc.Command)).DefaultIfEmpty(DateTime.UtcNow).Min();
 
             var commandsReturningByVillageId = await Profile("Process returning commands for all source villages", async () =>
             {

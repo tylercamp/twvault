@@ -137,9 +137,9 @@ namespace TW.Vault.Features
                 EnemyTribe = context.EnemyTribe.FromWorld(worldId).FromAccessGroup(accessGroupId)
             };
 
-            var serverTimeOffset = await context.WorldSettings.Where(s => s.WorldId == worldId).Select(s => s.UtcOffset).FirstOrDefaultAsync();
+            var serverSettings = await context.WorldSettings.Where(s => s.WorldId == worldId).FirstOrDefaultAsync();
 
-            var lastWeek = DateTime.UtcNow + serverTimeOffset - TimeSpan.FromDays(7);
+            var lastWeek = serverSettings.ServerTime - TimeSpan.FromDays(7);
 
             logger.LogDebug("Running data queries...");
 

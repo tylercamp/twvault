@@ -66,7 +66,7 @@ namespace TW.Vault.Controllers
                     from command in CurrentSets.Command
                                                .Include(c => c.Army)
                                                .Include(c => c.SourceVillage)
-                    where command.Army != null
+                    where command.ArmyId != null
                     where command.ReturnsAt > serverTime
                     where !invalidVillageIds.Contains(command.SourceVillageId)
                     select command
@@ -80,7 +80,7 @@ namespace TW.Vault.Controllers
             bool MeetsMinimumPopulation(Scaffold.Command command)
             {
                 var army = (JSON.Army)command.Army;
-                return army != null && 6000 < Model.Native.ArmyStats.CalculateTotalPopulation(army, offensiveTypes);
+                return army != null && 2000 < Model.Native.ArmyStats.CalculateTotalPopulation(army, offensiveTypes);
             }
 
             var targetPlayerIdsTmp = new ConcurrentDictionary<long, byte>();

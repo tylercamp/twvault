@@ -45,9 +45,7 @@ namespace TW.ConfigurationFetcher.Fetcher
                     PaladinSkillsEnabled = xml.Get<int, bool>("/config/game/knight", i => i > 1),
                     PaladinItemsEnabled = xml.Get<int, bool>("/config/game/knight_new_items", i => i > 0),
                     UnitSpeed = xml.Get<decimal>("/config/unit_speed"),
-                    WatchtowerEnabled = xml.Get<int, bool>("/config/game/watchtower", i => i > 0),
-                    // TODO - Need to find a good way to auto-retrieve UTC offset
-                    UtcOffset = TimeSpan.Zero
+                    WatchtowerEnabled = xml.Get<int, bool>("/config/game/watchtower", i => i > 0)
                 };
 
                 context.Add(world.WorldSettings);

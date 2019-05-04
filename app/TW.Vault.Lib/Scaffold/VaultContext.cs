@@ -1387,9 +1387,9 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.PaladinSkillsEnabled).HasColumnName("paladin_skills_enabled");
 
-                entity.Property(e => e.UnitSpeed).HasColumnName("unit_speed");
+                entity.Property(e => e.TimeZoneId).HasColumnName("timezone");
 
-                entity.Property(e => e.UtcOffset).HasColumnName("utc_offset");
+                entity.Property(e => e.UnitSpeed).HasColumnName("unit_speed");
 
                 entity.Property(e => e.WatchtowerEnabled).HasColumnName("watchtower_enabled");
 

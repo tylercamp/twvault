@@ -57,7 +57,7 @@ namespace TW.Vault.Controllers
                     CurrentWorldSettings.WatchtowerEnabled,
                     CurrentWorldSettings.GameSpeed,
                     CurrentWorldSettings.UnitSpeed,
-                    CurrentWorldSettings.UtcOffset,
+                    UtcOffset = DateTime.UtcNow - CurrentWorldSettings.ServerTime,
                     CurrentWorldSettings.MoraleEnabled,
                     CurrentWorldSettings.ChurchesEnabled,
                     CurrentWorldSettings.BonusVillagesEnabled,

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NodaTime;
+using NodaTime.Extensions;
+using System;
 using System.Collections.Generic;
 
 namespace TW.Vault.Scaffold
@@ -26,7 +28,18 @@ namespace TW.Vault.Scaffold
         public bool PaladinItemsEnabled { get; set; }
         public decimal UnitSpeed { get; set; }
         public bool WatchtowerEnabled { get; set; }
-        public TimeSpan UtcOffset { get; set; }
+        public String TimeZoneId { get; set; }
+
+        public DateTime ServerTime
+        {
+            get
+            {
+                var timeZone = DateTimeZoneProviders.Tzdb[TimeZoneId];
+                var zonedClock = SystemClock.Instance.InZone(timeZone);
+                var zonedDateTime = zonedClock.GetCurrentZonedDateTime();
+                return zonedDateTime.ToDateTimeUnspecified();
+            }
+        }
 
         public World World { get; set; }
     }
