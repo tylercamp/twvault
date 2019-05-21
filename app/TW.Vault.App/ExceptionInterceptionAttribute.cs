@@ -24,7 +24,8 @@ namespace TW.Vault
 
         public override void OnException(ExceptionContext context)
         {
-            logger.Error("Exception thrown at endpoint: {endpoint}", context.HttpContext.Request.Path.Value);
+            if (!(context.Exception is TaskCanceledException))
+                logger.Error("Exception thrown at endpoint: {endpoint}", context.HttpContext.Request.Path.Value);
             base.OnException(context);
         }
     }
