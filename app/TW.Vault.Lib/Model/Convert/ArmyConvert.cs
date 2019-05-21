@@ -14,35 +14,37 @@ namespace TW.Vault.Model.Convert
             return (short)value;
         }
 
-        public static Scaffold.CommandArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.CommandArmy existingArmy = null, Scaffold.VaultContext context = null) =>
-            JsonToArmy<Scaffold.CommandArmy>(armyCounts, worldId, existingArmy, context);
+        public static Scaffold.CommandArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.CommandArmy existingArmy = null, Scaffold.VaultContext context = null, bool emptyIfNull = false) =>
+            JsonToArmy<Scaffold.CommandArmy>(armyCounts, worldId, existingArmy, context, emptyIfNull);
 
-        public static Scaffold.ReportArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.ReportArmy existingArmy = null, Scaffold.VaultContext context = null) =>
-            JsonToArmy<Scaffold.ReportArmy>(armyCounts, worldId, existingArmy, context);
+        public static Scaffold.ReportArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.ReportArmy existingArmy = null, Scaffold.VaultContext context = null, bool emptyIfNull = false) =>
+            JsonToArmy<Scaffold.ReportArmy>(armyCounts, worldId, existingArmy, context, emptyIfNull);
 
-        public static Scaffold.CurrentArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.CurrentArmy existingArmy = null, Scaffold.VaultContext context = null) =>
-            JsonToArmy<Scaffold.CurrentArmy>(armyCounts, worldId, existingArmy, context);
+        public static Scaffold.CurrentArmy JsonToArmy(JSON.Army armyCounts, short worldId, Scaffold.CurrentArmy existingArmy = null, Scaffold.VaultContext context = null, bool emptyIfNull = false) =>
+            JsonToArmy<Scaffold.CurrentArmy>(armyCounts, worldId, existingArmy, context, emptyIfNull);
 
-        private static T JsonToArmy<T>(JSON.Army armyCounts, short worldId, T existingArmy = null, Scaffold.VaultContext context = null, Action<T> keyPopulator = null) where T : class, new()
+        private static T JsonToArmy<T>(JSON.Army armyCounts, short worldId, T existingArmy = null, Scaffold.VaultContext context = null, bool emptyIfNull = false) where T : class, new()
         {
-            if (armyCounts == null || armyCounts.Count == 0)
+            if (armyCounts == null)
             {
-                if (existingArmy != null && context != null)
-                    context.Remove(existingArmy);
+                if (emptyIfNull)
+                {
+                    armyCounts = JSON.Army.Empty;
+                }
+                else
+                {
+                    if (existingArmy != null && context != null)
+                        context.Remove(existingArmy);
 
-                return null;
+                    return null;
+                }
             }
 
             T result;
             if (existingArmy != null)
-            {
                 result = existingArmy;
-            }
             else
-            {
                 result = new T();
-                keyPopulator?.Invoke(result);
-            }
 
             var scaffoldArmyType = typeof(T);
             foreach (var troopType in Enum.GetValues(typeof(JSON.TroopType)).Cast<JSON.TroopType>())

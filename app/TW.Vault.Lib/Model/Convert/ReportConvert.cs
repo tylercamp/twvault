@@ -24,7 +24,7 @@ namespace TW.Vault.Model.Convert
             target.AttackerVillageId     = report.AttackingVillageId.Value;
 
             target.AttackerArmy          = ArmyConvert.JsonToArmy(report.AttackingArmy, worldId, target.AttackerArmy, context);
-            target.AttackerLossesArmy    = ArmyConvert.JsonToArmy(report.AttackingArmyLosses, worldId, target.AttackerLossesArmy, context);
+            target.AttackerLossesArmy    = ArmyConvert.JsonToArmy(report.AttackingArmyLosses, worldId, target.AttackerLossesArmy, context, emptyIfNull: true);
 
             target.DefenderPlayerId      = report.DefendingPlayerId;
             target.DefenderVillageId     = report.DefendingVillageId.Value;

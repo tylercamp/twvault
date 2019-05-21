@@ -5,6 +5,16 @@ using System.Threading.Tasks;
 
 namespace TW.Vault.Model.JSON
 {
+    public static class ArmyExtensions
+    {
+        // Extension method so we can also handle nulls
+        public static Army DefaultToEmpty(this Army army)
+        {
+            if (army == null || army.Count == 0) return Army.Empty;
+            else return army;
+        }
+    }
+
     public class Army : Dictionary<TroopType, int>
     {
         public Army()
@@ -14,8 +24,11 @@ namespace TW.Vault.Model.JSON
 
         public Army(Dictionary<TroopType, int> other)
         {
-            foreach (var kvp in other)
-                this.Add(kvp.Key, kvp.Value);
+            if (other != null)
+            {
+                foreach (var kvp in other)
+                    this.Add(kvp.Key, kvp.Value);
+            }
         }
 
         public bool IsEmpty()
@@ -107,6 +120,9 @@ namespace TW.Vault.Model.JSON
 
         public static Army operator *(Army a, double f)
         {
+            if (a == null)
+                return null;
+
             Army result = new Army();
             foreach (var kvp in a)
                 result.Add(kvp.Key, (int)Math.Round(kvp.Value * f));
@@ -115,11 +131,20 @@ namespace TW.Vault.Model.JSON
 
         public static Army operator *(Army a, float f)
         {
-            return a * (double)f;
+            if (a == null)
+                return null;
+            else
+                return a * (double)f;
         }
 
         public static Army operator -(Army a, Army b)
         {
+            if (a == null)
+                return null;
+
+            if (b == null)
+                return a;
+
             Army result = new Army();
             foreach (var kvp in a)
             {
@@ -140,9 +165,12 @@ namespace TW.Vault.Model.JSON
                 return true;
 
             if (aIsNull != bIsNull)
-                return false;
+            {
+                if (aIsNull) return b.Count == 0 || b.Sum(kvp => kvp.Value) == 0;
+                else return a.Count == 0 || a.Sum(kvp => kvp.Value) == 0;
+            }
 
-            if (a.Keys.All(k => b.ContainsKey(k)) || !b.Keys.All(k => a.ContainsKey(k)))
+            if (!a.Keys.All(k => b.ContainsKey(k)) || !b.Keys.All(k => a.ContainsKey(k)))
                 return false;
 
             foreach (var key in a.Keys)
