@@ -158,8 +158,6 @@ namespace TW.Vault.Features
                     join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                     join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                     join currentVillage in CurrentSets.CurrentVillage
-                                                      .Include(cv => cv.ArmyAtHome)
-                                                      .Include(cv => cv.ArmyTraveling)
                         on village.VillageId equals currentVillage.VillageId
                     where currentVillage.ArmyAtHomeId != null && currentVillage.ArmyTravelingId != null
                     select new { X = village.X.Value, Y = village.Y.Value, player.PlayerId, village.VillageId, currentVillage.ArmyAtHome, currentVillage.ArmyTraveling }
@@ -172,7 +170,7 @@ namespace TW.Vault.Features
                     from user in CurrentSets.ActiveUser
                     join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
                     join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
-                    join support in CurrentSets.CurrentVillageSupport.Include(s => s.SupportingArmy)
+                    join support in CurrentSets.CurrentVillageSupport
                         on village.VillageId equals support.SourceVillageId
                     select new { player.PlayerId, support.TargetVillageId, support.SupportingArmy }
                 ).ToListAsync(ct)
@@ -183,7 +181,7 @@ namespace TW.Vault.Features
                 (
                     from user in CurrentSets.ActiveUser
                     join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join command in CurrentSets.Command.Include(c => c.Army) on player.PlayerId equals command.SourcePlayerId
+                    join command in CurrentSets.Command on player.PlayerId equals command.SourcePlayerId
                     where command.ArmyId != null
                     where command.LandsAt > lastWeek
                     where command.IsAttack
@@ -197,7 +195,7 @@ namespace TW.Vault.Features
                 (
                     from user in CurrentSets.ActiveUser
                     join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join command in CurrentSets.Command.Include(c => c.Army) on player.PlayerId equals command.SourcePlayerId
+                    join command in CurrentSets.Command on player.PlayerId equals command.SourcePlayerId
                     where command.ArmyId != null
                     where command.LandsAt > lastWeek
                     where !command.IsAttack
@@ -211,7 +209,7 @@ namespace TW.Vault.Features
                 (
                     from user in CurrentSets.ActiveUser
                     join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join report in CurrentSets.Report.Include(r => r.AttackerArmy) on player.PlayerId equals report.AttackerPlayerId
+                    join report in CurrentSets.Report on player.PlayerId equals report.AttackerPlayerId
                     where report.OccuredAt > lastWeek
                     where report.AttackerArmy != null
                     where report.DefenderPlayerId != null
@@ -224,7 +222,7 @@ namespace TW.Vault.Features
                 (
                     from user in CurrentSets.ActiveUser
                     join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join report in CurrentSets.Report.Include(r => r.AttackerArmy) on player.PlayerId equals report.DefenderPlayerId
+                    join report in CurrentSets.Report on player.PlayerId equals report.DefenderPlayerId
                     where report.OccuredAt > lastWeek
                     where report.AttackerArmy != null
                     select new SlimReport { AttackerArmy = report.AttackerArmy, DefenderVillageId = report.DefenderVillageId, ReportId = report.ReportId, OccuredAt = report.OccuredAt }

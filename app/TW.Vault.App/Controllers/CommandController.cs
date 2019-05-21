@@ -296,13 +296,9 @@ namespace TW.Vault.Controllers
             var incomingData = await Profile("Get existing commands", () => (
                     from command in CurrentSets.Command
                                                .Include(c => c.SourceVillage)
-                    join currentVillage in CurrentSets.CurrentVillage
-                                                      .Include(c => c.ArmyOwned)
-                                                      .Include(c => c.ArmyStationed)
-                                                      .Include(c => c.ArmyTraveling)
-                        on command.SourceVillageId equals currentVillage.VillageId into currentVillage
+                    let currentVillage = command.SourceVillage.CurrentVillage.FirstOrDefault(cv => cv.AccessGroupId == CurrentAccessGroupId)
                     where incomingsIds.Contains(command.CommandId)
-                    select new { Command = command, CurrentVillage = currentVillage.FirstOrDefault() }
+                    select new { Command = command, CurrentVillage = currentVillage }
                 ).ToListAsync()
             );
 

@@ -40,7 +40,7 @@ namespace TW.Vault.Controllers
 
             var ownVillageData = await ManyTasks.RunToList(
                 from village in CurrentSets.Village
-                join currentVillage in CurrentSets.CurrentVillage.Include(cv => cv.ArmyStationed).Include(cv => cv.ArmyAtHome)
+                join currentVillage in CurrentSets.CurrentVillage
                     on village.VillageId equals currentVillage.VillageId
                 where village.PlayerId == CurrentPlayerId
                 select new { X = village.X.Value, Y = village.Y.Value, village.VillageId, VillageName = village.VillageName.UrlDecode(), currentVillage.ArmyAtHome, currentVillage.ArmyStationed }
@@ -58,7 +58,7 @@ namespace TW.Vault.Controllers
                     where conquer.UnixTimestamp > twoDaysAgoTimestamp
                     where conquer.NewOwner == null || !vaultPlayerIds.Contains(conquer.NewOwner.Value)
                     where conquer.NewOwner == village.PlayerId
-                    select new { X = village.X.Value, Y = village.Y.Value, VillageId = conquer.VillageId.Value, village.VillageName, conquer.OldOwner, conquer.NewOwner, OccurredAt = DateTimeOffset.FromUnixTimeSeconds(conquer.UnixTimestamp.Value).UtcDateTime }
+                    select new { X = village.X.Value, Y = village.Y.Value, VillageId = conquer.VillageId, village.VillageName, conquer.OldOwner, conquer.NewOwner, OccurredAt = DateTimeOffset.FromUnixTimeSeconds(conquer.UnixTimestamp).UtcDateTime }
                 ).ToListAsync();
 
                 capturedVillages = capturedVillages
@@ -88,7 +88,7 @@ namespace TW.Vault.Controllers
                     CurrentSets.Player.Where(p => relevantPlayerIds.Contains(p.PlayerId))
                     .ToDictionaryAsync(p => p.PlayerId, p => p.PlayerName);
 
-                var loyaltyCalculator = new Features.Simulation.LoyaltyCalculator(CurrentWorldSettings.LoyaltyPerHour);
+                var loyaltyCalculator = new Features.Simulation.LoyaltyCalculator(CurrentWorldSettings.GameSpeed);
                 var possibleLoyalties = capturedVillages.ToDictionary(
                     v => v.VillageId,
                     v => loyaltyCalculator.PossibleLoyalty(25, serverTime - v.OccurredAt)
@@ -222,7 +222,7 @@ namespace TW.Vault.Controllers
 
                     ,
 
-                    from support in CurrentSets.Command.Include(c => c.Army)
+                    from support in CurrentSets.Command
                     where frontlineVillageIds.Contains(support.TargetVillageId)
                     where support.LandsAt > serverTime
                     where support.ArmyId != null
@@ -232,9 +232,6 @@ namespace TW.Vault.Controllers
                 var attackingVillageIds = attacksOnFrontline.Select(c => c.SourceVillageId).Distinct().ToList();
                 var attackingVillages = await CurrentSets
                     .CurrentVillage
-                        .Include(cv => cv.ArmyOwned)
-                        .Include(cv => cv.ArmyStationed)
-                        .Include(cv => cv.ArmyTraveling)
                     .Where(v => attackingVillageIds.Contains(v.VillageId))
                     .Select(v => new { v.VillageId, v.ArmyOwned, v.ArmyStationed, v.ArmyTraveling })
                     .ToDictionaryAsync(
@@ -284,32 +281,23 @@ namespace TW.Vault.Controllers
             async Task<object> GetNobleTargetSuggestions(CurrentContextDbSets CurrentSets)
             {
                 (var villasWithNobles, var enemyCurrentVillas) = await ManyTasks.RunToList(
-                    from village in CurrentSets.Village.Include(v => v.Player)
-                    join currentVillage in CurrentSets.CurrentVillage.Include(cv => cv.ArmyOwned) on village.VillageId equals currentVillage.VillageId
+                    from village in CurrentSets.Village
+                    join currentVillage in CurrentSets.CurrentVillage on village.VillageId equals currentVillage.VillageId
                     where currentVillage.ArmyOwned.Snob > 0
                     where village.PlayerId == CurrentPlayerId
                     select new Coordinate { X = village.X.Value, Y = village.Y.Value }
 
                     ,
 
-                    from currentVillage in CurrentSets.CurrentVillage.Include(cv => cv.ArmyStationed)
+                    from currentVillage in CurrentSets.CurrentVillage
                     join village in CurrentSets.Village on currentVillage.VillageId equals village.VillageId
                     where !CurrentSets.ActiveUser.Any(au => au.PlayerId == village.PlayerId)
                     select new { X = village.X.Value, Y = village.Y.Value, village.VillageId, currentVillage.Loyalty, currentVillage.LoyaltyLastUpdated, currentVillage.ArmyStationed, village.PlayerId, VillageName = village.VillageName.UrlDecode(), PlayerName = village.Player.PlayerName.UrlDecode() }
                 );
 
-                var enemyVillaIds = enemyCurrentVillas.Select(v => v.VillageId).ToList();
-                var enemyVillaConquers = await CurrentSets.Conquer
-                    .Where(c => enemyVillaIds.Contains(c.VillageId.Value))
-                    .GroupBy(c => c.VillageId.Value)
-                    .ToDictionaryAsync(
-                        g => g.Key,
-                        g => DateTimeOffset.FromUnixTimeSeconds(g.OrderByDescending(c => c.UnixTimestamp).First().UnixTimestamp.Value).UtcDateTime
-                    );
-
                 var villageMap = new Features.Spatial.Quadtree(villasWithNobles);
 
-                var loyaltyCalculator = new Features.Simulation.LoyaltyCalculator(CurrentWorldSettings.LoyaltyPerHour);
+                var loyaltyCalculator = new Features.Simulation.LoyaltyCalculator(CurrentWorldSettings.GameSpeed);
                 var possibleTargets = enemyCurrentVillas
                     .Where(v => villageMap.ContainsInRange(v.X, v.Y, 7.5f)) // Only consider enemy villas within 7.5 fields of any villa with nobles
                     .Select(v =>
@@ -408,9 +396,11 @@ namespace TW.Vault.Controllers
                 var villageOwnersById = await (
                     from village in CurrentSets.Village
                     join player in CurrentSets.Player on village.PlayerId equals player.PlayerId
-                    join tribe in CurrentSets.Ally on player.TribeId equals tribe.TribeId into tribe
+                    let tribe = (from tribe in CurrentSets.Ally
+                                 where tribe.TribeId == player.TribeId
+                                 select new { tribe.Tag, tribe.TribeId }).FirstOrDefault()
                     where villageIds.Contains(village.VillageId)
-                    select new { village.VillageId, Player = player, Tribe = tribe.FirstOrDefault() }
+                    select new { village.VillageId, Player = player, Tribe = tribe }
                 ).ToDictionaryAsync(
                     v => v.VillageId,
                     v => new { v.Player.PlayerName, v.Player.PlayerId, TribeName = v.Tribe?.Tag, v.Tribe?.TribeId }

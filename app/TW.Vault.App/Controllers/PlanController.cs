@@ -125,7 +125,7 @@ namespace TW.Vault.Controllers
                 ).ToListAsync();
 
             var troopsAtBacktimedVillages = await (
-                    from village in CurrentSets.CurrentVillage.Include(v => v.ArmyStationed)
+                    from village in CurrentSets.CurrentVillage
                     where backtimedVillageIds.Contains(village.VillageId)
                     select new { village.VillageId, village.ArmyStationed }
                 ).ToDictionaryAsync(v => v.VillageId, v => v.ArmyStationed);

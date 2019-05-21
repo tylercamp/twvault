@@ -165,7 +165,7 @@ namespace TW.Vault.Controllers
 
                 if (currentVillage.Loyalty != null)
                 {
-                    var loyaltyCalculator = new LoyaltyCalculator(CurrentWorldSettings.LoyaltyPerHour);
+                    var loyaltyCalculator = new LoyaltyCalculator(CurrentWorldSettings.GameSpeed);
                     jsonData.PossibleLoyalty = loyaltyCalculator.PossibleLoyalty(currentVillage.Loyalty.Value, CurrentServerTime - currentVillage.LoyaltyLastUpdated.Value);
                 }
 
@@ -230,22 +230,18 @@ namespace TW.Vault.Controllers
                     availableArmyPopulation = Math.Max(0, armyCalculator.MaxPopulation - existingPop);
                 }
 
-                if (latestConquerTimestamp != null)
+                var conquerTime = DateTimeOffset.FromUnixTimeMilliseconds(latestConquerTimestamp).UtcDateTime;
+
+                bool useConquer = false;
+                if (localArmyLastSeenAt == null)
+                    useConquer = true;
+                else
+                    useConquer = conquerTime > localArmyLastSeenAt.Value;
+
+                if (useConquer)
                 {
-                    var timeOffset = DateTimeOffset.FromUnixTimeMilliseconds(latestConquerTimestamp.Value);
-                    var conquerTime = timeOffset.UtcDateTime;
-
-                    bool useConquer = false;
-                    if (localArmyLastSeenAt == null)
-                        useConquer = true;
-                    else
-                        useConquer = conquerTime > localArmyLastSeenAt.Value;
-
-                    if (useConquer)
-                    {
-                        localArmyLastSeenAt = conquerTime;
-                        availableArmyPopulation = armyCalculator.MaxPopulation;
-                    }
+                    localArmyLastSeenAt = conquerTime;
+                    availableArmyPopulation = armyCalculator.MaxPopulation;
                 }
 
                 //  Add recruitment estimations
@@ -384,11 +380,11 @@ namespace TW.Vault.Controllers
                     }
 
                     var fullArmy = armySetJson.AtHome + armySetJson.Traveling + armySetJson.Supporting;
-                    currentVillage.ArmyOwned = ArmyConvert.JsonToArmy(fullArmy, CurrentWorldId, currentVillage.ArmyOwned, context);
-                    currentVillage.ArmyStationed = ArmyConvert.JsonToArmy(armySetJson.Stationed, CurrentWorldId, currentVillage.ArmyStationed, context);
-                    currentVillage.ArmyTraveling = ArmyConvert.JsonToArmy(armySetJson.Traveling, CurrentWorldId, currentVillage.ArmyTraveling, context);
-                    currentVillage.ArmyAtHome = ArmyConvert.JsonToArmy(armySetJson.AtHome, CurrentWorldId, currentVillage.ArmyAtHome, context);
-                    currentVillage.ArmySupporting = ArmyConvert.JsonToArmy(armySetJson.Supporting, CurrentWorldId, currentVillage.ArmySupporting, context);
+                    currentVillage.ArmyOwned = ArmyConvert.JsonToArmy(fullArmy, CurrentWorldId, currentVillage.ArmyOwned, context, emptyIfNull: true);
+                    currentVillage.ArmyStationed = ArmyConvert.JsonToArmy(armySetJson.Stationed, CurrentWorldId, currentVillage.ArmyStationed, context, emptyIfNull: true);
+                    currentVillage.ArmyTraveling = ArmyConvert.JsonToArmy(armySetJson.Traveling, CurrentWorldId, currentVillage.ArmyTraveling, context, emptyIfNull: true);
+                    currentVillage.ArmyAtHome = ArmyConvert.JsonToArmy(armySetJson.AtHome, CurrentWorldId, currentVillage.ArmyAtHome, context, emptyIfNull: true);
+                    currentVillage.ArmySupporting = ArmyConvert.JsonToArmy(armySetJson.Supporting, CurrentWorldId, currentVillage.ArmySupporting, context, emptyIfNull: true);
 
 
                     currentVillage.ArmyOwned.LastUpdated = DateTime.UtcNow;
@@ -523,7 +519,7 @@ namespace TW.Vault.Controllers
 
             var ownVillageData = await Profile("Get own village data", () => (
                 from village in CurrentSets.Village
-                join currentVillage in CurrentSets.CurrentVillage.Include(v => v.ArmyAtHome) on village.VillageId equals currentVillage.VillageId
+                join currentVillage in CurrentSets.CurrentVillage on village.VillageId equals currentVillage.VillageId
                 where village.PlayerId == CurrentPlayerId
                 select new { Village = village, currentVillage.ArmyAtHome }
             ).ToListAsync());
@@ -532,9 +528,7 @@ namespace TW.Vault.Controllers
             var validVillageIds = villageData.Select(d => d.CurrentVillage.VillageId).ToList();
 
             var commandData = await Profile("Get command data", () => (
-                from command in CurrentSets.Command
-                                           .FromWorld(CurrentWorldId)
-                                           .Include(cmd => cmd.Army)
+                from command in CurrentSets.Command.FromWorld(CurrentWorldId)
                 where command.IsReturning && command.ReturnsAt > CurrentServerTime && command.ArmyId != null
                 select new { command.SourceVillageId, command.Army }
             ).ToListAsync());
