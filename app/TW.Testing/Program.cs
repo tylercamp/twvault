@@ -9,10 +9,13 @@ using TW.Vault.Model.JSON;
 using TW.Vault;
 using Microsoft.EntityFrameworkCore;
 using TW.Vault.Model.Native;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace TW.Testing
 {
-    class Program
+    static class Program
     {
         static void Main(string[] args)
         {
@@ -24,9 +27,213 @@ namespace TW.Testing
             //    TestHighScores();
 
             //DoSomeQuery();
-            TestTravelTime();
+            //TestTravelTime();
+            CleanDuplicateReports();
 
             Console.ReadLine();
+        }
+
+        struct ReportSignature
+        {
+            public ReportSignature(Vault.Scaffold.Report report)
+            {
+                AttackerPlayerId = report.AttackerPlayerId;
+                DefenderPlayerId = report.DefenderPlayerId;
+                AttackerVillageId = report.AttackerVillageId;
+                DefenderVillageId = report.DefenderVillageId;
+                OccurredAt = report.OccuredAt;
+                AttackerArmy = report.AttackerArmy;
+                AttackerArmyLosses = report.AttackerLossesArmy;
+                DefenderArmy = report.DefenderArmy;
+                DefenderArmyLosses = report.DefenderLossesArmy;
+                DefenderTravelingArmy = report.DefenderTravelingArmy;
+                AccessGroupId = report.AccessGroupId;
+                WorldId = report.WorldId;
+            }
+
+            public long? AttackerPlayerId, DefenderPlayerId, AttackerVillageId, DefenderVillageId;
+            public DateTime OccurredAt;
+            public Army AttackerArmy, AttackerArmyLosses, DefenderArmy, DefenderArmyLosses, DefenderTravelingArmy;
+            public int AccessGroupId, WorldId;
+        }
+
+        public static List<List<V>> FastGroupByUnordered<K,V>(this IEnumerable<V> collection, Func<V,K> selector)
+        {
+            var result = new Dictionary<K, List<V>>();
+            foreach (var item in collection)
+            {
+                var id = selector(item);
+                if (!result.ContainsKey(id))
+                    result[id] = new List<V>();
+                result[id].Add(item);
+            }
+            return result.Values.ToList();
+        }
+
+        static List<List<V>> ThenFastGroupByUnordered<K,V>(this IEnumerable<List<V>> collections, Func<V,K> selector, int minSize = 32)
+        {
+            return collections.SelectMany(c => c.Count < minSize ? new List<List<V>> { c } : c.FastGroupByUnordered(selector)).ToList();
+        }
+
+        static void CleanDuplicateReports()
+        {
+            Console.WriteLine("Creating connection...");
+
+            using (var context = new Vault.Scaffold.VaultContext(
+                    new DbContextOptionsBuilder<Vault.Scaffold.VaultContext>()
+                        .UseNpgsql("Server=v.tylercamp.me; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??")
+                        .Options
+                ))
+            {
+                var sw = new Stopwatch();
+
+                Console.WriteLine("Getting player IDs...");
+                var playerIds = context.User.OrderBy(g => g.PlayerId).Select(g => g.PlayerId).ToList().Distinct().ToList();
+                var playerReports = new ConcurrentBag<List<Vault.Scaffold.Report>>();
+
+                sw.Restart();
+                Console.WriteLine("Getting all reports...");
+                int numPlayersLoaded = 0;
+                Parallel.ForEach(playerIds, new ParallelOptions { MaxDegreeOfParallelism = 64 }, (id) =>
+                {
+                    using (var playerContext = new Vault.Scaffold.VaultContext(
+                        new DbContextOptionsBuilder<Vault.Scaffold.VaultContext>()
+                            .UseNpgsql("Server=v.tylercamp.me; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??")
+                            .Options
+                    ))
+                    {
+                        playerReports.Add(playerContext.Report.IncludeReportData().AsNoTracking().Where(r => r.AttackerPlayerId == id).ToList());
+                    }
+
+                    Interlocked.Increment(ref numPlayersLoaded);
+                    lock (context)
+                        Console.Title = "Loaded " + numPlayersLoaded + "/" + playerIds.Count;
+                });
+
+                Console.WriteLine("Got {0} reports in {1}s", playerReports.DefaultIfEmpty(new List<Vault.Scaffold.Report>()).Sum(l => l.Count), sw.ElapsedMilliseconds / 1000);
+
+                sw.Restart();
+                Console.Write("Pre-categorizing reports... ");
+                var categorizedReports = playerReports
+                    .ThenFastGroupByUnordered(r => r.AccessGroupId)
+                    .ThenFastGroupByUnordered(r => r.AttackerVillageId)
+                    .ThenFastGroupByUnordered(r => r.DefenderVillageId)
+                    .ThenFastGroupByUnordered(r => r.OccuredAt);
+                playerReports = null;
+                GC.Collect();
+                Console.WriteLine("Took {0}ms", sw.ElapsedMilliseconds);
+
+                sw.Restart();
+                Console.Write("Generating concurrent set... ");
+                var reportsQueue = new BlockingCollection<List<Vault.Scaffold.Report>>(new ConcurrentBag<List<Vault.Scaffold.Report>>(categorizedReports));
+                reportsQueue.CompleteAdding();
+                categorizedReports = null;
+                GC.Collect();
+                Console.WriteLine("Took {0}ms", sw.ElapsedMilliseconds);
+
+                int totalJobs = reportsQueue.Count;
+                var allDuplicates = new ConcurrentBag<List<Vault.Scaffold.Report>>();
+
+                sw.Restart();
+                Console.Write("Checking for duplicates within " + reportsQueue.Count + " categories... ");
+                for (int i = 0; i < 32; i++)
+                {
+                    Task.Factory.StartNew(() =>
+                    {
+                        foreach (var group in reportsQueue.GetConsumingEnumerable())
+                        {
+                            var reportsBySignature = new Dictionary<ReportSignature, List<Vault.Scaffold.Report>>();
+                            foreach (var report in group)
+                            {
+                                var sign = new ReportSignature(report);
+                                if (!reportsBySignature.ContainsKey(sign))
+                                    reportsBySignature[sign] = new List<Vault.Scaffold.Report>();
+                                reportsBySignature[sign].Add(report);
+                            }
+
+                            foreach (var set in reportsBySignature.Where(kvp => kvp.Value.Count > 1).Select(kvp => kvp.Value))
+                                allDuplicates.Add(set);
+                        }
+                    }, TaskCreationOptions.LongRunning);
+                }
+
+                while (!reportsQueue.IsCompleted)
+                {
+                    Thread.Sleep(1000);
+                    Console.Title = reportsQueue.Count + "/" + totalJobs + " remaining";
+                }
+
+                Console.WriteLine("Took {0}m {1}s", (int)sw.Elapsed.TotalMinutes, sw.Elapsed.Seconds);
+                Console.WriteLine("Total of {0} reports that were duplicated ({1} total duplicate reports)", allDuplicates.Count, allDuplicates.DefaultIfEmpty(new List<Vault.Scaffold.Report>()).Sum(l => l.Count));
+
+                sw.Restart();
+                var updateSw = Stopwatch.StartNew();
+                Console.Write("Verifying duplicates... ");
+                int numChecked = 0;
+                foreach (var group in allDuplicates)
+                {
+                    var reference = group[0];
+                    if (!group.All(r =>
+                        (Army)r.DefenderArmy == (Army)reference.DefenderArmy &&
+                        (Army)r.AttackerArmy == (Army)reference.AttackerArmy &&
+                        (Army)r.DefenderLossesArmy == (Army)reference.DefenderLossesArmy &&
+                        (Army)r.AttackerLossesArmy == (Army)reference.AttackerLossesArmy &&
+                        (Army)r.DefenderTravelingArmy == (Army)reference.DefenderTravelingArmy &&
+                        r.AttackerPlayerId == reference.AttackerPlayerId &&
+                        r.DefenderPlayerId == reference.DefenderPlayerId &&
+                        r.AttackerVillageId == reference.AttackerVillageId &&
+                        r.DefenderVillageId == reference.DefenderVillageId &&
+                        // Loyalty null in some cases
+                        //r.Loyalty == reference.Loyalty &&
+                        r.OccuredAt == reference.OccuredAt &&
+                        // Luck null or mismatched in some cases
+                        //r.Luck == reference.Luck &&
+                        r.WorldId == reference.WorldId &&
+                        r.AccessGroupId == reference.AccessGroupId
+                    ))
+                    {
+                        Console.WriteLine("Invalid duplicate set found");
+                        Debugger.Break();
+                    }
+
+                    ++numChecked;
+
+                    if (updateSw.ElapsedMilliseconds >= 1000)
+                    {
+                        Console.Title = "Checked " + numChecked + "/" + allDuplicates.Count;
+                        updateSw.Restart();
+                    }
+                }
+
+                Console.WriteLine("Took {0}m {1}s", (int)sw.Elapsed.TotalMinutes, sw.Elapsed.Seconds);
+
+                Console.Write("Determining best copies and removable reports... ");
+                sw.Restart();
+                var removableReports = new List<Vault.Scaffold.Report>();
+                foreach (var group in allDuplicates)
+                {
+                    var scores = group.Select(r => { return new { Score = r.Loyalty != null ? 1 : 0, Report = r }; }).OrderByDescending(s => s.Score);
+                    var best = scores.First();
+                    var others = group.Where(r => r != best.Report);
+                    removableReports.AddRange(others);
+                }
+                Console.WriteLine("Took {0}ms", sw.ElapsedMilliseconds);
+
+                Console.WriteLine("Press Enter to delete the {0} removed entries.", removableReports.Count);
+                Console.ReadLine();
+
+                Console.WriteLine("Deleting... ");
+                int numCleared = 0;
+                sw.Restart();
+                foreach (var group in removableReports.Grouped(1500).Select(g => g.ToList()))
+                {
+                    context.RemoveRange(group);
+                    context.SaveChanges();
+                    numCleared += group.Count;
+                    Console.Title = "Cleared " + numCleared + "/" + removableReports.Count;
+                }
+                Console.WriteLine("Took {0}ms", sw.ElapsedMilliseconds);
+            }
         }
 
         static void TestTravelTime()
