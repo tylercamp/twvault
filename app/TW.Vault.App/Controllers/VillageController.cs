@@ -579,7 +579,7 @@ namespace TW.Vault.Controllers
                         village.ArmyOwned,
                         village.ArmyTraveling,
                         village.ArmyStationed
-                    }.Where(a => a.LastUpdated != null && !ArmyConvert.ArmyToJson(a).IsEmpty()).ToList();
+                    }.Where(a => a?.LastUpdated != null && !ArmyConvert.ArmyToJson(a).IsEmpty()).ToList();
 
                     bool IsNuke(Scaffold.CurrentArmy army)
                     {

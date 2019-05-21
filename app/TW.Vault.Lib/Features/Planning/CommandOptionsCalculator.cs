@@ -45,9 +45,7 @@ namespace TW.Vault.Features.Planning
                     throw new ArgumentNullException("currentVillage");
 
                 var villageArmy = ArmyConvert.ArmyToJson(currentVillage.ArmyAtHome);
-                if (villageArmy == null)
-                    throw new ArgumentNullException("villageArmy");
-                if (villageArmy.IsEmpty())
+                if (villageArmy == null || villageArmy.IsEmpty())
                     continue;
 
                 foreach (var permutation in ArmyPermutations(villageArmy))
