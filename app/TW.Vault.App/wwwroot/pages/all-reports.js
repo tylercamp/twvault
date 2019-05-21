@@ -305,7 +305,7 @@
             hasFilters = true;
         }
 
-        let $checkedRadios = $filters.find('input[type=radio]:not([value=0]):checked');
+        let $checkedRadios = $filters.find('input[type=radio]:not([value=0]):not([value=OR]):not([value=AND]):checked');
         if ($checkedRadios.length) {
             console.log('Checked radios: ', $checkedRadios);
             hasFilters = true;
