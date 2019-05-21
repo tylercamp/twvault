@@ -16,7 +16,6 @@ namespace TW.Vault.Scaffold
         public bool FlagsEnabled { get; set; }
         public short NoblemanLoyaltyMin { get; set; }
         public short NoblemanLoyaltyMax { get; set; }
-        public short LoyaltyPerHour { get; set; }
         public decimal GameSpeed { get; set; }
         public short MaxNoblemanDistance { get; set; }
         public bool MilitiaEnabled { get; set; }

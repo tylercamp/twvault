@@ -59,8 +59,6 @@ namespace TW.Vault.Scaffold.Seed
             new TranslationParameter { Id = 45, Name = "numVillages", KeyId = 393 },
             new TranslationParameter { Id = 46, Name = "oldLoyalty", KeyId = 435 },
             new TranslationParameter { Id = 47, Name = "newLoyalty", KeyId = 435 },
-            new TranslationParameter { Id = 48, Name = "buildingName", KeyId = 436 },
-            new TranslationParameter { Id = 49, Name = "newLevel", KeyId = 437 },
             new TranslationParameter { Id = 50, Name = "dataType", KeyId = 441 },
             new TranslationParameter { Id = 51, Name = "time", KeyId = 449 },
             new TranslationParameter { Id = 52, Name = "time", KeyId = 450 },
@@ -102,7 +100,14 @@ namespace TW.Vault.Scaffold.Seed
             new TranslationParameter { Id = 88, Name = "name", KeyId = 534 },
             new TranslationParameter { Id = 89, Name = "day", KeyId = 538 },
             new TranslationParameter { Id = 90, Name = "month", KeyId = 538 },
-            new TranslationParameter { Id = 91, Name = "year", KeyId = 538 }
+            new TranslationParameter { Id = 91, Name = "year", KeyId = 538 },
+            new TranslationParameter { Id = 92, Name = "oldLevel", KeyId = 540 },
+            new TranslationParameter { Id = 93, Name = "newLevel", KeyId = 540 },
+            new TranslationParameter { Id = 94, Name = "buildingName", KeyId = 541 },
+            new TranslationParameter { Id = 95, Name = "oldLevel", KeyId = 541 },
+            new TranslationParameter { Id = 96, Name = "newLevel", KeyId = 541 },
+            new TranslationParameter { Id = 97, Name = "adminName", KeyId = 473 },
+            new TranslationParameter { Id = 98, Name = "millisecond", KeyId = 453 }
         };
     }
 }

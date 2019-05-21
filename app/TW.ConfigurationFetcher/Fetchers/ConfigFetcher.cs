@@ -32,7 +32,6 @@ namespace TW.ConfigurationFetcher.Fetcher
                     // No direct properties for noble loyalty drop range either
                     NoblemanLoyaltyMin = 20,
                     NoblemanLoyaltyMax = 35,
-                    LoyaltyPerHour = xml.Get<float, short>("/config/speed", f => (short)Math.Round(f)),
                     GameSpeed = xml.Get<decimal>("/config/speed"),
                     MaxNoblemanDistance = xml.Get<short>("/config/snob/max_dist"),
                     // No direct properties for militia enabled?

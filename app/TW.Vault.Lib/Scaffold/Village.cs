@@ -7,6 +7,7 @@ namespace TW.Vault.Scaffold
     {
         public Village()
         {
+            CurrentVillage = new HashSet<CurrentVillage>();
             CommandSourceVillage = new HashSet<Command>();
             CommandTargetVillage = new HashSet<Command>();
             CurrentVillageSupportSourceVillage = new HashSet<CurrentVillageSupport>();

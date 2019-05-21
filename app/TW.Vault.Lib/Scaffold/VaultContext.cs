@@ -1316,6 +1316,8 @@ namespace TW.Vault.Scaffold
             {
                 entity.ToTable("world", "tw_provided");
 
+                entity.HasData(Seed.WorldData.Contents);
+
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
                     .HasDefaultValueSql("nextval('tw_provided.world_id_seq'::regclass)");
@@ -1347,6 +1349,8 @@ namespace TW.Vault.Scaffold
 
                 entity.ToTable("world_settings", "tw_provided");
 
+                entity.HasData(Seed.WorldSettingsData.Contents);
+
                 entity.Property(e => e.WorldId)
                     .HasColumnName("world_id")
                     .ValueGeneratedNever();
@@ -1364,8 +1368,6 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.FlagsEnabled).HasColumnName("flags_enabled");
 
                 entity.Property(e => e.GameSpeed).HasColumnName("game_speed");
-
-                entity.Property(e => e.LoyaltyPerHour).HasColumnName("loyalty_per_hour");
 
                 entity.Property(e => e.MaxNoblemanDistance).HasColumnName("max_nobleman_distance");
 

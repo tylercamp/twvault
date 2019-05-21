@@ -389,8 +389,6 @@ namespace TW.Vault.Scaffold.Seed
             new TranslationKey { Id = 433, Name = "BUILDING_WATCHTOWER", IsTwNative = true, Group = "TribalWars" },
             new TranslationKey { Id = 434, Name = "BUILDING_CHURCH", IsTwNative = true, Group = "TribalWars" },
             new TranslationKey { Id = 435, Name = "REPORT_LOYALTY_FROM_TO", IsTwNative = true, Group = "Uploads" },
-            new TranslationKey { Id = 436, Name = "REPORT_BUILDING_DAMAGE_NAMES", IsTwNative = true, Group = "Uploads" },
-            new TranslationKey { Id = 437, Name = "REPORT_BUILDING_DAMAGE_LEVELS", IsTwNative = true, Group = "Uploads" },
             new TranslationKey { Id = 438, Name = "BB_TABLE", IsTwNative = true, Group = "TribalWars" },
             new TranslationKey { Id = 439, Name = "TRIGGERED_CAPTCHA", IsTwNative = false, Group = "General" },
             new TranslationKey { Id = 440, Name = "IS_IN_GROUP", IsTwNative = false, Group = "General" },
@@ -478,7 +476,11 @@ namespace TW.Vault.Scaffold.Seed
             new TranslationKey { Id = 535, Name = "TRANSLATION_MAKING_COPY", IsTwNative = false, Group = "Translations" },
             new TranslationKey { Id = 536, Name = "MAP_HOVER_NO_ARMY", IsTwNative = false, Group = "Map" },
             new TranslationKey { Id = 537, Name = "MAP_HOVER_NO_BUILDINGS", IsTwNative = false, Group = "Map" },
-            new TranslationKey { Id = 538, Name = "TIME_NUMERIC_DATE", IsTwNative = true, Group = "Time" }
+            new TranslationKey { Id = 538, Name = "TIME_NUMERIC_DATE", IsTwNative = true, Group = "Time" },
+            new TranslationKey { Id = 539, Name = "MAP_HIGHLIGHT_ENEMY", IsTwNative = false, Group = "Map" },
+            new TranslationKey { Id = 540, Name = "REPORT_WALL_DAMAGE", IsTwNative = true, Group = "Uploads" },
+            new TranslationKey { Id = 541, Name = "REPORT_BUILDING_DAMAGE", IsTwNative = true, Group = "Uploads" },
+            new TranslationKey { Id = 543, Name = "TARGET_VILLAGE", IsTwNative = false, Group = "General" }
         };
     }
 }
