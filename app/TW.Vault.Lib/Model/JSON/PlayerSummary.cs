@@ -33,6 +33,8 @@ namespace TW.Vault.Model.JSON
         public float ThreeQuarterNukesOwned { get; set; }
         public float NukesOwned { get; set; }
         public float NukesTraveling { get; set; }
+        public int FangsOwned { get; set; }
+        public int FangsTraveling { get; set; }
 
         /* Def stats */
         public Dictionary<String, int> SupportPopulationByTargetTribe { get; set; }

@@ -225,7 +225,6 @@ namespace TW.Vault.Controllers
         {
             var parameters =
                 context.TranslationParameter
-                    .Include(p => p.Key)
                     .Select(p => new { Key = p.Key.Name, p.Name })
                 .ToList()
                 .GroupBy(p => p.Key)

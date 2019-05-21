@@ -165,12 +165,19 @@ function makeAdminUsersTab() {
 function makeAdminStatsTab() {
 
     var options = lib.getLocalStorage('admin-stats-options', {
-        includeNukeBreakdown: false
+        includeNukeBreakdown: false,
+        fangMinCats: 150,
+        fangMaxPop: 8000
     });
 
     function saveChanges() {
         lib.setLocalStorage('admin-stats-options', options);
     }
+
+    var fangInputHtml = lib.translate(lib.itlcodes.FANGS_DEFINITION, {
+        numCats: `<input type="text" style="width:3em;text-align:center" id="vault-admin-stats-fang-cats">`,
+        maxPop: `<input type="text" style="width:4em;text-align:center" id="vault-admin-stats-fang-max-pop">`
+    });
 
     return {
         label: lib.translate(lib.itlcodes.TAB_TRIBE_STATS),
@@ -178,6 +185,8 @@ function makeAdminStatsTab() {
 
         init: function ($container) {
             uilib.syncProp($container.find('#vault-admin-stats-nuke-breakdown'), options, 'includeNukeBreakdown', saveChanges);
+            uilib.syncProp($container.find('#vault-admin-stats-fang-cats'), options, 'fangMinCats', saveChanges, uilib.propTransformers.int);
+            uilib.syncProp($container.find('#vault-admin-stats-fang-max-pop'), options, 'fangMaxPop', saveChanges, uilib.propTransformers.int);
 
             $container.find('#download-army-stats').click(() => {
                 let $downloadButton = $container.find('#download-army-stats');
@@ -188,7 +197,7 @@ function makeAdminStatsTab() {
 
                 loading();
 
-                lib.getApi('admin/summary')
+                lib.getApi(`admin/summary?fangMinCats=${options.fangMinCats}&fangMaxPop=${options.fangMaxPop}`)
                     .error(() => {
                         if (lib.isUnloading())
                             return;
@@ -221,6 +230,9 @@ function makeAdminStatsTab() {
             <p>${lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DESCRIPTION)} <input id="download-army-stats" type="button" value="${lib.translate(lib.itlcodes.DOWNLOAD)}"></p>
             <p>
                 <input type="checkbox" id="vault-admin-stats-nuke-breakdown"> <label for="vault-admin-stats-nuke-breakdown">${lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_SETTINGS_NUKES)}</label>
+            </p>
+            <p>
+                ${fangInputHtml}
             </p>
         `
     };
@@ -409,8 +421,6 @@ function makeAdminUsersInterface($container) {
 }
 
 function makeArmySummaryCsv(armyData, options) {
-    let nukePower = 400000;
-    let nukePop = 15000;
     let fullDVPop = 20000;
 
     let playerSummaries = [];
@@ -421,6 +431,7 @@ function makeArmySummaryCsv(armyData, options) {
     var totalPossibleNobles = 0;
     var totalIncomings = 0;
     var totalAttacks = 0;
+    var totalFangs = 0;
 
     let supportedTribeNames = [];
 
@@ -442,6 +453,8 @@ function makeArmySummaryCsv(armyData, options) {
             numNukesTraveling: ad.nukesTraveling,
             numNobles: ad.numNobles,
             numPossibleNobles: maxNobles,
+            numFangs: ad.fangsOwned,
+            numFangsTraveling: ad.fangsTraveling,
 
             numOwnedDVs: round(ad.dVsOwned),
             numDVsAtHome: round(ad.dVsAtHome),
@@ -480,6 +493,7 @@ function makeArmySummaryCsv(armyData, options) {
         totalPossibleNobles += playerData.numPossibleNobles;
         totalIncomings += playerData.numIncomings;
         totalAttacks += playerData.numAttacks;
+        totalFangs += playerData.numFangs;
 
         playerSummaries.push(playerData);
     });
@@ -504,6 +518,7 @@ function makeArmySummaryCsv(armyData, options) {
     csvBuilder.addRow(
         '', '', '', '',
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_FULL_NUKES, NOESC),
+        lib.translate(lib.itlcodes.ADMIN_TOTAL_FANGS, NOESC),
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_NOBLES, NOESC),
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_POSSIBLE_NOBLES, NOESC),
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_DVS, NOESC),
@@ -511,7 +526,7 @@ function makeArmySummaryCsv(armyData, options) {
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_TOTAL_ATTACKS, NOESC)
     );
 
-    csvBuilder.addRow('', '', '', '', totalNukes, totalNobles, totalPossibleNobles, totalDVs, totalIncomings, totalAttacks);
+    csvBuilder.addRow('', '', '', '', totalNukes, totalFangs, totalNobles, totalPossibleNobles, totalDVs, totalIncomings, totalAttacks);
 
     csvBuilder.addBlank(2);
 
@@ -525,6 +540,8 @@ function makeArmySummaryCsv(armyData, options) {
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_NUKES_TRAVELING, NOESC),
         lib.translate(lib.itlcodes.NOBLES, NOESC),
         lib.translate(lib.itlcodes.POSSIBLE_NOBLES, NOESC),
+        lib.translate(lib.itlcodes.FANGS, NOESC),
+        lib.translate(lib.itlcodes.FANGS_TRAVELING, NOESC),
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_OWNED_DVS, NOESC),
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_DVS_HOME, NOESC),
         lib.translate(lib.itlcodes.ADMIN_TRIBE_STATS_BACKLINE_DVS_HOME, NOESC),
@@ -542,7 +559,7 @@ function makeArmySummaryCsv(armyData, options) {
     playerSummaries.forEach((s) => {
         csvBuilder.addRow(
             s.uploadedAt, s.needsUpload ? lib.translate(lib.itlcodes.YES) : '', s.tribeName, s.playerName, ...s.nukeBreakdown, s.numNukes,
-            s.numNukesTraveling, s.numNobles, s.numPossibleNobles,
+            s.numNukesTraveling, s.numNobles, s.numPossibleNobles, s.numFangs, s.numFangsTraveling,
             s.numOwnedDVs, s.numDVsAtHome, s.numDVsAtHomeBackline, s.numDVsTraveling, s.numDVsSupportingSelf, s.numDVsSupportingOthers,
             s.numOffensiveVillas, s.numDefensiveVillas, s.numIncomings, s.numAttacks, '', ...supportedTribeNames.map((tn) => s.numDVsSupportingTribes[tn] || '0')
         );

@@ -439,7 +439,7 @@ namespace TW.Vault.Controllers
 
 
         [HttpGet("summary")]
-        public async Task<IActionResult> GetTroopsSummary()
+        public async Task<IActionResult> GetTroopsSummary(int fangMinCats, int fangMaxPop)
         {
             //  Dear jesus this is such a mess
 
@@ -511,12 +511,14 @@ namespace TW.Vault.Controllers
                     select command.TargetVillageId
                 ).ToListAsync());
 
-            var attackingVillageIds = await Profile("Get attacks", () => (
-                    from command in CurrentSets.Command
+            var attackCommands = await Profile("Get attack details", () => (
+                    from command in CurrentSets.Command.Include(c => c.Army)
                     where villageIds.Contains(command.SourceVillageId) && command.IsAttack && command.LandsAt > CurrentServerTime
                     where command.TargetPlayerId != null
-                    select command.SourceVillageId
+                    select new { command.SourceVillageId, command.Army }
                 ).ToListAsync());
+
+            var attackingVillageIds = attackCommands.Select(c => c.SourceVillageId).ToList();
 
             var tribeIds = tribeVillages.Select(tv => tv.player.TribeId)
                                         .Where(tid => tid != null)
@@ -613,6 +615,7 @@ namespace TW.Vault.Controllers
 
             var numIncomingsByPlayer = new Dictionary<long, int>();
             var numAttacksByPlayer = new Dictionary<long, int>();
+            var numAttackingFangsByPlayer = new Dictionary<long, int>();
             var villageOwnerIdById = tribeVillages.ToDictionary(v => v.currentVillage.VillageId, v => v.player.PlayerId);
 
             foreach (var target in attackedVillageIds)
@@ -629,6 +632,22 @@ namespace TW.Vault.Controllers
                 if (!numAttacksByPlayer.ContainsKey(playerId))
                     numAttacksByPlayer[playerId] = 0;
                 numAttacksByPlayer[playerId]++;
+            }
+
+            bool IsFang(JSON.Army army, bool ignorePop = false) =>
+                    army != null &&
+                    army.ContainsKey(JSON.TroopType.Catapult) &&
+                    army[JSON.TroopType.Catapult] >= fangMinCats &&
+                    (ignorePop || ArmyStats.CalculateTotalPopulation(army, ArmyStats.OffensiveTroopTypes) <= fangMaxPop);
+
+            foreach (var command in attackCommands)
+            {
+                var playerId = villageOwnerIdById[command.SourceVillageId];
+                if (!numAttackingFangsByPlayer.ContainsKey(playerId))
+                    numAttackingFangsByPlayer[playerId] = 0;
+
+                if (IsFang(command.Army))
+                    numAttackingFangsByPlayer[playerId]++;
             }
 
             var villagesNearEnemy = new HashSet<long>();
@@ -675,7 +694,8 @@ namespace TW.Vault.Controllers
                     UploadedCommandsAt = playerHistory?.LastUploadedCommandsAt ?? new DateTime(),
                     NumNobles = playerVillages.Select(v => v.ArmyOwned?.Snob ?? 0).Sum(),
                     NumIncomings = numIncomingsByPlayer.GetValueOrDefault(player.PlayerId, 0),
-                    NumAttackCommands = numAttacksByPlayer.GetValueOrDefault(player.PlayerId, 0)
+                    NumAttackCommands = numAttacksByPlayer.GetValueOrDefault(player.PlayerId, 0),
+                    FangsTraveling = numAttackingFangsByPlayer.GetValueOrDefault(player.PlayerId, 0)
                 };
 
                 playerSummary.UploadAge = DateTime.UtcNow - playerSummary.UploadedAt;
@@ -690,8 +710,8 @@ namespace TW.Vault.Controllers
                     var armyTraveling = ArmyConvert.ArmyToJson(village.ArmyTraveling);
                     var armyAtHome = ArmyConvert.ArmyToJson(village.ArmyAtHome);
 
-                    var armyPopSize = ArmyStats.CalculateTotalPopulation(armyOwned) / (float)ArmyStats.FullVillageArmy;
-                    armyPopSize = Math.Clamp(armyPopSize, 0, 1);
+                    if (IsFang(armyAtHome, true) && !ArmyStats.IsNuke(armyOwned, 0.75))
+                        playerSummary.FangsOwned++;
 
                     if (ArmyStats.IsOffensive(village.ArmyOwned))
                     {
@@ -707,8 +727,11 @@ namespace TW.Vault.Controllers
                             playerSummary.HalfNukesOwned++;
                         else if (ArmyStats.IsNuke(armyOwned, 0.25))
                             playerSummary.QuarterNukesOwned++;
+
                         if (ArmyStats.IsNuke(armyTraveling))
                             playerSummary.NukesTraveling++;
+                        else if (IsFang(armyTraveling))
+                            playerSummary.FangsTraveling++;
                     }
                     else
                     {

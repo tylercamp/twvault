@@ -341,8 +341,8 @@ namespace TW.Vault.MapDataFetcher
                 .Select(s => s.Split(','))
                 .Select(p => new
                 {
-                    VillageId = (long?)long.Parse(p[0]),
-                    UnixTimestamp = (long?)long.Parse(p[1]),
+                    VillageId = long.Parse(p[0]),
+                    UnixTimestamp = long.Parse(p[1]),
                     NewOwner = long.Parse(p[2]) == 0 ? null : (long?)long.Parse(p[2]),
                     OldOwner = long.Parse(p[3]) == 0 ? null : (long?)long.Parse(p[3])
                 })

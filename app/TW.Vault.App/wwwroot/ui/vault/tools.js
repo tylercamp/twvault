@@ -240,6 +240,7 @@ function makeBacktimeListTab() {
 
         let builder = new BBTableBuilder(lib.translate(lib.itlcodes.BB_TABLE));
         builder.setColumnNames(
+            lib.translate(lib.itlcodes.TARGET_VILLAGE),
             lib.translate(lib.itlcodes.SOURCE_VILLAGE),
             lib.translate(lib.itlcodes.LAUNCH_TIME),
             lib.translate(lib.itlcodes.LANDING_TIME),
@@ -283,6 +284,7 @@ function makeBacktimeListTab() {
 
         displayedCommands.forEach((i) => {
             builder.addRow(
+                `[coord]${i.targetVillageX}|${i.targetVillageY}[/coord]`,
                 `[${lib.translate(lib.itlcodes.BB_URL)}=${lib.makeTwUrl(`village=${i.sourceVillageId}&screen=place&from=simulator&att_${i.troopType}=1&target_village_id=${i.targetVillageId}`)}]${i.sourceVillageName} (${i.sourceVillageX}|${i.sourceVillageY})[/${lib.translate(lib.itlcodes.BB_URL)}]`,
                 lib.formatDateTime(i.launchAt),
                 lib.formatDateTime(i.landsAt),

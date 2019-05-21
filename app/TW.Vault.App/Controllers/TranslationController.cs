@@ -26,7 +26,7 @@ namespace TW.Vault.Controllers
         public IActionResult GetAllTranslations() => Ok(
             context.TranslationRegistry.Where(r => !r.IsSystemInternal).OrderBy(r => r.Author).ThenBy(r => r.Name).Select(r => new
             {
-                r.Author, r.AuthorPlayerId, r.Id, r.Name, r.LanguageId
+                Author = r.Author.UrlDecode(), r.AuthorPlayerId, r.Id, Name = r.Name.UrlDecode(), r.LanguageId
             })
         );
 
@@ -37,7 +37,7 @@ namespace TW.Vault.Controllers
             if (registry == null)
                 return NotFound();
             else
-                return Ok(new { registry.Id, registry.Name, registry.Author, registry.AuthorPlayerId, registry.LanguageId, Language = registry.Language.Name });
+                return Ok(new { registry.Id, Name = registry.Name.UrlDecode(), Author = registry.Author.UrlDecode(), registry.AuthorPlayerId, registry.LanguageId, Language = registry.Language.Name });
         }
 
         [HttpGet("{translationId}/contents")]
@@ -56,7 +56,7 @@ namespace TW.Vault.Controllers
             return Ok(new {
                 registry.Id,
                 registry.LanguageId,
-                registry.Name,
+                Name = registry.Name.UrlDecode(),
                 registry.AuthorPlayerId,
                 Language = registry.Language.Name,
                 Entries = registry.Entries.ToDictionary(
@@ -83,7 +83,7 @@ namespace TW.Vault.Controllers
             return Ok(
                 language.Translations
                     .Where(t => !t.IsSystemInternal)
-                    .Select(t => new { t.Id, t.Name, t.Author, t.AuthorPlayerId })
+                    .Select(t => new { t.Id, Name = t.Name.UrlDecode(), Author = t.Author.UrlDecode(), t.AuthorPlayerId })
                     .OrderBy(r => r.Author).ThenBy(r => r.Name)
                     .ToList()
             );
@@ -91,7 +91,7 @@ namespace TW.Vault.Controllers
 
         [HttpGet("translation-keys")]
         public IActionResult GetTranslationKeys() => Ok(
-            context.TranslationKey.Select(k => new { k.Id, k.Name, k.IsTwNative, k.Group })
+            context.TranslationKey.Select(k => new { k.Id, k.Name, k.IsTwNative, k.Group }).ToList()
         );
 
         [HttpGet("default/{serverName}")]
@@ -110,8 +110,8 @@ namespace TW.Vault.Controllers
             {
                 translationId = world.DefaultTranslationId,
                 languageId = world.DefaultTranslation.Language.Id,
-                translationAuthor = world.DefaultTranslation.Author,
-                translationName = world.DefaultTranslation.Name,
+                translationAuthor = world.DefaultTranslation.Author.UrlDecode(),
+                translationName = world.DefaultTranslation.Name.UrlDecode(),
                 language = world.DefaultTranslation.Language.Name
             });
         }
@@ -124,7 +124,6 @@ namespace TW.Vault.Controllers
         {
             return Ok(
                 context.TranslationParameter
-                    .Include(p => p.Key)
                     .Select(p => new { Key = p.Key.Name, p.Name })
                     .ToList()
                     .GroupBy(p => p.Key)

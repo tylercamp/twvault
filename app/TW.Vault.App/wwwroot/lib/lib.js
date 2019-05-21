@@ -475,10 +475,14 @@ var lib = (() => {
                 params_ = null;
 
             let result = currentTranslation.entries[key];
+
             if (!result || !result.trim().length) {
                 console.error('No translation provided for key: ', key);
                 return "NO TRANSLATION AVAILABLE";
             } else {
+                if (needsEscaping)
+                    result = escapeHtml(result);
+
                 let keyParams = translationParameters[key];
                 if (keyParams) {
                     if (!params_ || !params_._verbatim) {
@@ -510,9 +514,6 @@ var lib = (() => {
                 }
 
                 breakNewlines_ = breakNewlines_ || false;
-
-                if (needsEscaping)
-                    result = escapeHtml(result);
 
                 if (breakNewlines_) {
                     result = result.replace(/\n/g, '\n<br>');
@@ -855,10 +856,12 @@ var lib = (() => {
 
             let ex = new Error();
             let stack = ex.stack.split('\n').map(p => p.trim());
-            let firstScope = stack[stack.length - 1];
-            let sourceUrl = firstScope.match(/at (.+\.js)/);
+            let firstScope = stack[1];
+            let sourceUrl = firstScope.match(/(https:\/\/.+\.js)/);
             if (sourceUrl)
-                sourceUrl = sourceUrl[1];
+                sourceUrl = sourceUrl[1].trim();
+            if (sourceUrl && sourceUrl.contains('\n'))
+                sourceUrl = null; // Clear detected source URL if parsing failed
 
             return sourceUrl || 'https://v.tylercamp.me/script/main.js';
         },

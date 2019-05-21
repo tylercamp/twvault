@@ -105,7 +105,7 @@ namespace TW.Vault.Controllers
             if (fakeScript == null)
                 return NotFound();
             else
-                return Content(fakeScript, "application/json");
+                return Content(fakeScript, "application/javascript");
         }
         
         [HttpGet("{*name}", Name = "GetCompiledObfuscatedScript")]
@@ -131,7 +131,7 @@ namespace TW.Vault.Controllers
 
             //var minified = Uglify.Js(scriptContents).Code;
             //return Content(minified, "application/json");
-            return Content(scriptContents, "application/json");
+            return Content(scriptContents, "application/javascript");
         }
 
         [HttpGet("real/{authToken}/{*name}", Name = "GetCompiledUnobfuscatedScript")]
