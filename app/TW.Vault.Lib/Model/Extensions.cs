@@ -60,6 +60,9 @@ namespace TW.Vault.Model
 
         public static JSON.Army OfType(this JSON.Army army, JSON.UnitBuild build)
         {
+            if (army == null)
+                return new JSON.Army();
+
             var result = new JSON.Army();
             foreach (var type in army.Keys)
             {

@@ -24,8 +24,20 @@ namespace TW.Vault
 
         public override void OnException(ExceptionContext context)
         {
+            Security.AuthHeaders auth = null;
+            try { auth = Security.AuthenticationUtil.ParseHeaders(context.HttpContext.Request.Headers); }
+            catch { }
+
             if (!(context.Exception is TaskCanceledException))
-                logger.Error("Exception thrown at endpoint: {endpoint}", context.HttpContext.Request.Path.Value);
+            {
+                String message = "Exception thrown at endpoint: {endpoint}";
+                if (auth != null)
+                    message += " from request by user with token: " + auth.AuthToken;
+                else
+                    message += " (auth token unavailable)";
+                logger.Error(message, context.HttpContext.Request.Path.Value);
+            }
+
             base.OnException(context);
         }
     }

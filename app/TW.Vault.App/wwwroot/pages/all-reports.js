@@ -7,6 +7,7 @@
     var requestManager = new RequestManager();
 
     let previousReports = lib.getLocalStorage('reports-history', []);
+    let ignoredFolders = lib.getLocalStorage('reports-ignored-groups', []);
 
     let hasFilters = checkHasFilters();
     console.log('hasFilters = ', hasFilters);
@@ -23,18 +24,59 @@
         return;
     }
 
+    let $reportFolders = $doc.find('td > a[href*=group_id]:not(.village_switch_link)');
+    let usedReportFolderIds = [];
+    $reportFolders.each((_, el) => {
+        let groupId = $(el).attr('href').match(/group_id=(\d+)/)[1];
+        if (!ignoredFolders.contains(groupId))
+            usedReportFolderIds.push(groupId);
+    });
+
+    console.log('Got non-ignored folder IDs: ', usedReportFolderIds);
+
+    if (!usedReportFolderIds.length) {
+        if (onProgress_)
+            onProgress_(lib.translate(lib.itlcodes.REPORTS_UPLOAD_ALL_IGNORED));
+        else
+            alert(lib.translate(lib.itlcodes.REPORTS_UPLOAD_ALL_IGNORED));
+
+        if (onDone_) {
+            onDone_();
+        }
+        return;
+    }
+
+    let reportFolderLinks = usedReportFolderIds.map(id => lib.makeTwUrl(`screen=report&group_id=${id}&mode=all`));
+
     let reportLinks = [];
 
     onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_COLLECTING_PAGES));
-    let pages = lib.detectMultiPages($doc);
-    pages.push(lib.makeTwUrl(lib.pageTypes.ALL_REPORTS));
-    console.log('pages = ', pages);
+    let pages = [];
 
-    collectReportLinks();
+    collectReportFolderPages();
     makeUploadsDisplay();
 
+    function collectReportFolderPages() {
+        requestManager.resetStats();
+        requestManager.setFinishedHandler(() => {
+            requestManager.stop();
+            requestManager.resetStats();
+            collectReportLinks();
+        });
+
+        reportFolderLinks.forEach((url) => {
+            requestManager.addRequest(url, (data) => {
+                let $folder = lib.parseHtml(data);
+                pages.push(...lib.detectMultiPages($folder).map(l => l + '&group_id=' + url.match(/group_id=(\d+)/)[1]));
+                reportLinks.push(...parseReportsOverviewPage($folder));
+            });
+        });
+
+        requestManager.start();
+    }
 
     function collectReportLinks() {
+        console.log('pages = ', pages);
         let collectingReportLinksMessage = lib.translate(lib.itlcodes.REPORTS_COLLECTING_LINKS);
         onProgress_ && onProgress_(collectingReportLinksMessage);
 

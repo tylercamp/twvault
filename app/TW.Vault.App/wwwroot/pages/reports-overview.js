@@ -9,8 +9,6 @@ function parseReportsOverviewPage($doc) {
     
     let hasFilters = checkHasFilters();
     console.log('hasFilters = ', hasFilters);
-    let pages = lib.detectMultiPages($doc);
-    console.log('pages = ', pages);
 
     let reportLinks = [];
     let ignoredReports = [];

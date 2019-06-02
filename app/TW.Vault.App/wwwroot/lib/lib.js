@@ -172,7 +172,21 @@ var lib = (() => {
                     date: match[1].splitMany(dateSeparators),
                     time: match[2].splitMany(timeSeparators)
                 };
-
+            //} else if (match = lib.namedMatch(lib.translate(lib.itlcodes.TIME_FULL_FORMAT, { _escaped: false }), {
+            //    month: `(?:${monthStrings.join('|')})`,
+            //    day: `\d+`,
+            //    year: `(?:\d+)?`,
+            //    hour: `\d+`,
+            //    minute: `\d+`,
+            //    second: `\d+`,
+            //    millis: `\d+`
+            //}, timeString)) {
+            //    var monthName = match.month;
+            //    var month = (monthStrings.indexOf(monthName.toLowerCase()) + 1).toString();
+            //    result = {
+            //        date: [match.day, month, match.year || serverDate[2]],
+            //        time: [match.hour, match.minute, match.second, match.millis]
+            //    };
             } else if (match = timeString.match(new RegExp(`((?:${monthStrings.join('|')}))\\.?\\s+(\\d+),\\s*(?:(\\d+)\\s+)?${timeRegex}`, 'i'))) {
                 //  (Mon.) Day, Year Hour:Minute:Second:Ms
                 var monthName = match[1];
@@ -232,6 +246,7 @@ var lib = (() => {
             }
 
             if (result == null) {
+                console.warn('Unable to parse datetime string: ', timeString);
                 return null;
             }
 
@@ -1112,6 +1127,33 @@ var lib = (() => {
                         lib.recursiveObjForEach(object[prop], callback, sourceObject_ || object);
                     }
                 }
+            }
+        },
+
+        // Given some pattern ie `\s*{name}\s*` and an object groupPatterns ie { name: `\w+` }, returns a corresponding
+        // object with the same member names, corresponding to the appropriately-matched values in the string "operand"
+        namedMatch: function namedRegexMatch(pattern, groupPatterns, operand) {
+            var orderedGroupNames = [];
+            var groupNamePattern = /\{(\w+)\}/gm;
+            var match;
+            while (match = groupNamePattern.exec(pattern))
+                orderedGroupNames.push(match[1]);
+
+            orderedGroupNames.forEach(name => {
+                if (!groupPatterns[name])
+                    throw 'No pattern exists for group named ' + name;
+                pattern = pattern.replace(`{${name}}`, `(${groupPatterns[name]})`);
+            });
+
+            match = new RegExp(pattern).exec(operand);
+            if (!match) {
+                return null;
+            } else {
+                let result = {};
+                orderedGroupNames.forEach((name, i) => {
+                    result[name] = match[i + 1];
+                });
+                return result;
             }
         },
 

@@ -313,7 +313,7 @@ namespace TW.Vault.Controllers
                         var loyaltyConfidence = 1.0f - (possibleLoyalty - 50) / 50.0f;
                         var stackConfidence = 1.0f - (stationedDVs - 0.75f) / 0.75f;
 
-                        if (v.ArmyStationed.LastUpdated != null)
+                        if (v.ArmyStationed?.LastUpdated != null)
                         {
                             var stackAge = serverTime - v.ArmyStationed.LastUpdated.Value;
                             var ageFactor = (TimeSpan.FromHours(48) - stackAge) / TimeSpan.FromHours(48);
@@ -328,7 +328,7 @@ namespace TW.Vault.Controllers
                         {
                             Loyalty = possibleLoyalty,
                             StationedDVs = stationedDVs,
-                            DVsSeenAt = v.ArmyStationed.LastUpdated,
+                            DVsSeenAt = v.ArmyStationed?.LastUpdated,
                             Confidence = loyaltyConfidence + stackConfidence,
                             Village = v
                         };

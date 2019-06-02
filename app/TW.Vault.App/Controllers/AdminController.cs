@@ -76,7 +76,7 @@ namespace TW.Vault.Controllers
                 if (log.Tx != null)
                 {
                     json.OccurredAt = log.Tx.OccurredAt;
-                    json.AdminUserName = userNamesById[log.Tx.Uid];
+                    json.AdminUserName = log.Tx.Uid == 0 ? "System" : userNamesById[log.Tx.Uid];
                 }
                 else
                 {

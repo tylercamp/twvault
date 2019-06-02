@@ -6,6 +6,9 @@ function makeUploadsTab() {
 
         init: function ($container) {
 
+            let ignoredGroupIds = lib.getLocalStorage('reports-ignored-groups', []);
+            let reportFolderNames = null;
+
             var uploadDetailsMessages = {
                 'vault-upload-reports': lib.translate(lib.itlcodes.UPLOAD_DESCRIPTION_REPORTS),
                 'vault-upload-incomings': lib.translate(lib.itlcodes.UPLOAD_DESCRIPTION_INCS),
@@ -262,6 +265,66 @@ function makeUploadsTab() {
                     });
                 }
             });
+
+            $container.find('#vault-upload-settings-toggle').click(() => $container.find('#vault-upload-settings').toggle());
+
+            function saveIgnoredGroupIds() {
+                lib.setLocalStorage('reports-ignored-groups', ignoredGroupIds);
+            }
+
+            function updateIgnoredFoldersList() {
+                let $ignoredList = $container.find('#vault-ignored-report-folders');
+                $ignoredList.empty();
+                if (ignoredGroupIds.length) {
+                    ignoredGroupIds.forEach(id => {
+                        $ignoredList.append(`
+                        <li data-id="${id}">
+                            ${reportFolderNames[id] || `(${lib.translate(lib.itlcodes.REPORT_FOLDER_DELETED)})`}
+                            <img src="https://tylercamp.me/tw/img/delete.png" style="vertical-align:text-top;cursor:pointer">
+                        </li>
+                    `.trim());
+                    });
+
+                    $ignoredList.find('img').click((ev) => {
+                        let $target = $(ev.target);
+                        let deletedId = $target.closest('li').data('id');
+                        console.log('Removing folder with ID ', deletedId);
+                        ignoredGroupIds = ignoredGroupIds.except([deletedId.toString()]);
+                        saveIgnoredGroupIds();
+                        updateIgnoredFoldersList();
+                    });
+                } else {
+                    // No folders are currently ignored
+                    $ignoredList.append(`<em>${lib.translate(lib.itlcodes.REPORT_FOLDER_NONE_IGNORED)}</em>`);
+                }
+            }
+
+            $.get(lib.makeTwUrl(lib.pageTypes.ALL_REPORTS))
+                .done((data) => {
+                    let $page = lib.parseHtml(data);
+                    let $groupLinks = $page.find('td > a[href*=group_id]:not(.village_switch_link)');
+                    let groups = [];
+                    $groupLinks.each((i, el) => groups.push({ id: $(el).attr('href').match(/group_id=(\d+)/)[1], name: $(el).text().trim() }));
+                    console.log('Found report groups: ', groups);
+
+                    let $ignoredFolderOptions = $container.find('#vault-ignored-report-folders-options')
+                    groups.forEach((obj) => {
+                        $ignoredFolderOptions.append($(`<option value="${obj.id}">${obj.name}</option>`));
+                    });
+
+                    reportFolderNames = lib.arrayToObject(groups, g => g.id, g => g.name);
+                    updateIgnoredFoldersList();
+
+                    $container.find('#vault-ignored-report-folders-ignore').click(() => {
+                        let folderId = $container.find('#vault-ignored-report-folders-options').val();
+                        console.log('Ignoring folder id ', folderId);
+                        if (ignoredGroupIds.contains(folderId))
+                            return;
+                        ignoredGroupIds.push(folderId);
+                        saveIgnoredGroupIds();
+                        updateIgnoredFoldersList();
+                    });
+                });
         },
 
         getContent: `
@@ -318,7 +381,19 @@ function makeUploadsTab() {
                 </tr>
             </table>
 
+            ${uilib.mkBtn('vault-upload-settings-toggle', lib.translate(lib.itlcodes.SETTINGS), 'float:left')}
+
             <input type="button" class="upload-clear-cache" value="${lib.translate(lib.itlcodes.UPLOAD_CLEAR_CACHE)}" style="float:right">
+
+            <div id="vault-upload-settings" style="display:none;clear:both">
+                <h3>${lib.translate(lib.itlcodes.REPORT_OPTIONS)}</h3>
+                <h5>${lib.translate(lib.itlcodes.REPORT_FOLDERS_IGNORED)}</h5>
+                <div>
+                    <ul id="vault-ignored-report-folders" style="display:inline-block;list-style-type:none;padding:0"></ul>
+                </div>
+                <button id="vault-ignored-report-folders-ignore">${lib.translate(lib.itlcodes.REPORT_FOLDER_IGNORE)}</button>
+                <select id="vault-ignored-report-folders-options"></select>
+            </div>
         `
     };
 
