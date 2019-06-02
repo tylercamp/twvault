@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.MapDataFetcher", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.Migration", "TW.Vault.Migration\TW.Vault.Migration.csproj", "{04EC02DB-142E-4481-B28D-D39BEBE35615}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TW.Vault.Manage", "TW.Vault.Manage\TW.Vault.Manage.csproj", "{081053A3-5FE4-4D3A-956D-715481581DF3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,14 @@ Global
 		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Release|Any CPU.Build.0 = Release|Any CPU
 		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Release|x64.ActiveCfg = Release|x64
 		{04EC02DB-142E-4481-B28D-D39BEBE35615}.Release|x64.Build.0 = Release|x64
+		{081053A3-5FE4-4D3A-956D-715481581DF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{081053A3-5FE4-4D3A-956D-715481581DF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{081053A3-5FE4-4D3A-956D-715481581DF3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{081053A3-5FE4-4D3A-956D-715481581DF3}.Debug|x64.Build.0 = Debug|Any CPU
+		{081053A3-5FE4-4D3A-956D-715481581DF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{081053A3-5FE4-4D3A-956D-715481581DF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{081053A3-5FE4-4D3A-956D-715481581DF3}.Release|x64.ActiveCfg = Release|Any CPU
+		{081053A3-5FE4-4D3A-956D-715481581DF3}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

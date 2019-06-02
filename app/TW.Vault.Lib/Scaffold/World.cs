@@ -29,6 +29,7 @@ namespace TW.Vault.Scaffold
         public string Name { get; set; }
         public string Hostname { get; set; }
         public short DefaultTranslationId { get; set; }
+        public bool IsBeta { get; set; }
         
         public TranslationRegistry DefaultTranslation { get; set; }
         public WorldSettings WorldSettings { get; set; }

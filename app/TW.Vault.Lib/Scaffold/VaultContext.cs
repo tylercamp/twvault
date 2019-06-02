@@ -1336,6 +1336,10 @@ namespace TW.Vault.Scaffold
                     .IsRequired()
                     .HasColumnName("default_translation_id");
 
+                entity.Property(e => e.IsBeta)
+                    .IsRequired()
+                    .HasColumnName("is_beta");
+
                 entity.HasOne(e => e.DefaultTranslation)
                     .WithMany(e => e.DefaultWorlds)
                     .HasForeignKey(e => e.DefaultTranslationId)
