@@ -40,6 +40,12 @@ namespace TW.Vault.Manage
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.All,
+                RequireHeaderSymmetry = false
+            });
+
             app.UseDefaultFiles();
             app.UseStaticFiles();
             app.UseMvc();
