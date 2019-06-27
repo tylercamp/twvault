@@ -51,9 +51,16 @@ namespace TW.Vault.MapDataFetcher
             {
                 await InternalExecuteAsync(stoppingToken);
             }
+            catch (TaskCanceledException)
+            {
+
+            }
             catch (Exception e)
             {
                 logger.LogError(e, $"An exception occurred in {nameof(DataFetchingService)}, terminating");
+            }
+            finally
+            {
                 applicationLifetime.StopApplication();
             }
         }
@@ -87,76 +94,84 @@ namespace TW.Vault.MapDataFetcher
 
                         foreach (var job in jobs)
                         {
-                            logger.LogInformation("Running job for {world}/id={id}", job.WorldName, job.WorldId);
-                            String villageData, playerData, conquerData, tribeData;
-
-                            var currentWorldStats = new FetchWorldJobStats();
-                            pendingStats.StatsByWorld.Add(job.WorldName, currentWorldStats);
-
-                            if (job.NeedsRefresh)
+                            try
                             {
-                                logger.LogInformation("Fetching data from web...");
+                                logger.LogInformation("Running job for {world}/id={id}", job.WorldName, job.WorldId);
+                                String villageData, playerData, conquerData, tribeData;
 
-                                var villageRequest = await client.GetAsync(job.VillageDataUrl, stoppingToken);
-                                var playerRequest = await client.GetAsync(job.PlayerDataUrl, stoppingToken);
-                                var conquerRequest = await client.GetAsync(job.ConquerDataUrl, stoppingToken);
-                                var tribeRequest = await client.GetAsync(job.TribeDataUrl, stoppingToken);
+                                var currentWorldStats = new FetchWorldJobStats();
+                                pendingStats.StatsByWorld.Add(job.WorldName, currentWorldStats);
 
-                                if (stoppingToken.IsCancellationRequested)
-                                    break;
+                                if (job.NeedsRefresh)
+                                {
+                                    logger.LogInformation("Fetching data from web...");
 
-                                if (!villageRequest.IsSuccessStatusCode)
-                                    logger.LogError("GET request to {url} responded with {message} ({code})", job.VillageDataUrl, villageRequest.ReasonPhrase, villageRequest.StatusCode);
-                                if (!playerRequest.IsSuccessStatusCode)
-                                    logger.LogError("GET request to {url} responded with {message} ({code})", job.PlayerDataUrl, playerRequest.ReasonPhrase, playerRequest.StatusCode);
-                                if (!conquerRequest.IsSuccessStatusCode)
-                                    logger.LogError("GET request to {url} responded with {message} ({code})", job.ConquerDataUrl, conquerRequest.ReasonPhrase, conquerRequest.StatusCode);
-                                if (!tribeRequest.IsSuccessStatusCode)
-                                    logger.LogError("GET request to {url} responded with {message} ({code})", job.TribeDataUrl, tribeRequest.ReasonPhrase, tribeRequest.StatusCode);
+                                    var villageRequest = await client.GetAsync(job.VillageDataUrl, stoppingToken);
+                                    var playerRequest = await client.GetAsync(job.PlayerDataUrl, stoppingToken);
+                                    var conquerRequest = await client.GetAsync(job.ConquerDataUrl, stoppingToken);
+                                    var tribeRequest = await client.GetAsync(job.TribeDataUrl, stoppingToken);
 
-                                villageData = await villageRequest.Content.ReadAsStringAsync();
-                                playerData = await playerRequest.Content.ReadAsStringAsync();
-                                conquerData = await conquerRequest.Content.ReadAsStringAsync();
-                                tribeData = await tribeRequest.Content.ReadAsStringAsync();
+                                    if (stoppingToken.IsCancellationRequested)
+                                        break;
 
-                                if (stoppingToken.IsCancellationRequested)
-                                    break;
+                                    if (!villageRequest.IsSuccessStatusCode)
+                                        logger.LogError("GET request to {url} responded with {message} ({code})", job.VillageDataUrl, villageRequest.ReasonPhrase, villageRequest.StatusCode);
+                                    if (!playerRequest.IsSuccessStatusCode)
+                                        logger.LogError("GET request to {url} responded with {message} ({code})", job.PlayerDataUrl, playerRequest.ReasonPhrase, playerRequest.StatusCode);
+                                    if (!conquerRequest.IsSuccessStatusCode)
+                                        logger.LogError("GET request to {url} responded with {message} ({code})", job.ConquerDataUrl, conquerRequest.ReasonPhrase, conquerRequest.StatusCode);
+                                    if (!tribeRequest.IsSuccessStatusCode)
+                                        logger.LogError("GET request to {url} responded with {message} ({code})", job.TribeDataUrl, tribeRequest.ReasonPhrase, tribeRequest.StatusCode);
 
-                                await File.WriteAllTextAsync(job.VillageDataFilePath, villageData, stoppingToken);
-                                await File.WriteAllTextAsync(job.PlayerDataFilePath, playerData, stoppingToken);
-                                await File.WriteAllTextAsync(job.ConquerDataFilePath, conquerData, stoppingToken);
-                                await File.WriteAllTextAsync(job.TribeDataFilePath, tribeData, stoppingToken);
+                                    villageData = await villageRequest.Content.ReadAsStringAsync();
+                                    playerData = await playerRequest.Content.ReadAsStringAsync();
+                                    conquerData = await conquerRequest.Content.ReadAsStringAsync();
+                                    tribeData = await tribeRequest.Content.ReadAsStringAsync();
+
+                                    if (stoppingToken.IsCancellationRequested)
+                                        break;
+
+                                    await File.WriteAllTextAsync(job.VillageDataFilePath, villageData, stoppingToken);
+                                    await File.WriteAllTextAsync(job.PlayerDataFilePath, playerData, stoppingToken);
+                                    await File.WriteAllTextAsync(job.ConquerDataFilePath, conquerData, stoppingToken);
+                                    await File.WriteAllTextAsync(job.TribeDataFilePath, tribeData, stoppingToken);
+
+                                    if (stoppingToken.IsCancellationRequested)
+                                        break;
+                                }
+                                else
+                                {
+                                    logger.LogInformation("Loading from disk...");
+                                    villageData = await File.ReadAllTextAsync(job.VillageDataFilePath, stoppingToken);
+                                    playerData = await File.ReadAllTextAsync(job.PlayerDataFilePath, stoppingToken);
+                                    conquerData = await File.ReadAllTextAsync(job.ConquerDataFilePath, stoppingToken);
+                                    tribeData = await File.ReadAllTextAsync(job.TribeDataFilePath, stoppingToken);
+
+                                    if (stoppingToken.IsCancellationRequested)
+                                        break;
+                                }
+
+                                logger.LogInformation("Loaded data");
+
+                                var villageDataParts = villageData.Split('\n').Where(s => s.Length > 0);
+                                var playerDataParts = playerData.Split('\n').Where(s => s.Length > 0);
+                                var conquerDataParts = conquerData.Split('\n').Where(s => s.Length > 0);
+                                var tribeDataParts = tribeData.Split('\n').Where(s => s.Length > 0);
+
+                                logger.LogInformation("Uploading data to DB...");
+                                await UploadTribeData(job.WorldId, tribeDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
+                                await UploadPlayerData(job.WorldId, playerDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
+                                await UploadVillageData(job.WorldId, villageDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
+                                await UploadConquerData(job.WorldId, conquerDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
 
                                 if (stoppingToken.IsCancellationRequested)
                                     break;
                             }
-                            else
+                            catch (TaskCanceledException e) { }
+                            catch (Exception e)
                             {
-                                logger.LogInformation("Loading from disk...");
-                                villageData = await File.ReadAllTextAsync(job.VillageDataFilePath, stoppingToken);
-                                playerData = await File.ReadAllTextAsync(job.PlayerDataFilePath, stoppingToken);
-                                conquerData = await File.ReadAllTextAsync(job.ConquerDataFilePath, stoppingToken);
-                                tribeData = await File.ReadAllTextAsync(job.TribeDataFilePath, stoppingToken);
-
-                                if (stoppingToken.IsCancellationRequested)
-                                    break;
+                                logger.LogWarning("An exception occurred while processing for {world}/id={id}: {exception}", job.WorldName, job.WorldId, e);
                             }
-
-                            logger.LogInformation("Loaded data");
-
-                            var villageDataParts = villageData.Split('\n').Where(s => s.Length > 0);
-                            var playerDataParts = playerData.Split('\n').Where(s => s.Length > 0);
-                            var conquerDataParts = conquerData.Split('\n').Where(s => s.Length > 0);
-                            var tribeDataParts = tribeData.Split('\n').Where(s => s.Length > 0);
-
-                            logger.LogInformation("Uploading data to DB...");
-                            await UploadTribeData(job.WorldId, tribeDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
-                            await UploadPlayerData(job.WorldId, playerDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
-                            await UploadVillageData(job.WorldId, villageDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
-                            await UploadConquerData(job.WorldId, conquerDataParts, currentWorldStats, stoppingToken); if (stoppingToken.IsCancellationRequested) break;
-
-                            if (stoppingToken.IsCancellationRequested)
-                                break;
                         }
                     }
 
@@ -198,7 +213,7 @@ namespace TW.Vault.MapDataFetcher
                     X = short.Parse(p[2]),
                     Y = short.Parse(p[3]),
                     PlayerId = long.Parse(p[4]) == 0 ? null : (long?)long.Parse(p[4]),
-                    Points = int.Parse(p[5]),
+                    Points = short.Parse(p[5]),
                     Rank = int.Parse(p[6])
                 })
                 .Grouped(DataBatchSize)
@@ -237,6 +252,7 @@ namespace TW.Vault.MapDataFetcher
                         if (village.Y != entry.Y) village.Y = entry.Y;
                         if (village.PlayerId != entry.PlayerId) village.PlayerId = entry.PlayerId;
                         if (village.VillageRank != entry.Rank) village.VillageRank = entry.Rank;
+                        if (village.Points != entry.Points) village.Points = entry.Points;
 
                         if (!existingVillageIds.Contains(entry.VillageId))
                             context.Add(village);
