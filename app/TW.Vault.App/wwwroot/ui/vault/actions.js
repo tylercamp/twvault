@@ -60,22 +60,22 @@ function makeSuggestedActionsTab() {
                 .done((data) => {
                     console.log('Got suggestion data: ', data);
 
-                    let numAlerts =
-                        data.recaps.filter(_ => _.isNearby).length +
-                        data.snipes.length +
-                        data.uselessStacks.length +
-                        data.nobleTargets.length +
-                        data.stacks.length;
-
-                    self.$tabButton.text(self.$tabButton.text() + ' (' + numAlerts + ')');
-
-                    self.onLoaded && self.onLoaded(data, numAlerts);
-
                     recapsTab._init(recapsTab.$container, data.recaps);
                     snipesTab._init(snipesTab.$container, data.snipes);
                     stackTab._init(stackTab.$container, data.stacks);
                     nobleTab._init(nobleTab.$container, data.nobleTargets);
                     uselessStacksTab._init(uselessStacksTab.$container, data.uselessStacks);
+
+                    let numAlerts =
+                        data.recaps.filter(_ => _.isNearby).length +
+                        data.snipes.length +
+                        data.uselessStacks.length +
+                        nobleTab.getFilteredData().length +
+                        data.stacks.length;
+
+                    self.$tabButton.text(self.$tabButton.text() + ' (' + numAlerts + ')');
+
+                    self.onLoaded && self.onLoaded(data, numAlerts);
 
                     $container.find('table').css({
                         width: '100%'
@@ -252,46 +252,77 @@ function makeSuggestedActionsTab() {
     }
 
     function makeSuggestedNobleTargetsTab() {
+        var settings = lib.getLocalStorage('suggested-noble-settings', {
+            minPoints: 1500
+        });
+
+        let saveSettings = () => lib.setLocalStorage('suggested-noble-settings', settings);
+        let getFilteredData = () => currentData ? currentData.filter(d => d.points >= settings.minPoints) : []
+
+        var currentData = null;
+
+        function updateTable($table) {
+            let targets = getFilteredData();
+
+            this.$tabButton.html(this.label + ' (' + targets.length + ')');
+
+            $table.find('tr:not(:first-of-type)').remove();
+
+            if (!targets.length) {
+                $table.append(noDataRow(6, lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_NONE)));
+                return;
+            }
+
+            targets.forEach((target, i) => {
+                let rowClass = i % 2 ? 'row_b' : 'row_a';
+
+                $table.append(`
+                        <tr class="${rowClass}">
+                            <td>${makeVillageLink(target.villageName, target.villageId, target.x, target.y)}</td>
+                            <td>${target.points}</td>
+                            <td>${makePlayerLink(target.playerName, target.playerId)}</td>
+                            <td>${target.loyalty}</td>
+                            <td>${Math.roundTo(target.stationedDVs, 2)}</td>
+                            <td>${target.dVsSeenAt ? lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_DV_AGE, { duration: lib.formatDuration(target.dVsSeenAt) }) : '-'}</td >
+                        </tr>
+                    `.trim());
+            });
+        }
+
         return {
             containerId: 'vault-suggested-noble-targets-container',
             label: lib.translate(lib.itlcodes.TAB_NOBLE_TARGETS),
 
             _init: function ($container, data) {
-                if (data.length)
-                    this.$tabButton.html(this.label + ' (' + data.length + ')');
+                currentData = data;
 
                 let $table = $container.find('table');
 
-                if (!data.length) {
-                    $table.append(noDataRow(5, lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_NONE)));
-                    return;
-                }
+                let thisUpdateTable = updateTable.bind(this);
+                thisUpdateTable($table);
 
-                data.forEach((target, i) => {
-                    let rowClass = i % 2 ? 'row_b' : 'row_a';
+                var onUpdate = () => {
+                    saveSettings();
+                    thisUpdateTable($table);
+                };
 
-                    $table.append(`
-                        <tr class="${rowClass}">
-                            <td>${makeVillageLink(target.villageName, target.villageId, target.x, target.y)}</td>
-                            <td>${makePlayerLink(target.playerName, target.playerId)}</td>
-                            <td>${target.loyalty}</td>
-                            <td>${Math.roundTo(target.stationedDVs, 2)}</td>
-                            <td>${target.dVsSeenAt ? lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_DV_AGE, { duration: lib.formatDuration(target.dVsSeenAt) } ) : '-'}</td >
-                        </tr>
-                    `.trim());
-                });
+                uilib.syncProp($container.find('#vault-suggested-noble-targets-min-points'), settings, 'minPoints', onUpdate, uilib.propTransformers.int);
             },
 
-            // ACTIONS_NOBLE_TARGETS_STATIONED_DVS
-            // ACTIONS_NOBLE_TARGETS_DVS_SEEN_AT
-            // VILLAGE | OWNER | LOYALTY
+            getFilteredData: getFilteredData,
+
             getContent: `
                 <p>
                     ${lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_DESCRIPTION)}
                 </p>
+                <p>
+                    ${lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_MIN_POINTS)}
+                    <input type="text" id="vault-suggested-noble-targets-min-points" style="text-align: center; width: 3em">
+                </p>
                 <table class="vis">
                     <tr>
                         <th>${lib.translate(lib.itlcodes.VILLAGE)}</th>
+                        <th>${lib.translate(lib.itlcodes.POINTS)}</th>
                         <th>${lib.translate(lib.itlcodes.OWNER)}</th>
                         <th>${lib.translate(lib.itlcodes.LOYALTY)}</th>
                         <th>${lib.translate(lib.itlcodes.ACTIONS_NOBLE_TARGETS_STATIONED_DVS)}</th>

@@ -292,7 +292,7 @@ namespace TW.Vault.Controllers
                     from currentVillage in CurrentSets.CurrentVillage
                     join village in CurrentSets.Village on currentVillage.VillageId equals village.VillageId
                     where !CurrentSets.ActiveUser.Any(au => au.PlayerId == village.PlayerId)
-                    select new { X = village.X.Value, Y = village.Y.Value, village.VillageId, currentVillage.Loyalty, currentVillage.LoyaltyLastUpdated, currentVillage.ArmyStationed, village.PlayerId, VillageName = village.VillageName.UrlDecode(), PlayerName = village.Player.PlayerName.UrlDecode() }
+                    select new { X = village.X.Value, Y = village.Y.Value, village.VillageId, village.Points, currentVillage.Loyalty, currentVillage.LoyaltyLastUpdated, currentVillage.ArmyStationed, village.PlayerId, VillageName = village.VillageName.UrlDecode(), PlayerName = village.Player.PlayerName.UrlDecode() }
                 );
 
                 var villageMap = new Features.Spatial.Quadtree(villasWithNobles);
@@ -344,6 +344,7 @@ namespace TW.Vault.Controllers
                         t.Village.VillageName,
                         t.Village.PlayerId,
                         t.Village.PlayerName,
+                        t.Village.Points,
                         t.Loyalty,
                         t.StationedDVs,
                         t.DVsSeenAt,
