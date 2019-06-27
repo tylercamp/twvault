@@ -25,7 +25,9 @@ namespace TW.Vault.Features.Simulation
             { TroopType.Catapult,   75 }
         };
 
-        private static bool IsArmyEmpty(Army army) => army.Count == 0 || army.Values.All(c => c == 0);
+        private static bool IsArmyEmpty(Army army) => army == null || army.Count == 0 || army.Values.All(c => c == 0);
+
+        private static int MaxSimulationIterations = 75;
 
         public static int TotalAttackPower(Army attackingArmy) => attackingArmy.Count == 0 ? 0 : attackingArmy.Sum(kvp => kvp.Value * ArmyStats.AttackPower[kvp.Key]);
         public static int TotalAttackPower(Army attackingArmy, UnitType unitType)
@@ -52,11 +54,11 @@ namespace TW.Vault.Features.Simulation
             return result;
         }
 
-        public static int TotalDefensePower(Army defendingArmy) => defendingArmy.Count == 0 ? 0 : defendingArmy.Sum(kvp => kvp.Value * ArmyStats.DefensePower[kvp.Key].Total);
+        public static int TotalDefensePower(Army defendingArmy) => defendingArmy?.Count > 0 ? defendingArmy.Sum(kvp => kvp.Value * ArmyStats.DefensePower[kvp.Key].Total) : 0;
 
         public static int TotalDefensePower(Army defendingArmy, UnitType unitType)
         {
-            if (defendingArmy.Count == 0)
+            if (defendingArmy == null || defendingArmy.Count == 0)
                 return 0;
 
             int totalDefense = 0;
@@ -77,6 +79,8 @@ namespace TW.Vault.Features.Simulation
         public static UnitPower DefensePower(Army defendingArmy)
         {
             UnitPower result = new UnitPower();
+            if (defendingArmy == null)
+                return result;
 
             foreach (var kvp in defendingArmy)
             {
@@ -135,6 +139,8 @@ namespace TW.Vault.Features.Simulation
 
         public BattleResult SimulateAttackWithoutArchers(Army attackingArmy, Army defendingArmy, int wallLevel, int moralePercent = 100)
         {
+            defendingArmy = defendingArmy ?? new Army();
+
             float morale = moralePercent / 100.0f;
 
             int numRams = attackingArmy.GetValueOrDefault(TroopType.Ram, 0);
@@ -179,6 +185,8 @@ namespace TW.Vault.Features.Simulation
 
         public BattleResult SimulateAttackWithArchers(Army attackingArmy, Army defendingArmy, int wallLevel, int moralePercent = 100)
         {
+            defendingArmy = defendingArmy ?? new Army();
+
             var originalAttackingArmy = new Army(attackingArmy);
             var originalDefendingArmy = new Army(defendingArmy);
             float morale = moralePercent / 100.0f;
@@ -193,7 +201,7 @@ namespace TW.Vault.Features.Simulation
 
             var unitTypes = Enum.GetValues(typeof(UnitType)).Cast<UnitType>().ToArray();
 
-            while (!IsArmyEmpty(attackingArmy) && !IsArmyEmpty(defendingArmy))
+            for (int i = 0; i < MaxSimulationIterations && !IsArmyEmpty(attackingArmy) && !IsArmyEmpty(defendingArmy); i++)
             {
                 var attackPerTroopType = attackingArmy.ToDictionary(kvp => kvp.Key, kvp => morale * kvp.Value * ArmyStats.AttackPower[kvp.Key]);
                 var attackByUnitType = unitTypes.ToDictionary(t => t, t => morale * attackingArmy.Where(kvp => ArmyStats.UnitType[kvp.Key] == t).Sum((kvp) => kvp.Value * ArmyStats.AttackPower[kvp.Key]));
@@ -276,10 +284,11 @@ namespace TW.Vault.Features.Simulation
 
         public NukeEstimationResult EstimateRequiredNukes(Army defendingArmy, int wallLevel, bool useArchers, int moralePercent)
         {
+            defendingArmy = defendingArmy ?? new Army();
             var activeDefendingArmy = new Army(defendingArmy);
             int numNukes = 0;
             float lastNukeLossRatio = 0;
-            while (!IsArmyEmpty(activeDefendingArmy) && numNukes < 50)
+            for (int i = 0; i < MaxSimulationIterations && !IsArmyEmpty(activeDefendingArmy) && numNukes < 50; i++)
             {
                 var battleResult = SimulateAttack(DefaultNukeArmy, activeDefendingArmy, wallLevel, useArchers, moralePercent);
                 wallLevel = battleResult.NewWallLevel;

@@ -25,7 +25,7 @@ namespace TW.Vault.Model.Convert
 
         private static T JsonToArmy<T>(JSON.Army armyCounts, short worldId, T existingArmy = null, Scaffold.VaultContext context = null, bool emptyIfNull = false) where T : class, new()
         {
-            if (armyCounts == null)
+            if (Object.ReferenceEquals(armyCounts, null))
             {
                 if (emptyIfNull)
                 {
