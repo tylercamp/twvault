@@ -14,7 +14,7 @@ namespace TW.Vault.Security
         //  How often the interval will be changed
         private static readonly TimeSpan SwapInterval = TimeSpan.FromSeconds(5);
         //  How long the previous interval should be valid for (in case there's lag between requests)
-        private static readonly TimeSpan MaxIntervalLag = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan MaxIntervalLag = TimeSpan.FromSeconds(15);
 
         private static readonly uint SeedSalt = 0x8D760E23;
         
