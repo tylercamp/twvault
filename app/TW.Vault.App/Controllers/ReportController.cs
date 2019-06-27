@@ -233,12 +233,16 @@ namespace TW.Vault.Controllers
 
                 if (isDuplicate)
                 {
-                    context.IgnoredReport.Add(new IgnoredReport
+                    var isIgnored = await context.IgnoredReport.AnyAsync(r => r.ReportId == jsonReport.ReportId.Value);
+                    if (!isIgnored)
                     {
-                        AccessGroupId = CurrentAccessGroupId,
-                        ReportId = jsonReport.ReportId.Value,
-                        WorldId = CurrentWorldId
-                    });
+                        context.IgnoredReport.Add(new IgnoredReport
+                        {
+                            AccessGroupId = CurrentAccessGroupId,
+                            ReportId = jsonReport.ReportId.Value,
+                            WorldId = CurrentWorldId
+                        });
+                    }
                 }
                 else
                 {
