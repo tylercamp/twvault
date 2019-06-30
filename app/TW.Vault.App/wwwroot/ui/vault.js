@@ -60,7 +60,7 @@
         margin: 'auto',
         left: 0, right: 0,
         top: '100px',
-        'z-index': 999999999
+        'z-index': 9999
         });
 
     $uiContainer.find('th').css({

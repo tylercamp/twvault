@@ -171,13 +171,30 @@ function makeTranslationsTab() {
 
             $container.append($groupContainer);
 
+            UI.ToolTip('.vault-itl-tip', {
+                bodyHandler: function () {
+                    let $el = $(this);
+                    let id = $el.closest('tr').data('key-id');
+                    let key = translationKeys.filter(k => k.id == id)[0];
+                    return `
+                        <b>Note:</b>
+                        <span>${key.note}</span>
+                    `.trim();
+                }
+            });
+
             onLoaded && onLoaded();
         }
 
         function makeKeyEditor($container, key, registry, reference) {
+            let noteTip = '';
+            if (key.note) {
+                noteTip = `<a href="#" class="vault-itl-tip">(?)</a>`
+            }
+
             $container.append(`
                 <tr data-key-id="${key.id}" data-key-name="${key.name}">
-                    <td>${key.name}</td>
+                    <td>${key.name} ${noteTip}</td>
                     <td>
                         <textarea style="width:100%;margin:0" rows="2">${registry.entries[key.name] || ''}</textarea>
                     </td>

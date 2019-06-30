@@ -91,7 +91,7 @@ namespace TW.Vault.Controllers
 
         [HttpGet("translation-keys")]
         public IActionResult GetTranslationKeys() => Ok(
-            context.TranslationKey.Select(k => new { k.Id, k.Name, k.IsTwNative, k.Group }).ToList()
+            context.TranslationKey.Select(k => new { k.Id, k.Name, k.IsTwNative, k.Group, k.Note }).ToList()
         );
 
         [HttpGet("default/{serverName}")]

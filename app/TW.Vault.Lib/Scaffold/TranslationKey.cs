@@ -11,6 +11,7 @@ namespace TW.Vault.Scaffold
         public string Name { get; set; }
         public bool IsTwNative { get; set; }
         public String Group { get; set; }
+        public String Note { get; set; }
 
         public ICollection<TranslationEntry> TranslationEntries { get; set; }
         public ICollection<TranslationParameter> Parameters { get; set; }

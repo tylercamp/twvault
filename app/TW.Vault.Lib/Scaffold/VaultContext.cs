@@ -1065,6 +1065,7 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.Name).IsRequired().HasColumnName("name");
                 entity.Property(e => e.IsTwNative).HasDefaultValue(false).IsRequired().HasColumnName("is_tw_native");
                 entity.Property(e => e.Group).IsRequired().HasColumnName("group");
+                entity.Property(e => e.Note).HasDefaultValue(null).HasColumnName("note");
             });
 
             modelBuilder.Entity<TranslationLanguage>(entity =>

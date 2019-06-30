@@ -144,7 +144,7 @@ var lib = (() => {
                 .translate(lib.itlcodes.ORDERED_MONTHS)
                 .splitMany(',', ' ', '\n')
                 .filter(t => t.length > 0)
-                .map(m => m.trim())
+                .map(m => m.trim().toLowerCase())
                 ;
 
             var result;
@@ -153,132 +153,141 @@ var lib = (() => {
             let timeSeparators = [':', '.'];
             let dateSeparatorsStr = dateSeparators.map((s) => `\\${s}`).join('');
             let timeSeparatorsStr = timeSeparators.map((s) => `\\${s}`).join('');
-            let dateRegex = `(\\d+[${dateSeparatorsStr}]\\d+(?:[${dateSeparatorsStr}]\\d+)?)\\.?`;
-            let timeRegex = `(\\d+[${timeSeparatorsStr}]\\d+(?:[${timeSeparatorsStr}]\\d+)?(?:[${timeSeparatorsStr}]\\d+)?)`;
 
-            var serverDate = $doc_.find('#serverDate').text().split('/');
+            var serverDate = new Date(Timing.getCurrentServerTime());
+            serverDate = [
+                serverDate.getUTCDate(),
+                serverDate.getUTCMonth() + 1,
+                serverDate.getUTCFullYear()
+            ];
 
-            var match;
-            if (match = timeString.match(new RegExp(`${timeRegex} ${dateRegex}`))) {
-                //  Hour:Minute:Second:Ms Day/Month/Year
-                result = {
-                    time: match[1].splitMany(timeSeparators),
-                    date: match[2].splitMany(dateSeparators)
-                };
+            let paramPatterns = {
+                hour: '\\d+',
+                minute: '\\d+',
+                second: '\\d+',
+                millis: '\\d+',
+                day: '\\d+',
+                month: '\\d+',
+                monthName: `(?:${monthStrings.join('|')})`,
+                year: '\\d+'
+            };
 
-            } else if (match = timeString.match(new RegExp(`${dateRegex} ${timeRegex}`))) {
-                //  Day/Month/Year Hour:Minute:Second:Ms
-                result = {
-                    date: match[1].splitMany(dateSeparators),
-                    time: match[2].splitMany(timeSeparators)
-                };
-            //} else if (match = lib.namedMatch(lib.translate(lib.itlcodes.TIME_FULL_FORMAT, { _escaped: false }), {
-            //    month: `(?:${monthStrings.join('|')})`,
-            //    day: `\d+`,
-            //    year: `(?:\d+)?`,
-            //    hour: `\d+`,
-            //    minute: `\d+`,
-            //    second: `\d+`,
-            //    millis: `\d+`
-            //}, timeString)) {
-            //    var monthName = match.month;
-            //    var month = (monthStrings.indexOf(monthName.toLowerCase()) + 1).toString();
-            //    result = {
-            //        date: [match.day, month, match.year || serverDate[2]],
-            //        time: [match.hour, match.minute, match.second, match.millis]
-            //    };
-            } else if (match = timeString.match(new RegExp(`((?:${monthStrings.join('|')}))\\.?\\s+(\\d+),\\s*(?:(\\d+)\\s+)?${timeRegex}`, 'i'))) {
-                //  (Mon.) Day, Year Hour:Minute:Second:Ms
-                var monthName = match[1];
-                var day = match[2];
-                var year = match[3] || serverDate[2];
-                var month = (monthStrings.indexOf(monthName.toLowerCase()) + 1).toString();
+            var extraDateFormats = lib.translate(lib.itlcodes.TIME_EXTRA_DATE_FORMATS).split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var extraTimeFormats = lib.translate(lib.itlcodes.TIME_EXTRA_TIME_FORMATS).split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-                result = {
-                    date: [day, month, year],
-                    time: match[4].splitMany(timeSeparators)
-                };
+            var extraFullFormats = lib.hasTranslation(lib.itlcodes.TIME_EXTRA_FULL_FORMATS)
+                ? lib.translate(lib.itlcodes.TIME_EXTRA_FULL_FORMATS).split('\n').map(l => l.trim()).filter(l => l.length > 0)
+                : [];
 
-            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_TODAY_AT, { time: timeRegex, _escaped: false })))) {
-                // TIME_TODAY_AT
-                // today at (Hours:Minute:Second:Ms)
-                result = {
-                    date: serverDate,
-                    time: match[1].splitMany(timeSeparators)
+            let extraDateTimePermutations = extraDateFormats.map(d => extraTimeFormats.map(t => ({ date: d, time: t }))).flat();
+
+            function firstFormatMatch(formatStrings) {
+                for (let i = 0; i < formatStrings.length; i++) {
+                    let match = lib.namedMatch(timeString, formatStrings[i], paramPatterns);
+                    if (match) return match;
                 }
+                return null;
+            }
 
-            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_TOMORROW_AT, { time: timeRegex, _escaped: false })))) {
-                // TIME_TOMORROW_AT
-                // tomorrow at (Hours:Minute:Second:Ms)
-                result = {
-                    date: [
-                        (parseInt(serverDate[0]) + 1).toString(),
-                        (parseInt(serverDate[1])).toString(),
-                        serverDate[2]
-                    ],
-                    time: match[1].splitMany(timeSeparators)
-                };
+            function matchTimeDateFormat() {
+                const format = '{time} {date}';
+                let variants = extraDateTimePermutations.map(p => lib.namedReplace(format, p));
+                return firstFormatMatch(variants);
+            }
 
-            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_ON, { time: timeRegex, date: dateRegex, _escaped: false })))) {
-                // TIME_ON
+            function matchDateTimeFormat() {
+                const format = '{date} {time}';
+                let variants = extraDateTimePermutations.map(p => lib.namedReplace(format, p));
+                return firstFormatMatch(variants);
+            }
+
+            function matchLocaleTodayFormat() {
+                let todayPermutations = extraTimeFormats.map(t => lib.translate(lib.itlcodes.TIME_TODAY_AT, { time: t, _escaped: false }));
+                let match = firstFormatMatch(todayPermutations);
+                if (match) {
+                    match = {
+                        ...match,
+                        day: serverDate[0],
+                        month: serverDate[1],
+                        year: serverDate[2]
+                    }
+                }
+                return match;
+            }
+
+            function matchLocaleTomorrowFormat() {
+                let tomorrowPermutations = extraTimeFormats.map(t => lib.translate(lib.itlcodes.TIME_TOMORROW_AT, { time: t, _escaped: false }));
+                let match = firstFormatMatch(tomorrowPermutations);
+                if (match) {
+                    match = {
+                        ...match,
+                        day: serverDate[0] + 1,
+                        month: serverDate[1],
+                        year: serverDate[2]
+                    }
+                }
+                return match;
+            }
+
+            function matchLocaleExactFormat() {
+                let exactPermutations = extraFullFormats.slice();
+                exactPermutations.push(...extraDateTimePermutations.map(p => lib.translate(lib.itlcodes.TIME_ON, { time: p.time, date: p.date, _escaped: false })));
+                exactPermutations.push(...extraDateTimePermutations.map(p => lib.translate(lib.itlcodes.TIME_ON_AT, { time: p.time, date: p.date, _escaped: false })));
+                return firstFormatMatch(exactPermutations);
+            }
+
+            let matchers = [
+                matchTimeDateFormat,
+                matchDateTimeFormat,
+                matchLocaleTodayFormat,
+                matchLocaleTomorrowFormat,
+                matchLocaleExactFormat
+            ];
+
+            var match = null;
+            matchers.forEach((m) => {
+                if (!match)
+                    match = m();
+            });
+
+            if (match == null) {
+                debugger;
+                console.warn('Unable to parse datetime string: ', timeString);
+                return null;
+            }
+
+            /*
                 // (Hours:Minutes:Seconds:Ms) on (Day/Month/Year)
                 result = {
                     date: match[2].splitMany(dateSeparators),
                     time: match[1].splitMany(timeSeparators)
                 };
+            */
 
-                //  TODO - Update this one
-            } else if (match = timeString.match(new RegExp(lib.translate(lib.itlcodes.TIME_ON_AT, { _escaped: false, date: String.raw`(\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)`, time: String.raw`(\d+:\d+:\d+:\d+)` })))) {
-                //  /on (\d+[\/\.]\d+(?:[\/\.](?:\d+)?)?)\s+at\s+(\d+:\d+:\d+:\d+)/
-                // TIME_ON_AT
-                // on (Day/Month/Year) at (Hours:Minute:Second:Ms)
-                result = {
-                    date: match[1].splitMany(dateSeparators),
-                    time: match[2].splitMany(timeSeparators)
-                };
-                
-                if (!result.date[2]) {
-                    result.date[2] = serverDate[2];
-                }
-
-            } else {
-                result = null;
+            if (match.year && match.year.length == 2) {
+                match.year = '20' + match.year;
             }
 
-            if (result == null) {
-                console.warn('Unable to parse datetime string: ', timeString);
-                return null;
+            if (match.monthName && monthStrings.indexOf(match.monthName.toLowerCase()) >= 0) {
+                match.month = monthStrings.indexOf(match.monthName.toLowerCase()) + 1;
+                delete match.monthName;
             }
 
-            if (result.date[2] && result.date[2].length == 2) {
-                result.date[2] = '20' + result.date[2];
+            Object.keys(match).forEach((k) => typeof match[k] != 'number' ? match[k] = parseInt(match[k]) : null);
+
+            var result = {
+                date: [
+                    match.day,
+                    match.month,
+                    match.year || parseInt(serverDate[2])
+                ],
+                time: [
+                    match.hour,
+                    match.minute,
+                    match.second || 0,
+                    match.millis || 0
+                ]
             }
-
-            result.date.forEach((val, i) => result.date[i] = parseInt(val));
-            result.time.forEach((val, i) => result.time[i] = parseInt(val));
-
-            // Reorder date parts based on translated order
-            let dateOrder = lib.translate(lib.itlcodes.TIME_NUMERIC_DATE, { _verbatim: true });
-            let dateParts = (() => {
-                const paramRegex = /\{(\w+)\}/g
-                let match, result = [];
-                while (match = paramRegex.exec(dateOrder)) {
-                    result.push(match[1]);
-                }
-                return result;
-            })();
-
-            result.date = (() => {
-                let newDate = [];
-                newDate.push(result.date[dateParts.indexOf('day')]);
-                newDate.push(result.date[dateParts.indexOf('month')]);
-                newDate.push(result.date[dateParts.indexOf('year')]);
-                return newDate;
-            })();
-
-            result.date[2] = result.date[2] || parseInt(serverDate[2]);
-            result.time[2] = result.time[2] || 0;
-            result.time[3] = result.time[3] || 0;
 
             if (separated_) {
                 return result;
@@ -321,27 +330,17 @@ var lib = (() => {
             let numDays = duration;
 
             let nonZeroParts = [];
-            // TIME_DAY_SHORT
             if (numDays) nonZeroParts.push([numDays, lib.translate(lib.itlcodes.TIME_DAY_SHORT)]);
-            // TIME_HOUR_SHORT
             if (numHours) nonZeroParts.push([numHours, lib.translate(lib.itlcodes.TIME_HOUR_SHORT)]);
-            // TIME_MINUTE_SHORT
             if (numMinutes) nonZeroParts.push([numMinutes, lib.translate(lib.itlcodes.TIME_MINUTE_SHORT)]);
-            // TIME_SECOND_SHORT
             if (numSeconds) nonZeroParts.push([numSeconds, lib.translate(lib.itlcodes.TIME_SECOND_SHORT)]);
 
             if (nonZeroParts.length > 2)
                 nonZeroParts = nonZeroParts.slice(0, 2);
-
-            // TIME_NOW
+            
             if (nonZeroParts.length == 0)
                 return lib.translate(lib.itlcodes.TIME_NOW);
-
-            // TIME_DAY_PLURAL_SHORT
-            // TIME_HOUR_PLURAL_SHORT
-            // TIME_MINUTE_PLURAL_SHORT
-            // TIME_SECOND_PLURAL_SHORT
-
+            
             let singularToPlural = {};
             singularToPlural[lib.translate(lib.itlcodes.TIME_DAY_SHORT)] = lib.translate(lib.itlcodes.TIME_DAY_PLURAL_SHORT);
             singularToPlural[lib.translate(lib.itlcodes.TIME_HOUR_SHORT)] = lib.translate(lib.itlcodes.TIME_HOUR_PLURAL_SHORT);
@@ -470,6 +469,12 @@ var lib = (() => {
             };
         },
 
+        hasTranslation: function (key) {
+            if (currentTranslation == null)
+                throw "No translation loaded";
+            return !!currentTranslation.entries[key];
+        },
+
         translate: function (key, params_, breakNewlines_) {
             if (currentTranslation == null)
                 throw "No translation loaded";
@@ -536,6 +541,48 @@ var lib = (() => {
 
                 return result;
             }
+        },
+
+        // Takes a template string of format "{param-1} {param-2} ...", replaces the parameter entries
+        // with regex patterns from 'paramPatterns', and returns a regex match against the given string.
+        // Result is an object with matching parameter names containing the matched items. Meant to be used
+        // multiple times with the same string/paramPatterns but different templates, returning a consistent
+        // set of results that can be consistently accessed.
+        namedMatch: function namedMatch(string, template, paramPatterns) {
+
+            var specialChars = ['\\', '.', '(', ')', '[', ']', '+', '?'];
+            specialChars.forEach((c) => {
+                template = template.replace(new RegExp('\\' + c, 'g'), '\\' + c);
+            });
+
+            template = template.replace(/\s+/g, '\\s+');
+
+            let acceptedGroups = Object.keys(paramPatterns).map(group => {
+                return {
+                    group: group,
+                    pattern: paramPatterns[group],
+                    index: template.indexOf(`{${group}}`)
+                };
+            });
+
+            acceptedGroups = acceptedGroups.filter(g => g.index >= 0);
+            acceptedGroups.sort((a, b) => a.index - b.index);
+
+            let regexSpec = template;
+            acceptedGroups.forEach((g) => regexSpec = regexSpec.replace(`{${g.group}}`, `(${g.pattern})`));
+            let regex = new RegExp(regexSpec, 'i')
+
+            var match = regex.exec(string);
+            var result = null;
+            if (match) {
+                result = {};
+                for (let i = 1; i < match.length; i++) {
+                    let group = acceptedGroups[i - 1];
+                    result[group.group] = match[i];
+                }
+            }
+
+            return result;
         },
 
         isUnloading: function () {
@@ -1130,31 +1177,9 @@ var lib = (() => {
             }
         },
 
-        // Given some pattern ie `\s*{name}\s*` and an object groupPatterns ie { name: `\w+` }, returns a corresponding
-        // object with the same member names, corresponding to the appropriately-matched values in the string "operand"
-        namedMatch: function namedRegexMatch(pattern, groupPatterns, operand) {
-            var orderedGroupNames = [];
-            var groupNamePattern = /\{(\w+)\}/gm;
-            var match;
-            while (match = groupNamePattern.exec(pattern))
-                orderedGroupNames.push(match[1]);
-
-            orderedGroupNames.forEach(name => {
-                if (!groupPatterns[name])
-                    throw 'No pattern exists for group named ' + name;
-                pattern = pattern.replace(`{${name}}`, `(${groupPatterns[name]})`);
-            });
-
-            match = new RegExp(pattern).exec(operand);
-            if (!match) {
-                return null;
-            } else {
-                let result = {};
-                orderedGroupNames.forEach((name, i) => {
-                    result[name] = match[i + 1];
-                });
-                return result;
-            }
+        namedReplace: function namedStringReplace(string, replacements) {
+            Object.keys(replacements).forEach((key) => string = string.replace(`{${key}}`, replacements[key]));
+            return string;
         },
 
         // Binds all functions in the object to the object itself
