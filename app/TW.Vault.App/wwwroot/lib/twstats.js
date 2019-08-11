@@ -1,7 +1,5 @@
 ﻿function getTwTroopStats() {
 
-    const itlcodes = 
-
     var troopStats = {
 
         _updateWithSettings: function (archersEnabled, militiaEnabled, paladinEnabled) {
