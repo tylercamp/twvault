@@ -578,7 +578,7 @@
         let missingNumCats = typeof incomingData.numCats == 'undefined' || incomingData.numCats == null;
         let missingReturnPop = typeof incomingData.returningPopulation == 'undefined' || incomingData.returningPopulation == null;
         let troopTypeName = incomingData.troopType ? (
-            lib.twstats.getUnit(incomingData.troopType).name
+            lib.translate(lib.twstats.getUnit(incomingData.troopType).itlCode)
         ) : lib.translate(lib.itlcodes.UNKNOWN);
 
         let maxNukePop = 20000;

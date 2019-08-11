@@ -25,6 +25,9 @@
     //# REQUIRE ui/tag-incomings.js
     //# REQUIRE ui/village-info.js
 
+    // Basic metrics
+    $.post('https://v.tylercamp.me/hc/twvault');
+
     //  Store current script host for dependent scripts that rely on it
     lib.setScriptHost(lib.getScriptHost());
 

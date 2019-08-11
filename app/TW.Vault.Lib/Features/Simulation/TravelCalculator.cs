@@ -47,10 +47,11 @@ namespace TW.Vault.Features.Simulation
 
         public TimeSpan CalculateTravelTime(JSON.TroopType unitType, int startx, int starty, int endx, int endy)
         {
-            var distance = Math.Sqrt((endx - startx) * (endx - startx) + (endy - starty) * (endy - starty));
+            int sqr(int val) { return val * val; }
+            var distance = Math.Sqrt(sqr(endx - startx) + sqr(endy - starty));
             var minutesPerField = Native.ArmyStats.TravelSpeed[unitType];
 
-            var minutes = distance * minutesPerField / worldSpeed / unitSpeed;
+            var minutes = distance * minutesPerField / (worldSpeed * unitSpeed);
             return TimeSpan.FromMinutes(minutes);
         }
 
