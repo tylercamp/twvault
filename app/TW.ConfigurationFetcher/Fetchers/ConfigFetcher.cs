@@ -44,7 +44,8 @@ namespace TW.ConfigurationFetcher.Fetcher
                     PaladinSkillsEnabled = xml.Get<int, bool>("/config/game/knight", i => i > 1),
                     PaladinItemsEnabled = xml.Get<int, bool>("/config/game/knight_new_items", i => i > 0),
                     UnitSpeed = xml.Get<decimal>("/config/unit_speed"),
-                    WatchtowerEnabled = xml.Get<int, bool>("/config/game/watchtower", i => i > 0)
+                    WatchtowerEnabled = xml.Get<int, bool>("/config/game/watchtower", i => i > 0),
+                    TimeZoneId = "Europe/London"
                 };
 
                 context.Add(world.WorldSettings);

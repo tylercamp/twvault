@@ -7,9 +7,18 @@ using System.Text.RegularExpressions;
 using TW.ConfigurationFetcher.Fetcher;
 using TW.Vault.Scaffold;
 using TW.Vault;
+using ShellProgressBar;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace TW.ConfigurationFetcher
 {
+    struct LocaleSettings
+    {
+        public short DefaultTranslationId { get; set; }
+        public String TimeZoneId { get; set; }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -22,31 +31,8 @@ namespace TW.ConfigurationFetcher
             }
 
             var connectionString = args[0];
-            var worlds = args.Skip(1).Select(a => a.ToLower()).Where(a => !a.StartsWith("-")).ToArray();
 
-#if DEBUG
-            if (worlds.Length == 0)
-                worlds = new[] { "en100.tribalwars.net" };
-#endif
-
-            if (worlds.Length == 0)
-            {
-                Console.WriteLine("No server worlds specified");
-                Environment.ExitCode = 1;
-                return;
-            }
-
-            var invalidHostnames = worlds.Where(h => !Regex.IsMatch(h, @"^\w+\.\w+\.\w+$")).ToList();
-            if (invalidHostnames.Any())
-            {
-                Console.WriteLine("Invalid worlds were given, they should be e.g. en100.tribalwars.net");
-                foreach (var hostname in invalidHostnames)
-                    Console.WriteLine("- {0}", hostname);
-                Environment.ExitCode = 1;
-                return;
-            }
-
-            var deleteOldWorlds = args.Contains("-clean");
+            var deleteOldWorlds = args.Contains("-clean") || true;
             Console.WriteLine("deleteOldWorlds ('-clean'): " + deleteOldWorlds);
 
             var vaultContext = new VaultContext(
@@ -67,17 +53,46 @@ namespace TW.ConfigurationFetcher
                 AllowAutoRedirect = false
             });
 
+            String HostFor(String hostname) => String.Join('.', hostname.Split('.').Skip(1)).ToLower();
+            String HostOf(World world) => HostFor(world.Hostname);
+
             using (vaultContext)
             using (httpClient)
             {
-                Console.WriteLine("Creating and pulling new worlds...");
-                foreach (var hostname in worlds)
-                {
-                    var world = vaultContext.World
-                        .Include(w => w.WorldSettings)
-                        .Where(w => w.Hostname == hostname)
-                        .FirstOrDefault();
+                var worlds = vaultContext.World.Include(w => w.WorldSettings).ToList();
+                var hosts = worlds.Select(HostOf).Distinct().ToList();
 
+                var hostLocales = hosts.ToDictionary(h => h, h =>
+                {
+                    var matchedWorlds = worlds.Where(w => HostOf(w) == h).ToList();
+                    var distinctLocales = matchedWorlds
+                        .Select(w => new LocaleSettings { DefaultTranslationId = w.DefaultTranslationId, TimeZoneId = w.WorldSettings.TimeZoneId })
+                        .Distinct()
+                        .ToList();
+
+                    if (distinctLocales.Count > 1)
+                        throw new Exception($"Expected one time zone for host {h}, got {distinctLocales.Count}");
+
+                    return distinctLocales.First();
+                });
+
+                var activeWorldRegex = new Regex("\"https?\\:\\/\\/([^\"]+)\"");
+                var hostActiveWorlds = new Dictionary<String, List<String>>();
+                foreach (var host in hosts)
+                {
+                    Console.WriteLine("Fetching active servers for {0}...", host);
+                    var serverListUrl = $"http://www.{host}/backend/get_servers.php";
+                    var response = httpClient.GetStringAsync(serverListUrl).Result;
+                    var activeWorldMatches = activeWorldRegex.Matches(response);
+                    hostActiveWorlds.Add(host, activeWorldMatches.Select(m => m.Groups[1].Value).ToList());
+                }
+
+                var allWorldHostnames = hostActiveWorlds.SelectMany(kvp => kvp.Value).ToList();
+
+                Console.WriteLine("Creating and pulling new worlds...");
+                foreach (var hostname in allWorldHostnames)
+                {
+                    var world = worlds.Where(w => w.Hostname == hostname).FirstOrDefault();
                     if (world == null)
                     {
                         world = new World
@@ -85,17 +100,19 @@ namespace TW.ConfigurationFetcher
                             Name = hostname.Split('.')[0],
                             Hostname = hostname,
                             // TODO - Auto-pull translation IDs based on language and assigned server type
-                            DefaultTranslationId = 1
+                            DefaultTranslationId = hostLocales[HostFor(hostname)].DefaultTranslationId
                         };
                         vaultContext.Add(world);
                         vaultContext.SaveChanges();
                     }
 
-                    Console.WriteLine("Pulling for world {0}...", hostname);
+                    var pendingFetchers = fetchers.Where(f => f.NeedsUpdate(world)).ToList();
+                    if (pendingFetchers.Count > 0)
+                        Console.WriteLine("Pulling for world {0}...", world.Hostname);
 
-                    var baseUrl = $"https://{hostname}";
+                    var baseUrl = $"https://{world.Hostname}";
 
-                    foreach (var fetcher in fetchers.Where(f => f.NeedsUpdate(world)))
+                    foreach (var fetcher in pendingFetchers)
                     {
                         var url = $"{baseUrl}{fetcher.Endpoint}";
                         Console.Write("Fetching {0} ... ", url); Console.Out.Flush();
@@ -103,7 +120,7 @@ namespace TW.ConfigurationFetcher
                         var response = httpClient.GetAsync(url).Result;
                         if ((int)response.StatusCode >= 300 && (int)response.StatusCode < 400)
                         {
-                            Console.WriteLine("Warning: server {0} seems to have ended (redirection occurred)", hostname);
+                            Console.WriteLine("Warning: server {0} seems to have ended (redirection occurred)", world.Hostname);
                             break;
                         }
                         
@@ -121,41 +138,62 @@ namespace TW.ConfigurationFetcher
 
                         Console.WriteLine("Done.");
                     }
+
+                    var worldSettings = vaultContext.WorldSettings.Where(s => s.WorldId == world.Id).First();
+                    worldSettings.TimeZoneId = hostLocales[HostFor(hostname)].TimeZoneId;
+                    vaultContext.SaveChanges();
                 }
 
                 if (deleteOldWorlds)
                 {
                     Console.WriteLine("Cleaning old world data...");
-                    var oldWorlds = vaultContext.World.Where(w => !worlds.Contains(w.Hostname)).Include(w => w.WorldSettings).ToList();
+                    var oldWorlds = vaultContext.World.Where(w => !allWorldHostnames.Contains(w.Hostname)).Include(w => w.WorldSettings).ToList();
                     Console.WriteLine("Found {0} old worlds to be cleaned:", oldWorlds.Count);
                     foreach (var w in oldWorlds)
                         Console.WriteLine("- " + w.Hostname);
 
+                    Console.ReadLine();
+
                     foreach (var w in oldWorlds)
                     {
-                        Console.WriteLine("Deleting data for {0}...", w.Hostname);
-                        
-                        DeleteBatched(vaultContext, vaultContext.UserUploadHistory.Include(h => h.U).Where(h => h.U.WorldId == w.Id));
-                        DeleteBatched(vaultContext, vaultContext.User.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.UserLog.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.Command.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.CurrentBuilding.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.CurrentVillage.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.CurrentVillageSupport.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.CurrentArmy.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.CommandArmy.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.CurrentPlayer.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.EnemyTribe.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.IgnoredReport.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.Report.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.ReportArmy.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.ReportBuilding.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.Transaction.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.Village.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.Player.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.Ally.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.Conquer.FromWorld(w.Id));
-                        DeleteBatched(vaultContext, vaultContext.AccessGroup.Where(g => g.WorldId == w.Id));
+                        List<Action<IProgressBar>> jobs = new List<Action<IProgressBar>>();
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.UserUploadHistory.Include(h => h.U).Where(h => h.U.WorldId == w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.User.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.UserLog.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Command.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentBuilding.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentVillage.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentVillageSupport.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentArmy.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CommandArmy.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentPlayer.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.EnemyTribe.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.IgnoredReport.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Report.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.ReportArmy.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.ReportBuilding.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Transaction.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Village.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Player.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Ally.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Conquer.FromWorld(w.Id)));
+                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.AccessGroup.Where(g => g.WorldId == w.Id)));
+
+                        var numJobsDone = 0;
+                        String JobsProgressMessage() => $"Deleting data for {w.Hostname} (id={w.Id}) ({numJobsDone}/{jobs.Count} done)";
+
+                        using (var dataProgressBar = new ProgressBar(jobs.Count, JobsProgressMessage()))
+                        {
+                            
+                            foreach (var job in jobs)
+                            {
+                                using (var jobProgressBar = dataProgressBar.Spawn(1, ""))
+                                    job(jobProgressBar);
+
+                                numJobsDone++;
+                                dataProgressBar.Tick(JobsProgressMessage());
+                            }
+                        }
 
                         Console.WriteLine("Deleting world settings...");
                         vaultContext.Remove(w.WorldSettings);
@@ -170,45 +208,54 @@ namespace TW.ConfigurationFetcher
                 }
             }
 
+            vaultContext.Dispose();
+
             Console.WriteLine("FINISHED.");
             Console.ReadLine();
         }
 
-        private static void DeleteBatched<T>(VaultContext context, IQueryable<T> query)
+        private static void DeleteBatched<T>(VaultContext context, IProgressBar progressBar, IQueryable<T> query) where T : class
         {
-            var batchSize = 1000;
+            var batchSize = 50;
             var didDelete = true;
 
             var numDeleted = 0;
 
             var numTotal = query.Count();
-            Console.Write("Deleting {0} entries of type {1}... ", numTotal, typeof(T).Name); Console.Out.Flush();
 
-            var lastOutputCount = 0;
+            String ProgressMessage() => $"Deleting {numTotal} entries of type {typeof(T).Name}... ({numDeleted}/{numTotal} done)";
+            progressBar.Message = ProgressMessage();
+
+            if (numTotal == 0)
+            {
+                progressBar.Tick(progressBar.MaxTicks);
+                return;
+            }
+
+            progressBar.MaxTicks = numTotal;
 
             do
             {
                 var batch = query.Take(batchSize).ToList();
                 if (batch.Any())
                 {
-                    context.Remove(batch);
-                    context.SaveChangesAsync();
+                    context.RemoveRange(batch);
+                    context.SaveChanges();
                     numDeleted += batch.Count;
 
-                    // Write progress every 20% or so
-                    if ((numDeleted - lastOutputCount) / (float)numTotal > 0.2f)
+                    if (numDeleted > numTotal)
                     {
-                        lastOutputCount = numDeleted;
-                        Console.Write("{0}%... ", numDeleted * 100 / numTotal); Console.Out.Flush();
+                        numTotal = query.Count();
+                        progressBar.MaxTicks = numTotal;
                     }
+
+                    progressBar.Tick(numDeleted, ProgressMessage());
                 }
                 else
                 {
                     didDelete = false;
                 }
             } while (didDelete);
-
-            Console.WriteLine("Done.");
         }
     }
 }
