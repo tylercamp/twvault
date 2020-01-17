@@ -119,7 +119,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> SetUserFinishedReportUploads()
         {
             var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
-            history.LastUploadedReportsAt = DateTime.UtcNow;
+            history.LastUploadedReportsAt = CurrentServerTime;
             await context.SaveChangesAsync();
             return Ok();
         }
@@ -154,7 +154,7 @@ namespace TW.Vault.Controllers
             await context.SaveChangesAsync();
 
             var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
-            history.LastUploadedReportsAt = DateTime.UtcNow;
+            history.LastUploadedReportsAt = CurrentServerTime;
             await context.SaveChangesAsync();
 
             return Ok();
@@ -301,7 +301,7 @@ namespace TW.Vault.Controllers
                                 command.WorldId = CurrentWorldId;
                                 command.AccessGroupId = CurrentAccessGroupId;
                                 command.IsReturning = true;
-                                command.FirstSeenAt = DateTime.UtcNow;
+                                command.FirstSeenAt = CurrentServerTime;
                                 command.IsAttack = true;
                                 command.SourcePlayerId = jsonReport.AttackingPlayerId.Value;
                                 command.TargetPlayerId = jsonReport.DefendingPlayerId;
@@ -389,7 +389,7 @@ namespace TW.Vault.Controllers
                 //  Run upload history update in separate query to prevent creating multiple history
                 //  entries
                 var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
-                userUploadHistory.LastUploadedReportsAt = DateTime.UtcNow;
+                userUploadHistory.LastUploadedReportsAt = CurrentServerTime;
                 await context.SaveChangesAsync();
 
                 return Ok();

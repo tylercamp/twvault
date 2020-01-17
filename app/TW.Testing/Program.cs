@@ -27,8 +27,8 @@ namespace TW.Testing
             //    TestHighScores();
 
             //DoSomeQuery();
-            //TestTravelTime();
-            CleanDuplicateReports();
+            TestTravelTime();
+            //CleanDuplicateReports();
 
             Console.ReadLine();
         }
@@ -241,6 +241,16 @@ namespace TW.Testing
             var calculator = new TravelCalculator(1.0f, 1.0f);
             var start = new Village { X = 200, Y = 200 };
             var end = new Village { X = 210, Y = 220 };
+
+            var start2 = new Village { X = 541, Y = 533 };
+            var end2 = new Village { X = 494, Y = 533 };
+
+            var calc2 = new TravelCalculator(1.3f, 0.7f);
+            var extraTime = calc2.EstimateTroopType(
+                TimeSpan.FromSeconds(74804),
+                start2,
+                end2
+            );
 
             var troopsWithTimes = Enum.GetValues(typeof(TroopType)).Cast<TroopType>().Where(t => t != TroopType.Militia).ToDictionary(t => t, t => calculator.CalculateTravelTime(t, start, end));
 

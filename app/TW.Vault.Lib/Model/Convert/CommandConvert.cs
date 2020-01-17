@@ -8,13 +8,13 @@ namespace TW.Vault.Model.Convert
 {
     public static class CommandConvert
     {
-        public static Scaffold.Command ToModel(this JSON.Command command, short worldId, int accessGroupId, Scaffold.Command existingCommand, Scaffold.VaultContext context = null) =>
-            JsonToModel(command, worldId, accessGroupId, existingCommand, context);
+        public static Scaffold.Command ToModel(this JSON.Command command, short worldId, int accessGroupId, Scaffold.Command existingCommand, DateTime currentTime, Scaffold.VaultContext context = null) =>
+            JsonToModel(command, worldId, accessGroupId, existingCommand, currentTime, context);
 
         public static JSON.Command ToJson(this Scaffold.Command command) =>
             ModelToJson(command);
 
-        public static Scaffold.Command JsonToModel(JSON.Command command, short worldId, int accessGroupId, Scaffold.Command existingCommand, Scaffold.VaultContext context = null)
+        public static Scaffold.Command JsonToModel(JSON.Command command, short worldId, int accessGroupId, Scaffold.Command existingCommand, DateTime currentTime, Scaffold.VaultContext context = null)
         {
             if (command == null)
             {
@@ -46,7 +46,7 @@ namespace TW.Vault.Model.Convert
             result.TargetPlayerId   = command.TargetPlayerId;
             result.TargetVillageId  = command.TargetVillageId.Value;
             result.LandsAt          = command.LandsAt.Value;
-            result.FirstSeenAt      = result.FirstSeenAt == DateTime.MinValue ? DateTime.UtcNow : result.FirstSeenAt;
+            result.FirstSeenAt      = result.FirstSeenAt == DateTime.MinValue ? currentTime : result.FirstSeenAt;
             result.IsAttack         = command.CommandType == JSON.CommandType.Attack;
             result.IsReturning      = command.IsReturning.Value;
 

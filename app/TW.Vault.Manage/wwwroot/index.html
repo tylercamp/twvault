@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <title></title>
     <style>
+        html {
+            font-family: Helvetica, sans-serif;
+        }
+
         #container {
             max-width: 800px;
             margin: 3em auto;
@@ -45,6 +49,11 @@
 
         #description > p {
             font-size: 1.2em;
+        }
+
+        .donate {
+            margin-top: 1em;
+            font-style: italic;
         }
     </style>
 </head>
@@ -97,11 +106,16 @@
             </p>
 
             <div>
-                <input type="submit" disabled />
+                <input type="submit" disabled value="Get Script" />
             </div>
         </form>
         <div>
             <textarea id="script-target" readonly placeholder="Your script will appear here"></textarea>
+        </div>
+        <div class="donate">
+            Want to support development and hosting? You can donate with <a href="https://paypal.me/twvault?locale.x=en_US">Paypal</a>
+            and <a href="https://www.patreon.com/twvault">Patreon</a>. (Donating will not give any extra features - this is illegal under TW rules. You do get the nice
+            fuzzy feeling of doing something good though.)
         </div>
     </div>
 
@@ -130,7 +144,6 @@
                 data = JSON.parse(data);
 
             let $serverSelect = $('#tw-server');
-            let $worldSelect = $('#tw-world');
 
             let nameRegex = /^([^.]+)\.(.+)$/
 
@@ -153,10 +166,6 @@
 
             updateWorldSelect();
             $serverSelect.change(updateWorldSelect);
-
-            //data.forEach((world) => {
-            //    $worldSelect.append(`<option value="${world.id}">${world.name}</option>`);
-            //});
 
             $('input[type=submit]').attr('disabled', false);
         });

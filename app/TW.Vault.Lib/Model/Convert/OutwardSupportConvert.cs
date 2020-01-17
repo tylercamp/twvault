@@ -13,6 +13,7 @@ namespace TW.Vault.Model.Convert
                 short worldId,
                 int accessGroupId,
                 JSON.PlayerOutwardSupport.SupportedVillage villageData,
+                DateTime currentTime,
                 Scaffold.CurrentVillageSupport existingSupport = null,
                 Scaffold.VaultContext context = null
             )
@@ -29,7 +30,7 @@ namespace TW.Vault.Model.Convert
             existingSupport.SourceVillageId = sourceVillageId;
             existingSupport.TargetVillageId = villageData.Id;
 
-            existingSupport.LastUpdatedAt = DateTime.UtcNow;
+            existingSupport.LastUpdatedAt = currentTime;
             existingSupport.SupportingArmy = ArmyConvert.JsonToArmy(villageData.TroopCounts, worldId, existingSupport.SupportingArmy, context);
 
             return existingSupport;

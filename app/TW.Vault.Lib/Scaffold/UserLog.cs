@@ -20,7 +20,7 @@ namespace TW.Vault.Scaffold
         public string OperationType { get; set; }
         public bool IsReadOnly { get; set; }
         public long? TxId { get; set; }
-        public int AccessGroupId { get; set; }
+        public int? AccessGroupId { get; set; }
 
         public World World { get; set; }
         public Transaction Tx { get; set; }

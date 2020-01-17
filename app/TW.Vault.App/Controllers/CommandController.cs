@@ -112,7 +112,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> SetUserFinishedCommandUploads()
         {
             var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
-            history.LastUploadedCommandsAt = DateTime.UtcNow;
+            history.LastUploadedCommandsAt = CurrentServerTime;
             await context.SaveChangesAsync();
             return Ok();
         }
@@ -121,7 +121,7 @@ namespace TW.Vault.Controllers
         public async Task<IActionResult> SetUserFinishedIncomingUploads()
         {
             var history = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
-            history.LastUploadedIncomingsAt = DateTime.UtcNow;
+            history.LastUploadedIncomingsAt = CurrentServerTime;
             await context.SaveChangesAsync();
             return Ok();
         }
@@ -233,7 +233,7 @@ namespace TW.Vault.Controllers
                             scaffoldCommand = new Scaffold.Command();
                             scaffoldCommand.World = CurrentWorld;
                             scaffoldCommand.AccessGroupId = CurrentAccessGroupId;
-                            jsonCommand.ToModel(CurrentWorldId, CurrentAccessGroupId, scaffoldCommand, context);
+                            jsonCommand.ToModel(CurrentWorldId, CurrentAccessGroupId, scaffoldCommand, CurrentServerTime, context);
                             context.Command.Add(scaffoldCommand);
                         }
                         else
@@ -248,7 +248,7 @@ namespace TW.Vault.Controllers
                                 });
                             }
 
-                            jsonCommand.ToModel(CurrentWorldId, CurrentAccessGroupId, scaffoldCommand, context);
+                            jsonCommand.ToModel(CurrentWorldId, CurrentAccessGroupId, scaffoldCommand, CurrentServerTime, context);
                         }
 
                         if (String.IsNullOrWhiteSpace(scaffoldCommand.UserLabel) || scaffoldCommand.UserLabel == "Attack")
@@ -270,9 +270,9 @@ namespace TW.Vault.Controllers
                 //  entries
                 var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
                 if (jsonCommands.IsOwnCommands.Value)
-                    userUploadHistory.LastUploadedCommandsAt = DateTime.UtcNow;
+                    userUploadHistory.LastUploadedCommandsAt = CurrentServerTime;
                 else
-                    userUploadHistory.LastUploadedIncomingsAt = DateTime.UtcNow;
+                    userUploadHistory.LastUploadedIncomingsAt = CurrentServerTime;
 
                 await context.SaveChangesAsync();
 
@@ -342,7 +342,7 @@ namespace TW.Vault.Controllers
             );
 
             var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromTaggingRestrictions(CurrentUser, uploadHistory);
-            List<String> needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
+            List<String> needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(CurrentServerTime, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
@@ -399,7 +399,7 @@ namespace TW.Vault.Controllers
                 relevantVillages[command.TargetVillageId].X, relevantVillages[command.TargetVillageId].Y
             );
 
-            var earliestLaunchTime = incomingData.Select(inc => CommandLaunchedAt(inc.Command)).DefaultIfEmpty(DateTime.UtcNow).Min();
+            var earliestLaunchTime = incomingData.Select(inc => CommandLaunchedAt(inc.Command)).DefaultIfEmpty(CurrentServerTime).Min();
 
             var commandsReturningByVillageId = await Profile("Process returning commands for all source villages", async () =>
             {

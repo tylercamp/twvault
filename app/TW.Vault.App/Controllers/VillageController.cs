@@ -82,7 +82,7 @@ namespace TW.Vault.Controllers
             );
 
             var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(CurrentUser, uploadHistory);
-            List<String> needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
+            List<String> needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(CurrentServerTime, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
@@ -387,11 +387,11 @@ namespace TW.Vault.Controllers
                     currentVillage.ArmySupporting = ArmyConvert.JsonToArmy(armySetJson.Supporting, CurrentWorldId, currentVillage.ArmySupporting, context, emptyIfNull: true);
 
 
-                    currentVillage.ArmyOwned.LastUpdated = DateTime.UtcNow;
-                    currentVillage.ArmyStationed.LastUpdated = DateTime.UtcNow;
-                    currentVillage.ArmyTraveling.LastUpdated = DateTime.UtcNow;
-                    currentVillage.ArmyAtHome.LastUpdated = DateTime.UtcNow;
-                    currentVillage.ArmySupporting.LastUpdated = DateTime.UtcNow;
+                    currentVillage.ArmyOwned.LastUpdated = CurrentServerTime;
+                    currentVillage.ArmyStationed.LastUpdated = CurrentServerTime;
+                    currentVillage.ArmyTraveling.LastUpdated = CurrentServerTime;
+                    currentVillage.ArmyAtHome.LastUpdated = CurrentServerTime;
+                    currentVillage.ArmySupporting.LastUpdated = CurrentServerTime;
                 }
             });
 
@@ -403,7 +403,7 @@ namespace TW.Vault.Controllers
             //  Run upload history update in separate query to prevent creating multiple history
             //  entries
             var userUploadHistory = await EFUtil.GetOrCreateUserUploadHistory(context, CurrentUserId);
-            userUploadHistory.LastUploadedTroopsAt = DateTime.UtcNow;
+            userUploadHistory.LastUploadedTroopsAt = CurrentServerTime;
             await context.SaveChangesAsync();
 
             return Ok();
@@ -417,7 +417,7 @@ namespace TW.Vault.Controllers
 
             var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUserId).FirstOrDefaultAsync();
             var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(CurrentUser, uploadHistory);
-            var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
+            var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(CurrentServerTime, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {
@@ -486,7 +486,7 @@ namespace TW.Vault.Controllers
         {
             var uploadHistory = await context.UserUploadHistory.Where(u => u.Uid == CurrentUserId).FirstOrDefaultAsync();
             var validationInfo = UploadRestrictionsValidate.ValidateInfo.FromMapRestrictions(CurrentUser, uploadHistory);
-            var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(DateTime.UtcNow, validationInfo);
+            var needsUpdateReasons = UploadRestrictionsValidate.GetNeedsUpdateReasons(CurrentServerTime, validationInfo);
 
             if (needsUpdateReasons != null && needsUpdateReasons.Any())
             {

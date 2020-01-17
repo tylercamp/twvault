@@ -46,7 +46,6 @@ namespace TW.Vault.Model.Validation
 
         public static List<String> GetNeedsUpdateReasons(DateTime currentTime, ValidateInfo info)
         {
-            var now = DateTime.UtcNow;
             var history = info.History;
 
             List<String> reasons = new List<String>();
@@ -55,25 +54,25 @@ namespace TW.Vault.Model.Validation
                 return reasons;
 
             if (history?.LastUploadedCommandsAt == null ||
-                (now - history.LastUploadedCommandsAt.Value > info.MaxCommandsAge))
+                (currentTime - history.LastUploadedCommandsAt.Value > info.MaxCommandsAge))
             {
                 reasons.Add("UPLOAD_COMMANDS_REQUIRED");
             }
 
             if (history?.LastUploadedIncomingsAt == null ||
-                (now - history.LastUploadedIncomingsAt.Value > info.MaxIncomingsAge))
+                (currentTime - history.LastUploadedIncomingsAt.Value > info.MaxIncomingsAge))
             {
                 reasons.Add("UPLOAD_INCOMINGS_REQUIRED");
             }
 
             if (history?.LastUploadedReportsAt == null ||
-                (now - history.LastUploadedReportsAt.Value > info.MaxReportsAge))
+                (currentTime - history.LastUploadedReportsAt.Value > info.MaxReportsAge))
             {
                 reasons.Add("UPLOAD_REPORTS_REQUIRED");
             }
 
             if (history?.LastUploadedTroopsAt == null ||
-                (now - history.LastUploadedTroopsAt.Value > info.MaxTroopsAge))
+                (currentTime - history.LastUploadedTroopsAt.Value > info.MaxTroopsAge))
             {
                 reasons.Add("UPLOAD_TROOPS_REQUIRED");
             }

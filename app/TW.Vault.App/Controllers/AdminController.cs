@@ -725,7 +725,7 @@ namespace TW.Vault.Controllers
                     FangsTraveling = numAttackingFangsByPlayer.GetValueOrDefault(player.PlayerId, 0)
                 };
 
-                playerSummary.UploadAge = DateTime.UtcNow - playerSummary.UploadedAt;
+                playerSummary.UploadAge = CurrentServerTime - playerSummary.UploadedAt;
 
                 if (maxNoblesByPlayer.ContainsKey(player.PlayerId))
                     playerSummary.MaxPossibleNobles = maxNoblesByPlayer[player.PlayerId];
