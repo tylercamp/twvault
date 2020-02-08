@@ -26,6 +26,8 @@ namespace TW.Vault.Model.JSON
         public int? WatchtowerLevel { get; set; }
         public DateTime? WatchtowerSeenAt { get; set; }
 
+        public int NumTargettingNukes { get; set; }
+
         public int? ReturningTroopsPopulation { get; set; }
 
         public String TribeName { get; set; }

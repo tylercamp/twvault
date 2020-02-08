@@ -41,7 +41,8 @@
         STACKED: 'stacked',
         WALL: 'wall',
         RETURNING_TROOPS: 'returning',
-        WATCHTOWER: 'watchtower'
+        WATCHTOWER: 'watchtower',
+        NUKE_TARGETTING: 'nuke_targetting'
     };
 
     let tagIconTemplates = {};
@@ -78,6 +79,12 @@
     tagIconTemplates[TAG_TYPES.WATCHTOWER] = `
         <span class="marker" style="background-color:white">
             <img src="https://tylercamp.me/tw/img/building_watchtower.png" style="width:18px;height:18px;">
+        </span>
+    `.trim();
+
+    tagIconTemplates[TAG_TYPES.NUKE_TARGETTING] = count => `
+        <span class="marker" style="background-color:red; color: white; text-align: center; display:inline-block; width:18px; height:18px">
+            ${count}
         </span>
     `.trim();
     
@@ -231,7 +238,7 @@
 
                     let alertMessage = lib.translate(lib.itlcodes.MAP_UPLOAD_DATA_REQUIRED);
                     if (reasons) {
-                        alertMessage += `\n${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS)} ${ reasons.join(', ') }`;
+                        alertMessage += `\n${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS, { _escaped: false })} ${ reasons.join(', ') }`;
                     }
 
                     alert(alertMessage);
@@ -285,7 +292,7 @@
                 $overlay.appendTo($parent);
             }
 
-            let tags = makeTagElements(mapOverlayTags[villageId]);
+            let tags = makeTagElements(mapOverlayTags[villageId], villageId);
 
             tags.forEach((tag, i) => {
                 let $tag = $(tag);
@@ -344,7 +351,8 @@
                     (settings.overlayShowNobles && isRecentIntel(tag.noblesSeenAt)) ||
                     (settings.overlayShowWall && isRecentIntel(tag.wallLevelSeenAt) && tag.wallLevel < settings.wallMinLevel) ||
                     (settings.overlayShowReturning && tag.returningTroopsPopulation > settings.returningMinPop * 1000) ||
-                    (lib.getCurrentServerSettings().watchtowerEnabled && isRecentIntel(tag.watchtowerSeenAt) && tag.watchtowerLevel > settings.watchtowerMinLevel)
+                    (lib.getCurrentServerSettings().watchtowerEnabled && isRecentIntel(tag.watchtowerSeenAt) && tag.watchtowerLevel > settings.watchtowerMinLevel) ||
+                    (settings.overlayShowTargettingNukes && tag.numTargettingNukes > 0)
                 );
         }
     }
@@ -407,6 +415,11 @@
             let $watchtowerIcon = $(tagIconTemplates[TAG_TYPES.WATCHTOWER]);
             $watchtowerIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.WATCHTOWER}_${villageId}`);
             result.push($watchtowerIcon);
+        }
+        if (settings.overlayShowTargettingNukes && tag.numTargettingNukes > 0) {
+            let $nukeTargettingIcon = $(tagIconTemplates[TAG_TYPES.NUKE_TARGETTING](tag.numTargettingNukes));
+            $nukeTargettingIcon.prop('id', `vault_overlay_icon_${TAG_TYPES.NUKE_TARGETTING}_${villageId}`);
+            result.push($nukeTargettingIcon);
         }
 
         return result;
@@ -690,7 +703,7 @@
                 ${lib.translate(lib.itlcodes.MAP_UPLOAD_DATA_REQUIRED)}
                 <br>
                 <br>
-                ${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS)} ${fuckYouMessage}
+                ${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS, { _escaped: false })} ${fuckYouMessage}
             </h3>
         `);
     }
@@ -793,6 +806,11 @@
                         </span>
 
                         <span style="display:inline-block">
+                            <input type="checkbox" id="vault-overlay-show-nukes-targetting">
+                            <label for="vault-overlay-show-nukes-targetting">${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_SHOW_TARGET_NUM_NUKES)}</label>
+                        </span>
+
+                        <span style="display:inline-block">
                             <input type="checkbox" id="vault-overlay-show-returning">
                             <label for="vault-overlay-show-returning">
                                 ${lib.translate(lib.itlcodes.MAP_SETTINGS_OVERLAY_RETURNING_1)}
@@ -864,6 +882,7 @@
         uilib.syncProp('#vault-overlay-show-returning', settings, 'overlayShowReturning', saveAndRefresh);
         uilib.syncProp('#vault-overlay-highlight-method', settings, 'overlayHighlights', saveAndRefresh);
         uilib.syncProp('#vault-overlay-show-watchtower', settings, 'overlayShowWatchtower', saveAndRefresh);
+        uilib.syncProp('#vault-overlay-show-nukes-targetting', settings, 'overlayShowTargettingNukes', saveAndRefresh);
 
         function genericNumberFilter(newNumber, oldNumber) {
             if (typeof newNumber == 'string')
@@ -905,6 +924,7 @@
             overlayShowWall: true,
             overlayShowReturning: true,
             overlayShowWatchtower: true,
+            overlayShowTargettingNukes: false,
             stackMinDV: 1,
             stackMaxDV: 8,
             wallMinLevel: 15,

@@ -59,7 +59,7 @@ namespace TW.Vault.Manage.Controllers
             var encodedPlayerName = userInfo.Name.UrlEncode();
             var player = context.Player.Where(p => p.WorldId == userInfo.WorldId && p.PlayerName == encodedPlayerName).SingleOrDefault();
             if (player == null)
-                return Ok(new { error = $"No user exists with that name on world {world.Hostname} (Name is Case-Sensitive)" });
+                return Ok(new { error = $"No user exists with that name on world {world.Hostname} (Name is Case-Sensitive).\n\nIf you just registered, you'll need to wait up to 60 minutes for the world data to refresh." });
 
             var remoteIp = HttpContext.Connection.RemoteIpAddress;
 

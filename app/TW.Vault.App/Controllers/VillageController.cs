@@ -527,15 +527,21 @@ namespace TW.Vault.Controllers
             var validVillages = villageData.Where(vd => vd.PlayerId != CurrentPlayerId).ToList();
             var validVillageIds = villageData.Select(d => d.CurrentVillage.VillageId).ToList();
 
-            var commandData = await Profile("Get command data", () => (
-                from command in CurrentSets.Command.FromWorld(CurrentWorldId)
-                where command.IsReturning && command.ReturnsAt > CurrentServerTime && command.ArmyId != null
-                select new { command.SourceVillageId, command.Army }
+            var commandData = await Profile("Get returning command data", () => (
+                from command in CurrentSets.Command
+                where command.ReturnsAt > CurrentServerTime && command.ArmyId != null
+                select new { command.SourceVillageId, command.TargetVillageId, command.Army }
             ).ToListAsync());
 
-            var commandsByVillageId = validVillageIds.ToDictionary(id => id, id => new List<Scaffold.CommandArmy>());
-            foreach (var command in commandData.Where(cmd => commandsByVillageId.ContainsKey(cmd.SourceVillageId)))
-                commandsByVillageId[command.SourceVillageId].Add(command.Army);
+            var commandsBySourceVillageId = validVillageIds.ToDictionary(id => id, id => new List<Scaffold.CommandArmy>());
+            var commandsByTargetVillageId = validVillageIds.ToDictionary(id => id, id => new List<Scaffold.CommandArmy>());
+            foreach (var command in commandData)
+            {
+                if (commandsBySourceVillageId.ContainsKey(command.SourceVillageId))
+                    commandsBySourceVillageId[command.SourceVillageId].Add(command.Army);
+                if (commandsByTargetVillageId.ContainsKey(command.TargetVillageId))
+                    commandsByTargetVillageId[command.TargetVillageId].Add(command.Army);
+            }
             
             var result = new Dictionary<long, JSON.VillageTags>();
 
@@ -563,25 +569,7 @@ namespace TW.Vault.Controllers
                     tag.WatchtowerLevel = data.CurrentVillage.CurrentBuilding?.Watchtower;
                     tag.WatchtowerSeenAt = data.CurrentVillage.CurrentBuilding?.LastUpdated;
 
-                    tag.ReturningTroopsPopulation = commandsByVillageId[data.CurrentVillage.VillageId].Sum((army) => ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(army)));
-
-                    if (village.ArmyStationed?.LastUpdated != null)
-                    {
-                        // 1 DV is approx. 1.7m total defense power
-                        var stationed = village.ArmyStationed;
-                        var defensePower = BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(stationed));
-                        tag.IsStacked = defensePower > 1.7e6;
-                        tag.StackDVs = defensePower / (float)1.7e6;
-                        tag.StackSeenAt = village.ArmyStationed.LastUpdated;
-                    }
-
-                    var validArmies = new[] {
-                        village.ArmyOwned,
-                        village.ArmyTraveling,
-                        village.ArmyStationed
-                    }.Where(a => a?.LastUpdated != null && !ArmyConvert.ArmyToJson(a).IsEmpty()).ToList();
-
-                    bool IsNuke(Scaffold.CurrentArmy army)
+                    bool IsNuke(Scaffold.IScaffoldArmy army)
                     {
                         var jsonArmy = ArmyConvert.ArmyToJson(army);
                         if (BattleSimulator.TotalAttackPower(jsonArmy) < 3.5e5)
@@ -601,6 +589,25 @@ namespace TW.Vault.Controllers
                             return ArmyStats.CalculateTotalPopulation(jsonArmy, TroopType.Axe, TroopType.Light, TroopType.Marcher) > 13000;
                         }
                     }
+
+                    tag.ReturningTroopsPopulation = commandsBySourceVillageId[data.CurrentVillage.VillageId].Sum((army) => ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(army)));
+                    tag.NumTargettingNukes = commandsByTargetVillageId[data.CurrentVillage.VillageId].Count(army => IsNuke(army));
+
+                    if (village.ArmyStationed?.LastUpdated != null)
+                    {
+                        // 1 DV is approx. 1.7m total defense power
+                        var stationed = village.ArmyStationed;
+                        var defensePower = BattleSimulator.TotalDefensePower(ArmyConvert.ArmyToJson(stationed));
+                        tag.IsStacked = defensePower > 1.7e6;
+                        tag.StackDVs = defensePower / (float)1.7e6;
+                        tag.StackSeenAt = village.ArmyStationed.LastUpdated;
+                    }
+
+                    var validArmies = new[] {
+                        village.ArmyOwned,
+                        village.ArmyTraveling,
+                        village.ArmyStationed
+                    }.Where(a => a?.LastUpdated != null && !ArmyConvert.ArmyToJson(a).IsEmpty()).ToList();
 
                     var nukeArmy = (
                             from army in validArmies
