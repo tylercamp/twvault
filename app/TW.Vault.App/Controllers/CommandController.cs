@@ -140,6 +140,21 @@ namespace TW.Vault.Controllers
                                 .Select(id => id.Value)
                                 .Distinct();
 
+                var allCurrentVillageIds = await CurrentSets.CurrentVillage.Where(v => allVillageIds.Contains(v.VillageId)).Select(v => v.VillageId).ToListAsync();
+                var allVillagesMissingCurrentEntries = allVillageIds.Except(allCurrentVillageIds).ToList();
+                if (allVillagesMissingCurrentEntries.Count > 0)
+                {
+                    foreach (var id in allVillagesMissingCurrentEntries)
+                        context.Add(new CurrentVillage
+                        {
+                            VillageId = id,
+                            AccessGroupId = CurrentAccessGroupId,
+                            WorldId = CurrentWorldId
+                        });
+
+                    await context.SaveChangesAsync();
+                }
+
                 var villageIdsFromCommandsMissingTroopType = jsonCommands.Commands
                     .Where(c => c.TroopType == null)
                     .SelectMany(c => new[] { c.SourceVillageId, c.TargetVillageId })
