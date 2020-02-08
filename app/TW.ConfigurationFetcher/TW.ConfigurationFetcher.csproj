@@ -24,6 +24,7 @@
     <PackageReference Include="Serilog.Sinks.Debug" Version="1.0.1" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="ShellProgressBar" Version="4.3.0" />
+    <PackageReference Include="Z.EntityFramework.Plus.EFCore" Version="2.0.35" />
   </ItemGroup>
 
   <ItemGroup>

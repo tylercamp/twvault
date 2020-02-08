@@ -525,7 +525,7 @@ namespace TW.Vault.MapDataFetcher
         {
             var maxAge = TimeSpan.FromHours(1);
             var cachingPath = FileCachingPath;
-            var worlds = context.World.ToList();
+            var worlds = context.World.Where(w => !w.IsPendingDeletion).ToList();
             return worlds.Select(w => new FetchingJob(w, cachingPath)).Where(j => forceReApply || j.NeedsRefresh).ToList();
         }
     }

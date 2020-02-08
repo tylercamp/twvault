@@ -1341,6 +1341,10 @@ namespace TW.Vault.Scaffold
                     .IsRequired()
                     .HasColumnName("is_beta");
 
+                entity.Property(e => e.IsPendingDeletion)
+                    .IsRequired()
+                    .HasColumnName("is_pending_deletion");
+
                 entity.HasOne(e => e.DefaultTranslation)
                     .WithMany(e => e.DefaultWorlds)
                     .HasForeignKey(e => e.DefaultTranslationId)

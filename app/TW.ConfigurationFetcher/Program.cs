@@ -10,6 +10,7 @@ using TW.Vault;
 using ShellProgressBar;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Z.EntityFramework.Plus;
 
 namespace TW.ConfigurationFetcher
 {
@@ -59,7 +60,7 @@ namespace TW.ConfigurationFetcher
             using (vaultContext)
             using (httpClient)
             {
-                var worlds = vaultContext.World.Include(w => w.WorldSettings).ToList();
+                var worlds = vaultContext.World.Where(w => !w.IsPendingDeletion).Include(w => w.WorldSettings).ToList();
                 var hosts = worlds.Select(HostOf).Distinct().ToList();
 
                 var hostLocales = hosts.ToDictionary(h => h, h =>
@@ -147,37 +148,44 @@ namespace TW.ConfigurationFetcher
                 if (deleteOldWorlds)
                 {
                     Console.WriteLine("Cleaning old world data...");
-                    var oldWorlds = vaultContext.World.Where(w => !allWorldHostnames.Contains(w.Hostname)).Include(w => w.WorldSettings).ToList();
+                    var oldWorlds = vaultContext.World.Where(w => w.IsPendingDeletion || !allWorldHostnames.Contains(w.Hostname)).Include(w => w.WorldSettings).ToList();
                     Console.WriteLine("Found {0} old worlds to be cleaned:", oldWorlds.Count);
                     foreach (var w in oldWorlds)
                         Console.WriteLine("- " + w.Hostname);
 
                     Console.ReadLine();
 
+                    Console.WriteLine("Marking worlds as pending deletion...");
                     foreach (var w in oldWorlds)
                     {
-                        List<Action<IProgressBar>> jobs = new List<Action<IProgressBar>>();
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.UserUploadHistory.Include(h => h.U).Where(h => h.U.WorldId == w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.User.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.UserLog.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Command.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentBuilding.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentVillage.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentVillageSupport.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentArmy.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CommandArmy.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.CurrentPlayer.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.EnemyTribe.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.IgnoredReport.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Report.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.ReportArmy.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.ReportBuilding.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Transaction.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Village.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Player.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Ally.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.Conquer.FromWorld(w.Id)));
-                        jobs.Add((pb) => DeleteBatched(vaultContext, pb, vaultContext.AccessGroup.Where(g => g.WorldId == w.Id)));
+                        w.IsPendingDeletion = true;
+                    }
+                    vaultContext.SaveChanges();
+
+                    foreach (var w in oldWorlds)
+                    {
+                        List<IQueryable<object>> jobs = new List<IQueryable<object>>();
+                        jobs.Add(vaultContext.UserUploadHistory.Include(h => h.U).Where(h => h.U.WorldId == w.Id));
+                        jobs.Add(vaultContext.User.FromWorld(w.Id));
+                        jobs.Add(vaultContext.UserLog.FromWorld(w.Id));
+                        jobs.Add(vaultContext.Command.FromWorld(w.Id));
+                        jobs.Add(vaultContext.CurrentBuilding.FromWorld(w.Id));
+                        jobs.Add(vaultContext.CurrentVillage.FromWorld(w.Id));
+                        jobs.Add(vaultContext.CurrentVillageSupport.FromWorld(w.Id));
+                        jobs.Add(vaultContext.CurrentArmy.FromWorld(w.Id));
+                        jobs.Add(vaultContext.CommandArmy.FromWorld(w.Id));
+                        jobs.Add(vaultContext.CurrentPlayer.FromWorld(w.Id));
+                        jobs.Add(vaultContext.EnemyTribe.FromWorld(w.Id));
+                        jobs.Add(vaultContext.IgnoredReport.FromWorld(w.Id));
+                        jobs.Add(vaultContext.Report.FromWorld(w.Id));
+                        jobs.Add(vaultContext.ReportArmy.FromWorld(w.Id));
+                        jobs.Add(vaultContext.ReportBuilding.FromWorld(w.Id));
+                        jobs.Add(vaultContext.Transaction.FromWorld(w.Id));
+                        jobs.Add(vaultContext.Village.FromWorld(w.Id));
+                        jobs.Add(vaultContext.Player.FromWorld(w.Id));
+                        jobs.Add(vaultContext.Ally.FromWorld(w.Id));
+                        jobs.Add(vaultContext.Conquer.FromWorld(w.Id));
+                        jobs.Add(vaultContext.AccessGroup.Where(g => g.WorldId == w.Id));
 
                         var numJobsDone = 0;
                         String JobsProgressMessage() => $"Deleting data for {w.Hostname} (id={w.Id}) ({numJobsDone}/{jobs.Count} done)";
@@ -187,8 +195,13 @@ namespace TW.ConfigurationFetcher
                             
                             foreach (var job in jobs)
                             {
-                                using (var jobProgressBar = dataProgressBar.Spawn(1, ""))
-                                    job(jobProgressBar);
+                                if (job.Any())
+                                {
+                                    using (var jobProgressBar = dataProgressBar.Spawn(1, ""))
+                                    {
+                                        DeleteBatched(vaultContext, jobProgressBar, job);
+                                    }
+                                }
 
                                 numJobsDone++;
                                 dataProgressBar.Tick(JobsProgressMessage());
@@ -196,8 +209,11 @@ namespace TW.ConfigurationFetcher
                         }
 
                         Console.WriteLine("Deleting world settings...");
-                        vaultContext.Remove(w.WorldSettings);
-                        vaultContext.SaveChanges();
+                        if (w.WorldSettings != null)
+                        {
+                            vaultContext.Remove(w.WorldSettings);
+                            vaultContext.SaveChanges();
+                        }
 
                         Console.WriteLine("Deleting world...");
                         vaultContext.Remove(w);
@@ -221,9 +237,10 @@ namespace TW.ConfigurationFetcher
 
             var numDeleted = 0;
 
+            var type = query.First().GetType();
             var numTotal = query.Count();
 
-            String ProgressMessage() => $"Deleting {numTotal} entries of type {typeof(T).Name}... ({numDeleted}/{numTotal} done)";
+            String ProgressMessage() => $"Deleting {numTotal} entries of type {type.Name}... ({numDeleted}/{numTotal} done)";
             progressBar.Message = ProgressMessage();
 
             if (numTotal == 0)
