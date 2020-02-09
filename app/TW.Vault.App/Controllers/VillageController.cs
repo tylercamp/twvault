@@ -527,22 +527,32 @@ namespace TW.Vault.Controllers
             var validVillages = villageData.Where(vd => vd.PlayerId != CurrentPlayerId).ToList();
             var validVillageIds = villageData.Select(d => d.CurrentVillage.VillageId).ToList();
 
-            var commandData = await Profile("Get returning command data", () => (
+            var returningCommandData = await Profile("Get returning command data", () => (
                 from command in CurrentSets.Command
-                where command.ReturnsAt > CurrentServerTime && command.ArmyId != null
+                where command.ReturnsAt > CurrentServerTime && command.ArmyId != null && command.IsReturning
                 select new { command.SourceVillageId, command.TargetVillageId, command.Army }
             ).ToListAsync());
 
-            var commandsBySourceVillageId = validVillageIds.ToDictionary(id => id, id => new List<Scaffold.CommandArmy>());
-            var commandsByTargetVillageId = validVillageIds.ToDictionary(id => id, id => new List<Scaffold.CommandArmy>());
-            foreach (var command in commandData)
+            var sendingCommandData = await Profile("Get sent command data", () => (
+                from command in CurrentSets.Command
+                where command.ReturnsAt > CurrentServerTime && command.ArmyId != null && !command.IsReturning
+                select new { command.SourceVillageId, command.TargetVillageId, command.Army }
+            ).ToListAsync());
+
+            var returningCommandsBySourceVillageId = validVillageIds.ToDictionary(id => id, id => new List<Scaffold.CommandArmy>());
+            foreach (var command in returningCommandData)
             {
-                if (commandsBySourceVillageId.ContainsKey(command.SourceVillageId))
-                    commandsBySourceVillageId[command.SourceVillageId].Add(command.Army);
+                if (returningCommandsBySourceVillageId.ContainsKey(command.SourceVillageId))
+                    returningCommandsBySourceVillageId[command.SourceVillageId].Add(command.Army);
+            }
+
+            var commandsByTargetVillageId = validVillageIds.ToDictionary(id => id, id => new List<Scaffold.CommandArmy>());
+            foreach (var command in sendingCommandData)
+            {
                 if (commandsByTargetVillageId.ContainsKey(command.TargetVillageId))
                     commandsByTargetVillageId[command.TargetVillageId].Add(command.Army);
             }
-            
+
             var result = new Dictionary<long, JSON.VillageTags>();
 
             var tribeIds = validVillages.Select(vv => vv.TribeId).Where(t => t != null).Select(t => t.Value).Distinct();
@@ -590,7 +600,7 @@ namespace TW.Vault.Controllers
                         }
                     }
 
-                    tag.ReturningTroopsPopulation = commandsBySourceVillageId[data.CurrentVillage.VillageId].Sum((army) => ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(army)));
+                    tag.ReturningTroopsPopulation = returningCommandsBySourceVillageId[data.CurrentVillage.VillageId].Sum((army) => ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(army)));
                     tag.NumTargettingNukes = commandsByTargetVillageId[data.CurrentVillage.VillageId].Count(army => IsNuke(army));
 
                     if (village.ArmyStationed?.LastUpdated != null)

@@ -635,7 +635,7 @@ namespace TW.Vault.Controllers
                 MaximumTime = command.ReturnsAt.Value - CurrentServerTime
             });
 
-            planner.Requirements.Add(MinimumOffenseRequirement.HalfNuke);
+            planner.Requirements.Add(MinimumOffenseRequirement.QuarterNuke);
 
             var instructions = Profile("Generate plan", () => planner.GenerateOptions(
                 availableVillages.ToDictionary(cv => cv.Village, cv => cv),

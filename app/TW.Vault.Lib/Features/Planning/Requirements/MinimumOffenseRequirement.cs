@@ -15,7 +15,7 @@ namespace TW.Vault.Features.Planning.Requirements
         public static readonly MinimumOffenseRequirement HalfNuke = new MinimumOffenseRequirement { MinimumOffense = 250000 };
         public static readonly MinimumOffenseRequirement QuarterNuke = new MinimumOffenseRequirement { MinimumOffense = 125000 };
 
-        public static MinimumOffenseRequirement PercentNuke(float percent)
+        public static MinimumOffenseRequirement FractionalNuke(float percent)
         {
             return new MinimumOffenseRequirement { MinimumOffense = (int)(FullNuke.MinimumOffense * percent) };
         }
