@@ -36,6 +36,19 @@ var lib = (() => {
     let currentTranslation = null;
     let translationParameters = null;
 
+    const nativeTranslations = {
+        // "on %1 at %2" -> "on {date} at {time}"
+        Time_OnAt: window.lang["0cb274c906d622fa8ce524bcfbb7552d"].replace('%1', '{date}').replace('%2', '{time}'),
+        // "tomorrow at %s" -> "tomorrow at {time}"
+        Time_TomorrowAt: window.lang["57d28d1b211fddbb7a499ead5bf23079"].replace('%s', '{time}'),
+        // "today at %s" -> "today at {time}"
+        Time_TodayAt: window.lang["aea2b0aa9ae1534226518faaefffdaad"].replace('%s', '{time}'),
+        // "%1 at %2" -> "{date} at {time}"
+        Time_At: window.lang["850731037a4693bf4338a0e8b06bd2e4"].replace('%1', '{date}').replace('%2', '{time}'),
+
+        Time_MonthShorthands: window.Format.month_names.map(n => n.toLowerCase())
+    }
+
     let escapeHtml = (() => {
         // https://stackoverflow.com/a/12034334/2692629
         var entityMap = {
@@ -140,19 +153,13 @@ var lib = (() => {
 
             $doc_ = $doc_ || $(document);
 
-            var monthStrings = lib
-                .translate(lib.itlcodes.ORDERED_MONTHS)
-                .splitMany(',', ' ', '\n')
-                .filter(t => t.length > 0)
-                .map(m => m.trim().toLowerCase())
-                ;
-
-            var result;
-
-            let dateSeparators = ['/', '.', '-'];
-            let timeSeparators = [':', '.'];
-            let dateSeparatorsStr = dateSeparators.map((s) => `\\${s}`).join('');
-            let timeSeparatorsStr = timeSeparators.map((s) => `\\${s}`).join('');
+            //var monthStrings = lib
+            //    .translate(lib.itlcodes.ORDERED_MONTHS)
+            //    .splitMany(',', ' ', '\n')
+            //    .filter(t => t.length > 0)
+            //    .map(m => m.trim().toLowerCase())
+            //    ;
+            var monthStrings = nativeTranslations.Time_MonthShorthands;
 
             var serverDate = new Date(Timing.getCurrentServerTime());
             serverDate = [
@@ -180,6 +187,8 @@ var lib = (() => {
                 : [];
 
             let extraDateTimePermutations = extraDateFormats.map(d => extraTimeFormats.map(t => ({ date: d, time: t }))).flat();
+            extraFullFormats.push(...extraDateTimePermutations.map(p => lib.namedReplace(nativeTranslations.Time_OnAt, p)));
+            extraFullFormats.push(...extraDateTimePermutations.map(p => lib.namedReplace(nativeTranslations.Time_At, p)));
 
             function firstFormatMatch(formatStrings) {
                 for (let i = 0; i < formatStrings.length; i++) {
@@ -202,7 +211,9 @@ var lib = (() => {
             }
 
             function matchLocaleTodayFormat() {
-                let todayPermutations = extraTimeFormats.map(t => lib.translate(lib.itlcodes.TIME_TODAY_AT, { time: t, _escaped: false }));
+                let todayPermutations = extraTimeFormats.map(t => lib.namedReplace(nativeTranslations.Time_TodayAt, { time: t }))
+                    .concat(extraTimeFormats.map(t => lib.translate(lib.itlcodes.TIME_TODAY_AT, { time: t, _escaped: false })));
+
                 let match = firstFormatMatch(todayPermutations);
                 if (match) {
                     match = {
@@ -216,7 +227,9 @@ var lib = (() => {
             }
 
             function matchLocaleTomorrowFormat() {
-                let tomorrowPermutations = extraTimeFormats.map(t => lib.translate(lib.itlcodes.TIME_TOMORROW_AT, { time: t, _escaped: false }));
+                let tomorrowPermutations = extraTimeFormats.map(t => lib.namedReplace(nativeTranslations.Time_TomorrowAt, { time: t }))
+                    .concat(extraTimeFormats.map(t => lib.translate(lib.itlcodes.TIME_TOMORROW_AT, { time: t, _escaped: false })));
+
                 let match = firstFormatMatch(tomorrowPermutations);
                 if (match) {
                     match = {
