@@ -35,7 +35,7 @@
             margin-bottom: 2em;
         }
 
-        .g-recaptcha {
+        #captcha-container {
             display: inline-block;
         }
 
@@ -59,15 +59,12 @@
 </head>
 <body>
     <script>
-        function captchaOnloadCallback(grecaptcha) {
+        function captchaOnloadCallback() {
             $.get('captcha-sitekey').done(data => {
-                const $captcha = $('#captcha')
-                $captcha.attr({
-                    class: "g-recaptcha",
-                    'data-sitekey': data,
-                    'data-callback': "onCaptchaFinished"
+                grecaptcha.render(document.querySelector('#captcha-container'), {
+                    'sitekey': data,
+                    'callback': onCaptchaFinished
                 })
-                grecaptcha.render($captcha[0])
             })
         }
     </script>
@@ -114,7 +111,7 @@
                 </table>
             </div>
 
-            <div id="captcha" />
+            <div id="captcha-container"></div>
 
             <p>
                 <em>Is your server/world not listed? Contact me in the forum link above and request it.</em>
@@ -211,7 +208,7 @@
                 type: 'post',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    worldId: worldId,
+                    worldId: parseInt(worldId),
                     name: playerName,
                     captchaToken: currentCaptchaResponse
                 })
@@ -228,6 +225,9 @@
                 }
 
                 grecaptcha.reset();
+            }).fail((response) => {
+                alert('An error occurred.')
+                console.error(response)
             });
         });
     </script>
