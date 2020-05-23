@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TW.Vault.Scaffold;
 
-namespace TW.Vault.Migrations
+namespace TW.Vault.Migration.Migrations
 {
     [DbContext(typeof(VaultContext))]
     partial class VaultContextModelSnapshot : ModelSnapshot
@@ -17,7 +17,7 @@ namespace TW.Vault.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
-                .HasAnnotation("ProductVersion", "2.2.2-servicing-10034")
+                .HasAnnotation("ProductVersion", "2.2.6-servicing-10079")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
                 .HasAnnotation("Relational:Sequence:feature.translation_key_id_seq", "'translation_key_id_seq', 'feature', '1', '1', '', '', 'Int16', 'False'")
                 .HasAnnotation("Relational:Sequence:feature.translation_language_id_seq", "'translation_language_id_seq', 'feature', '1', '1', '', '', 'Int16', 'False'")
@@ -261,9 +261,11 @@ namespace TW.Vault.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ConflictingTxId");
+                    b.HasIndex("ConflictingTxId")
+                        .HasName("fki_fk_conflicting_data_record_conflicting_tx_id");
 
-                    b.HasIndex("OldTxId");
+                    b.HasIndex("OldTxId")
+                        .HasName("fki_fk_conflicting_data_record_old_tx_id");
 
                     b.ToTable("conflicting_data_record","security");
                 });
@@ -281,10 +283,10 @@ namespace TW.Vault.Migrations
                     b.Property<long?>("OldOwner")
                         .HasColumnName("old_owner");
 
-                    b.Property<long?>("UnixTimestamp")
+                    b.Property<long>("UnixTimestamp")
                         .HasColumnName("unix_timestamp");
 
-                    b.Property<long?>("VillageId")
+                    b.Property<long>("VillageId")
                         .HasColumnName("village_id");
 
                     b.Property<short>("WorldId")
@@ -578,7 +580,11 @@ namespace TW.Vault.Migrations
 
                     b.HasKey("Id", "AccessGroupId");
 
+                    b.HasIndex("AccessGroupId");
+
                     b.HasIndex("TxId");
+
+                    b.HasIndex("WorldId");
 
                     b.ToTable("enemy_tribe","tw");
                 });
@@ -730,6 +736,8 @@ namespace TW.Vault.Migrations
                     b.HasIndex("PlayerId");
 
                     b.HasIndex("TribeId");
+
+                    b.HasIndex("WorldId", "TribeId");
 
                     b.ToTable("player","tw_provided");
                 });
@@ -1014,12 +1022,6 @@ namespace TW.Vault.Migrations
                     b.ToTable("translation","feature");
 
                     b.HasData(
-                        new
-                        {
-                            TranslationId = (short)1,
-                            KeyId = (short)2,
-                            Value = "Open Vault"
-                        },
                         new
                         {
                             TranslationId = (short)1,
@@ -2850,7 +2852,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         {
                             TranslationId = (short)1,
                             KeyId = (short)363,
-                            Value = "({numDone}/{numTotal} done, {numFailed} failed)"
+                            Value = "{numDone}/{numTotal} done, {numFailed} failed"
                         },
                         new
                         {
@@ -2892,7 +2894,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         {
                             TranslationId = (short)1,
                             KeyId = (short)370,
-                            Value = "(page {numDone}/{numTotal})"
+                            Value = "Collecting reports pages... (page {numDone}/{numTotal})"
                         },
                         new
                         {
@@ -3287,18 +3289,6 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         new
                         {
                             TranslationId = (short)1,
-                            KeyId = (short)436,
-                            Value = "The {buildingName} has"
-                        },
-                        new
-                        {
-                            TranslationId = (short)1,
-                            KeyId = (short)437,
-                            Value = "to level {newLevel}"
-                        },
-                        new
-                        {
-                            TranslationId = (short)1,
                             KeyId = (short)438,
                             Value = "table"
                         },
@@ -3354,7 +3344,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         {
                             TranslationId = (short)1,
                             KeyId = (short)453,
-                            Value = "{hour}:{minute}:{second} on {day}:{month}:{year}"
+                            Value = "{hour}:{minute}:{second}:{millisecond} on {day}:{month}:{year}"
                         },
                         new
                         {
@@ -3474,7 +3464,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         {
                             TranslationId = (short)1,
                             KeyId = (short)473,
-                            Value = "Gave admin privileges to {playerName}"
+                            Value = "{adminName} gave admin privileges to {playerName}"
                         },
                         new
                         {
@@ -3810,19 +3800,157 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         {
                             TranslationId = (short)1,
                             KeyId = (short)536,
-                            Value = "No army data available."
+                            Value = "No recent army data available."
                         },
                         new
                         {
                             TranslationId = (short)1,
                             KeyId = (short)537,
-                            Value = "No building data available."
+                            Value = "No recent building data available."
                         },
                         new
                         {
                             TranslationId = (short)1,
                             KeyId = (short)538,
                             Value = "{day}/{month}/{year}"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)539,
+                            Value = "Enemy"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)540,
+                            Value = "The Wall has been damaged and downgraded from level {oldLevel} to level {newLevel}"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)541,
+                            Value = "The {buildingName} has been damaged and downgraded from level {oldLevel} to level {newLevel}"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)543,
+                            Value = "Target Village"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)544,
+                            Value = "Fangs have at least {numCats} catapults and at most {maxPop} population"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)545,
+                            Value = "Fangs Traveling"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)546,
+                            Value = "Total Fangs"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)547,
+                            Value = "Settings"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)548,
+                            Value = "No report folders are being ignored."
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)549,
+                            Value = "Deleted Folder"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)550,
+                            Value = "Ignore Folder"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)551,
+                            Value = "Report Upload Options"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)552,
+                            Value = "Ignored Report Folders"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)553,
+                            Value = "All report folders are being ignored by your settings!"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)554,
+                            Value = "{month} {day}, {year} {hour}:{minute}:{second}:{millis}"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)555,
+                            Value = "Points"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)556,
+                            Value = "Minimum village points:"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)557,
+                            Value = @"{hour}:{minute}:{second}:{millis}
+
+{hour}:{minute}:{second}
+
+{hour}:{minute}"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)558,
+                            Value = @"{monthName} {day}, {year}
+
+{day}/{month}/{year}
+
+{day}.{month}."
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)559,
+                            Value = @"{monthName} {day}, {hour}:{minute}
+
+{monthName} {day},{year} {hour}:{minute}
+
+{hour}:{minute}:{second}:{millisecond} on {day}:{month}:{year}"
+                        },
+                        new
+                        {
+                            TranslationId = (short)1,
+                            KeyId = (short)560,
+                            Value = "Receiving nukes"
                         });
                 });
 
@@ -3846,6 +3974,11 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         .IsRequired()
                         .HasColumnName("name");
 
+                    b.Property<string>("Note")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("note")
+                        .HasDefaultValue(null);
+
                     b.HasKey("Id");
 
                     b.ToTable("translation_key","feature");
@@ -3853,59 +3986,675 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.HasData(
                         new
                         {
-                            Id = (short)2,
-                            Group = "General",
+                            Id = (short)139,
+                            Group = "Tabs",
                             IsTwNative = false,
-                            Name = "OPEN_VAULT"
+                            Name = "TAB_SEND_STACKS"
                         },
                         new
                         {
-                            Id = (short)3,
+                            Id = (short)301,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_TOOLS"
+                        },
+                        new
+                        {
+                            Id = (short)302,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_FAKE_SCRIPT"
+                        },
+                        new
+                        {
+                            Id = (short)315,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_FIND_BACKTIMES"
+                        },
+                        new
+                        {
+                            Id = (short)327,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_UPLOAD"
+                        },
+                        new
+                        {
+                            Id = (short)134,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_SNIPES_NONE"
+                        },
+                        new
+                        {
+                            Id = (short)135,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_SNIPES_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)136,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_SNIPES_NUM_NOBLES"
+                        },
+                        new
+                        {
+                            Id = (short)140,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_STACKS_NONE"
+                        },
+                        new
+                        {
+                            Id = (short)141,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_STACKS_EATABLE_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)159,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_QUICK_SUPPORT_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)160,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_QUICK_SUPPORT_SETTINGS_1"
+                        },
+                        new
+                        {
+                            Id = (short)161,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_QUICK_SUPPORT_SETTINGS_2"
+                        },
+                        new
+                        {
+                            Id = (short)162,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_QUICK_SUPPORT_SETTINGS_3"
+                        },
+                        new
+                        {
+                            Id = (short)166,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_REQUEST_STACK_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)167,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_REQUEST_STACK_SETTINGS_1"
+                        },
+                        new
+                        {
+                            Id = (short)168,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_REQUEST_STACK_SETTINGS_2"
+                        },
+                        new
+                        {
+                            Id = (short)169,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_REQUEST_STACK_SETTINGS_3"
+                        },
+                        new
+                        {
+                            Id = (short)206,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_25%_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)207,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_50%_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)208,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_75%_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)209,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_TOTAL_FULL_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)210,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_TOTAL_NOBLES"
+                        },
+                        new
+                        {
+                            Id = (short)464,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_REVOKED_PRIVELEGES_FOR"
+                        },
+                        new
+                        {
+                            Id = (short)465,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_GAVE_PRIVELEGES_TO"
+                        },
+                        new
+                        {
+                            Id = (short)466,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_RE_ENABLED_KEY_FOR"
+                        },
+                        new
+                        {
+                            Id = (short)467,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_DISABLED_KEY_FOR"
+                        },
+                        new
+                        {
+                            Id = (short)468,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_CHANGED_KEY_OWNER"
+                        },
+                        new
+                        {
+                            Id = (short)469,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_SET_READ_ONLY"
+                        },
+                        new
+                        {
+                            Id = (short)470,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_REMOVED_READ_ONLY"
+                        },
+                        new
+                        {
+                            Id = (short)471,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_CHANGED_SERVER"
+                        },
+                        new
+                        {
+                            Id = (short)472,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_CLEARED_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)473,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_ASSIGNED_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)474,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_CHANGED_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)475,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_UNKNOWN_CHANGE"
+                        },
+                        new
+                        {
+                            Id = (short)476,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_DELETED_KEY"
+                        },
+                        new
+                        {
+                            Id = (short)478,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_PLAYER_NOT_FOUND_NAME"
+                        },
+                        new
+                        {
+                            Id = (short)477,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_PLAYER_NOT_FOUND_ID"
+                        },
+                        new
+                        {
+                            Id = (short)479,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_PLAYER_NAME_NOT_SET"
+                        },
+                        new
+                        {
+                            Id = (short)480,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_PLAYER_NOT_IN_TRIBE"
+                        },
+                        new
+                        {
+                            Id = (short)481,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_PLAYER_HAS_KEY"
+                        },
+                        new
+                        {
+                            Id = (short)482,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_INVALID_KEY"
+                        },
+                        new
+                        {
+                            Id = (short)483,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_KEY_NOT_FOUND"
+                        },
+                        new
+                        {
+                            Id = (short)484,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_DELETE_OWN_KEY"
+                        },
+                        new
+                        {
+                            Id = (short)485,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_DELETE_OTHER_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)486,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_CHANGE_OWN_KEY"
+                        },
+                        new
+                        {
+                            Id = (short)487,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_CHANGE_OTHER_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)137,
                             Group = "Time",
                             IsTwNative = false,
-                            Name = "ARRIVAL_TIME"
+                            Name = "LANDS_AT"
                         },
                         new
                         {
-                            Id = (short)4,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "ARRIVES_IN"
-                        },
-                        new
-                        {
-                            Id = (short)5,
+                            Id = (short)345,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "REQUIRE_PREMIUM_ACCOUNT"
+                            Name = "INCOMINGS"
                         },
                         new
                         {
-                            Id = (short)6,
+                            Id = (short)347,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "TERMS_AND_CONDITIONS"
+                            Name = "COMMANDS"
                         },
                         new
                         {
-                            Id = (short)7,
+                            Id = (short)439,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "RE_RUN_SCRIPT"
+                            Name = "TRIGGERED_CAPTCHA"
                         },
                         new
                         {
-                            Id = (short)8,
+                            Id = (short)440,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "SCRIPT_NOT_RAN"
+                            Name = "IS_IN_GROUP"
                         },
                         new
                         {
-                            Id = (short)9,
+                            Id = (short)441,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "UPDATE_NOTICE"
+                            Name = "FILTER_APPLIED"
+                        },
+                        new
+                        {
+                            Id = (short)560,
+                            Group = "Map",
+                            IsTwNative = false,
+                            Name = "MAP_SETTINGS_OVERLAY_SHOW_TARGET_NUM_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)489,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "OFFENSE"
+                        },
+                        new
+                        {
+                            Id = (short)371,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_CHECK_UPLOADED"
+                        },
+                        new
+                        {
+                            Id = (short)372,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_LA_NOT_FOUND"
+                        },
+                        new
+                        {
+                            Id = (short)374,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_FILTERING_LA"
+                        },
+                        new
+                        {
+                            Id = (short)375,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_LA_ERROR"
+                        },
+                        new
+                        {
+                            Id = (short)376,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_SKIPPED_OLD"
+                        },
+                        new
+                        {
+                            Id = (short)377,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_ERROR_CHECK_OLD"
+                        },
+                        new
+                        {
+                            Id = (short)378,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_FINISHED"
+                        },
+                        new
+                        {
+                            Id = (short)379,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_NONE_NEW"
+                        },
+                        new
+                        {
+                            Id = (short)380,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_PROGRESS"
+                        },
+                        new
+                        {
+                            Id = (short)381,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_COLLECTING_PAGES"
+                        },
+                        new
+                        {
+                            Id = (short)382,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_FIND_ACADEMY"
+                        },
+                        new
+                        {
+                            Id = (short)383,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_NO_ACADEMY"
+                        },
+                        new
+                        {
+                            Id = (short)384,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_FIND_POSSIBLE_NOBLES"
+                        },
+                        new
+                        {
+                            Id = (short)385,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_FIND_SUPPORT"
+                        },
+                        new
+                        {
+                            Id = (short)386,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_COLLECTING_SUPPORT"
+                        },
+                        new
+                        {
+                            Id = (short)387,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_ERROR_FINDING_ACADEMY"
+                        },
+                        new
+                        {
+                            Id = (short)58,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "TAG_SELECTED"
+                        },
+                        new
+                        {
+                            Id = (short)390,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_ERROR_GETTING_NOBLES"
+                        },
+                        new
+                        {
+                            Id = (short)391,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_UPLOADING"
+                        },
+                        new
+                        {
+                            Id = (short)392,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "UPLOAD_ERROR"
+                        },
+                        new
+                        {
+                            Id = (short)393,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_FINISHED"
+                        },
+                        new
+                        {
+                            Id = (short)394,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "TROOPS_UPLOADING_SUPPORT"
+                        },
+                        new
+                        {
+                            Id = (short)59,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "TAG_REVERT"
+                        },
+                        new
+                        {
+                            Id = (short)493,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "NOBLES"
+                        },
+                        new
+                        {
+                            Id = (short)494,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "NAME"
+                        },
+                        new
+                        {
+                            Id = (short)495,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "OPTIONS"
+                        },
+                        new
+                        {
+                            Id = (short)496,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "INCOMINGS_NONE"
+                        },
+                        new
+                        {
+                            Id = (short)497,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "INCOMINGS_UPLOAD_ERROR"
+                        },
+                        new
+                        {
+                            Id = (short)498,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_NOBLE_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)499,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_NOBLE"
+                        },
+                        new
+                        {
+                            Id = (short)60,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "CANCEL"
+                        },
+                        new
+                        {
+                            Id = (short)501,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "YOUR_SUPPORT_FROM"
+                        },
+                        new
+                        {
+                            Id = (short)61,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "TAG_DURATION_NOTICE"
+                        },
+                        new
+                        {
+                            Id = (short)503,
+                            Group = "Map",
+                            IsTwNative = false,
+                            Name = "MAP_SETTINGS_HOVER_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)504,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "TAGGING_TITLE"
+                        },
+                        new
+                        {
+                            Id = (short)505,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "TAG_CODE_DISTANCE_DETAILS"
+                        },
+                        new
+                        {
+                            Id = (short)506,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "PREVIEW"
+                        },
+                        new
+                        {
+                            Id = (short)507,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "COMMANDS_FROM_HERE"
+                        },
+                        new
+                        {
+                            Id = (short)62,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "NOT_A_NUMBER"
+                        },
+                        new
+                        {
+                            Id = (short)63,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "FAKE_DETECTION_CONFIRM"
+                        },
+                        new
+                        {
+                            Id = (short)64,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "NO_INCOMINGS_SELECTED"
                         },
                         new
                         {
@@ -3923,157 +4672,1327 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         },
                         new
                         {
-                            Id = (short)12,
+                            Id = (short)65,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "TAGS_ARE_CURRENT"
+                        },
+                        new
+                        {
+                            Id = (short)538,
+                            Group = "Time",
+                            IsTwNative = true,
+                            Name = "TIME_NUMERIC_DATE"
+                        },
+                        new
+                        {
+                            Id = (short)539,
+                            Group = "Map",
+                            IsTwNative = false,
+                            Name = "MAP_HIGHLIGHT_ENEMY"
+                        },
+                        new
+                        {
+                            Id = (short)531,
+                            Group = "Translations",
+                            IsTwNative = false,
+                            Name = "TRANSLATION_NOT_SAVED"
+                        },
+                        new
+                        {
+                            Id = (short)532,
+                            Group = "Translations",
+                            IsTwNative = false,
+                            Name = "TRANSLATION_DELETED"
+                        },
+                        new
+                        {
+                            Id = (short)528,
+                            Group = "Translations",
+                            IsTwNative = false,
+                            Name = "TRANSLATION_DELETE"
+                        },
+                        new
+                        {
+                            Id = (short)529,
+                            Group = "Translations",
+                            IsTwNative = false,
+                            Name = "TRANSLATION_DELETE_CONFIRM"
+                        },
+                        new
+                        {
+                            Id = (short)530,
+                            Group = "Translations",
+                            IsTwNative = false,
+                            Name = "TRANSLATION_DELETE_DEFAULT"
+                        },
+                        new
+                        {
+                            Id = (short)534,
+                            Group = "Translations",
+                            IsTwNative = false,
+                            Name = "TRANSLATION_DUPLICATE"
+                        },
+                        new
+                        {
+                            Id = (short)145,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_NOBLE_TARGETS"
+                        },
+                        new
+                        {
+                            Id = (short)152,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_USELESS_STACKS"
+                        },
+                        new
+                        {
+                            Id = (short)157,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_QUICK_SUPPORT"
+                        },
+                        new
+                        {
+                            Id = (short)165,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_REQUEST_STACK"
+                        },
+                        new
+                        {
+                            Id = (short)170,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)173,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_ENEMY_TRIBES"
+                        },
+                        new
+                        {
+                            Id = (short)181,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_MANAGE_USERS"
+                        },
+                        new
+                        {
+                            Id = (short)187,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_TRIBE_STATS"
+                        },
+                        new
+                        {
+                            Id = (short)192,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_LOG"
+                        },
+                        new
+                        {
+                            Id = (short)234,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_NOTIFICATIONS"
+                        },
+                        new
+                        {
+                            Id = (short)275,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_STATS"
+                        },
+                        new
+                        {
+                            Id = (short)282,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_ME"
+                        },
+                        new
+                        {
+                            Id = (short)142,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_STACKS_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)143,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_STACKS_POSSIBLE_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)144,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_STACKS_CURRENT_STRENGTH"
+                        },
+                        new
+                        {
+                            Id = (short)146,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_NOBLE_TARGETS_NONE"
+                        },
+                        new
+                        {
+                            Id = (short)147,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_NOBLE_TARGETS_DV_AGE"
+                        },
+                        new
+                        {
+                            Id = (short)148,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_NOBLE_TARGETS_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)149,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_NOBLE_TARGETS_STATIONED_DVS"
+                        },
+                        new
+                        {
+                            Id = (short)150,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_NOBLE_TARGETS_DVS_SEEN_AT"
+                        },
+                        new
+                        {
+                            Id = (short)153,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_USELESS_STACKS_NONE"
+                        },
+                        new
+                        {
+                            Id = (short)154,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_USELESS_STACKS_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)156,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_USELESS_STACKS_POP_COUNT"
+                        },
+                        new
+                        {
+                            Id = (short)172,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_REMOVE_ENEMY"
+                        },
+                        new
+                        {
+                            Id = (short)174,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ERROR_LOADING_ENEMY_TRIBES"
+                        },
+                        new
+                        {
+                            Id = (short)175,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_NAME_OF_TRIBE"
+                        },
+                        new
+                        {
+                            Id = (short)176,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_NOT_FOUND"
+                        },
+                        new
+                        {
+                            Id = (short)177,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_ALREADY_EXISTS"
+                        },
+                        new
+                        {
+                            Id = (short)178,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_ENEMY_TRIBES"
+                        },
+                        new
+                        {
+                            Id = (short)179,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_ENEMY_TRIBES_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)180,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_ADD_ENEMY_TRIBE"
+                        },
+                        new
+                        {
+                            Id = (short)183,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_NEW_KEY"
+                        },
+                        new
+                        {
+                            Id = (short)184,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_NEW_VAULT_SCRIPT"
+                        },
+                        new
+                        {
+                            Id = (short)189,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)190,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_SETTINGS_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)193,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_USER_LOG"
+                        },
+                        new
+                        {
+                            Id = (short)197,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_MANAGE_USERS_ENTER_NAME"
+                        },
+                        new
+                        {
+                            Id = (short)199,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_MANAGE_USERS_GIVE_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)200,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_MANAGE_USERS_REVOKE_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)202,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_MANAGE_USERS_CONFIRM_DELETE"
+                        },
+                        new
+                        {
+                            Id = (short)203,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_MANAGE_USERS_CONFIRM_REMOVE_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)204,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_MANAGE_USERS_CONFIRM_GIVE_ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)205,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_MANAGE_USERS_VAULT_SCRIPT_FOR"
+                        },
+                        new
+                        {
+                            Id = (short)211,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_TOTAL_POSSIBLE_NOBLES"
+                        },
+                        new
+                        {
+                            Id = (short)212,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_TOTAL_DVS"
+                        },
+                        new
+                        {
+                            Id = (short)213,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_TOTAL_INCS"
+                        },
+                        new
+                        {
+                            Id = (short)214,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_TOTAL_ATTACKS"
+                        },
+                        new
+                        {
+                            Id = (short)215,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_NEEDS_UPLOAD"
+                        },
+                        new
+                        {
+                            Id = (short)218,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_FULL_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)219,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_NUKES_TRAVELING"
+                        },
+                        new
+                        {
+                            Id = (short)221,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_OWNED_DVS"
+                        },
+                        new
+                        {
+                            Id = (short)222,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_DVS_HOME"
+                        },
+                        new
+                        {
+                            Id = (short)223,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_BACKLINE_DVS_HOME"
+                        },
+                        new
+                        {
+                            Id = (short)224,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_DVS_TRAVELING"
+                        },
+                        new
+                        {
+                            Id = (short)225,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_DVS_TO_SELF"
+                        },
+                        new
+                        {
+                            Id = (short)226,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_DVS_TO_OTHERS"
+                        },
+                        new
+                        {
+                            Id = (short)227,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_OFF_VILLAS"
+                        },
+                        new
+                        {
+                            Id = (short)228,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_DEF_VILLAS"
+                        },
+                        new
+                        {
+                            Id = (short)229,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_NUM_INCS"
+                        },
+                        new
+                        {
+                            Id = (short)230,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_NUM_ATTACKS"
+                        },
+                        new
+                        {
+                            Id = (short)231,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TRIBE_STATS_DVS_TO_TRIBE"
+                        },
+                        new
+                        {
+                            Id = (short)188,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "UPLOAD_COMMANDS_REQUIRED"
+                            Name = "WORKING"
                         },
                         new
                         {
-                            Id = (short)13,
+                            Id = (short)201,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "UPLOAD_INCOMINGS_REQUIRED"
+                            Name = "GET_SCRIPT"
                         },
                         new
                         {
-                            Id = (short)14,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "UPLOAD_REPORTS_REQUIRED"
-                        },
-                        new
-                        {
-                            Id = (short)15,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "UPLOAD_TROOPS_REQUIRED"
-                        },
-                        new
-                        {
-                            Id = (short)16,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "UPLOAD_DATA_REQUIRED_REASONS"
-                        },
-                        new
-                        {
-                            Id = (short)17,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "ERROR_OCCURRED"
-                        },
-                        new
-                        {
-                            Id = (short)18,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "NO_COMMANDS_AVAILABLE"
-                        },
-                        new
-                        {
-                            Id = (short)19,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "NO_DATA_AVAILABLE"
-                        },
-                        new
-                        {
-                            Id = (short)20,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "TROOPS"
-                        },
-                        new
-                        {
-                            Id = (short)21,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "SOURCE_VILLAGE"
-                        },
-                        new
-                        {
-                            Id = (short)22,
+                            Id = (short)455,
                             Group = "Time",
                             IsTwNative = false,
-                            Name = "LAUNCH_TIME"
+                            Name = "TIME_HOUR_SHORT"
                         },
                         new
                         {
-                            Id = (short)23,
+                            Id = (short)456,
                             Group = "Time",
                             IsTwNative = false,
-                            Name = "LANDING_TIME"
+                            Name = "TIME_MINUTE_SHORT"
                         },
                         new
                         {
-                            Id = (short)24,
+                            Id = (short)457,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "TIME_SECOND_SHORT"
+                        },
+                        new
+                        {
+                            Id = (short)458,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "TIME_DAY_PLURAL_SHORT"
+                        },
+                        new
+                        {
+                            Id = (short)151,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "TROOP_REQUIRED"
+                            Name = "OWNER"
                         },
                         new
                         {
-                            Id = (short)25,
+                            Id = (short)155,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "VAULT"
+                            Name = "TRIBE"
                         },
                         new
                         {
-                            Id = (short)26,
+                            Id = (short)163,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "VAULT_INTERFACE_DESCRIPTION"
+                            Name = "SEARCH"
                         },
                         new
                         {
-                            Id = (short)27,
+                            Id = (short)164,
                             Group = "General",
                             IsTwNative = false,
-                            Name = "DONE"
+                            Name = "RESULTS"
                         },
                         new
                         {
-                            Id = (short)28,
+                            Id = (short)171,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "DELETE"
+                        },
+                        new
+                        {
+                            Id = (short)182,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "KEYS"
+                        },
+                        new
+                        {
+                            Id = (short)185,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "USER_NAME"
+                        },
+                        new
+                        {
+                            Id = (short)194,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = (short)198,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "NO_TRIBE"
+                        },
+                        new
+                        {
+                            Id = (short)216,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "YES"
+                        },
+                        new
+                        {
+                            Id = (short)217,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "PLAYER"
+                        },
+                        new
+                        {
+                            Id = (short)158,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "NO_PLAYERS_FOUND"
+                        },
+                        new
+                        {
+                            Id = (short)186,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "CURRENT_TRIBE"
+                        },
+                        new
+                        {
+                            Id = (short)191,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "DOWNLOAD"
+                        },
+                        new
+                        {
+                            Id = (short)195,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "EVENT"
+                        },
+                        new
+                        {
+                            Id = (short)196,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "TIME"
+                        },
+                        new
+                        {
+                            Id = (short)241,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "SERVER_TIME"
+                        },
+                        new
+                        {
+                            Id = (short)243,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "MESSAGE"
+                        },
+                        new
+                        {
+                            Id = (short)244,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "ADD"
+                        },
+                        new
+                        {
+                            Id = (short)264,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "OPTIONAL"
+                        },
+                        new
+                        {
+                            Id = (short)268,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "SAVE"
+                        },
+                        new
+                        {
+                            Id = (short)283,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "STATS_LOAD_ERROR"
+                        },
+                        new
+                        {
+                            Id = (short)284,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "STATS_7_DAYS"
+                        },
+                        new
+                        {
+                            Id = (short)285,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)286,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "FANGS"
+                        },
+                        new
+                        {
+                            Id = (short)287,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "STATS_TRAVELING_LANDED"
+                        },
+                        new
+                        {
+                            Id = (short)288,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "DEFENSE"
+                        },
+                        new
+                        {
+                            Id = (short)220,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "POSSIBLE_NOBLES"
+                        },
+                        new
+                        {
+                            Id = (short)535,
+                            Group = "Translations",
+                            IsTwNative = false,
+                            Name = "TRANSLATION_MAKING_COPY"
+                        },
+                        new
+                        {
+                            Id = (short)536,
+                            Group = "Map",
+                            IsTwNative = false,
+                            Name = "MAP_HOVER_NO_ARMY"
+                        },
+                        new
+                        {
+                            Id = (short)294,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_HIGH_SCORES"
+                        },
+                        new
+                        {
+                            Id = (short)297,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_SUPPORT"
+                        },
+                        new
+                        {
+                            Id = (short)298,
+                            Group = "Tabs",
+                            IsTwNative = false,
+                            Name = "TAB_TERMS"
+                        },
+                        new
+                        {
+                            Id = (short)537,
+                            Group = "Map",
+                            IsTwNative = false,
+                            Name = "MAP_HOVER_NO_BUILDINGS"
+                        },
+                        new
+                        {
+                            Id = (short)452,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "TIME_ON_AT"
+                        },
+                        new
+                        {
+                            Id = (short)453,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "TIME_DATE_FORMAT"
+                        },
+                        new
+                        {
+                            Id = (short)454,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "TIME_DAY_SHORT"
+                        },
+                        new
+                        {
+                            Id = (short)395,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_RAM"
+                        },
+                        new
+                        {
+                            Id = (short)396,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_RAM_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)398,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_CATAPULT_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)399,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_SPEAR"
+                        },
+                        new
+                        {
+                            Id = (short)400,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_SPEAR_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)401,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_SWORD"
+                        },
+                        new
+                        {
+                            Id = (short)402,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_SWORD_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)403,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_AXE"
+                        },
+                        new
+                        {
+                            Id = (short)404,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_AXE_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)405,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_ARCHER"
+                        },
+                        new
+                        {
+                            Id = (short)406,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_ARCHER_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)407,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_SPY"
+                        },
+                        new
+                        {
+                            Id = (short)408,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_SPY_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)409,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_LIGHT_CAV"
+                        },
+                        new
+                        {
+                            Id = (short)410,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_LIGHT_CAV_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)289,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "STATS_NUM_DVS"
+                        },
+                        new
+                        {
+                            Id = (short)290,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "STATS_DVS_AT_HOME"
+                        },
+                        new
+                        {
+                            Id = (short)291,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "STATS_BACKLINE_DVS_AT_HOME"
+                        },
+                        new
+                        {
+                            Id = (short)292,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "STATS_DVS_TRAVELING"
+                        },
+                        new
+                        {
+                            Id = (short)293,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "SUPPORT"
+                        },
+                        new
+                        {
+                            Id = (short)295,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "RANKINGS_LOAD_ERROR"
+                        },
+                        new
+                        {
+                            Id = (short)296,
+                            Group = "Stats",
+                            IsTwNative = false,
+                            Name = "RANKINGS"
+                        },
+                        new
+                        {
+                            Id = (short)299,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "TERMS_NOT_INNO"
+                        },
+                        new
+                        {
+                            Id = (short)300,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "TERMS_DETAILS"
+                        },
+                        new
+                        {
+                            Id = (short)303,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "DYNAMIC_FAKE_SCRIPTS"
+                        },
+                        new
+                        {
+                            Id = (short)314,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_RESULTS"
+                        },
+                        new
+                        {
+                            Id = (short)321,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_MIN_ATTACK_SIZE_1"
+                        },
+                        new
+                        {
+                            Id = (short)322,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_MIN_ATTACK_SIZE_2"
+                        },
+                        new
+                        {
+                            Id = (short)323,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_MAX_TRAVEL_TIME"
+                        },
+                        new
+                        {
+                            Id = (short)324,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_MAX_NUM_TIMINGS"
+                        },
+                        new
+                        {
+                            Id = (short)325,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_HIDE_HANDLED_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)326,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_HIDE_STACKED_NUKES"
+                        },
+                        new
+                        {
+                            Id = (short)316,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_WORKING"
+                        },
+                        new
+                        {
+                            Id = (short)318,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_DESCRIPTION_1"
+                        },
+                        new
+                        {
+                            Id = (short)319,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_DESCRIPTION_2"
+                        },
+                        new
+                        {
+                            Id = (short)320,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "BACKTIME_MIN_RETURNING_POPULATION"
+                        },
+                        new
+                        {
+                            Id = (short)304,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "PLAYERS"
+                        },
+                        new
+                        {
+                            Id = (short)305,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "TRIBES"
+                        },
+                        new
+                        {
+                            Id = (short)306,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "CONTINENTS"
+                        },
+                        new
+                        {
+                            Id = (short)451,
+                            Group = "Time",
+                            IsTwNative = true,
+                            Name = "TIME_ON",
+                            Note = "Landing time for commands"
+                        },
+                        new
+                        {
+                            Id = (short)310,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "FAKES_DIST_LABEL"
+                        },
+                        new
+                        {
+                            Id = (short)311,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "FAKES_DIST_FIELDS_FROM"
+                        },
+                        new
+                        {
+                            Id = (short)312,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "GET_COORDS"
+                        },
+                        new
+                        {
+                            Id = (short)307,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "FAKES_MIN_COORD"
+                        },
+                        new
+                        {
+                            Id = (short)308,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "FAKES_MAX_COORD"
+                        },
+                        new
+                        {
+                            Id = (short)333,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "WAITING"
+                        },
+                        new
+                        {
+                            Id = (short)334,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "UNEXPECTED_ERROR"
+                        },
+                        new
+                        {
+                            Id = (short)335,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "UPLOAD"
+                        },
+                        new
+                        {
+                            Id = (short)336,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "PROGRESS"
+                        },
+                        new
+                        {
+                            Id = (short)340,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "DETAILS"
+                        },
+                        new
+                        {
+                            Id = (short)342,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "REPORTS"
+                        },
+                        new
+                        {
+                            Id = (short)328,
                             Group = "Uploads",
                             IsTwNative = false,
-                            Name = "UPLOADING_IF_CLOSED"
+                            Name = "UPLOAD_DESCRIPTION_REPORTS"
                         },
                         new
                         {
-                            Id = (short)29,
-                            Group = "Tagging",
+                            Id = (short)329,
+                            Group = "Uploads",
                             IsTwNative = false,
-                            Name = "INCS_NOT_TAGGED"
+                            Name = "UPLOAD_DESCRIPTION_INCS"
                         },
                         new
                         {
-                            Id = (short)30,
-                            Group = "Tagging",
+                            Id = (short)330,
+                            Group = "Uploads",
                             IsTwNative = false,
-                            Name = "TAG_UPLOAD_DATA_REQUIRED"
+                            Name = "UPLOAD_DESCRIPTION_COMMANDS"
                         },
                         new
                         {
-                            Id = (short)31,
-                            Group = "Tagging",
+                            Id = (short)331,
+                            Group = "Uploads",
                             IsTwNative = false,
-                            Name = "FEATURE_IS_EXPERIMENTAL"
+                            Name = "UPLOAD_DESCRIPTION_TROOPS"
                         },
                         new
                         {
-                            Id = (short)32,
-                            Group = "Tagging",
+                            Id = (short)332,
+                            Group = "Uploads",
                             IsTwNative = false,
-                            Name = "UPLOAD_VISIBLE_INCOMINGS"
+                            Name = "UPLOAD_CACHE_CLEARED"
                         },
                         new
                         {
-                            Id = (short)33,
-                            Group = "Tagging",
+                            Id = (short)341,
+                            Group = "Uploads",
                             IsTwNative = false,
-                            Name = "TAG_CODE_HEADER"
+                            Name = "UPLOAD_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)348,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "UPLOAD_ALL"
+                        },
+                        new
+                        {
+                            Id = (short)349,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "UPLOAD_CLEAR_CACHE"
+                        },
+                        new
+                        {
+                            Id = (short)356,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "COMMANDS_COLLECTING_PAGES"
+                        },
+                        new
+                        {
+                            Id = (short)360,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "COMMANDS_FINISHED"
+                        },
+                        new
+                        {
+                            Id = (short)370,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_PAGES_PROGRESS"
+                        },
+                        new
+                        {
+                            Id = (short)357,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "COMMANDS_NONE_NEW"
+                        },
+                        new
+                        {
+                            Id = (short)358,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "COMMANDS_CHECK_UPLOADED"
+                        },
+                        new
+                        {
+                            Id = (short)359,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "COMMANDS_UPLOADING"
+                        },
+                        new
+                        {
+                            Id = (short)361,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "COMMANDS_CHECK_UPLOADED_FAILED"
+                        },
+                        new
+                        {
+                            Id = (short)362,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "COMMANDS_SKIPPED_OLD"
+                        },
+                        new
+                        {
+                            Id = (short)364,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "INCOMINGS_COLLECTING_PAGES"
+                        },
+                        new
+                        {
+                            Id = (short)365,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "INCOMINGS_PROGRESS"
+                        },
+                        new
+                        {
+                            Id = (short)366,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "INCOMINGS_UPLOADING"
+                        },
+                        new
+                        {
+                            Id = (short)367,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "INCOMINGS_FINISHED"
+                        },
+                        new
+                        {
+                            Id = (short)368,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_COLLECTING_PAGES"
+                        },
+                        new
+                        {
+                            Id = (short)369,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_COLLECTING_LINKS"
+                        },
+                        new
+                        {
+                            Id = (short)363,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "COMMANDS_PROGRESS"
+                        },
+                        new
+                        {
+                            Id = (short)3,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "ARRIVAL_TIME"
+                        },
+                        new
+                        {
+                            Id = (short)4,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "ARRIVES_IN"
                         },
                         new
                         {
@@ -4151,6 +6070,13 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                             Group = "Tagging",
                             IsTwNative = false,
                             Name = "TAG_CODE_SRC_VILLAGE_DETAILS"
+                        },
+                        new
+                        {
+                            Id = (short)463,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_LOG_ADDED_KEY_FOR"
                         },
                         new
                         {
@@ -4238,66 +6164,17 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         },
                         new
                         {
+                            Id = (short)459,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "TIME_HOUR_PLURAL_SHORT"
+                        },
+                        new
+                        {
                             Id = (short)57,
                             Group = "Tagging",
                             IsTwNative = false,
                             Name = "TAG_ALL"
-                        },
-                        new
-                        {
-                            Id = (short)58,
-                            Group = "Tagging",
-                            IsTwNative = false,
-                            Name = "TAG_SELECTED"
-                        },
-                        new
-                        {
-                            Id = (short)59,
-                            Group = "Tagging",
-                            IsTwNative = false,
-                            Name = "TAG_REVERT"
-                        },
-                        new
-                        {
-                            Id = (short)60,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "CANCEL"
-                        },
-                        new
-                        {
-                            Id = (short)61,
-                            Group = "Tagging",
-                            IsTwNative = false,
-                            Name = "TAG_DURATION_NOTICE"
-                        },
-                        new
-                        {
-                            Id = (short)62,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "NOT_A_NUMBER"
-                        },
-                        new
-                        {
-                            Id = (short)63,
-                            Group = "Tagging",
-                            IsTwNative = false,
-                            Name = "FAKE_DETECTION_CONFIRM"
-                        },
-                        new
-                        {
-                            Id = (short)64,
-                            Group = "Tagging",
-                            IsTwNative = false,
-                            Name = "NO_INCOMINGS_SELECTED"
-                        },
-                        new
-                        {
-                            Id = (short)65,
-                            Group = "Tagging",
-                            IsTwNative = false,
-                            Name = "TAGS_ARE_CURRENT"
                         },
                         new
                         {
@@ -4560,6 +6437,83 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         },
                         new
                         {
+                            Id = (short)460,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "TIME_MINUTE_PLURAL_SHORT"
+                        },
+                        new
+                        {
+                            Id = (short)461,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "TIME_SECOND_PLURAL_SHORT"
+                        },
+                        new
+                        {
+                            Id = (short)411,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_M_ARCHER"
+                        },
+                        new
+                        {
+                            Id = (short)412,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_M_ARCHER_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)413,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_HEAVY_CAV"
+                        },
+                        new
+                        {
+                            Id = (short)414,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_HEAVY_CAV_ALIASES"
+                        },
+                        new
+                        {
+                            Id = (short)415,
+                            Group = "TribalWars",
+                            IsTwNative = false,
+                            Name = "UNIT_PALADIN"
+                        },
+                        new
+                        {
+                            Id = (short)462,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "REQUEST_STATS"
+                        },
+                        new
+                        {
+                            Id = (short)488,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "NONE"
+                        },
+                        new
+                        {
+                            Id = (short)2,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "OPEN_VAULT"
+                        },
+                        new
+                        {
+                            Id = (short)5,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "REQUIRE_PREMIUM_ACCOUNT"
+                        },
+                        new
+                        {
                             Id = (short)103,
                             Group = "Map",
                             IsTwNative = false,
@@ -4620,13 +6574,6 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                             Group = "Map",
                             IsTwNative = false,
                             Name = "MAP_SETTINGS_OVERLAY_SHOW_STACKS"
-                        },
-                        new
-                        {
-                            Id = (short)112,
-                            Group = "Map",
-                            IsTwNative = false,
-                            Name = "MAP_SETTINGS_OVERLAY_SHOW_WALL"
                         },
                         new
                         {
@@ -4770,1567 +6717,6 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         },
                         new
                         {
-                            Id = (short)134,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_SNIPES_NONE"
-                        },
-                        new
-                        {
-                            Id = (short)135,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_SNIPES_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)136,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_SNIPES_NUM_NOBLES"
-                        },
-                        new
-                        {
-                            Id = (short)137,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "LANDS_AT"
-                        },
-                        new
-                        {
-                            Id = (short)139,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_SEND_STACKS"
-                        },
-                        new
-                        {
-                            Id = (short)140,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_STACKS_NONE"
-                        },
-                        new
-                        {
-                            Id = (short)141,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_STACKS_EATABLE_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)142,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_STACKS_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)143,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_STACKS_POSSIBLE_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)144,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_STACKS_CURRENT_STRENGTH"
-                        },
-                        new
-                        {
-                            Id = (short)145,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_NOBLE_TARGETS"
-                        },
-                        new
-                        {
-                            Id = (short)146,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_NOBLE_TARGETS_NONE"
-                        },
-                        new
-                        {
-                            Id = (short)147,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_NOBLE_TARGETS_DV_AGE"
-                        },
-                        new
-                        {
-                            Id = (short)148,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_NOBLE_TARGETS_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)149,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_NOBLE_TARGETS_STATIONED_DVS"
-                        },
-                        new
-                        {
-                            Id = (short)150,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_NOBLE_TARGETS_DVS_SEEN_AT"
-                        },
-                        new
-                        {
-                            Id = (short)151,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "OWNER"
-                        },
-                        new
-                        {
-                            Id = (short)152,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_USELESS_STACKS"
-                        },
-                        new
-                        {
-                            Id = (short)153,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_USELESS_STACKS_NONE"
-                        },
-                        new
-                        {
-                            Id = (short)154,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_USELESS_STACKS_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)155,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "TRIBE"
-                        },
-                        new
-                        {
-                            Id = (short)156,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_USELESS_STACKS_POP_COUNT"
-                        },
-                        new
-                        {
-                            Id = (short)157,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_QUICK_SUPPORT"
-                        },
-                        new
-                        {
-                            Id = (short)158,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "NO_PLAYERS_FOUND"
-                        },
-                        new
-                        {
-                            Id = (short)159,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_QUICK_SUPPORT_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)160,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_QUICK_SUPPORT_SETTINGS_1"
-                        },
-                        new
-                        {
-                            Id = (short)161,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_QUICK_SUPPORT_SETTINGS_2"
-                        },
-                        new
-                        {
-                            Id = (short)162,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_QUICK_SUPPORT_SETTINGS_3"
-                        },
-                        new
-                        {
-                            Id = (short)163,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "SEARCH"
-                        },
-                        new
-                        {
-                            Id = (short)164,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "RESULTS"
-                        },
-                        new
-                        {
-                            Id = (short)165,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_REQUEST_STACK"
-                        },
-                        new
-                        {
-                            Id = (short)166,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_REQUEST_STACK_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)167,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_REQUEST_STACK_SETTINGS_1"
-                        },
-                        new
-                        {
-                            Id = (short)168,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_REQUEST_STACK_SETTINGS_2"
-                        },
-                        new
-                        {
-                            Id = (short)169,
-                            Group = "Actions",
-                            IsTwNative = false,
-                            Name = "ACTIONS_REQUEST_STACK_SETTINGS_3"
-                        },
-                        new
-                        {
-                            Id = (short)170,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)171,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "DELETE"
-                        },
-                        new
-                        {
-                            Id = (short)172,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_REMOVE_ENEMY"
-                        },
-                        new
-                        {
-                            Id = (short)173,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_ENEMY_TRIBES"
-                        },
-                        new
-                        {
-                            Id = (short)174,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ERROR_LOADING_ENEMY_TRIBES"
-                        },
-                        new
-                        {
-                            Id = (short)175,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_NAME_OF_TRIBE"
-                        },
-                        new
-                        {
-                            Id = (short)176,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_NOT_FOUND"
-                        },
-                        new
-                        {
-                            Id = (short)177,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_ALREADY_EXISTS"
-                        },
-                        new
-                        {
-                            Id = (short)178,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_ENEMY_TRIBES"
-                        },
-                        new
-                        {
-                            Id = (short)179,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_ENEMY_TRIBES_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)180,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_ADD_ENEMY_TRIBE"
-                        },
-                        new
-                        {
-                            Id = (short)181,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_MANAGE_USERS"
-                        },
-                        new
-                        {
-                            Id = (short)182,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "KEYS"
-                        },
-                        new
-                        {
-                            Id = (short)183,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_NEW_KEY"
-                        },
-                        new
-                        {
-                            Id = (short)184,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_NEW_VAULT_SCRIPT"
-                        },
-                        new
-                        {
-                            Id = (short)185,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "USER_NAME"
-                        },
-                        new
-                        {
-                            Id = (short)186,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "CURRENT_TRIBE"
-                        },
-                        new
-                        {
-                            Id = (short)187,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_TRIBE_STATS"
-                        },
-                        new
-                        {
-                            Id = (short)188,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "WORKING"
-                        },
-                        new
-                        {
-                            Id = (short)189,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)190,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_SETTINGS_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)191,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "DOWNLOAD"
-                        },
-                        new
-                        {
-                            Id = (short)192,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_LOG"
-                        },
-                        new
-                        {
-                            Id = (short)193,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_USER_LOG"
-                        },
-                        new
-                        {
-                            Id = (short)194,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)195,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "EVENT"
-                        },
-                        new
-                        {
-                            Id = (short)196,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "TIME"
-                        },
-                        new
-                        {
-                            Id = (short)197,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_MANAGE_USERS_ENTER_NAME"
-                        },
-                        new
-                        {
-                            Id = (short)198,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "NO_TRIBE"
-                        },
-                        new
-                        {
-                            Id = (short)199,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_MANAGE_USERS_GIVE_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)200,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_MANAGE_USERS_REVOKE_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)201,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "GET_SCRIPT"
-                        },
-                        new
-                        {
-                            Id = (short)202,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_MANAGE_USERS_CONFIRM_DELETE"
-                        },
-                        new
-                        {
-                            Id = (short)203,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_MANAGE_USERS_CONFIRM_REMOVE_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)204,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_MANAGE_USERS_CONFIRM_GIVE_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)205,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_MANAGE_USERS_VAULT_SCRIPT_FOR"
-                        },
-                        new
-                        {
-                            Id = (short)206,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_25%_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)207,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_50%_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)208,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_75%_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)209,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_TOTAL_FULL_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)210,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_TOTAL_NOBLES"
-                        },
-                        new
-                        {
-                            Id = (short)211,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_TOTAL_POSSIBLE_NOBLES"
-                        },
-                        new
-                        {
-                            Id = (short)212,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_TOTAL_DVS"
-                        },
-                        new
-                        {
-                            Id = (short)213,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_TOTAL_INCS"
-                        },
-                        new
-                        {
-                            Id = (short)214,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_TOTAL_ATTACKS"
-                        },
-                        new
-                        {
-                            Id = (short)215,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_NEEDS_UPLOAD"
-                        },
-                        new
-                        {
-                            Id = (short)216,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "YES"
-                        },
-                        new
-                        {
-                            Id = (short)217,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "PLAYER"
-                        },
-                        new
-                        {
-                            Id = (short)218,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_FULL_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)219,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_NUKES_TRAVELING"
-                        },
-                        new
-                        {
-                            Id = (short)220,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "POSSIBLE_NOBLES"
-                        },
-                        new
-                        {
-                            Id = (short)221,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_OWNED_DVS"
-                        },
-                        new
-                        {
-                            Id = (short)222,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_DVS_HOME"
-                        },
-                        new
-                        {
-                            Id = (short)223,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_BACKLINE_DVS_HOME"
-                        },
-                        new
-                        {
-                            Id = (short)224,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_DVS_TRAVELING"
-                        },
-                        new
-                        {
-                            Id = (short)225,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_DVS_TO_SELF"
-                        },
-                        new
-                        {
-                            Id = (short)226,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_DVS_TO_OTHERS"
-                        },
-                        new
-                        {
-                            Id = (short)227,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_OFF_VILLAS"
-                        },
-                        new
-                        {
-                            Id = (short)228,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_DEF_VILLAS"
-                        },
-                        new
-                        {
-                            Id = (short)229,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_NUM_INCS"
-                        },
-                        new
-                        {
-                            Id = (short)230,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_NUM_ATTACKS"
-                        },
-                        new
-                        {
-                            Id = (short)231,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_TRIBE_STATS_DVS_TO_TRIBE"
-                        },
-                        new
-                        {
-                            Id = (short)234,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_NOTIFICATIONS"
-                        },
-                        new
-                        {
-                            Id = (short)241,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "SERVER_TIME"
-                        },
-                        new
-                        {
-                            Id = (short)243,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "MESSAGE"
-                        },
-                        new
-                        {
-                            Id = (short)244,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "ADD"
-                        },
-                        new
-                        {
-                            Id = (short)264,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "OPTIONAL"
-                        },
-                        new
-                        {
-                            Id = (short)268,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "SAVE"
-                        },
-                        new
-                        {
-                            Id = (short)275,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_STATS"
-                        },
-                        new
-                        {
-                            Id = (short)282,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_ME"
-                        },
-                        new
-                        {
-                            Id = (short)283,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "STATS_LOAD_ERROR"
-                        },
-                        new
-                        {
-                            Id = (short)284,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "STATS_7_DAYS"
-                        },
-                        new
-                        {
-                            Id = (short)285,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)286,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "FANGS"
-                        },
-                        new
-                        {
-                            Id = (short)287,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "STATS_TRAVELING_LANDED"
-                        },
-                        new
-                        {
-                            Id = (short)288,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "DEFENSE"
-                        },
-                        new
-                        {
-                            Id = (short)289,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "STATS_NUM_DVS"
-                        },
-                        new
-                        {
-                            Id = (short)290,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "STATS_DVS_AT_HOME"
-                        },
-                        new
-                        {
-                            Id = (short)291,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "STATS_BACKLINE_DVS_AT_HOME"
-                        },
-                        new
-                        {
-                            Id = (short)292,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "STATS_DVS_TRAVELING"
-                        },
-                        new
-                        {
-                            Id = (short)293,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "SUPPORT"
-                        },
-                        new
-                        {
-                            Id = (short)294,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_HIGH_SCORES"
-                        },
-                        new
-                        {
-                            Id = (short)295,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "RANKINGS_LOAD_ERROR"
-                        },
-                        new
-                        {
-                            Id = (short)296,
-                            Group = "Stats",
-                            IsTwNative = false,
-                            Name = "RANKINGS"
-                        },
-                        new
-                        {
-                            Id = (short)297,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_SUPPORT"
-                        },
-                        new
-                        {
-                            Id = (short)298,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_TERMS"
-                        },
-                        new
-                        {
-                            Id = (short)299,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "TERMS_NOT_INNO"
-                        },
-                        new
-                        {
-                            Id = (short)300,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "TERMS_DETAILS"
-                        },
-                        new
-                        {
-                            Id = (short)301,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_TOOLS"
-                        },
-                        new
-                        {
-                            Id = (short)302,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_FAKE_SCRIPT"
-                        },
-                        new
-                        {
-                            Id = (short)303,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "DYNAMIC_FAKE_SCRIPTS"
-                        },
-                        new
-                        {
-                            Id = (short)304,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "PLAYERS"
-                        },
-                        new
-                        {
-                            Id = (short)305,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "TRIBES"
-                        },
-                        new
-                        {
-                            Id = (short)306,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "CONTINENTS"
-                        },
-                        new
-                        {
-                            Id = (short)307,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "FAKES_MIN_COORD"
-                        },
-                        new
-                        {
-                            Id = (short)308,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "FAKES_MAX_COORD"
-                        },
-                        new
-                        {
-                            Id = (short)310,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "FAKES_DIST_LABEL"
-                        },
-                        new
-                        {
-                            Id = (short)311,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "FAKES_DIST_FIELDS_FROM"
-                        },
-                        new
-                        {
-                            Id = (short)312,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "GET_COORDS"
-                        },
-                        new
-                        {
-                            Id = (short)314,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_RESULTS"
-                        },
-                        new
-                        {
-                            Id = (short)315,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_FIND_BACKTIMES"
-                        },
-                        new
-                        {
-                            Id = (short)316,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_WORKING"
-                        },
-                        new
-                        {
-                            Id = (short)318,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_DESCRIPTION_1"
-                        },
-                        new
-                        {
-                            Id = (short)319,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_DESCRIPTION_2"
-                        },
-                        new
-                        {
-                            Id = (short)320,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_MIN_RETURNING_POPULATION"
-                        },
-                        new
-                        {
-                            Id = (short)321,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_MIN_ATTACK_SIZE_1"
-                        },
-                        new
-                        {
-                            Id = (short)322,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_MIN_ATTACK_SIZE_2"
-                        },
-                        new
-                        {
-                            Id = (short)323,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_MAX_TRAVEL_TIME"
-                        },
-                        new
-                        {
-                            Id = (short)324,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_MAX_NUM_TIMINGS"
-                        },
-                        new
-                        {
-                            Id = (short)325,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_HIDE_HANDLED_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)326,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "BACKTIME_HIDE_STACKED_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)327,
-                            Group = "Tabs",
-                            IsTwNative = false,
-                            Name = "TAB_UPLOAD"
-                        },
-                        new
-                        {
-                            Id = (short)328,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_DESCRIPTION_REPORTS"
-                        },
-                        new
-                        {
-                            Id = (short)329,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_DESCRIPTION_INCS"
-                        },
-                        new
-                        {
-                            Id = (short)330,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_DESCRIPTION_COMMANDS"
-                        },
-                        new
-                        {
-                            Id = (short)331,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_DESCRIPTION_TROOPS"
-                        },
-                        new
-                        {
-                            Id = (short)332,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_CACHE_CLEARED"
-                        },
-                        new
-                        {
-                            Id = (short)333,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "WAITING"
-                        },
-                        new
-                        {
-                            Id = (short)334,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "UNEXPECTED_ERROR"
-                        },
-                        new
-                        {
-                            Id = (short)335,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "UPLOAD"
-                        },
-                        new
-                        {
-                            Id = (short)336,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "PROGRESS"
-                        },
-                        new
-                        {
-                            Id = (short)340,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "DETAILS"
-                        },
-                        new
-                        {
-                            Id = (short)341,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_DESCRIPTION"
-                        },
-                        new
-                        {
-                            Id = (short)342,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "REPORTS"
-                        },
-                        new
-                        {
-                            Id = (short)345,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "INCOMINGS"
-                        },
-                        new
-                        {
-                            Id = (short)347,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "COMMANDS"
-                        },
-                        new
-                        {
-                            Id = (short)348,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_ALL"
-                        },
-                        new
-                        {
-                            Id = (short)349,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_CLEAR_CACHE"
-                        },
-                        new
-                        {
-                            Id = (short)356,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "COMMANDS_COLLECTING_PAGES"
-                        },
-                        new
-                        {
-                            Id = (short)357,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "COMMANDS_NONE_NEW"
-                        },
-                        new
-                        {
-                            Id = (short)358,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "COMMANDS_CHECK_UPLOADED"
-                        },
-                        new
-                        {
-                            Id = (short)359,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "COMMANDS_UPLOADING"
-                        },
-                        new
-                        {
-                            Id = (short)360,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "COMMANDS_FINISHED"
-                        },
-                        new
-                        {
-                            Id = (short)361,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "COMMANDS_CHECK_UPLOADED_FAILED"
-                        },
-                        new
-                        {
-                            Id = (short)362,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "COMMANDS_SKIPPED_OLD"
-                        },
-                        new
-                        {
-                            Id = (short)363,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "COMMANDS_PROGRESS"
-                        },
-                        new
-                        {
-                            Id = (short)364,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "INCOMINGS_COLLECTING_PAGES"
-                        },
-                        new
-                        {
-                            Id = (short)365,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "INCOMINGS_PROGRESS"
-                        },
-                        new
-                        {
-                            Id = (short)366,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "INCOMINGS_UPLOADING"
-                        },
-                        new
-                        {
-                            Id = (short)367,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "INCOMINGS_FINISHED"
-                        },
-                        new
-                        {
-                            Id = (short)368,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_COLLECTING_PAGES"
-                        },
-                        new
-                        {
-                            Id = (short)369,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_COLLECTING_LINKS"
-                        },
-                        new
-                        {
-                            Id = (short)370,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_PAGES_PROGRESS"
-                        },
-                        new
-                        {
-                            Id = (short)371,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_CHECK_UPLOADED"
-                        },
-                        new
-                        {
-                            Id = (short)372,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_LA_NOT_FOUND"
-                        },
-                        new
-                        {
-                            Id = (short)373,
-                            Group = "Uploads",
-                            IsTwNative = true,
-                            Name = "REPORTS_LOOT_ASSISTANT"
-                        },
-                        new
-                        {
-                            Id = (short)374,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_FILTERING_LA"
-                        },
-                        new
-                        {
-                            Id = (short)375,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_LA_ERROR"
-                        },
-                        new
-                        {
-                            Id = (short)376,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_SKIPPED_OLD"
-                        },
-                        new
-                        {
-                            Id = (short)377,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_ERROR_CHECK_OLD"
-                        },
-                        new
-                        {
-                            Id = (short)378,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_FINISHED"
-                        },
-                        new
-                        {
-                            Id = (short)379,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_NONE_NEW"
-                        },
-                        new
-                        {
-                            Id = (short)380,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "REPORTS_PROGRESS"
-                        },
-                        new
-                        {
-                            Id = (short)381,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_COLLECTING_PAGES"
-                        },
-                        new
-                        {
-                            Id = (short)382,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_FIND_ACADEMY"
-                        },
-                        new
-                        {
-                            Id = (short)383,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_NO_ACADEMY"
-                        },
-                        new
-                        {
-                            Id = (short)384,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_FIND_POSSIBLE_NOBLES"
-                        },
-                        new
-                        {
-                            Id = (short)385,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_FIND_SUPPORT"
-                        },
-                        new
-                        {
-                            Id = (short)386,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_COLLECTING_SUPPORT"
-                        },
-                        new
-                        {
-                            Id = (short)387,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_ERROR_FINDING_ACADEMY"
-                        },
-                        new
-                        {
-                            Id = (short)388,
-                            Group = "Uploads",
-                            IsTwNative = true,
-                            Name = "TROOPS_NOBLES_LIMIT"
-                        },
-                        new
-                        {
-                            Id = (short)389,
-                            Group = "Uploads",
-                            IsTwNative = true,
-                            Name = "TROOPS_NOBLES_NUM_VILLAGES"
-                        },
-                        new
-                        {
-                            Id = (short)390,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_ERROR_GETTING_NOBLES"
-                        },
-                        new
-                        {
-                            Id = (short)391,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_UPLOADING"
-                        },
-                        new
-                        {
-                            Id = (short)392,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "UPLOAD_ERROR"
-                        },
-                        new
-                        {
-                            Id = (short)393,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_FINISHED"
-                        },
-                        new
-                        {
-                            Id = (short)394,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "TROOPS_UPLOADING_SUPPORT"
-                        },
-                        new
-                        {
-                            Id = (short)395,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_RAM"
-                        },
-                        new
-                        {
-                            Id = (short)396,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_RAM_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)397,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_CATAPULT"
-                        },
-                        new
-                        {
-                            Id = (short)398,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_CATAPULT_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)399,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_SPEAR"
-                        },
-                        new
-                        {
-                            Id = (short)400,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_SPEAR_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)401,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_SWORD"
-                        },
-                        new
-                        {
-                            Id = (short)402,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_SWORD_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)403,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_AXE"
-                        },
-                        new
-                        {
-                            Id = (short)404,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_AXE_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)405,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_ARCHER"
-                        },
-                        new
-                        {
-                            Id = (short)406,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_ARCHER_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)407,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_SPY"
-                        },
-                        new
-                        {
-                            Id = (short)408,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_SPY_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)409,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_LIGHT_CAV"
-                        },
-                        new
-                        {
-                            Id = (short)410,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_LIGHT_CAV_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)411,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_M_ARCHER"
-                        },
-                        new
-                        {
-                            Id = (short)412,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_M_ARCHER_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)413,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_HEAVY_CAV"
-                        },
-                        new
-                        {
-                            Id = (short)414,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_HEAVY_CAV_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)415,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_PALADIN"
-                        },
-                        new
-                        {
                             Id = (short)416,
                             Group = "TribalWars",
                             IsTwNative = false,
@@ -6338,472 +6724,10 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         },
                         new
                         {
-                            Id = (short)417,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_HQ"
-                        },
-                        new
-                        {
-                            Id = (short)418,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_BARRACKS"
-                        },
-                        new
-                        {
-                            Id = (short)419,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_STABLE"
-                        },
-                        new
-                        {
-                            Id = (short)420,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_WORKSHOP"
-                        },
-                        new
-                        {
-                            Id = (short)421,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_ACADEMY"
-                        },
-                        new
-                        {
-                            Id = (short)422,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_SMITHY"
-                        },
-                        new
-                        {
-                            Id = (short)423,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_RALLY_POINT"
-                        },
-                        new
-                        {
-                            Id = (short)424,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_STATUE"
-                        },
-                        new
-                        {
-                            Id = (short)425,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_MARKET"
-                        },
-                        new
-                        {
-                            Id = (short)426,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_TIMBER_CAMP"
-                        },
-                        new
-                        {
-                            Id = (short)427,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_CLAY_PIT"
-                        },
-                        new
-                        {
-                            Id = (short)428,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_IRON_MINE"
-                        },
-                        new
-                        {
-                            Id = (short)429,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_FARM"
-                        },
-                        new
-                        {
-                            Id = (short)430,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_WAREHOUSE"
-                        },
-                        new
-                        {
-                            Id = (short)431,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_HIDING_PLACE"
-                        },
-                        new
-                        {
-                            Id = (short)432,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_WALL"
-                        },
-                        new
-                        {
-                            Id = (short)433,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_WATCHTOWER"
-                        },
-                        new
-                        {
-                            Id = (short)434,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BUILDING_CHURCH"
-                        },
-                        new
-                        {
-                            Id = (short)435,
-                            Group = "Uploads",
-                            IsTwNative = true,
-                            Name = "REPORT_LOYALTY_FROM_TO"
-                        },
-                        new
-                        {
-                            Id = (short)436,
-                            Group = "Uploads",
-                            IsTwNative = true,
-                            Name = "REPORT_BUILDING_DAMAGE_NAMES"
-                        },
-                        new
-                        {
-                            Id = (short)437,
-                            Group = "Uploads",
-                            IsTwNative = true,
-                            Name = "REPORT_BUILDING_DAMAGE_LEVELS"
-                        },
-                        new
-                        {
-                            Id = (short)438,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BB_TABLE"
-                        },
-                        new
-                        {
-                            Id = (short)439,
-                            Group = "General",
+                            Id = (short)112,
+                            Group = "Map",
                             IsTwNative = false,
-                            Name = "TRIGGERED_CAPTCHA"
-                        },
-                        new
-                        {
-                            Id = (short)440,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "IS_IN_GROUP"
-                        },
-                        new
-                        {
-                            Id = (short)441,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "FILTER_APPLIED"
-                        },
-                        new
-                        {
-                            Id = (short)448,
-                            Group = "Time",
-                            IsTwNative = true,
-                            Name = "ORDERED_MONTHS"
-                        },
-                        new
-                        {
-                            Id = (short)449,
-                            Group = "Time",
-                            IsTwNative = true,
-                            Name = "TIME_TODAY_AT"
-                        },
-                        new
-                        {
-                            Id = (short)450,
-                            Group = "Time",
-                            IsTwNative = true,
-                            Name = "TIME_TOMORROW_AT"
-                        },
-                        new
-                        {
-                            Id = (short)451,
-                            Group = "Time",
-                            IsTwNative = true,
-                            Name = "TIME_ON"
-                        },
-                        new
-                        {
-                            Id = (short)452,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_ON_AT"
-                        },
-                        new
-                        {
-                            Id = (short)453,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_DATE_FORMAT"
-                        },
-                        new
-                        {
-                            Id = (short)454,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_DAY_SHORT"
-                        },
-                        new
-                        {
-                            Id = (short)455,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_HOUR_SHORT"
-                        },
-                        new
-                        {
-                            Id = (short)456,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_MINUTE_SHORT"
-                        },
-                        new
-                        {
-                            Id = (short)457,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_SECOND_SHORT"
-                        },
-                        new
-                        {
-                            Id = (short)458,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_DAY_PLURAL_SHORT"
-                        },
-                        new
-                        {
-                            Id = (short)459,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_HOUR_PLURAL_SHORT"
-                        },
-                        new
-                        {
-                            Id = (short)460,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_MINUTE_PLURAL_SHORT"
-                        },
-                        new
-                        {
-                            Id = (short)461,
-                            Group = "Time",
-                            IsTwNative = false,
-                            Name = "TIME_SECOND_PLURAL_SHORT"
-                        },
-                        new
-                        {
-                            Id = (short)462,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "REQUEST_STATS"
-                        },
-                        new
-                        {
-                            Id = (short)463,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_ADDED_KEY_FOR"
-                        },
-                        new
-                        {
-                            Id = (short)464,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_REVOKED_PRIVELEGES_FOR"
-                        },
-                        new
-                        {
-                            Id = (short)465,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_GAVE_PRIVELEGES_TO"
-                        },
-                        new
-                        {
-                            Id = (short)466,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_RE_ENABLED_KEY_FOR"
-                        },
-                        new
-                        {
-                            Id = (short)467,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_DISABLED_KEY_FOR"
-                        },
-                        new
-                        {
-                            Id = (short)468,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_CHANGED_KEY_OWNER"
-                        },
-                        new
-                        {
-                            Id = (short)469,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_SET_READ_ONLY"
-                        },
-                        new
-                        {
-                            Id = (short)470,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_REMOVED_READ_ONLY"
-                        },
-                        new
-                        {
-                            Id = (short)471,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_CHANGED_SERVER"
-                        },
-                        new
-                        {
-                            Id = (short)472,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_CLEARED_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)473,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_ASSIGNED_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)474,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_CHANGED_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)475,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_UNKNOWN_CHANGE"
-                        },
-                        new
-                        {
-                            Id = (short)476,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_LOG_DELETED_KEY"
-                        },
-                        new
-                        {
-                            Id = (short)477,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_PLAYER_NOT_FOUND_ID"
-                        },
-                        new
-                        {
-                            Id = (short)478,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_PLAYER_NOT_FOUND_NAME"
-                        },
-                        new
-                        {
-                            Id = (short)479,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_PLAYER_NAME_NOT_SET"
-                        },
-                        new
-                        {
-                            Id = (short)480,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_PLAYER_NOT_IN_TRIBE"
-                        },
-                        new
-                        {
-                            Id = (short)481,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_PLAYER_HAS_KEY"
-                        },
-                        new
-                        {
-                            Id = (short)482,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_INVALID_KEY"
-                        },
-                        new
-                        {
-                            Id = (short)483,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_KEY_NOT_FOUND"
-                        },
-                        new
-                        {
-                            Id = (short)484,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_DELETE_OWN_KEY"
-                        },
-                        new
-                        {
-                            Id = (short)485,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_DELETE_OTHER_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)486,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_CHANGE_OWN_KEY"
-                        },
-                        new
-                        {
-                            Id = (short)487,
-                            Group = "Admin",
-                            IsTwNative = false,
-                            Name = "ADMIN_CHANGE_OTHER_ADMIN"
-                        },
-                        new
-                        {
-                            Id = (short)488,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "NONE"
-                        },
-                        new
-                        {
-                            Id = (short)489,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "OFFENSE"
+                            Name = "MAP_SETTINGS_OVERLAY_SHOW_WALL"
                         },
                         new
                         {
@@ -6814,115 +6738,10 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         },
                         new
                         {
-                            Id = (short)493,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "NOBLES"
-                        },
-                        new
-                        {
-                            Id = (short)494,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "NAME"
-                        },
-                        new
-                        {
-                            Id = (short)495,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "OPTIONS"
-                        },
-                        new
-                        {
-                            Id = (short)496,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "INCOMINGS_NONE"
-                        },
-                        new
-                        {
-                            Id = (short)497,
-                            Group = "Uploads",
-                            IsTwNative = false,
-                            Name = "INCOMINGS_UPLOAD_ERROR"
-                        },
-                        new
-                        {
-                            Id = (short)498,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_NOBLE_ALIASES"
-                        },
-                        new
-                        {
-                            Id = (short)499,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "UNIT_NOBLE"
-                        },
-                        new
-                        {
-                            Id = (short)501,
-                            Group = "TribalWars",
-                            IsTwNative = false,
-                            Name = "YOUR_SUPPORT_FROM"
-                        },
-                        new
-                        {
-                            Id = (short)503,
-                            Group = "Map",
-                            IsTwNative = false,
-                            Name = "MAP_SETTINGS_HOVER_NUKES"
-                        },
-                        new
-                        {
-                            Id = (short)504,
-                            Group = "Tagging",
-                            IsTwNative = false,
-                            Name = "TAGGING_TITLE"
-                        },
-                        new
-                        {
-                            Id = (short)505,
-                            Group = "Tagging",
-                            IsTwNative = false,
-                            Name = "TAG_CODE_DISTANCE_DETAILS"
-                        },
-                        new
-                        {
-                            Id = (short)506,
-                            Group = "General",
-                            IsTwNative = false,
-                            Name = "PREVIEW"
-                        },
-                        new
-                        {
-                            Id = (short)507,
-                            Group = "Tools",
-                            IsTwNative = false,
-                            Name = "COMMANDS_FROM_HERE"
-                        },
-                        new
-                        {
                             Id = (short)510,
                             Group = "Tabs",
                             IsTwNative = false,
                             Name = "TAB_ALERTS"
-                        },
-                        new
-                        {
-                            Id = (short)511,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BB_UNIT"
-                        },
-                        new
-                        {
-                            Id = (short)512,
-                            Group = "TribalWars",
-                            IsTwNative = true,
-                            Name = "BB_URL"
                         },
                         new
                         {
@@ -7031,73 +6850,555 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         },
                         new
                         {
-                            Id = (short)528,
-                            Group = "Translations",
+                            Id = (short)6,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "TRANSLATION_DELETE"
+                            Name = "TERMS_AND_CONDITIONS"
                         },
                         new
                         {
-                            Id = (short)529,
-                            Group = "Translations",
+                            Id = (short)7,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "TRANSLATION_DELETE_CONFIRM"
+                            Name = "RE_RUN_SCRIPT"
                         },
                         new
                         {
-                            Id = (short)530,
-                            Group = "Translations",
+                            Id = (short)8,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "TRANSLATION_DELETE_DEFAULT"
+                            Name = "SCRIPT_NOT_RAN"
                         },
                         new
                         {
-                            Id = (short)531,
-                            Group = "Translations",
+                            Id = (short)9,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "TRANSLATION_NOT_SAVED"
+                            Name = "UPDATE_NOTICE"
                         },
                         new
                         {
-                            Id = (short)532,
-                            Group = "Translations",
+                            Id = (short)12,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "TRANSLATION_DELETED"
+                            Name = "UPLOAD_COMMANDS_REQUIRED"
                         },
                         new
                         {
-                            Id = (short)534,
-                            Group = "Translations",
+                            Id = (short)13,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "TRANSLATION_DUPLICATE"
+                            Name = "UPLOAD_INCOMINGS_REQUIRED"
                         },
                         new
                         {
-                            Id = (short)535,
-                            Group = "Translations",
+                            Id = (short)14,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "TRANSLATION_MAKING_COPY"
+                            Name = "UPLOAD_REPORTS_REQUIRED"
                         },
                         new
                         {
-                            Id = (short)536,
-                            Group = "Map",
+                            Id = (short)15,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "MAP_HOVER_NO_ARMY"
+                            Name = "UPLOAD_TROOPS_REQUIRED"
                         },
                         new
                         {
-                            Id = (short)537,
-                            Group = "Map",
+                            Id = (short)16,
+                            Group = "General",
                             IsTwNative = false,
-                            Name = "MAP_HOVER_NO_BUILDINGS"
+                            Name = "UPLOAD_DATA_REQUIRED_REASONS"
                         },
                         new
                         {
-                            Id = (short)538,
+                            Id = (short)17,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "ERROR_OCCURRED"
+                        },
+                        new
+                        {
+                            Id = (short)18,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "NO_COMMANDS_AVAILABLE"
+                        },
+                        new
+                        {
+                            Id = (short)19,
+                            Group = "Tools",
+                            IsTwNative = false,
+                            Name = "NO_DATA_AVAILABLE"
+                        },
+                        new
+                        {
+                            Id = (short)20,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "TROOPS"
+                        },
+                        new
+                        {
+                            Id = (short)21,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "SOURCE_VILLAGE"
+                        },
+                        new
+                        {
+                            Id = (short)22,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "LAUNCH_TIME"
+                        },
+                        new
+                        {
+                            Id = (short)23,
+                            Group = "Time",
+                            IsTwNative = false,
+                            Name = "LANDING_TIME"
+                        },
+                        new
+                        {
+                            Id = (short)24,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "TROOP_REQUIRED"
+                        },
+                        new
+                        {
+                            Id = (short)25,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "VAULT"
+                        },
+                        new
+                        {
+                            Id = (short)26,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "VAULT_INTERFACE_DESCRIPTION"
+                        },
+                        new
+                        {
+                            Id = (short)27,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "DONE"
+                        },
+                        new
+                        {
+                            Id = (short)28,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "UPLOADING_IF_CLOSED"
+                        },
+                        new
+                        {
+                            Id = (short)29,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "INCS_NOT_TAGGED"
+                        },
+                        new
+                        {
+                            Id = (short)30,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "TAG_UPLOAD_DATA_REQUIRED"
+                        },
+                        new
+                        {
+                            Id = (short)31,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "FEATURE_IS_EXPERIMENTAL"
+                        },
+                        new
+                        {
+                            Id = (short)32,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "UPLOAD_VISIBLE_INCOMINGS"
+                        },
+                        new
+                        {
+                            Id = (short)33,
+                            Group = "Tagging",
+                            IsTwNative = false,
+                            Name = "TAG_CODE_HEADER"
+                        },
+                        new
+                        {
+                            Id = (short)543,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "TARGET_VILLAGE"
+                        },
+                        new
+                        {
+                            Id = (short)544,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "FANGS_DEFINITION"
+                        },
+                        new
+                        {
+                            Id = (short)545,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "FANGS_TRAVELING"
+                        },
+                        new
+                        {
+                            Id = (short)546,
+                            Group = "Admin",
+                            IsTwNative = false,
+                            Name = "ADMIN_TOTAL_FANGS"
+                        },
+                        new
+                        {
+                            Id = (short)547,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "SETTINGS"
+                        },
+                        new
+                        {
+                            Id = (short)548,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORT_FOLDER_NONE_IGNORED"
+                        },
+                        new
+                        {
+                            Id = (short)549,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORT_FOLDER_DELETED"
+                        },
+                        new
+                        {
+                            Id = (short)550,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORT_FOLDER_IGNORE"
+                        },
+                        new
+                        {
+                            Id = (short)551,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORT_OPTIONS"
+                        },
+                        new
+                        {
+                            Id = (short)552,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORT_FOLDERS_IGNORED"
+                        },
+                        new
+                        {
+                            Id = (short)553,
+                            Group = "Uploads",
+                            IsTwNative = false,
+                            Name = "REPORTS_UPLOAD_ALL_IGNORED"
+                        },
+                        new
+                        {
+                            Id = (short)554,
                             Group = "Time",
                             IsTwNative = true,
-                            Name = "TIME_NUMERIC_DATE"
+                            Name = "TIME_FULL_FORMAT"
+                        },
+                        new
+                        {
+                            Id = (short)555,
+                            Group = "General",
+                            IsTwNative = false,
+                            Name = "POINTS"
+                        },
+                        new
+                        {
+                            Id = (short)556,
+                            Group = "Actions",
+                            IsTwNative = false,
+                            Name = "ACTIONS_NOBLE_TARGETS_MIN_POINTS"
+                        },
+                        new
+                        {
+                            Id = (short)541,
+                            Group = "Uploads",
+                            IsTwNative = true,
+                            Name = "REPORT_BUILDING_DAMAGE",
+                            Note = "Report text when Catapults damage a building"
+                        },
+                        new
+                        {
+                            Id = (short)540,
+                            Group = "Uploads",
+                            IsTwNative = true,
+                            Name = "REPORT_WALL_DAMAGE",
+                            Note = "Report text when Rams damage Walls"
+                        },
+                        new
+                        {
+                            Id = (short)512,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BB_URL",
+                            Note = "BB-code name for links can leave blank"
+                        },
+                        new
+                        {
+                            Id = (short)511,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BB_UNIT",
+                            Note = "BB-code name for units can leave blank"
+                        },
+                        new
+                        {
+                            Id = (short)450,
+                            Group = "Time",
+                            IsTwNative = true,
+                            Name = "TIME_TOMORROW_AT",
+                            Note = "Landing time for commands that arrive tomorrow"
+                        },
+                        new
+                        {
+                            Id = (short)449,
+                            Group = "Time",
+                            IsTwNative = true,
+                            Name = "TIME_TODAY_AT",
+                            Note = "Landing time for commands that arrive today"
+                        },
+                        new
+                        {
+                            Id = (short)448,
+                            Group = "Time",
+                            IsTwNative = true,
+                            Name = "ORDERED_MONTHS",
+                            Note = "Short names of months in order (january february etc.) - used for report times can leave blank if TW doesn't use month names in your language"
+                        },
+                        new
+                        {
+                            Id = (short)438,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BB_TABLE",
+                            Note = "BB-code name for tables can leave blank"
+                        },
+                        new
+                        {
+                            Id = (short)435,
+                            Group = "Uploads",
+                            IsTwNative = true,
+                            Name = "REPORT_LOYALTY_FROM_TO",
+                            Note = "Loyalty change in a report containing noblemen"
+                        },
+                        new
+                        {
+                            Id = (short)434,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_CHURCH",
+                            Note = "Name of the Church (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)433,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_WATCHTOWER",
+                            Note = "Name of the Watchtower (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)432,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_WALL",
+                            Note = "Name of the Wall (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)431,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_HIDING_PLACE",
+                            Note = "Name of the Hiding Place (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)430,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_WAREHOUSE",
+                            Note = "Name of the Warehouse (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)429,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_FARM",
+                            Note = "Name of the Farm (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)428,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_IRON_MINE",
+                            Note = "Name of the Iron Mine (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)427,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_CLAY_PIT",
+                            Note = "Name of the Clay Pit (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)426,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_TIMBER_CAMP",
+                            Note = "Name of the Timber Camp (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)425,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_MARKET",
+                            Note = "Name of the Market (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)424,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_STATUE",
+                            Note = "Name of the Paladin Statue (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)423,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_RALLY_POINT",
+                            Note = "Name of the Rally Point (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)422,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_SMITHY",
+                            Note = "Name of the Smithy (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)421,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_ACADEMY",
+                            Note = "Name of the Academy (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)420,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_WORKSHOP",
+                            Note = "Name of the Workshop (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)419,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_STABLE",
+                            Note = "Name of the Stable (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)418,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_BARRACKS",
+                            Note = "Name of the Barracks (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)417,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "BUILDING_HQ",
+                            Note = "Name of the Headquarters (matching the name seen in your Headquarters)"
+                        },
+                        new
+                        {
+                            Id = (short)389,
+                            Group = "Uploads",
+                            IsTwNative = true,
+                            Name = "TROOPS_NOBLES_NUM_VILLAGES",
+                            Note = "Number of conquered villages seen in your Academy"
+                        },
+                        new
+                        {
+                            Id = (short)388,
+                            Group = "Uploads",
+                            IsTwNative = true,
+                            Name = "TROOPS_NOBLES_LIMIT",
+                            Note = "Total noblemen limit from your Academy"
+                        },
+                        new
+                        {
+                            Id = (short)373,
+                            Group = "Uploads",
+                            IsTwNative = true,
+                            Name = "REPORTS_LOOT_ASSISTANT",
+                            Note = "Name of the Loot Assistant report folder"
+                        },
+                        new
+                        {
+                            Id = (short)559,
+                            Group = "Time",
+                            IsTwNative = true,
+                            Name = "TIME_EXTRA_FULL_FORMATS",
+                            Note = "List of full DateTime formats seen in Tribal Wars each format should be on a different line. The Vault automatically tries combining EXTRA_TIME_FORMATS and EXTRA_DATE_FORMATS. Any weird/unexpected formats should go here containing both date AND time."
+                        },
+                        new
+                        {
+                            Id = (short)558,
+                            Group = "Time",
+                            IsTwNative = true,
+                            Name = "TIME_EXTRA_DATE_FORMATS",
+                            Note = "List of Date formats seen in Tribal Wars each format should be on a different line. These are combined with TIME_EXTRA_TIME_FORMATS in both time-date and date-time order with a space in-between. Any format seen in reports commands or anywhere else in TW"
+                        },
+                        new
+                        {
+                            Id = (short)557,
+                            Group = "Time",
+                            IsTwNative = true,
+                            Name = "TIME_EXTRA_TIME_FORMATS",
+                            Note = "List of Time formats seen in Tribal Wars each format should be on a different line. These are combined with TIME_EXTRA_DATE_FORMATS in both time-date and date-time order with a space in-between. Any format seen in reports commands or anywhere else in TW"
+                        },
+                        new
+                        {
+                            Id = (short)397,
+                            Group = "TribalWars",
+                            IsTwNative = true,
+                            Name = "UNIT_CATAPULT",
+                            Note = "Full name of the Catapult troop seen when viewing a command listing the target building of your catapults"
                         });
                 });
 
@@ -7121,16 +7422,6 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         {
                             Id = (short)1,
                             Name = "English"
-                        },
-                        new
-                        {
-                            Id = (short)3,
-                            Name = "Slovenščina"
-                        },
-                        new
-                        {
-                            Id = (short)4,
-                            Name = "русский"
                         });
                 });
 
@@ -7181,12 +7472,6 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         },
                         new
                         {
-                            Id = (short)5,
-                            KeyId = (short)125,
-                            Name = "duration"
-                        },
-                        new
-                        {
                             Id = (short)6,
                             KeyId = (short)89,
                             Name = "nukesRequired"
@@ -7208,6 +7493,12 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                             Id = (short)9,
                             KeyId = (short)141,
                             Name = "numNukes"
+                        },
+                        new
+                        {
+                            Id = (short)5,
+                            KeyId = (short)125,
+                            Name = "duration"
                         },
                         new
                         {
@@ -7418,18 +7709,6 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                             Id = (short)47,
                             KeyId = (short)435,
                             Name = "newLoyalty"
-                        },
-                        new
-                        {
-                            Id = (short)48,
-                            KeyId = (short)436,
-                            Name = "buildingName"
-                        },
-                        new
-                        {
-                            Id = (short)49,
-                            KeyId = (short)437,
-                            Name = "newLevel"
                         },
                         new
                         {
@@ -7682,6 +7961,60 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                             Id = (short)91,
                             KeyId = (short)538,
                             Name = "year"
+                        },
+                        new
+                        {
+                            Id = (short)92,
+                            KeyId = (short)540,
+                            Name = "oldLevel"
+                        },
+                        new
+                        {
+                            Id = (short)93,
+                            KeyId = (short)540,
+                            Name = "newLevel"
+                        },
+                        new
+                        {
+                            Id = (short)94,
+                            KeyId = (short)541,
+                            Name = "buildingName"
+                        },
+                        new
+                        {
+                            Id = (short)95,
+                            KeyId = (short)541,
+                            Name = "oldLevel"
+                        },
+                        new
+                        {
+                            Id = (short)96,
+                            KeyId = (short)541,
+                            Name = "newLevel"
+                        },
+                        new
+                        {
+                            Id = (short)97,
+                            KeyId = (short)473,
+                            Name = "adminName"
+                        },
+                        new
+                        {
+                            Id = (short)98,
+                            KeyId = (short)453,
+                            Name = "millisecond"
+                        },
+                        new
+                        {
+                            Id = (short)99,
+                            KeyId = (short)544,
+                            Name = "numCats"
+                        },
+                        new
+                        {
+                            Id = (short)100,
+                            KeyId = (short)544,
+                            Name = "maxPop"
                         });
                 });
 
@@ -7779,7 +8112,8 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
 
                     b.HasIndex("AccessGroupId");
 
-                    b.HasIndex("AuthToken");
+                    b.HasIndex("AuthToken")
+                        .IsUnique();
 
                     b.HasIndex("Enabled");
 
@@ -7801,7 +8135,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         .HasColumnName("id")
                         .HasDefaultValueSql("nextval('security.user_log_id_seq'::regclass)");
 
-                    b.Property<int>("AccessGroupId")
+                    b.Property<int?>("AccessGroupId")
                         .HasColumnName("access_group_id");
 
                     b.Property<Guid?>("AdminAuthToken")
@@ -7942,6 +8276,12 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         .HasColumnName("hostname")
                         .HasMaxLength(32);
 
+                    b.Property<bool>("IsBeta")
+                        .HasColumnName("is_beta");
+
+                    b.Property<bool>("IsPendingDeletion")
+                        .HasColumnName("is_pending_deletion");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnName("name")
@@ -7980,9 +8320,6 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.Property<decimal>("GameSpeed")
                         .HasColumnName("game_speed");
 
-                    b.Property<short>("LoyaltyPerHour")
-                        .HasColumnName("loyalty_per_hour");
-
                     b.Property<short>("MaxNoblemanDistance")
                         .HasColumnName("max_nobleman_distance");
 
@@ -8013,11 +8350,11 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.Property<bool>("PaladinSkillsEnabled")
                         .HasColumnName("paladin_skills_enabled");
 
+                    b.Property<string>("TimeZoneId")
+                        .HasColumnName("timezone");
+
                     b.Property<decimal>("UnitSpeed")
                         .HasColumnName("unit_speed");
-
-                    b.Property<TimeSpan>("UtcOffset")
-                        .HasColumnName("utc_offset");
 
                     b.Property<bool>("WatchtowerEnabled")
                         .HasColumnName("watchtower_enabled");
@@ -8032,7 +8369,8 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.HasOne("TW.Vault.Scaffold.World", "World")
                         .WithMany("Ally")
                         .HasForeignKey("WorldId")
-                        .HasConstraintName("fk_world_id");
+                        .HasConstraintName("fk_world_id")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("TW.Vault.Scaffold.Command", b =>
@@ -8045,7 +8383,8 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.HasOne("TW.Vault.Scaffold.World", "World")
                         .WithMany("Command")
                         .HasForeignKey("WorldId")
-                        .HasConstraintName("fk_world_id");
+                        .HasConstraintName("fk_world_id")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("TW.Vault.Scaffold.CommandArmy", "Army")
                         .WithMany("Command")
@@ -8055,12 +8394,14 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.HasOne("TW.Vault.Scaffold.Player", "SourcePlayer")
                         .WithMany("CommandSourcePlayer")
                         .HasForeignKey("WorldId", "SourcePlayerId")
-                        .HasConstraintName("fk_source_player");
+                        .HasConstraintName("fk_source_player")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("TW.Vault.Scaffold.Village", "SourceVillage")
                         .WithMany("CommandSourceVillage")
                         .HasForeignKey("WorldId", "SourceVillageId")
-                        .HasConstraintName("fk_source_village");
+                        .HasConstraintName("fk_source_village")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("TW.Vault.Scaffold.Player", "TargetPlayer")
                         .WithMany("CommandTargetPlayer")
@@ -8070,7 +8411,8 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.HasOne("TW.Vault.Scaffold.Village", "TargetVillage")
                         .WithMany("CommandTargetVillage")
                         .HasForeignKey("WorldId", "TargetVillageId")
-                        .HasConstraintName("fk_target_village");
+                        .HasConstraintName("fk_target_village")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("TW.Vault.Scaffold.CommandArmy", b =>
@@ -8107,12 +8449,14 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.HasOne("TW.Vault.Scaffold.World", "World")
                         .WithMany("CurrentBuilding")
                         .HasForeignKey("WorldId")
-                        .HasConstraintName("fk_world_id");
+                        .HasConstraintName("fk_world_id")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("TW.Vault.Scaffold.CurrentVillage", "Village")
                         .WithOne("CurrentBuilding")
                         .HasForeignKey("TW.Vault.Scaffold.CurrentBuilding", "WorldId", "VillageId", "AccessGroupId")
-                        .HasConstraintName("buildings_villages_fk");
+                        .HasConstraintName("buildings_villages_fk")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("TW.Vault.Scaffold.CurrentPlayer", b =>
@@ -8200,9 +8544,19 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
 
             modelBuilder.Entity("TW.Vault.Scaffold.EnemyTribe", b =>
                 {
+                    b.HasOne("TW.Vault.Scaffold.AccessGroup", "AccessGroup")
+                        .WithMany()
+                        .HasForeignKey("AccessGroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("TW.Vault.Scaffold.Transaction", "Tx")
                         .WithMany("EnemyTribe")
                         .HasForeignKey("TxId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                        .WithMany("EnemyTribe")
+                        .HasForeignKey("WorldId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
@@ -8221,6 +8575,10 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         .WithMany("Player")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
+
+                    b.HasOne("TW.Vault.Scaffold.Ally", "Tribe")
+                        .WithMany("Players")
+                        .HasForeignKey("WorldId", "TribeId");
                 });
 
             modelBuilder.Entity("TW.Vault.Scaffold.Report", b =>
@@ -8345,6 +8703,12 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
 
             modelBuilder.Entity("TW.Vault.Scaffold.User", b =>
                 {
+                    b.HasOne("TW.Vault.Scaffold.AccessGroup", "AccessGroup")
+                        .WithMany("Users")
+                        .HasForeignKey("AccessGroupId")
+                        .HasConstraintName("fk_access_group_id")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("TW.Vault.Scaffold.Transaction", "Tx")
                         .WithMany("User")
                         .HasForeignKey("TxId")
@@ -8374,7 +8738,8 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.HasOne("TW.Vault.Scaffold.User", "U")
                         .WithMany("UserUploadHistory")
                         .HasForeignKey("Uid")
-                        .HasConstraintName("fk_uid");
+                        .HasConstraintName("fk_uid")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("TW.Vault.Scaffold.Village", b =>
@@ -8382,7 +8747,8 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.HasOne("TW.Vault.Scaffold.World", "World")
                         .WithMany("Village")
                         .HasForeignKey("WorldId")
-                        .HasConstraintName("fk_world_id");
+                        .HasConstraintName("fk_world_id")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("TW.Vault.Scaffold.Player", "Player")
                         .WithMany("Village")

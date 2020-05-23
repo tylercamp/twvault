@@ -18,7 +18,6 @@ namespace TW.Vault.Scaffold.Seed
 
         public static List<TranslationEntry> Contents { get; } = new List<TranslationEntry>
         {
-            new TranslationEntry { TranslationId = 1, KeyId = 2, Value = "Open Vault" },
             new TranslationEntry { TranslationId = 1, KeyId = 3, Value = "Arrival time" },
             new TranslationEntry { TranslationId = 1, KeyId = 4, Value = "Arrives in" },
             new TranslationEntry { TranslationId = 1, KeyId = 5, Value = "This script cannot be used without a premium account!" },
@@ -477,13 +476,30 @@ namespace TW.Vault.Scaffold.Seed
             new TranslationEntry { TranslationId = 1, KeyId = 532, Value = "Successfully deleted the translation." },
             new TranslationEntry { TranslationId = 1, KeyId = 534, Value = "You already have a translation with the name \"{name}\"!" },
             new TranslationEntry { TranslationId = 1, KeyId = 535, Value = "Since you don't own this translation, you'll be editing a copy instead." },
-            new TranslationEntry { TranslationId = 1, KeyId = 536, Value = "No army data available." },
-            new TranslationEntry { TranslationId = 1, KeyId = 537, Value = "No building data available." },
+            new TranslationEntry { TranslationId = 1, KeyId = 536, Value = "No recent army data available." },
+            new TranslationEntry { TranslationId = 1, KeyId = 537, Value = "No recent building data available." },
             new TranslationEntry { TranslationId = 1, KeyId = 538, Value = "{day}/{month}/{year}" },
             new TranslationEntry { TranslationId = 1, KeyId = 539, Value = "Enemy" },
             new TranslationEntry { TranslationId = 1, KeyId = 540, Value = "The Wall has been damaged and downgraded from level {oldLevel} to level {newLevel}" },
             new TranslationEntry { TranslationId = 1, KeyId = 541, Value = "The {buildingName} has been damaged and downgraded from level {oldLevel} to level {newLevel}" },
-            new TranslationEntry { TranslationId = 1, KeyId = 543, Value = "Target Village" }
+            new TranslationEntry { TranslationId = 1, KeyId = 543, Value = "Target Village" },
+            new TranslationEntry { TranslationId = 1, KeyId = 544, Value = "Fangs have at least {numCats} catapults and at most {maxPop} population" },
+            new TranslationEntry { TranslationId = 1, KeyId = 545, Value = "Fangs Traveling" },
+            new TranslationEntry { TranslationId = 1, KeyId = 546, Value = "Total Fangs" },
+            new TranslationEntry { TranslationId = 1, KeyId = 547, Value = "Settings" },
+            new TranslationEntry { TranslationId = 1, KeyId = 548, Value = "No report folders are being ignored." },
+            new TranslationEntry { TranslationId = 1, KeyId = 549, Value = "Deleted Folder" },
+            new TranslationEntry { TranslationId = 1, KeyId = 550, Value = "Ignore Folder" },
+            new TranslationEntry { TranslationId = 1, KeyId = 551, Value = "Report Upload Options" },
+            new TranslationEntry { TranslationId = 1, KeyId = 552, Value = "Ignored Report Folders" },
+            new TranslationEntry { TranslationId = 1, KeyId = 553, Value = "All report folders are being ignored by your settings!" },
+            new TranslationEntry { TranslationId = 1, KeyId = 554, Value = "{month} {day}, {year} {hour}:{minute}:{second}:{millis}" },
+            new TranslationEntry { TranslationId = 1, KeyId = 555, Value = "Points" },
+            new TranslationEntry { TranslationId = 1, KeyId = 556, Value = "Minimum village points:" },
+            new TranslationEntry { TranslationId = 1, KeyId = 557, Value = "{hour}:{minute}:{second}:{millis}\n\n{hour}:{minute}:{second}\n\n{hour}:{minute}" },
+            new TranslationEntry { TranslationId = 1, KeyId = 558, Value = "{monthName} {day}, {year}\n\n{day}/{month}/{year}\n\n{day}.{month}." },
+            new TranslationEntry { TranslationId = 1, KeyId = 559, Value = "{monthName} {day}, {hour}:{minute}\n\n{monthName} {day},{year} {hour}:{minute}\n\n{hour}:{minute}:{second}:{millisecond} on {day}:{month}:{year}" },
+            new TranslationEntry { TranslationId = 1, KeyId = 560, Value = "Receiving nukes" }
         };
     }
 }

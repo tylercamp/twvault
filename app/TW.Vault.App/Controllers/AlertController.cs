@@ -122,6 +122,7 @@ namespace TW.Vault.Controllers
                     where command.IsAttack
                     where command.TroopType == "snob"
                     where command.LandsAt > serverTime
+                    where !command.IsReturning
                     select new { command.TargetVillageId, command.LandsAt }
                 ).ToListAsync();
 

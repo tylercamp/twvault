@@ -167,7 +167,7 @@ namespace TW.Vault.MapDataFetcher
                                 if (stoppingToken.IsCancellationRequested)
                                     break;
                             }
-                            catch (TaskCanceledException e) { }
+                            catch (TaskCanceledException) { }
                             catch (Exception e)
                             {
                                 logger.LogWarning("An exception occurred while processing for {world}/id={id}: {exception}", job.WorldName, job.WorldId, e);

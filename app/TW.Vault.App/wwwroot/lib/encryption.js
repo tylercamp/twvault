@@ -1,18 +1,14 @@
 ﻿function makeEncryption() {
 
     //  Constants are base64-encoded since JS script obfuscator won't obfuscate numbers
-    //  Constants are pulled from EncryptionSeedProvider.cs and should be kept in sync in any changes
 
-    // 0x8D760E23 - From EncryptionSeedProvider.cs
-    const SEED_SALT = parseInt(atob("MjM3MzMyNDMyMw=="));
-    // 15 seconds (15000 ms) - From EncryptionSeedProvider.cs
-    const SEED_SWAP_INTERVAL = parseInt(atob("NTAwMA=="));
-    // Random prime number
-    const SEED_RANDOM_PRIME = parseInt(atob("MjAzNTU2NzUxMQ=="));
+    const SEED_SALT = parseInt(atob("%V<ENC_SEED_SALT>"));
+    const SEED_SWAP_INTERVAL = parseInt(atob("%V<ENC_SWAP_INTERVAL>"));
+    const SEED_RANDOM_PRIME = parseInt(atob("%V<ENC_SRC_PRIME>"));
 
     //  Encryption must be enabled or disabled on both the server and client, otherwise
     //  communication will fail
-    const ENCRYPTION_ENABLED = true;
+    const ENCRYPTION_ENABLED = `%V<ENC_ENABLED>`;
 
 
 

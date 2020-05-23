@@ -58,10 +58,25 @@
     </style>
 </head>
 <body>
+    <script>
+        function captchaOnloadCallback(grecaptcha) {
+            $.get('captcha-sitekey').done(data => {
+                const $captcha = $('#captcha')
+                $captcha.attr({
+                    class: "g-recaptcha",
+                    'data-sitekey': data,
+                    'data-callback': "onCaptchaFinished"
+                })
+                grecaptcha.render($captcha[0])
+            })
+        }
+    </script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
             crossorigin="anonymous"></script>
-    <script src="https://www.google.com/recaptcha/api.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js?onload=captchaOnloadCallback&render=explicit"
+            async
+            defer></script>
     <div id="container">
         <div id="description">
             <h1>Tribal Wars Vault Script</h1>
@@ -99,7 +114,7 @@
                 </table>
             </div>
 
-            <div class="g-recaptcha" data-sitekey="6LePwaYUAAAAAMYte7qFaG9A1Igz3cpxfT9P0PmN" data-callback="onCaptchaFinished"></div>
+            <div id="captcha" />
 
             <p>
                 <em>Is your server/world not listed? Contact me in the forum link above and request it.</em>

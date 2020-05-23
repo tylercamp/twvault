@@ -10,5 +10,7 @@ namespace TW.Vault.Scaffold
         public int Id { get; set; }
         public String Label { get; set; }
         public int WorldId { get; set; }
+
+        public ICollection<User> Users { get; set; }
     }
 }

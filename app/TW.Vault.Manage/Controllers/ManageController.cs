@@ -29,8 +29,14 @@ namespace TW.Vault.Manage.Controllers
             public string Name { get; set; }
         }
 
+        [HttpGet("/captcha-sitekey")]
+        public ActionResult GetCaptchaInfo()
+        {
+            return Ok(Configuration.Instance["CaptchaSiteKey"]);
+        }
+
         [HttpGet("/servers")]
-        public ActionResult<IEnumerable<WorldInfo>> Get()
+        public ActionResult<IEnumerable<WorldInfo>> GetServers()
         {
             var worlds = context.World.ToList();
 

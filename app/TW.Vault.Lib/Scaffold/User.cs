@@ -26,8 +26,10 @@ namespace TW.Vault.Scaffold
         public long? TxId { get; set; }
         public int AccessGroupId { get; set; }
 
+
         public World World { get; set; }
         public Transaction Tx { get; set; }
+        public AccessGroup AccessGroup { get; set; }
         public ICollection<InvalidDataRecord> InvalidDataRecord { get; set; }
         public ICollection<UserUploadHistory> UserUploadHistory { get; set; }
     }

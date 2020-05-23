@@ -115,7 +115,7 @@ namespace TW.Vault.Controllers
             if (Configuration.Security.EnableScriptFilter)
             {
                 if (allowedPublicScripts.Contains(name))
-                    return Content(ResolveFileContents(name), "application/json");
+                    return Content(ResolveFileContents(name), "application/javascript");
                 else
                     return NotFound();
             }
@@ -129,8 +129,6 @@ namespace TW.Vault.Controllers
             if (notFoundString != null)
                 return NotFound();
 
-            //var minified = Uglify.Js(scriptContents).Code;
-            //return Content(minified, "application/json");
             return Content(scriptContents, "application/javascript");
         }
 
@@ -238,10 +236,22 @@ namespace TW.Vault.Controllers
 
         private String MakeCompiled(String name, Action<String> onError, Action<String> onNotFound)
         {
-            var scriptCompiler = new Features.ScriptCompiler();
+            String ToBase64(String text) => System.Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(text));
+
+            var scriptCompiler = new Features.ScriptCompiler()
+            {
+                CompileTimeVars = new Dictionary<string, string>
+                {
+                    { "ENC_SEED_SALT", ToBase64(Configuration.Security.Encryption.SeedSalt.ToString()) },
+                    { "ENC_SRC_PRIME", ToBase64(Configuration.Security.Encryption.SeedPrime.ToString()) },
+                    { "ENC_SWAP_INTERVAL", ToBase64(((int)EncryptionSeedProvider.SwapInterval.TotalMilliseconds).ToString()) },
+                    { "ENC_ENABLED", Configuration.Security.Encryption.UseEncryption.ToString().ToLower() }
+                }
+            };
 
             List<String> failedFiles = new List<string>();
 
+            List<String> missingCVars = new List<string>();
             IEnumerable<String> circularDependencyChain = null;
             scriptCompiler.DependencyResolver = (fileName) =>
             {
@@ -251,8 +261,15 @@ namespace TW.Vault.Controllers
                 return contents;
             };
             scriptCompiler.OnCircularDependency += (chain) => circularDependencyChain = new[] { name }.Concat(chain);
+            scriptCompiler.OnMissingCVar += (varname) => missingCVars.Add(varname);
 
             String scriptContents = scriptCompiler.Compile(name);
+
+            if (missingCVars.Count > 0)
+            {
+                onError?.Invoke("Error compiling script due to missing CVar values for: " + String.Join(", ", missingCVars));
+                return null;
+            }
 
             if (circularDependencyChain != null)
             {

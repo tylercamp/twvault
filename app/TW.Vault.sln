@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2027
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.App", "TW.Vault.App\TW.Vault.App.csproj", "{E09383BA-4A48-4A52-BB50-3192245C658F}"
 EndProject
@@ -15,7 +15,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.MapDataFetcher", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.Migration", "TW.Vault.Migration\TW.Vault.Migration.csproj", "{04EC02DB-142E-4481-B28D-D39BEBE35615}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TW.Vault.Manage", "TW.Vault.Manage\TW.Vault.Manage.csproj", "{081053A3-5FE4-4D3A-956D-715481581DF3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TW.Vault.Manage", "TW.Vault.Manage\TW.Vault.Manage.csproj", "{081053A3-5FE4-4D3A-956D-715481581DF3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{0B2A036E-B30D-4168-BE24-9770463831C0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Support", "Support", "{4DF5DCBE-8884-4793-A94C-A21FE78AD5CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -84,6 +88,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5DE5A0DB-6C67-48F3-B65C-374706DE0058} = {0B2A036E-B30D-4168-BE24-9770463831C0}
+		{9116426F-5D10-47F8-84E0-35DDCC8FDDE6} = {0B2A036E-B30D-4168-BE24-9770463831C0}
+		{D965091C-A23E-47BE-8012-6F1263B6404A} = {4DF5DCBE-8884-4793-A94C-A21FE78AD5CD}
+		{04EC02DB-142E-4481-B28D-D39BEBE35615} = {4DF5DCBE-8884-4793-A94C-A21FE78AD5CD}
+		{081053A3-5FE4-4D3A-956D-715481581DF3} = {4DF5DCBE-8884-4793-A94C-A21FE78AD5CD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44D54FBD-F2F4-418E-8F42-BCA7367C7022}

@@ -10,14 +10,36 @@ namespace TW.Vault.Features
     public class ScriptCompiler
     {
         private static Regex RequireRegex = new Regex(@"^([ \t]*).*\/\/\#\s*REQUIRE\s+([^\n\r]+)", RegexOptions.Multiline | RegexOptions.Compiled);
+        private static Regex CVarRegex = new Regex(@"`?%V<([^>]+)>`?", RegexOptions.Multiline | RegexOptions.Compiled);
 
         public delegate String ResolveDependencyDelegate(String fileName);
         public delegate void CircularDependencyDelegate(IEnumerable<String> dependencyChain);
+        public delegate void MissingCVarDelegate(String varName);
 
         public ResolveDependencyDelegate DependencyResolver;
         public event CircularDependencyDelegate OnCircularDependency;
+        public event MissingCVarDelegate OnMissingCVar;
+
+        public Dictionary<String, String> CompileTimeVars { get; set; }
 
         public String Compile(String scriptName) => CompileWithDependencies(scriptName, new List<String>(), new List<string>());
+
+        private String BakeCompileVars(String scriptContents)
+        {
+            return CVarRegex.Replace(scriptContents, match =>
+            {
+                var varName = match.Groups[1].Value;
+                if (CompileTimeVars.ContainsKey(varName))
+                {
+                    return CompileTimeVars[varName];
+                }
+                else
+                {
+                    OnMissingCVar?.Invoke(varName);
+                    return "";
+                }
+            });
+        }
 
         private String CompileWithDependencies(String scriptName, List<String> resolvedDependencies, List<String> workingDependencies)
         {
@@ -25,9 +47,11 @@ namespace TW.Vault.Features
             if (scriptContents == null)
                 return null;
 
+            String scriptWithBakedVars = BakeCompileVars(scriptContents);
+
             bool canContinue = true;
 
-            String compilationResult = RequireRegex.Replace(scriptContents, match =>
+            String compilationResult = RequireRegex.Replace(scriptWithBakedVars, match =>
             {
                 if (!canContinue)
                     return "";

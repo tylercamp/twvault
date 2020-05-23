@@ -19,11 +19,11 @@ namespace TW.Vault.Scaffold.Seed
             new TranslationParameter { Id = 2, Name = "numDone", KeyId = 67 },
             new TranslationParameter { Id = 3, Name = "numTotal", KeyId = 67 },
             new TranslationParameter { Id = 4, Name = "numFailed", KeyId = 67 },
-            new TranslationParameter { Id = 5, Name = "duration", KeyId = 125 },
             new TranslationParameter { Id = 6, Name = "nukesRequired", KeyId = 89 },
             new TranslationParameter { Id = 7, Name = "morale", KeyId = 89 },
             new TranslationParameter { Id = 8, Name = "lossPercent", KeyId = 89 },
             new TranslationParameter { Id = 9, Name = "numNukes", KeyId = 141 },
+            new TranslationParameter { Id = 5, Name = "duration", KeyId = 125 },
             new TranslationParameter { Id = 10, Name = "duration", KeyId = 147 },
             new TranslationParameter { Id = 11, Name = "tribeName", KeyId = 172 },
             new TranslationParameter { Id = 12, Name = "playerName", KeyId = 202 },
@@ -107,7 +107,9 @@ namespace TW.Vault.Scaffold.Seed
             new TranslationParameter { Id = 95, Name = "oldLevel", KeyId = 541 },
             new TranslationParameter { Id = 96, Name = "newLevel", KeyId = 541 },
             new TranslationParameter { Id = 97, Name = "adminName", KeyId = 473 },
-            new TranslationParameter { Id = 98, Name = "millisecond", KeyId = 453 }
+            new TranslationParameter { Id = 98, Name = "millisecond", KeyId = 453 },
+            new TranslationParameter { Id = 99, Name = "numCats", KeyId = 544 },
+            new TranslationParameter { Id = 100, Name = "maxPop", KeyId = 544 },
         };
     }
 }

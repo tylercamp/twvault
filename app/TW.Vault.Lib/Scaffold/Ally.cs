@@ -16,5 +16,6 @@ namespace TW.Vault.Scaffold
         public short WorldId { get; set; }
 
         public World World { get; set; }
+        public ICollection<Player> Players { get; set; }
     }
 }

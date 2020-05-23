@@ -12,11 +12,9 @@ namespace TW.Vault.Security
     {
         /* These values are reflected in encryption.js and should be kept in sync */
         //  How often the interval will be changed
-        private static readonly TimeSpan SwapInterval = TimeSpan.FromSeconds(5);
+        public static readonly TimeSpan SwapInterval = TimeSpan.FromSeconds(5);
         //  How long the previous interval should be valid for (in case there's lag between requests)
         private static readonly TimeSpan MaxIntervalLag = TimeSpan.FromSeconds(15);
-
-        private static readonly uint SeedSalt = 0x8D760E23;
         
         public static uint CurrentSeed => MakeSeed(CurrentTime);
 
@@ -48,7 +46,7 @@ namespace TW.Vault.Security
         {
             ulong currentLongInterval = (ulong)(new DateTimeOffset(referenceTime).ToUnixTimeMilliseconds() / (long)SwapInterval.TotalMilliseconds);
             uint currentInterval = (uint)(currentLongInterval % 0xFFFFFFFF);
-            return Randomizer.Randomize(currentInterval) ^ SeedSalt;
+            return Randomizer.Randomize(currentInterval) ^ Configuration.Security.Encryption.SeedSalt;
         }
 
 
@@ -56,16 +54,15 @@ namespace TW.Vault.Security
 
         private static class Randomizer
         {
-            private const uint RandomPrime = 2035567511;
-
             public static uint Randomize(uint x)
             {
+                var prime = Configuration.Security.Encryption.SeedPrime;
                 uint result = x;
                 result <<= 13;
-                result *= RandomPrime;
-                result %= RandomPrime;
+                result *= prime;
+                result %= prime;
                 result ^= x;
-                result ^= RandomPrime;
+                result ^= prime;
                 return result;
             }
         }

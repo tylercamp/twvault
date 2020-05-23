@@ -37,7 +37,7 @@ namespace TW.Vault.Features
 
             String result = null;
 
-            if (Configuration.Security.UseEncryption)
+            if (Configuration.Security.Encryption.UseEncryption)
             {
                 var seeds = EncryptionSeedProvider.AvailableSeeds;
                 foreach (var seed in seeds)

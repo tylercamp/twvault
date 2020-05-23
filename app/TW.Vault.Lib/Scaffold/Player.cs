@@ -23,6 +23,7 @@ namespace TW.Vault.Scaffold
         public short WorldId { get; set; }
 
         public World World { get; set; }
+        public Ally Tribe { get; set; }
         public ICollection<Command> CommandSourcePlayer { get; set; }
         public ICollection<Command> CommandTargetPlayer { get; set; }
         public ICollection<Report> ReportAttackerPlayer { get; set; }

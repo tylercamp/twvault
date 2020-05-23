@@ -153,13 +153,13 @@ var lib = (() => {
 
             $doc_ = $doc_ || $(document);
 
-            //var monthStrings = lib
-            //    .translate(lib.itlcodes.ORDERED_MONTHS)
-            //    .splitMany(',', ' ', '\n')
-            //    .filter(t => t.length > 0)
-            //    .map(m => m.trim().toLowerCase())
-            //    ;
-            var monthStrings = nativeTranslations.Time_MonthShorthands;
+            var monthStrings = lib
+                .translate(lib.itlcodes.ORDERED_MONTHS)
+                .splitMany(',', ' ', '\n')
+                .filter(t => t.length > 0)
+                .map(m => m.trim().toLowerCase())
+                ;
+            //var monthStrings = nativeTranslations.Time_MonthShorthands;
 
             var serverDate = new Date(Timing.getCurrentServerTime());
             serverDate = [

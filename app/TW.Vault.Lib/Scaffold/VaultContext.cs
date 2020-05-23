@@ -19,10 +19,10 @@ namespace TW.Vault.Scaffold
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseNpgsql(
-                    "Server=localhost; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??",
-                    x => x.MigrationsAssembly("TW.Vault.Migration")
-                );
+                //optionsBuilder.UseNpgsql(
+                //    "Server=localhost; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??",
+                //    x => x.MigrationsAssembly("TW.Vault.Migration")
+                //);
             }
         }
 
@@ -114,7 +114,7 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.Ally)
                     .HasForeignKey(d => d.WorldId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_world_id");
             });
 
@@ -134,6 +134,7 @@ namespace TW.Vault.Scaffold
                 entity.HasIndex(e => e.TargetPlayerId);
                 entity.HasIndex(e => e.TargetVillageId);
                 entity.HasIndex(e => new { e.WorldId, e.CommandId, e.AccessGroupId });
+                entity.HasIndex(e => e.TxId);
                 
                 entity.Property(e => e.CommandId)
                     .HasColumnName("command_id")
@@ -181,13 +182,13 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.SourcePlayer)
                     .WithMany(p => p.CommandSourcePlayer)
                     .HasForeignKey(d => new { d.WorldId, d.SourcePlayerId })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_source_player");
 
                 entity.HasOne(d => d.SourceVillage)
                     .WithMany(p => p.CommandSourceVillage)
                     .HasForeignKey(d => new { d.WorldId, d.SourceVillageId })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_source_village");
 
                 entity.HasOne(d => d.TargetPlayer)
@@ -198,7 +199,7 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.TargetVillage)
                     .WithMany(p => p.CommandTargetVillage)
                     .HasForeignKey(d => new { d.WorldId, d.TargetVillageId })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_target_village");
 
                 entity.HasOne(d => d.Tx)
@@ -209,7 +210,7 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.Command)
                     .HasForeignKey(d => d.WorldId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_world_id");
             });
 
@@ -272,6 +273,12 @@ namespace TW.Vault.Scaffold
                 entity.Property(e => e.ConflictingTxId).HasColumnName("conflicting_tx_id");
 
                 entity.Property(e => e.OldTxId).HasColumnName("old_tx_id");
+
+                entity.HasIndex(e => e.ConflictingTxId)
+                    .HasName("fki_fk_conflicting_data_record_conflicting_tx_id");
+
+                entity.HasIndex(e => e.OldTxId)
+                    .HasName("fki_fk_conflicting_data_record_old_tx_id");
 
                 entity.HasOne(d => d.ConflictingTx)
                     .WithMany(p => p.ConflictingDataRecordConflictingTx)
@@ -420,13 +427,13 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.Village)
                     .WithOne(p => p.CurrentBuilding)
                     .HasForeignKey<CurrentBuilding>(d => new { d.WorldId, d.VillageId, d.AccessGroupId })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("buildings_villages_fk");
 
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.CurrentBuilding)
                     .HasForeignKey(d => d.WorldId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_world_id");
             });
 
@@ -697,6 +704,9 @@ namespace TW.Vault.Scaffold
                     .WithMany(p => p.InvalidDataRecord)
                     .HasForeignKey(d => d.UserId)
                     .HasConstraintName("fk_user_id");
+
+                entity.Property(d => d.DataString)
+                    .HasColumnName("data_string");
             });
             
             modelBuilder.Entity<PerformanceRecord>(entity =>
@@ -757,6 +767,10 @@ namespace TW.Vault.Scaffold
                     .HasForeignKey(d => d.WorldId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("fk_world_id");
+
+                entity.HasOne(e => e.Tribe)
+                    .WithMany(t => t.Players)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
             modelBuilder.Entity<Report>(entity =>
@@ -1145,7 +1159,7 @@ namespace TW.Vault.Scaffold
 
                 entity.HasIndex(e => e.Enabled);
                 entity.HasIndex(e => e.PlayerId);
-                entity.HasIndex(e => e.AuthToken);
+                entity.HasIndex(e => e.AuthToken).IsUnique();
                 entity.HasIndex(e => e.AccessGroupId);
                 entity.HasIndex(e => e.Uid);
                 entity.HasIndex(e => e.WorldId);
@@ -1189,6 +1203,11 @@ namespace TW.Vault.Scaffold
                     .WithMany(p => p.User)
                     .HasForeignKey(d => d.TxId)
                     .HasConstraintName("fk_tx_id");
+
+                entity.HasOne(e => e.AccessGroup)
+                    .WithMany(a => a.Users)
+                    .HasForeignKey(e => e.AccessGroupId)
+                    .HasConstraintName("fk_access_group_id");
             });
 
             modelBuilder.Entity<UserLog>(entity =>
@@ -1249,6 +1268,7 @@ namespace TW.Vault.Scaffold
 
                 entity.HasIndex(e => e.Uid);
 
+                entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
                     .HasDefaultValueSql("nextval('security.user_upload_history_id_seq'::regclass)");
@@ -1266,7 +1286,7 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.U)
                     .WithMany(p => p.UserUploadHistory)
                     .HasForeignKey(d => d.Uid)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_uid");
             });
 
@@ -1309,15 +1329,13 @@ namespace TW.Vault.Scaffold
                 entity.HasOne(d => d.World)
                     .WithMany(p => p.Village)
                     .HasForeignKey(d => d.WorldId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_world_id");
             });
 
             modelBuilder.Entity<World>(entity =>
             {
                 entity.ToTable("world", "tw_provided");
-
-                entity.HasData(Seed.WorldData.Contents);
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
@@ -1357,8 +1375,6 @@ namespace TW.Vault.Scaffold
                 entity.HasKey(e => e.WorldId);
 
                 entity.ToTable("world_settings", "tw_provided");
-
-                entity.HasData(Seed.WorldSettingsData.Contents);
 
                 entity.Property(e => e.WorldId)
                     .HasColumnName("world_id")

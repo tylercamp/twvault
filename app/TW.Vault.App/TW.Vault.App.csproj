@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
     <Platforms>AnyCPU;x64</Platforms>
+    <StartupObject>TW.Vault.Program</StartupObject>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

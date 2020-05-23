@@ -513,7 +513,9 @@ namespace TW.Vault.Controllers
                 join player in CurrentSets.Player on village.PlayerId equals player.PlayerId
                 where CurrentUserIsAdmin || player.TribeId == null || !vaultTribes.Contains(player.TribeId.Value)
 
-                where village.X >= x && village.Y >= y && village.X <= x + width && village.Y <= y + height
+                // Right now we're not doing lazy-loading of data in the script, so this is just a potentially-costly
+                // and pointless calculation.
+                //where village.X >= x && village.Y >= y && village.X <= x + width && village.Y <= y + height
                 select new { CurrentVillage = currentVillage, player.PlayerId, player.TribeId }
             ).ToListAsync());
 

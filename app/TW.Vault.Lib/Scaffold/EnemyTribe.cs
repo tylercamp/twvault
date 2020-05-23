@@ -13,6 +13,8 @@ namespace TW.Vault.Scaffold
         public long TxId { get; set; }
         public int AccessGroupId { get; set; }
 
+        public AccessGroup AccessGroup { get; set; }
+        public World World { get; set; }
         public Transaction Tx { get; set; }
     }
 }

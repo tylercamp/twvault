@@ -236,7 +236,7 @@
                         lockedDataReasons = reasons;
                     } catch (_) { }
 
-                    let alertMessage = lib.translate(lib.itlcodes.MAP_UPLOAD_DATA_REQUIRED);
+                    let alertMessage = lib.translate(lib.itlcodes.MAP_UPLOAD_DATA_REQUIRED, { _escaped: false });
                     if (reasons) {
                         alertMessage += `\n${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS, { _escaped: false })} ${ reasons.join(', ') }`;
                     }

@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using TW.Vault.Scaffold;
 
-namespace TW.ConfigurationFetcher
+namespace TW.Vault.Migration
 {
     class Program
     {

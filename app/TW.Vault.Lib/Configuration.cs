@@ -30,6 +30,17 @@ namespace TW.Vault
             }
         }
 
+        public static void Require(params String[] keys)
+        {
+            var missing = keys.Where(k => Instance[k] == null || Instance[k].Trim().Length == 0).ToList();
+            if (missing.Any())
+            {
+                var summary = String.Join("\n", missing.Select(k => $"- {k}"));
+                var msg = $"Required configuration values are missing:\n{summary}";
+                throw new Exception(msg);
+            }
+        }
+
         public static String ConnectionString
         {
             get
@@ -60,6 +71,8 @@ namespace TW.Vault
             {
                 SecurityConfiguration cfg = new SecurityConfiguration();
                 Instance.GetSection("Security").Bind(cfg);
+                cfg.Encryption = new EncryptionConfiguration();
+                Instance.GetSection("Security").GetSection("Encryption").Bind(cfg.Encryption);
                 return cfg;
             }
         }
@@ -118,7 +131,7 @@ namespace TW.Vault
 
         public short MinimumRequiredPriveleges { get; set; }
 
-        public bool UseEncryption { get; set; } = true;
+        public EncryptionConfiguration Encryption { get; set; }
 
         public bool EnableScriptFilter { get; set; }
         public List<String> PublicScripts { get; set; }
@@ -126,6 +139,13 @@ namespace TW.Vault
         public Guid? ForcedKey { get; set; }
         public long? ForcedPlayerId { get; set; }
         public long? ForcedTribeId { get; set; }
+    }
+
+    public class EncryptionConfiguration
+    {
+        public bool UseEncryption { get; set; } = true;
+        public uint SeedSalt { get; set; } = 0x8D760E23;
+        public uint SeedPrime { get; set; } = 2035567511;
     }
 
     public class BehaviorConfiguration
