@@ -741,9 +741,6 @@ namespace TW.Vault.Scaffold
 
                 entity.HasKey(e => new { e.WorldId, e.PlayerId });
 
-                entity.HasIndex(e => e.PlayerId);
-                entity.HasIndex(e => e.TribeId);
-
                 entity.Property(e => e.PlayerId)
                     .HasColumnName("player_id")
                     .ValueGeneratedNever();
@@ -770,7 +767,11 @@ namespace TW.Vault.Scaffold
 
                 entity.HasOne(e => e.Tribe)
                     .WithMany(t => t.Players)
+                    .HasForeignKey(p => new { p.WorldId, p.TribeId })
                     .OnDelete(DeleteBehavior.ClientSetNull);
+
+                entity.HasIndex(e => e.PlayerId);
+                entity.HasIndex(e => e.TribeId);
             });
 
             modelBuilder.Entity<Report>(entity =>
