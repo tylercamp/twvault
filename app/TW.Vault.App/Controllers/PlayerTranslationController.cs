@@ -240,7 +240,7 @@ namespace TW.Vault.Controllers
                 var keyParameters = parameters[key];
                 var discoveredParameters = ParameterExtractor
                     .Matches(value)
-                    ?.SelectMany(m => m.Groups.Select(g => g.Value))
+                    ?.SelectMany(m => m.Groups.Select<Group, String>(g => g.Value))
                 ?? new String[] { };
 
                 var missingParameters = keyParameters.Except(discoveredParameters);

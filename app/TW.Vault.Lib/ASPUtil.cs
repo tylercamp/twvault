@@ -9,10 +9,10 @@ namespace TW.Vault
 {
     public class ASPUtil
     {
-        public IHostingEnvironment HostingEnvironment { get; private set; }
+        public IWebHostEnvironment HostingEnvironment { get; private set; }
         String basePath;
 
-        public ASPUtil(IHostingEnvironment hostingEnvironment, String basePath = "")
+        public ASPUtil(IWebHostEnvironment hostingEnvironment, String basePath = "")
         {
             this.HostingEnvironment = hostingEnvironment;
             this.basePath = basePath;

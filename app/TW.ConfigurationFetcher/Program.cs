@@ -322,7 +322,8 @@ namespace TW.ConfigurationFetcher
         private static void DeleteForWorld(VaultContext context, IProgressBar progressBar, Type type, int worldId)
         {
             var entityType = context.Model.FindEntityType(type);
-            var table = entityType.Relational();
+            var table = entityType.GetTableName();
+            var schema = entityType.GetSchema();
             var primaryKeys = entityType.FindPrimaryKey().Properties.Select(p => p.Name).Where(n => n != "WorldId" && n != "AccessGroupId").ToList();
             if (primaryKeys.Count != 1)
             {
@@ -335,7 +336,7 @@ namespace TW.ConfigurationFetcher
             progressBar.Tick(0, $"Counting {type.Name} entities...");
             using (var command = context.Database.GetDbConnection().CreateCommand())
             {
-                command.CommandText = $"SELECT COUNT(1) FROM {table.Schema}.{table.TableName} WHERE world_id = {worldId}";
+                command.CommandText = $"SELECT COUNT(1) FROM {schema}.{table} WHERE world_id = {worldId}";
                 context.Database.OpenConnection();
                 using (var result = command.ExecuteReader())
                 {
@@ -353,7 +354,7 @@ namespace TW.ConfigurationFetcher
             progressBar.Message = $"Deleting {numTotal} entries of type {type.Name} with single transaction...";
             progressBar.MaxTicks = numTotal;
 
-            int numDeleted = context.Database.ExecuteSqlCommand(new RawSqlString($"DELETE FROM {table.Schema}.{table.TableName} WHERE world_id = {worldId}"));
+            int numDeleted = context.Database.ExecuteSqlRaw($"DELETE FROM {schema}.{table} WHERE world_id = {worldId}");
             if (numDeleted != numTotal)
             {
                 Console.WriteLine("Deletion failed for {0}, expected to delete {1} but deleted {2} instead", type.Name, numTotal, numDeleted);

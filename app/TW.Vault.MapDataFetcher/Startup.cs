@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TW.Vault.Scaffold;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Hosting;
 
 namespace TW.Vault.MapDataFetcher
 {
@@ -28,8 +29,6 @@ namespace TW.Vault.MapDataFetcher
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_0);
-
             services.AddCors(options =>
             {
                 options.AddPolicy("AllOrigins", builder =>
@@ -41,6 +40,8 @@ namespace TW.Vault.MapDataFetcher
                 });
             });
 
+            services.AddControllers();
+
             services.AddSingleton<Hosting.IHostedService, DataFetchingService>();
 
             String connectionString = Vault.Configuration.ConnectionString;
@@ -48,12 +49,14 @@ namespace TW.Vault.MapDataFetcher
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCors("AllOrigins");
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
@@ -61,7 +64,8 @@ namespace TW.Vault.MapDataFetcher
                 RequireHeaderSymmetry = false
             });
 
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(e => e.MapControllers());
         }
     }
 }

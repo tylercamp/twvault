@@ -334,7 +334,7 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.ArmyId)
                     .HasColumnName("army_id")
-                    .UseNpgsqlIdentityByDefaultColumn();
+                    .UseIdentityByDefaultColumn();
 
                 entity.Property(e => e.Archer).HasColumnName("archer");
 
@@ -1035,8 +1035,8 @@ namespace TW.Vault.Scaffold
 
                 entity.HasData(Seed.TranslationEntryData.Contents);
 
-                entity.HasIndex(e => e.TranslationId).ForNpgsqlHasMethod("hash");
-                entity.HasIndex(e => e.KeyId).ForNpgsqlHasMethod("hash");
+                entity.HasIndex(e => e.TranslationId).HasMethod("hash");
+                entity.HasIndex(e => e.KeyId).HasMethod("hash");
 
                 entity.Property(e => e.TranslationId)
                     .IsRequired()

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -15,9 +16,9 @@ using TW.Vault.Features;
 
 namespace TW.Vault.MapDataFetcher
 {
-    public class DataFetchingService : BackgroundService
+    public class DataFetchingService : TW.Vault.Features.BackgroundService
     {
-        public DataFetchingService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory, IApplicationLifetime applicationLifetime) : base(scopeFactory, loggerFactory)
+        public DataFetchingService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory, IHostApplicationLifetime applicationLifetime) : base(scopeFactory, loggerFactory)
         {
             Instance = this;
             this.applicationLifetime = applicationLifetime;
@@ -28,7 +29,7 @@ namespace TW.Vault.MapDataFetcher
         private bool forceReApply = false;
         private FetchJobStats pendingStats = null;
         private DateTime lastCheckedAt = DateTime.MinValue;
-        private IApplicationLifetime applicationLifetime;
+        private IHostApplicationLifetime applicationLifetime;
 
         public FetchJobStats LatestStats { get; private set; } = null;
 

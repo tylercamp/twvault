@@ -26,7 +26,7 @@ namespace TW.Vault.Controllers
 
         private const String ScriptsBasePath = "";
 
-        public ScriptController(IHostingEnvironment environment, IServiceScopeFactory scopeFactory, VaultContext context, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
+        public ScriptController(IWebHostEnvironment environment, IServiceScopeFactory scopeFactory, VaultContext context, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
             asputil = new ASPUtil(environment, ScriptsBasePath);
         }

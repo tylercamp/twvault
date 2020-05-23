@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Newtonsoft.Json.Converters;
 using System.IO;
 using Hosting = Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json.Serialization;
 
 namespace TW.Vault
 {
@@ -28,19 +30,6 @@ namespace TW.Vault
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services
-                .AddMvc()
-                .AddJsonOptions(opt =>
-                {
-                    opt.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
-                    opt.SerializerSettings.Converters.Add(new StringEnumConverter(camelCaseText: false));
-                })
-                .AddMvcOptions(opt =>
-                {
-                    opt.Filters.Add(new IPLoggingInterceptionAttribute());
-                    opt.Filters.Add(new ExceptionInterceptionAttribute());
-                });
-
             services.AddCors(options =>
             {
                 options.AddPolicy("AllOrigins", builder =>
@@ -53,6 +42,19 @@ namespace TW.Vault
             });
 
             services
+                .AddControllers()
+                .AddNewtonsoftJson(opt =>
+                {
+                    opt.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+                    opt.SerializerSettings.Converters.Add(new StringEnumConverter(new SnakeCaseNamingStrategy(), false));
+                })
+                .AddMvcOptions(opt =>
+                {
+                    opt.Filters.Add(new IPLoggingInterceptionAttribute());
+                    opt.Filters.Add(new ExceptionInterceptionAttribute());
+                });
+
+            services
                 .AddScoped<RequireAuthAttribute>()
                 .AddSingleton<Hosting.IHostedService, Features.HighScoresService>();
 
@@ -61,7 +63,7 @@ namespace TW.Vault
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -89,8 +91,9 @@ namespace TW.Vault
             });
 
             app.UseVaultContentDecryption();
-            
-            app.UseMvc();
+
+            app.UseRouting();
+            app.UseEndpoints(e => e.MapControllers());
         }
     }
 }
