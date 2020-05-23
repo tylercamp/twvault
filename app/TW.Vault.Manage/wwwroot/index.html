@@ -221,7 +221,7 @@
                 if (response.error) {
                     alert(response.error);
                 } else {
-                    $('#script-target').val(`javascript:window.vaultToken='${response.token}';$.getScript('https://v.tylercamp.me/script/main.js')`);
+                    $('#script-target').val(`javascript:window.vaultToken='${response.token}';$.getScript('https://${window.location.host}/script/main.js')`);
                 }
 
                 grecaptcha.reset();
