@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,6 +18,9 @@ namespace TW.Vault
             this.HostingEnvironment = hostingEnvironment;
             this.basePath = basePath;
         }
+
+        public bool UseProductionScripts => HostingEnvironment.IsProduction() || Configuration.Security.ForceEnableObfuscatedScripts;
+        public String ObfuscationPathRoot => Path.Combine(HostingEnvironment.ContentRootPath, Configuration.Initialization.ScriptCompilationOutputPath);
 
         public String GetFilePath(String relativePath)
         {
@@ -37,5 +41,7 @@ namespace TW.Vault
             else
                 return absolutePath;
         }
+
+        public String GetObfuscatedPath(String fileName) => Path.Combine(ObfuscationPathRoot, fileName);
     }
 }

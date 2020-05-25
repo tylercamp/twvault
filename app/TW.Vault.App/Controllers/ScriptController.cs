@@ -111,11 +111,11 @@ namespace TW.Vault.Controllers
         [HttpGet("{*name}", Name = "GetCompiledObfuscatedScript")]
         public IActionResult GetCompiledObfuscated(String name)
         {
-            var allowedPublicScripts = Configuration.Security.PublicScripts;
-            if (Configuration.Security.EnableScriptFilter)
+            if (asputil.UseProductionScripts)
             {
-                if (allowedPublicScripts.Contains(name))
-                    return Content(ResolveFileContents(name), "application/javascript");
+                var contents = ResolveFileContents(name);
+                if (contents != null)
+                    return Content(contents, "application/javascript");
                 else
                     return NotFound();
             }
@@ -214,16 +214,13 @@ namespace TW.Vault.Controllers
             if (String.IsNullOrWhiteSpace(name))
                 return null;
 
-            if (Configuration.Initialization.EnableRequiredFiles)
+            if (asputil.UseProductionScripts)
             {
-                foreach (var externalFile in Configuration.Initialization.RequiredFiles)
-                {
-                    var fileName = Path.GetFileName(externalFile);
-                    if (name == fileName)
-                        return System.IO.File.ReadAllText(Path.GetFullPath(Path.Combine(asputil.HostingEnvironment.WebRootPath, externalFile)));
-                }
-
-                throw new FileNotFoundException("Could not find required file: " + name);
+                var path = asputil.GetObfuscatedPath(name);
+                if (System.IO.File.Exists(path))
+                    return System.IO.File.ReadAllText(path);
+                else
+                    return null;
             }
 
             var resolvedPath = asputil.GetFilePath(name);
@@ -236,18 +233,8 @@ namespace TW.Vault.Controllers
 
         private String MakeCompiled(String name, Action<String> onError, Action<String> onNotFound)
         {
-            String ToBase64(String text) => System.Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(text));
-
-            var scriptCompiler = new Features.ScriptCompiler()
-            {
-                CompileTimeVars = new Dictionary<string, string>
-                {
-                    { "ENC_SEED_SALT", ToBase64(Configuration.Security.Encryption.SeedSalt.ToString()) },
-                    { "ENC_SRC_PRIME", ToBase64(Configuration.Security.Encryption.SeedPrime.ToString()) },
-                    { "ENC_SWAP_INTERVAL", ToBase64(((int)EncryptionSeedProvider.SwapInterval.TotalMilliseconds).ToString()) },
-                    { "ENC_ENABLED", Configuration.Security.Encryption.UseEncryption.ToString().ToLower() }
-                }
-            };
+            var scriptCompiler = new Features.ScriptCompiler();
+            scriptCompiler.InitCommonVars();
 
             List<String> failedFiles = new List<string>();
 

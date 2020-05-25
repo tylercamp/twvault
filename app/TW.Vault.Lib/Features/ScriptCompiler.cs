@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using TW.Vault.Security;
 
 namespace TW.Vault.Features
 {
@@ -21,6 +22,18 @@ namespace TW.Vault.Features
         public event MissingCVarDelegate OnMissingCVar;
 
         public Dictionary<String, String> CompileTimeVars { get; set; }
+
+        public void InitCommonVars()
+        {
+            String ToBase64(String text) => System.Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(text));
+            CompileTimeVars = new Dictionary<string, string>
+            {
+                { "ENC_SEED_SALT", ToBase64(Configuration.Security.Encryption.SeedSalt.ToString()) },
+                { "ENC_SRC_PRIME", ToBase64(Configuration.Security.Encryption.SeedPrime.ToString()) },
+                { "ENC_SWAP_INTERVAL", ToBase64(((int)EncryptionSeedProvider.SwapInterval.TotalMilliseconds).ToString()) },
+                { "ENC_ENABLED", Configuration.Security.Encryption.UseEncryption.ToString().ToLower() }
+            };
+        }
 
         public String Compile(String scriptName) => CompileWithDependencies(scriptName, new List<String>(), new List<string>());
 

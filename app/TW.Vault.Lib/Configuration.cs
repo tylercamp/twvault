@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -133,8 +134,7 @@ namespace TW.Vault
 
         public EncryptionConfiguration Encryption { get; set; }
 
-        public bool EnableScriptFilter { get; set; }
-        public List<String> PublicScripts { get; set; }
+        public bool ForceEnableObfuscatedScripts { get; set; }
 
         public Guid? ForcedKey { get; set; }
         public long? ForcedPlayerId { get; set; }
@@ -172,8 +172,7 @@ namespace TW.Vault
     
     public class InitializationConfiguration
     {
-        public bool EnableRequiredFiles { get; set; }
-        public List<String> RequiredFiles { get; set; }
+        public String ScriptCompilationOutputPath { get; set; } = "obfuscated";
     }
 
     public class RankingsConfiguration
