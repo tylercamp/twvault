@@ -173,6 +173,7 @@ namespace TW.Vault
     public class InitializationConfiguration
     {
         public String ScriptCompilationOutputPath { get; set; } = "obfuscated";
+        public String ServerHostname { get; set; } = "v.tylercamp.me";
     }
 
     public class RankingsConfiguration

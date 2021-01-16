@@ -161,30 +161,23 @@ namespace TW.Vault.Controllers
                     .Distinct()
                     .ToList();
 
-                var (scaffoldCommands, villageIdsFromCommandsMissingTroopTypes, allVillages) = await ManyTasks.Run(
-                    Profile("Get existing commands", () => (
-                        from command in CurrentSets.Command.IncludeCommandData()
-                        where commandIds.Contains(command.CommandId)
-                        select command
-                    ).ToListAsync())
-                    
-                    ,
+                var scaffoldCommands = await Profile("Get existing commands", () => (
+                    from command in CurrentSets.Command.IncludeCommandData()
+                    where commandIds.Contains(command.CommandId)
+                    select command
+                ).ToListAsync());
 
-                    Profile("Get villages for commands missing troop type", () => (
-                        from village in CurrentSets.Village
-                        where villageIdsFromCommandsMissingTroopType.Contains(village.VillageId)
-                        select village
-                    ).ToListAsync())
+                var villageIdsFromCommandsMissingTroopTypes = await Profile("Get villages for commands missing troop type", () => (
+                    from village in CurrentSets.Village
+                    where villageIdsFromCommandsMissingTroopType.Contains(village.VillageId)
+                    select village
+                ).ToListAsync());
 
-                    ,
-
-                    Profile("Get all relevant villages", () => (
-                        from village in CurrentSets.Village
-                        where allVillageIds.Contains(village.VillageId)
-                        select village
-                    ).ToListAsync())
-                );
-                
+                var allVillages = await Profile("Get all relevant villages", () => (
+                    from village in CurrentSets.Village
+                    where allVillageIds.Contains(village.VillageId)
+                    select village
+                ).ToListAsync());
 
                 var mappedScaffoldCommands = scaffoldCommands.ToDictionary(c => c.CommandId, c => c);
                 var villagesById = allVillages.ToDictionary(v => v.VillageId, v => v);
@@ -216,6 +209,10 @@ namespace TW.Vault.Controllers
                             ));
                             continue;
                         }
+
+                        // Can happen on stronghold worlds when the stronghold "owner" sends an attack from it
+                        if (jsonCommand.SourcePlayerId == 0)
+                            continue;
 
                         var scaffoldCommand = mappedScaffoldCommands.GetValueOrDefault(jsonCommand.CommandId.Value);
                         //  Don't process/update commands that are already "complete" (have proper army data attached to them)
@@ -377,35 +374,27 @@ namespace TW.Vault.Controllers
 
             var sourcePlayerIds = relevantVillages.Values.Where(v => commandSourceVillageIds.Contains(v.VillageId)).Select(v => v.PlayerId ?? 0).ToList();
 
-            (var vaultOwnedVillages, var sourcePlayerNames, var countsByVillage) = await ManyTasks.Run(
-                //  Don't do any tagging for villages owned by players registered with the vault (so players in other tribes
-                //  also using the vault can't infer villa builds)
-                Profile("Get villages owned by vault users", () => (
-                    from user in CurrentSets.User
-                    join village in CurrentSets.Village on user.PlayerId equals village.PlayerId
-                    where user.Enabled
-                    select village.VillageId
-                ).ToListAsync())
+            //  Don't do any tagging for villages owned by players registered with the vault (so players in other tribes
+            //  also using the vault can't infer villa builds)
+            var vaultOwnedVillages = await Profile("Get villages owned by vault users", () => (
+                from user in CurrentSets.User
+                join village in CurrentSets.Village on user.PlayerId equals village.PlayerId
+                where user.Enabled
+                select village.VillageId
+            ).ToListAsync());
 
-                ,
+            var sourcePlayerNames = await Profile("Get player names", () => (
+                from player in CurrentSets.Player
+                where sourcePlayerIds.Contains(player.PlayerId)
+                select new { player.PlayerId, player.PlayerName }
+            ).ToDictionaryAsync(p => p.PlayerId, p => p.PlayerName));
 
-                Profile("Get player names", () => (
-                    from player in CurrentSets.Player
-                    where sourcePlayerIds.Contains(player.PlayerId)
-                    select new { player.PlayerId, player.PlayerName }
-                ).ToDictionaryAsync(p => p.PlayerId, p => p.PlayerName))
-
-                ,
-
-                Profile("Get command counts", () => (
-                    from command in CurrentSets.Command
-                    where !command.IsReturning && command.LandsAt > CurrentServerTime
-                    group command by command.SourceVillageId into villageCommands
-                    select new { VillageId = villageCommands.Key, Count = villageCommands.Count() }
-                ).ToDictionaryAsync(vc => vc.VillageId, vc => vc.Count))
-
-            );
-            
+            var countsByVillage = await Profile("Get command counts", () => (
+                from command in CurrentSets.Command
+                where !command.IsReturning && command.LandsAt > CurrentServerTime
+                group command by command.SourceVillageId into villageCommands
+                select new { VillageId = villageCommands.Key, Count = villageCommands.Count() }
+            ).ToDictionaryAsync(vc => vc.VillageId, vc => vc.Count));
 
             var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
             DateTime CommandLaunchedAt(Scaffold.Command command) => command.LandsAt - travelCalculator.CalculateTravelTime(
@@ -532,19 +521,19 @@ namespace TW.Vault.Controllers
                             troopsReturning += ArmyConvert.ArmyToJson(command.Army);
                     }
 
-                    Scaffold.CurrentArmy effectiveArmy = null;
+                    Scaffold.CurrentArmy recentArmy = null;
                     bool isConfidentArmy = true;
                     if (armyOwned != null)
                     {
-                        effectiveArmy = armyOwned;
+                        recentArmy = armyOwned;
                     }
                     else if (armyTraveling != null)
                     {
-                        effectiveArmy = armyTraveling;
+                        recentArmy = armyTraveling;
                     }
                     else if (armyStationed != null)
                     {
-                        effectiveArmy = armyStationed;
+                        recentArmy = armyStationed;
                         isConfidentArmy = false;
                     }
 
@@ -563,17 +552,25 @@ namespace TW.Vault.Controllers
                     tag.TargetVillageName = targetVillage.VillageName.UrlDecode();
                     tag.Distance = new Coordinate { X = sourceVillage.X, Y = sourceVillage.Y }.DistanceTo(targetVillage.X, targetVillage.Y);
 
+                    // "fallback" isn't a good name, but idk what else to name it
+                    var effectiveArmy = recentArmy ?? armyOwned ?? armyTraveling ?? armyStationed;
+
+                    //  TODO - Make offensive army reqs. a setting
+                    bool isOffense = effectiveArmy != null && ArmyStats.IsOffensive(effectiveArmy);
+
+                    // Give basic info if we have anything available
                     if (effectiveArmy != null)
-                    {
-                        //  TODO - Make this a setting
-                        bool isOffense = ArmyStats.IsOffensive(effectiveArmy);
-
+                    {                        
                         tag.VillageType = isOffense ? Translate("OFFENSE") : Translate("DEFENSE");
+                    }
 
+                    // Give more info if the data is recent
+                    if (recentArmy != null)
+                    {
                         if (!isOffense && isConfidentArmy && (effectiveArmy.Snob == null || effectiveArmy.Snob == 0) && incoming.TroopType != JSON.TroopType.Snob.ToTroopString())
                             tag.DefiniteFake = true;
 
-                        var offensiveArmy = effectiveArmy.OfType(JSON.UnitBuild.Offensive);
+                        var offensiveArmy = recentArmy.OfType(JSON.UnitBuild.Offensive);
                         var jsonArmy = ArmyConvert.ArmyToJson(offensiveArmy);
                         var pop = Native.ArmyStats.CalculateTotalPopulation(jsonArmy);
 
@@ -589,7 +586,7 @@ namespace TW.Vault.Controllers
 
                         tag.ReturningPopulation = returningPop;
 
-                        tag.NumCats = effectiveArmy.Catapult;
+                        tag.NumCats = recentArmy.Catapult;
                     }
 
                     resultTags.Add(incoming.CommandId, tag);

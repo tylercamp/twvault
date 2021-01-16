@@ -18,6 +18,7 @@ namespace TW.Vault.Scaffold.Seed
 
         public static List<TranslationEntry> Contents { get; } = new List<TranslationEntry>
         {
+            new TranslationEntry { TranslationId = 1, KeyId = 2, Value = "Open Vault" },
             new TranslationEntry { TranslationId = 1, KeyId = 3, Value = "Arrival time" },
             new TranslationEntry { TranslationId = 1, KeyId = 4, Value = "Arrives in" },
             new TranslationEntry { TranslationId = 1, KeyId = 5, Value = "This script cannot be used without a premium account!" },

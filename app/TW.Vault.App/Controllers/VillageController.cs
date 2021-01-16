@@ -91,36 +91,33 @@ namespace TW.Vault.Controllers
 
             //  Start getting village data
 
-            var (currentVillage, commandsToVillage, latestConquerTimestamp) = await ManyTasks.Run(
-                Profile("Get current village", () => (
-                    from cv in CurrentSets.CurrentVillage
-                                        .Include(v => v.ArmyAtHome)
-                                        .Include(v => v.ArmyOwned)
-                                        .Include(v => v.ArmyStationed)
-                                        .Include(v => v.ArmyTraveling)
-                                        .Include(v => v.ArmyRecentLosses)
-                                        .Include(v => v.CurrentBuilding)
-                    where cv.VillageId == villageId
-                    select cv
-                ).FirstOrDefaultAsync()),
+            var currentVillage = await Profile("Get current village", () => (
+                from cv in CurrentSets.CurrentVillage
+                                    .Include(v => v.ArmyAtHome)
+                                    .Include(v => v.ArmyOwned)
+                                    .Include(v => v.ArmyStationed)
+                                    .Include(v => v.ArmyTraveling)
+                                    .Include(v => v.ArmyRecentLosses)
+                                    .Include(v => v.CurrentBuilding)
+                where cv.VillageId == villageId
+                select cv
+            ).FirstOrDefaultAsync());
 
-                Profile("Get commands to village", () => (
-                    from command in CurrentSets.Command
-                                               .Include(c => c.Army)
-                    where command.TargetVillageId == villageId
-                    where !command.IsReturning
-                    where command.LandsAt > CurrentServerTime
-                    select command
-                ).ToListAsync()),
+            var commandsToVillage = await Profile("Get commands to village", () => (
+                from command in CurrentSets.Command
+                                            .Include(c => c.Army)
+                where command.TargetVillageId == villageId
+                where !command.IsReturning
+                where command.LandsAt > CurrentServerTime
+                select command
+            ).ToListAsync());
 
-                Profile("Get latest conquer", () => (
-                    from conquer in CurrentSets.Conquer
-                    where conquer.VillageId == villageId
-                    orderby conquer.UnixTimestamp descending
-                    select conquer.UnixTimestamp
-                ).FirstOrDefaultAsync())
-            );
-            
+            var latestConquerTimestamp = await Profile("Get latest conquer", () => (
+                from conquer in CurrentSets.Conquer
+                where conquer.VillageId == villageId
+                orderby conquer.UnixTimestamp descending
+                select conquer.UnixTimestamp
+            ).FirstOrDefaultAsync());
             
             var jsonData = new JSON.VillageData();
 
@@ -310,24 +307,22 @@ namespace TW.Vault.Controllers
 
             var villageIds = currentArmySetJson.TroopData.Select(a => a.VillageId.Value).ToList();
 
-            var (scaffoldCurrentVillages, villagesWithPlayerIds) = await ManyTasks.Run(
-                Profile("Get existing scaffold current villages", () => (
-                    from cv in CurrentSets.CurrentVillage
-                                          .Include(v => v.ArmyOwned)
-                                          .Include(v => v.ArmyAtHome)
-                                          .Include(v => v.ArmyStationed)
-                                          .Include(v => v.ArmySupporting)
-                                          .Include(v => v.ArmyTraveling)
-                    where villageIds.Contains(cv.VillageId)
-                    select cv
-                ).ToListAsync())
-                ,
-                Profile("Get village player IDs", () => (
-                    from v in CurrentSets.Village
-                    where villageIds.Contains(v.VillageId)
-                    select new { v.PlayerId, v.VillageId }
-                ).ToListAsync())
-            );
+            var scaffoldCurrentVillages = await Profile("Get existing scaffold current villages", () => (
+                from cv in CurrentSets.CurrentVillage
+                                        .Include(v => v.ArmyOwned)
+                                        .Include(v => v.ArmyAtHome)
+                                        .Include(v => v.ArmyStationed)
+                                        .Include(v => v.ArmySupporting)
+                                        .Include(v => v.ArmyTraveling)
+                where villageIds.Contains(cv.VillageId)
+                select cv
+            ).ToListAsync());
+
+            var villagesWithPlayerIds = await Profile("Get village player IDs", () => (
+                from v in CurrentSets.Village
+                where villageIds.Contains(v.VillageId)
+                select new { v.PlayerId, v.VillageId }
+            ).ToListAsync());
 
             var villageIdsByPlayerId = villagesWithPlayerIds.ToDictionary(v => v.VillageId, v => v.PlayerId);
 

@@ -225,7 +225,7 @@
 
                 makeOutput(data);
             })
-            .error((xhr) => {
+            .fail((xhr) => {
                 if (!canUse)
                     return;
 

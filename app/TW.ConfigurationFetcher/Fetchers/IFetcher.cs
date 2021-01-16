@@ -24,7 +24,7 @@ namespace TW.ConfigurationFetcher.Fetcher
                 DtdProcessing = DtdProcessing.Ignore
             };
 
-            Console.WriteLine("Parsing XML: " + xml?.Substring(0, 50) + "...");
+            //Console.WriteLine("Parsing XML: " + xml?.Substring(0, 50) + "...");
 
             var doc = new XPathDocument(XmlReader.Create(new StringReader(xml), readerSettings));
             return new XmlParser(doc.CreateNavigator());

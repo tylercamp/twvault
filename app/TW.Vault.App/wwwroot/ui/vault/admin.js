@@ -63,7 +63,7 @@ function makeEnemyTribesTab() {
                 .done(() => {
                     $row.remove();
                 })
-                .error(() => {
+                .fail(() => {
                     if (!lib.isUnloading())
                         alert(lib.messages.GENERIC_ERROR);
                 });
@@ -88,7 +88,7 @@ function makeEnemyTribesTab() {
                         insertEnemyTribe($container.find('#enemies-table'), tribe);
                     });
                 })
-                .error(() => {
+                .fail(() => {
                     if (!lib.isUnloading()) {
                         alert(lib.translate(lib.itlcodes.ERROR_LOADING_ENEMY_TRIBES, { _escaped: false }));
                     }
@@ -101,7 +101,7 @@ function makeEnemyTribesTab() {
 
                 lib.postApi(`admin/enemies/${nameOrTag}`)
                     .done((tribe) => insertEnemyTribe($container.find('#enemies-table'), tribe))
-                    .error((xhr) => {
+                    .fail((xhr) => {
                         if (!lib.isUnloading()) {
                             switch (xhr.status) {
                                 case 401: break;
@@ -198,7 +198,7 @@ function makeAdminStatsTab() {
                 loading();
 
                 lib.getApi(`admin/summary?fangMinCats=${options.fangMinCats}&fangMaxPop=${options.fangMaxPop}`)
-                    .error(() => {
+                    .fail(() => {
                         if (lib.isUnloading())
                             return;
                         alert(lib.messages.GENERIC_ERROR);
@@ -277,7 +277,7 @@ function makeAdminUsersInterface($container) {
                         `.trim());
             });
         })
-        .error(() => {
+        .fail(() => {
             if (lib.isUnloading())
                 return;
 
@@ -292,7 +292,7 @@ function makeAdminUsersInterface($container) {
 
             data.forEach((d) => insertNewAuthKey(d));
         })
-        .error((xhr) => {
+        .fail((xhr) => {
             if (lib.isUnloading())
                 return;
 
@@ -322,7 +322,7 @@ function makeAdminUsersInterface($container) {
                 insertNewAuthKey(data);
                 displayUserScript(data);
             })
-            .error((xhr) => {
+            .fail((xhr) => {
                 if (lib.isUnloading())
                     return;
 
@@ -359,7 +359,7 @@ function makeAdminUsersInterface($container) {
                 .done(() => {
                     $newRow.remove();
                 })
-                .error((xhr) => {
+                .fail((xhr) => {
                     if (lib.isUnloading())
                         return;
 
@@ -394,7 +394,7 @@ function makeAdminUsersInterface($container) {
                     else
                         $newRow.find('input.give-admin').val('Make admin');
                 })
-                .error(() => {
+                .fail(() => {
                     if (lib.isUnloading())
                         return;
 

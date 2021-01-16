@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TW.Vault.Features;
 using TW.Vault.Features.Simulation;
 using TW.Vault.Model.Convert;
 using TW.Vault.Model.Native;
@@ -455,21 +456,22 @@ namespace TW.Vault.Controllers
 
             //  This is a mess because of different classes for Player, CurrentPlayer, etc
 
-            var (tribeVillages, currentPlayers, uploadHistory, enemyVillages) = await ManyTasks.RunToList(
-                //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
-                //  (This returns a lot of data and will be slow)
+            //  Get all CurrentVillages from the user's tribe - list of (Player, CurrentVillage)
+            //  (This returns a lot of data and will be slow)
+            var tribeVillages = await (
                 from player in CurrentSets.Player
                 join user in CurrentSets.User on player.PlayerId equals user.PlayerId
                 join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                 join currentVillage in CurrentSets.CurrentVillage
                                     on village.VillageId equals currentVillage.VillageId
-                    into currentVillage
+                    into currentVillageOrDefault
+                from currentVillage in currentVillageOrDefault.DefaultIfEmpty()
                 where user.Enabled && !user.IsReadOnly
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
-                select new { player, villageId = village.VillageId, currentVillage = currentVillage.FirstOrDefault(), X = village.X.Value, Y = village.Y.Value }
+                select new { player, currentVillage, villageId = village.VillageId, X = village.X.Value, Y = village.Y.Value }
+            ).ToListAsync();
 
-                ,
-
+            var currentPlayers = await (
                 //  Get all CurrentPlayer data for the user's tribe (separate from global 'Player' table
                 //      so we can also output stats for players that haven't uploaded anything yet)
                 from currentPlayer in CurrentSets.CurrentPlayer
@@ -478,9 +480,9 @@ namespace TW.Vault.Controllers
                 where user.Enabled && !user.IsReadOnly
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 select currentPlayer
-                
-                ,
+            ).ToListAsync();
 
+            var uploadHistory = await (
                 //  Get user upload history
                 from history in context.UserUploadHistory
                 join user in CurrentSets.User on history.Uid equals user.Uid
@@ -488,16 +490,15 @@ namespace TW.Vault.Controllers
                 where player.TribeId == CurrentTribeId || !Configuration.Security.RestrictAccessWithinTribes
                 where user.Enabled && !user.IsReadOnly
                 select new { playerId = player.PlayerId, history }
+            ).ToListAsync();
 
-                ,
-
+            var enemyVillages = await (
                 //  Get enemy villages
                 from tribe in CurrentSets.EnemyTribe
                 join player in CurrentSets.Player on tribe.EnemyTribeId equals player.TribeId
                 join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                 select new { village.VillageId, X = village.X.Value, Y = village.Y.Value }
-
-            );
+            ).ToListAsync();
 
             // Need to load armies separately since `join into` doesn't work right with .Include()
             var armyIds = tribeVillages
@@ -514,7 +515,7 @@ namespace TW.Vault.Controllers
                 .Select(id => id.Value)
                 .ToList();
 
-            var allArmies = await context.CurrentArmy.Where(a => armyIds.Contains(a.ArmyId)).ToDictionaryAsync(a => a.ArmyId, a => a);
+            var allArmies = await Profile("Fetch current armies", () => context.CurrentArmy.Where(a => armyIds.Contains(a.ArmyId)).ToDictionaryAsync(a => a.ArmyId, a => a));
             foreach (var village in tribeVillages.Where(v => v.currentVillage != null))
             {
                 Scaffold.CurrentArmy FindArmy(long? armyId) => armyId == null ? null : allArmies.GetValueOrDefault(armyId.Value);
@@ -559,14 +560,14 @@ namespace TW.Vault.Controllers
                                         .Distinct()
                                         .ToDictionary(
                                             p => p,
-                                            p => tribeVillages.Where(v => v.player == p)
+                                            p => tribeVillages.Where(v => v.player.PlayerId == p.PlayerId)
                                                               .Select(tv => tv.currentVillage)
                                                               .Where(cv => cv != null)
                                                               .ToList()
                                          );
 
-            var villageIdsByPlayer = villagesByPlayer.ToDictionary(
-                kvp => kvp.Key,
+            var villageIdsByPlayerId = villagesByPlayer.ToDictionary(
+                kvp => kvp.Key.PlayerId,
                 kvp => kvp.Value.Select(v => v.VillageId).ToList()
             );
 
@@ -588,11 +589,12 @@ namespace TW.Vault.Controllers
                     where villageIds.Contains(support.SourceVillageId)
                     select support
                 ).ToListAsync();
-            
+
 
 
             //  Get support data by player Id, and sorted by target tribe ID
-            var playersById = tribeVillages.Select(tv => tv.player).Distinct().ToDictionary(p => p.PlayerId, p => p);
+            var players = tribeVillages.Select(tv => tv.player);
+            var playerIds = players.Select(p => p.PlayerId).Distinct();
 
             var tribeIdsByVillage = tribeVillages.ToDictionary(
                 v => v.villageId,
@@ -620,11 +622,10 @@ namespace TW.Vault.Controllers
 
 
             //  Only check support with players that have registered villas
-            foreach (var player in currentPlayers.Where(p => playersById.ContainsKey(p.PlayerId)))
+            foreach (var player in currentPlayers.Where(p => playerIds.Contains(p.PlayerId)))
             {
-                var supportFromPlayer = villagesSupport.Where(
-                    s => villageIdsByPlayer[playersById[player.PlayerId]].Contains(s.SourceVillageId)
-                ).ToList();
+                var villageIdsForPlayer = villageIdsByPlayerId[player.PlayerId];
+                var supportFromPlayer = villagesSupport.Where(s => villageIdsForPlayer.Contains(s.SourceVillageId)).ToList();
 
                 villagesSupportByPlayerId.Add(player.PlayerId, supportFromPlayer);
 
@@ -702,6 +703,7 @@ namespace TW.Vault.Controllers
             var tribeNamesById = tribeNames.ToDictionary(tn => tn.TribeId, tn => tn.Tag.UrlDecode());
 
             var jsonData = new List<JSON.PlayerSummary>();
+            var itlUnknown = Translate("UNKNOWN");
             foreach (var kvp in villagesByPlayer.OrderBy(kvp => kvp.Key.TribeId).ThenBy(kvp => kvp.Key.PlayerName))
             {
                 var player = kvp.Key;
@@ -793,7 +795,7 @@ namespace TW.Vault.Controllers
 
                     foreach (var (tribeId, supportToTribe) in villagesSupportByPlayerIdByTargetTribeId[player.PlayerId])
                     {
-                        var supportedTribeName = tribeNamesById.GetValueOrDefault(tribeId, Translate("UNKNOWN"));
+                        var supportedTribeName = tribeNamesById.GetValueOrDefault(tribeId, itlUnknown);
                         var totalSupportPopulation = 0;
                         foreach (var support in supportToTribe)
                             totalSupportPopulation += ArmyStats.CalculateTotalPopulation(ArmyConvert.ArmyToJson(support.SupportingArmy));

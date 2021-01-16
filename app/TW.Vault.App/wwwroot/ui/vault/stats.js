@@ -63,7 +63,7 @@ function makeUserStatsTab() {
                         'text-align': 'left'
                     });
                 })
-                .error(() => {
+                .fail(() => {
                     if (!lib.isUnloading())
                         alert(lib.translate(lib.itlcodes.STATS_LOAD_ERROR, { _escaped: false }));
                 });
@@ -143,7 +143,7 @@ function makeHighScoresTab() {
                         'overflow-y': 'scroll'
                     });
                 })
-                .error(() => {
+                .fail(() => {
                     alert(lib.translate(lib.itlcodes.RANKINGS_LOAD_ERROR, { _escaped: false }));
                 });
         },

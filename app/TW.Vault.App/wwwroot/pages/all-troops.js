@@ -134,7 +134,7 @@
                     onDone(-1);
                 }
             })
-            .error(() => {
+            .fail(() => {
                 if (lib.isUnloading())
                     return;
 
@@ -164,7 +164,7 @@
                     onDone(null);
                 }
             })
-            .error(() => {
+            .fail(() => {
                 if (lib.isUnloading())
                     return;
 
@@ -215,7 +215,7 @@
         function uploadArmy(onDone) {
             console.log('Uploading army data: ', data);
             lib.postApi('village/army/current', data)
-                .error(onError)
+                .fail(onError)
                 .done(() => {
                     onProgress_ && onProgress_(lib.translate(lib.itlcodes.TROOPS_UPLOADING_SUPPORT));
                     uploadSupport(onDone);
@@ -226,7 +226,7 @@
             console.log('Uploading support data: ', supportData);
             lib.queryCurrentPlayerInfo((playerId) => {
                 lib.postApi(`player/${playerId}/support`, supportData)
-                    .error(onError)
+                    .fail(onError)
                     .done(onDone);
             });
         }

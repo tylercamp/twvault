@@ -24,7 +24,7 @@ namespace TW.Vault.Features
         {
             var players = new List<String>(query.PlayerNames);
             var tribes = query.TribeNamesOrTags;
-            var worldId = query.WorldId;
+            var worldId = (short)query.WorldId;
             var continents = query.Continents;
 
             players.AddRange(await (

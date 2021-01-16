@@ -25,13 +25,14 @@ namespace TW.Vault.Features
 
         public void InitCommonVars()
         {
-            String ToBase64(String text) => System.Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(text));
+            //String ToBase64(String text) => System.Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(text));
             CompileTimeVars = new Dictionary<string, string>
             {
-                { "ENC_SEED_SALT", ToBase64(Configuration.Security.Encryption.SeedSalt.ToString()) },
-                { "ENC_SRC_PRIME", ToBase64(Configuration.Security.Encryption.SeedPrime.ToString()) },
-                { "ENC_SWAP_INTERVAL", ToBase64(((int)EncryptionSeedProvider.SwapInterval.TotalMilliseconds).ToString()) },
-                { "ENC_ENABLED", Configuration.Security.Encryption.UseEncryption.ToString().ToLower() }
+                { "ENC_SEED_SALT", Configuration.Security.Encryption.SeedSalt.ToString() },
+                { "ENC_SRC_PRIME", Configuration.Security.Encryption.SeedPrime.ToString() },
+                { "ENC_SWAP_INTERVAL", ((int)EncryptionSeedProvider.SwapInterval.TotalMilliseconds).ToString() },
+                { "ENC_ENABLED", Configuration.Security.Encryption.UseEncryption.ToString().ToLower() },
+                { "HOSTNAME", Configuration.Initialization.ServerHostname },
             };
         }
 

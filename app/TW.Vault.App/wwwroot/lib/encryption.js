@@ -2,9 +2,9 @@
 
     //  Constants are base64-encoded since JS script obfuscator won't obfuscate numbers
 
-    const SEED_SALT = parseInt(atob("%V<ENC_SEED_SALT>"));
-    const SEED_SWAP_INTERVAL = parseInt(atob("%V<ENC_SWAP_INTERVAL>"));
-    const SEED_RANDOM_PRIME = parseInt(atob("%V<ENC_SRC_PRIME>"));
+    const SEED_SALT = `%V<ENC_SEED_SALT>`;
+    const SEED_SWAP_INTERVAL = `%V<ENC_SWAP_INTERVAL>`
+    const SEED_RANDOM_PRIME = `%V<ENC_SRC_PRIME>`
 
     //  Encryption must be enabled or disabled on both the server and client, otherwise
     //  communication will fail

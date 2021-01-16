@@ -38,13 +38,13 @@ namespace TW.Vault.Controllers
             var twoDaysAgo = serverTime - TimeSpan.FromDays(2);
             var twoDaysAgoTimestamp = new DateTimeOffset(twoDaysAgo).ToUnixTimeSeconds();
 
-            var ownVillageData = await ManyTasks.RunToList(
+            var ownVillageData = await (
                 from village in CurrentSets.Village
                 join currentVillage in CurrentSets.CurrentVillage
                     on village.VillageId equals currentVillage.VillageId
                 where village.PlayerId == CurrentPlayerId
                 select new { X = village.X.Value, Y = village.Y.Value, village.VillageId, VillageName = village.VillageName.UrlDecode(), currentVillage.ArmyAtHome, currentVillage.ArmyStationed }
-            );
+            ).ToListAsync();
 
             var vaultPlayerIds = await CurrentSets.ActiveUser.Select(u => u.PlayerId).ToListAsync();
             var ownVillageMap = new Features.Spatial.Quadtree(ownVillageData.Select(v => new Coordinate { X = v.X, Y = v.Y }));
@@ -203,32 +203,32 @@ namespace TW.Vault.Controllers
 
             async Task<object> GetStackSuggestions(CurrentContextDbSets CurrentSets)
             {
-                var enemyVillages = await ManyTasks.RunToList(
+                var enemyVillages = await (
                     from enemy in CurrentSets.EnemyTribe
                     join player in CurrentSets.Player on enemy.EnemyTribeId equals player.TribeId
                     join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                     select new Coordinate { X = village.X.Value, Y = village.Y.Value }
-                );
+                ).ToListAsync();
 
                 var enemyMap = new Features.Spatial.Quadtree(enemyVillages);
                 var frontlineVillages = ownVillageData.Where(v => enemyMap.ContainsInRange(v.X, v.Y, 4.0f)).ToList();
                 var frontlineVillageIds = frontlineVillages.Select(v => v.VillageId).ToList();
 
-                (var attacksOnFrontline, var supportToFrontine) = await ManyTasks.RunToList(
+                var attacksOnFrontline = await (
                     from command in CurrentSets.Command
                     where frontlineVillageIds.Contains(command.TargetVillageId)
                     where command.IsAttack
                     where command.LandsAt > serverTime
                     select new { command.SourceVillageId, command.TargetVillageId }
+                ).ToListAsync();
 
-                    ,
-
+                var supportToFrontline = await (
                     from support in CurrentSets.Command
                     where frontlineVillageIds.Contains(support.TargetVillageId)
                     where support.LandsAt > serverTime
                     where support.ArmyId != null
                     select new { support.TargetVillageId, support.Army }
-                );
+                ).ToListAsync();
 
                 var attackingVillageIds = attacksOnFrontline.Select(c => c.SourceVillageId).Distinct().ToList();
                 var attackingVillages = await CurrentSets
@@ -255,7 +255,7 @@ namespace TW.Vault.Controllers
                     nukesSentPerVillage[attack.TargetVillageId]++;
 
                 var pendingSupportPerVillage = frontlineVillageIds.ToDictionary(id => id, id => new JSON.Army());
-                foreach (var support in supportToFrontine)
+                foreach (var support in supportToFrontline)
                     pendingSupportPerVillage[support.TargetVillageId] += support.Army;
 
                 var battleSimulator = new Features.Simulation.BattleSimulator();
@@ -281,20 +281,20 @@ namespace TW.Vault.Controllers
 
             async Task<object> GetNobleTargetSuggestions(CurrentContextDbSets CurrentSets)
             {
-                (var villasWithNobles, var enemyCurrentVillas) = await ManyTasks.RunToList(
+                var villasWithNobles = await (
                     from village in CurrentSets.Village
                     join currentVillage in CurrentSets.CurrentVillage on village.VillageId equals currentVillage.VillageId
                     where currentVillage.ArmyOwned.Snob > 0
                     where village.PlayerId == CurrentPlayerId
                     select new Coordinate { X = village.X.Value, Y = village.Y.Value }
+                ).ToListAsync();
 
-                    ,
-
+                var enemyCurrentVillas = await (
                     from currentVillage in CurrentSets.CurrentVillage
                     join village in CurrentSets.Village on currentVillage.VillageId equals village.VillageId
                     where !CurrentSets.ActiveUser.Any(au => au.PlayerId == village.PlayerId)
                     select new { X = village.X.Value, Y = village.Y.Value, village.VillageId, village.Points, currentVillage.Loyalty, currentVillage.LoyaltyLastUpdated, currentVillage.ArmyStationed, village.PlayerId, VillageName = village.VillageName.UrlDecode(), PlayerName = village.Player.PlayerName.UrlDecode() }
-                );
+                ).ToListAsync();
 
                 var villageMap = new Features.Spatial.Quadtree(villasWithNobles);
 
@@ -358,21 +358,21 @@ namespace TW.Vault.Controllers
 
             async Task<object> GetUselessStackSuggestions(CurrentContextDbSets CurrentSets)
             {
-                (var enemyVillages, var ownSupport) = await ManyTasks.RunToList(
+                var enemyVillages = await (
                     from enemy in CurrentSets.EnemyTribe
                     join player in CurrentSets.Player on enemy.EnemyTribeId equals player.TribeId
                     join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
-                    select new Coordinate { X = village.X.Value,  Y = village.Y.Value }
+                    select new Coordinate { X = village.X.Value, Y = village.Y.Value }
+                ).ToListAsync();
 
-                    ,
-
+                var ownSupport = await (
                     from support in CurrentSets.CurrentVillageSupport
                     join targetVillage in CurrentSets.Village on support.TargetVillageId equals targetVillage.VillageId
                     join sourceVillage in CurrentSets.Village on support.SourceVillageId equals sourceVillage.VillageId
                     where targetVillage.PlayerId == null || !vaultPlayerIds.Contains(targetVillage.PlayerId.Value)
                     where sourceVillage.PlayerId == CurrentPlayerId
                     select new { support.SupportingArmy, targetVillage.VillageId }
-                );
+                ).ToListAsync();
 
                 var notOwnVillageIds = ownSupport.Select(s => s.VillageId).Distinct().ToList();
                 var notOwnVillages = await (
@@ -428,12 +428,12 @@ namespace TW.Vault.Controllers
             }
 
             (var recaps, var snipes, var stacks, var nobles, var uselessStacks) = await ManyTasks.Run(
-                    WithTemporarySets(GetRecapSuggestions),
-                    WithTemporarySets(GetSnipeSuggestions),
-                    WithTemporarySets(GetStackSuggestions),
-                    WithTemporarySets(GetNobleTargetSuggestions),
-                    WithTemporarySets(GetUselessStackSuggestions)
-                );
+                WithTemporarySets(GetRecapSuggestions),
+                WithTemporarySets(GetSnipeSuggestions),
+                WithTemporarySets(GetStackSuggestions),
+                WithTemporarySets(GetNobleTargetSuggestions),
+                WithTemporarySets(GetUselessStackSuggestions)
+            );
 
             return Ok(new
             {
@@ -478,21 +478,21 @@ namespace TW.Vault.Controllers
         [HttpGet("request-backline-defense")]
         public async Task<IActionResult> GetAvailableBacklineDefense(short x, short y, int? maxTravelSeconds)
         {
-            (var currentVillages, var enemyVillages) = await ManyTasks.RunToList(
+            var currentVillages = await (
                 from user in CurrentSets.ActiveUser
                 join village in CurrentSets.Village on user.PlayerId equals village.PlayerId
                 join currentVillage in CurrentSets.CurrentVillage.Include(cv => cv.ArmyAtHome).Include(cv => cv.ArmyOwned)
                     on village.VillageId equals currentVillage.VillageId
                 where currentVillage.ArmyAtHomeId != null && currentVillage.ArmyOwnedId != null
                 select new { Village = village, CurrentVillage = currentVillage }
-                
-                ,
+            ).ToListAsync();
 
+            var enemyVillages = await (
                 from enemy in CurrentSets.EnemyTribe
                 join player in CurrentSets.Player on enemy.EnemyTribeId equals player.TribeId
                 join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
                 select new Coordinate { X = village.X.Value, Y = village.Y.Value }
-            );
+            ).ToListAsync();
 
             //  Ignore current villages where < 10% of their troops are at home
             currentVillages = currentVillages

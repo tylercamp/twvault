@@ -103,10 +103,8 @@ namespace TW.Vault.Controllers
                     currentBatchSize = maxBatchSize;
 
                 var currentBatch = reportIds.Skip(i * maxBatchSize).Take(currentBatchSize).ToList();
-                (var existingBatchReports, var existingIgnoredBatchReports) = await ManyTasks.RunToList(
-                        CurrentSets.Report.Where(r => currentBatch.Contains(r.ReportId)).Select(r => r.ReportId),
-                        CurrentSets.IgnoredReport.Where(r => currentBatch.Contains(r.ReportId)).Select(r => r.ReportId)
-                    );
+                var existingBatchReports = await CurrentSets.Report.Where(r => currentBatch.Contains(r.ReportId)).Select(r => r.ReportId).ToListAsync();
+                var existingIgnoredBatchReports = await CurrentSets.IgnoredReport.Where(r => currentBatch.Contains(r.ReportId)).Select(r => r.ReportId).ToListAsync();
 
                 existingReports.AddRange(existingBatchReports);
                 existingReports.AddRange(existingIgnoredBatchReports);
@@ -130,10 +128,8 @@ namespace TW.Vault.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            (var previousIgnoredReports, var previousReports) = await ManyTasks.RunToList(
-                    CurrentSets.IgnoredReport.Where(r => reportIds.Contains(r.ReportId)).Select(r => r.ReportId),
-                    CurrentSets.Report.Where(r => reportIds.Contains(r.ReportId)).Select(r => r.ReportId)
-                );
+            var previousIgnoredReports = await CurrentSets.IgnoredReport.Where(r => reportIds.Contains(r.ReportId)).Select(r => r.ReportId).ToListAsync();
+            var previousReports = await CurrentSets.Report.Where(r => reportIds.Contains(r.ReportId)).Select(r => r.ReportId).ToListAsync();
 
             var reportsToIgnore = reportIds
                 .Except(previousIgnoredReports)

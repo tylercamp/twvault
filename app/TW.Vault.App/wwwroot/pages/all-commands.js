@@ -169,7 +169,7 @@
 
     function checkExistingCommands(commandIds, onDone) {
         lib.postApi('command/check-existing-commands', commandIds)
-            .error(() => {
+            .fail(() => {
                 if (lib.isUnloading())
                     return;
 

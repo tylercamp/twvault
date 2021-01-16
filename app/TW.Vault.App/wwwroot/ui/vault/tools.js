@@ -124,7 +124,7 @@ $.getScript("${link}");
 
                         $container.find('#fake-script-output').val(coords);
                     })
-                    .error(() => {
+                    .fail(() => {
                         if (lib.isUnloading())
                             return;
 
@@ -324,7 +324,7 @@ function makeBacktimeListTab() {
                         currentCommands = data;
                         updateBacktimingList($container);
                     })
-                    .error(() => {
+                    .fail(() => {
                         alert(lib.messages.GENERIC_ERROR);
                     });
             });

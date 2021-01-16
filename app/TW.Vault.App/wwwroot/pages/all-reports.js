@@ -188,7 +188,7 @@
 
                 requestManager.start();
             })
-            .error(() => {
+            .fail(() => {
                 onProgress_ && onProgress_(lib.translate(lib.itlcodes.REPORTS_LA_ERROR));
                 setTimeout(() => onDone([]), 1500);
             });
@@ -206,7 +206,7 @@
                     onDone(data);
                 }
             })
-            .error(() => {
+            .fail(() => {
                 if (lib.isUnloading())
                     return;
 

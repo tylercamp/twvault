@@ -436,7 +436,7 @@ function makeRequestLocalSupportTab() {
 
                         $container.find('#vault-request-local-support-output').css('display', 'block');
                     })
-                    .error(() => {
+                    .fail(() => {
                         $searchButton.prop('disabled', false);
                         alert(lib.messages.GENERIC_ERROR);
                     });
@@ -544,7 +544,7 @@ function makeRequestStackTab() {
 
                         $container.find('#vault-request-stack-output').css('display', 'block');
                     })
-                    .error(() => {
+                    .fail(() => {
                         $searchButton.prop('disabled', false);
                         alert(lib.messages.GENERIC_ERROR);
                     });

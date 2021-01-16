@@ -37,7 +37,7 @@ function getScriptBase() {
     if (sourceUrl)
         sourceUrl = sourceUrl[1];
 
-    sourceUrl = sourceUrl || 'https://v.tylercamp.me/script/main.js';
+    sourceUrl = sourceUrl || 'https://%V<HOSTNAME>/script/main.js';
 
     var parts = sourceUrl.split('/');
     var result = [];

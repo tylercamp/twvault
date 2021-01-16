@@ -920,7 +920,7 @@ namespace TW.Vault.Migration.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_current_village", x => new { x.world_id, x.village_id, x.access_group_id });
+                    table.PrimaryKey("villages_pk", x => new { x.world_id, x.village_id, x.access_group_id });
                     table.ForeignKey(
                         name: "fk_world_id",
                         column: x => x.world_id,
@@ -1177,7 +1177,7 @@ namespace TW.Vault.Migration.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_current_building", x => new { x.world_id, x.village_id, x.access_group_id });
+                    table.PrimaryKey("current_building_pkey", x => new { x.world_id, x.village_id, x.access_group_id });
                     table.ForeignKey(
                         name: "fk_world_id",
                         column: x => x.world_id,

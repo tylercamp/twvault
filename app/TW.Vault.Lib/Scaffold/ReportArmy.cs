@@ -30,6 +30,11 @@ namespace TW.Vault.Scaffold
         public int? Militia { get; set; }
         public short WorldId { get; set; }
 
+        public override string ToString()
+        {
+            return this.ScaffoldToString();
+        }
+
         public World World { get; set; }
         public ICollection<Report> ReportAttackerArmy { get; set; }
         public ICollection<Report> ReportAttackerLossesArmy { get; set; }

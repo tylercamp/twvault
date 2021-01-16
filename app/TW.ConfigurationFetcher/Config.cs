@@ -13,6 +13,7 @@ namespace TW.ConfigurationFetcher
         public List<String> ExtraTLDs { get; private set; } = new List<string>();
         public List<String> ExtraServers { get; private set; } = new List<string>();
         public bool FetchExisting { get; private set; }
+        public bool AcceptAll { get; private set; }
 
         public bool IsValid => ConnectionString != null;
 
@@ -56,27 +57,22 @@ namespace TW.ConfigurationFetcher
                 {
                     result.ConnectionString = args[i].Trim('"', '\'');
                 }
-                else if (arg == "-extratld" && !isLast)
+                else switch (arg)
                 {
-                    ++i;
-                    result.ExtraTLDs.Add(args[i].ToLower());
-                }
-                else if (arg == "-extraserver" && !isLast)
-                {
-                    ++i;
-                    result.ExtraServers.Add(args[i].ToLower());
-                }
-                else if (arg == "-clean")
-                {
-                    result.Clean = true;
-                }
-                else if (arg == "-fetch-all")
-                {
-                    result.FetchTldServers = true;
-                }
-                else if (arg == "-fetch-old")
-                {
-                    result.FetchExisting = true;
+                    case "-extratld" when !isLast:
+                        ++i;
+                        result.ExtraTLDs.Add(args[i].ToLower());
+                        break;
+
+                    case "-extraserver" when !isLast:
+                        ++i;
+                        result.ExtraServers.Add(args[i].ToLower());
+                        break;
+
+                    case "-clean": result.Clean = true; break;
+                    case "-fetch-all": result.FetchTldServers = true; break;
+                    case "-fetch-old": result.FetchExisting = true; break;
+                    case "-accept": result.AcceptAll = true; break;
                 }
             }
 
@@ -94,6 +90,11 @@ Options:
 
                           Example: > TW.ConfigurationFetcher ""Server=127.0.0.1; Port=5432; Database=vault; User Id=u_vault; Password=vaulttest""
 
+    -extraserver : Specifies an extra game server (eg en100.tribalwars.net) to be registered, if not done
+                   already. Does not affect ""-fetch-all"".
+
+                   Example: > TW.ConfigurationFetcher ""<connection-string>"" -extraserver en100.tribalwars.net -extraserver us40.tribalwars.us
+
     -clean       : If specified, will check for old, closed servers and automatically delete their data.
 
     -fetch-all   : If specified, will gather all TLD servers (eg tribalwars.net, tribalwars.us, ...) and will
@@ -104,6 +105,11 @@ Options:
                         If ""en100.tribalwars.net"" is already registered, ""tribalwars.net"" would be used
                         to also find and register ""en101.tribalwars.net"", etc..
 
+    -extraTLD    : Specifies an extra top-level domain of a server (eg tribalwars.net, tribalwars.co.uk)
+                   to be used when fetching all available servers. Has no effect when -fetch-all is not used.
+
+                   Example: > TW.ConfigurationFetcher ""<connection-string>"" -fetch-all -extraTLD tribalwars.net -extraTLD tribalwars.us
+
     -fetch-old   : If specified, will pull configuration for worlds that are already registered and will
                    update their configuration if necessary.
 
@@ -113,15 +119,13 @@ Options:
                         compared to the stored settings for that server. If they don't match, a warning will be
                         logged showing the change and will wait for confirmation before overwriting.
 
-    -extraserver : Specifies an extra game server (eg en100.tribalwars.net) to be registered, if not done
-                   already. Does not affect ""-fetch-all"".
+{Note: Options below not implemented}
 
-                   Example: > TW.ConfigurationFetcher ""<connection-string>"" -extraserver en100.tribalwars.net -extraserver us40.tribalwars.us
+    -reset-on-diff : If specified with -fetch-old, deletes and recreates any worlds whose config differ
+                     on the given property. Specify a property with -reset-on-diff=a,b. The default value
+                     is ""GameSpeed,UnitSpeed,ArchersEnabled,MoraleEnabled""
 
-    -extraTLD    : Specifies an extra top-level domain of a server (eg tribalwars.net, tribalwars.co.uk)
-                   to be used when fetching all available servers. Has no effect when -fetch-all is not used.
-
-                   Example: > TW.ConfigurationFetcher ""<connection-string>"" -fetch-all -extraTLD tribalwars.net -extraTLD tribalwars.us
+    -accept      : If specified with -fetch-old, any prompts to modify old worlds will be accepted.
 
 ".Trim();
     }

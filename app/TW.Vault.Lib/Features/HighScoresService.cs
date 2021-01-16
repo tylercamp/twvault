@@ -73,7 +73,7 @@ namespace TW.Vault.Features
                         {
                             highScores = await WithVaultContext(async (context) =>
                             {
-                                return await GenerateHighScores(context, group.WorldId, group.Id, stoppingToken).ConfigureAwait(false);
+                                return await GenerateHighScores(context, (short)group.WorldId, group.Id, stoppingToken).ConfigureAwait(false);
                             }).ConfigureAwait(false);
 
                             if (highScores != null)
@@ -85,7 +85,7 @@ namespace TW.Vault.Features
                         }
                     });
 
-                    await ManyTasks.RunThrottled(updateTasks).ConfigureAwait(false);
+                    await ManyTasks.RunThrottled(4, updateTasks).ConfigureAwait(false);
 
                     IsUpdating = false;
                 }
@@ -118,7 +118,7 @@ namespace TW.Vault.Features
             public DateTime LandsAt { get; set; }
         }
 
-        public async Task<Dictionary<String, UserStats>> GenerateHighScores(Scaffold.VaultContext context, int worldId, int accessGroupId, CancellationToken ct)
+        public async Task<Dictionary<String, UserStats>> GenerateHighScores(Scaffold.VaultContext context, short worldId, int accessGroupId, CancellationToken ct)
         {
             context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
@@ -143,101 +143,81 @@ namespace TW.Vault.Features
 
             logger.LogDebug("Running data queries...");
 
-            (var tribePlayers, var tribeVillas, var tribeSupport, var tribeAttackCommands, var tribeSupportCommands, var tribeAttackingReports, var tribeDefendingReports, var enemyVillas) = await ManyTasks.Run(
-                (
-                    from user in CurrentSets.ActiveUser
-                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    select new { player.PlayerName, player.PlayerId }
-                ).ToListAsync(ct)
+            var tribePlayers = await Profiling.AddAsyncRecord("High scores - fetch tribePlayers", (
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                select new { player.PlayerName, player.PlayerId }
+            ).ToListAsync(ct));
 
-                ,
+            var tribeVillas = await Profiling.AddAsyncRecord("High scores - fetch tribeVillas", (
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+                join currentVillage in CurrentSets.CurrentVillage
+                    on village.VillageId equals currentVillage.VillageId
+                where currentVillage.ArmyAtHomeId != null && currentVillage.ArmyTravelingId != null
+                select new { X = village.X.Value, Y = village.Y.Value, player.PlayerId, village.VillageId, currentVillage.ArmyAtHome, currentVillage.ArmyTraveling }
+            ).ToListAsync(ct));
 
-                // At-home armies
-                (
-                    from user in CurrentSets.ActiveUser
-                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
-                    join currentVillage in CurrentSets.CurrentVillage
-                        on village.VillageId equals currentVillage.VillageId
-                    where currentVillage.ArmyAtHomeId != null && currentVillage.ArmyTravelingId != null
-                    select new { X = village.X.Value, Y = village.Y.Value, player.PlayerId, village.VillageId, currentVillage.ArmyAtHome, currentVillage.ArmyTraveling }
-                ).ToListAsync(ct)
+            var playerIdsByVilla = tribeVillas.ToDictionary(v => v.VillageId, v => v.PlayerId);
 
-                ,
+            var allTribeSupport = await Profiling.AddAsyncRecord("High scores - fetch allTribeSupport", (
+                CurrentSets.CurrentVillageSupport.Include(s => s.SupportingArmy).ToListAsync(ct)
+            ));
 
-                // Support
-                (
-                    from user in CurrentSets.ActiveUser
-                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
-                    join support in CurrentSets.CurrentVillageSupport
-                        on village.VillageId equals support.SourceVillageId
-                    select new { player.PlayerId, support.TargetVillageId, support.SupportingArmy }
-                ).ToListAsync(ct)
+            var tribeSupport = allTribeSupport
+                .Where(s => playerIdsByVilla.ContainsKey(s.SourceVillageId))
+                .Select(support => new { PlayerId = playerIdsByVilla[support.SourceVillageId], support.TargetVillageId, support.SupportingArmy })
+                .ToList();
 
-                ,
 
-                // Commands in last week
-                (
-                    from user in CurrentSets.ActiveUser
-                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join command in CurrentSets.Command on player.PlayerId equals command.SourcePlayerId
-                    where command.ArmyId != null
-                    where command.LandsAt > lastWeek
-                    where command.IsAttack
-                    where command.TargetPlayerId != null
-                    select new { command.CommandId, command.SourcePlayerId, command.LandsAt, command.TargetVillageId, command.Army }
-                ).ToListAsync(ct)
+            var tribeAttackCommands = await Profiling.AddAsyncRecord("High scores - fetch tribeAttackCommands", (
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join command in CurrentSets.Command on player.PlayerId equals command.SourcePlayerId
+                where command.ArmyId != null
+                where command.LandsAt > lastWeek
+                where command.IsAttack
+                where command.TargetPlayerId != null
+                select new { command.CommandId, command.SourcePlayerId, command.LandsAt, command.TargetVillageId, command.Army }
+            ).ToListAsync(ct));
 
-                ,
+            var tribeSupportCommands = await Profiling.AddAsyncRecord("High scores - fetch tribeSupportCommands", (
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join command in CurrentSets.Command on player.PlayerId equals command.SourcePlayerId
+                where command.ArmyId != null
+                where command.LandsAt > lastWeek
+                where !command.IsAttack
+                where command.TargetPlayerId != null
+                select new SlimSupportCommand { SourcePlayerId = command.SourcePlayerId, TargetPlayerId = command.TargetPlayerId.Value, TargetVillageId = command.TargetVillageId, LandsAt = command.LandsAt }
+            ).ToListAsync(ct));
 
-                // Support commands in last week
-                (
-                    from user in CurrentSets.ActiveUser
-                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join command in CurrentSets.Command on player.PlayerId equals command.SourcePlayerId
-                    where command.ArmyId != null
-                    where command.LandsAt > lastWeek
-                    where !command.IsAttack
-                    where command.TargetPlayerId != null
-                    select new SlimSupportCommand { SourcePlayerId = command.SourcePlayerId, TargetPlayerId = command.TargetPlayerId.Value, TargetVillageId = command.TargetVillageId, LandsAt = command.LandsAt }
-                ).ToListAsync(ct)
+            var tribeAttackingReports = await Profiling.AddAsyncRecord("High scores - fetch tribeAttackingReports", (
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join report in CurrentSets.Report on player.PlayerId equals report.AttackerPlayerId
+                where report.OccuredAt > lastWeek
+                where report.AttackerArmy != null
+                where report.DefenderPlayerId != null
+                select new SlimReport { AttackerArmy = report.AttackerArmy, ReportId = report.ReportId, OccuredAt = report.OccuredAt, AttackerPlayerId = report.AttackerPlayerId.Value, DefenderVillageId = report.DefenderVillageId }
+            ).ToListAsync(ct));
 
-                ,
+            var tribeDefendingReports = await Profiling.AddAsyncRecord("High scores - tribeDefendingReports", (
+                from user in CurrentSets.ActiveUser
+                join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
+                join report in CurrentSets.Report on player.PlayerId equals report.DefenderPlayerId
+                where report.OccuredAt > lastWeek
+                where report.AttackerArmy != null
+                select new SlimReport { AttackerArmy = report.AttackerArmy, DefenderVillageId = report.DefenderVillageId, ReportId = report.ReportId, OccuredAt = report.OccuredAt }
+            ).ToListAsync(ct));
 
-                // Attacking reports in last week
-                (
-                    from user in CurrentSets.ActiveUser
-                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join report in CurrentSets.Report on player.PlayerId equals report.AttackerPlayerId
-                    where report.OccuredAt > lastWeek
-                    where report.AttackerArmy != null
-                    where report.DefenderPlayerId != null
-                    select new SlimReport { AttackerArmy = report.AttackerArmy, ReportId = report.ReportId, OccuredAt = report.OccuredAt, AttackerPlayerId = report.AttackerPlayerId.Value, DefenderVillageId = report.DefenderVillageId }
-                ).ToListAsync(ct)
-
-                ,
-
-                // Defending reports in last week
-                (
-                    from user in CurrentSets.ActiveUser
-                    join player in CurrentSets.Player on user.PlayerId equals player.PlayerId
-                    join report in CurrentSets.Report on player.PlayerId equals report.DefenderPlayerId
-                    where report.OccuredAt > lastWeek
-                    where report.AttackerArmy != null
-                    select new SlimReport { AttackerArmy = report.AttackerArmy, DefenderVillageId = report.DefenderVillageId, ReportId = report.ReportId, OccuredAt = report.OccuredAt }
-                ).ToListAsync(ct)
-
-                ,
-
-                // Enemy villas (to determine what's "backline")
-                (
-                    from enemy in CurrentSets.EnemyTribe
-                    join player in CurrentSets.Player on enemy.EnemyTribeId equals player.TribeId
-                    join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
-                    select new { X = village.X.Value, Y = village.Y.Value }
-                ).ToListAsync(ct)
-            ).ConfigureAwait(false);
+            var enemyVillas = await Profiling.AddAsyncRecord("High scores - fetch enemyVillas", (
+                from enemy in CurrentSets.EnemyTribe
+                join player in CurrentSets.Player on enemy.EnemyTribeId equals player.TribeId
+                join village in CurrentSets.Village on player.PlayerId equals village.PlayerId
+                select new { X = village.X.Value, Y = village.Y.Value }
+            ).ToListAsync(ct));
 
             if (ct.IsCancellationRequested)
                 return null;
@@ -247,23 +227,23 @@ namespace TW.Vault.Features
             var tribeVillageIds = tribeVillas.Select(v => v.VillageId).ToList();
 
             var supportedVillageIds = tribeSupport.Select(s => s.TargetVillageId).Distinct().ToList();
-            var villageTribeIds = await (
+            var villageTribeIds = await Profiling.AddAsyncRecord("High scores - fetch villageTribeIds", (
                 from village in CurrentSets.Village
                 join player in CurrentSets.Player on village.PlayerId equals player.PlayerId
                 join tribe in CurrentSets.Ally on player.TribeId equals tribe.TribeId
                 where supportedVillageIds.Contains(village.VillageId)
                 select new { village.VillageId, tribe.TribeId }
-            ).ToDictionaryAsync(d => d.VillageId, d => d.TribeId, ct);
+            ).ToDictionaryAsync(d => d.VillageId, d => d.TribeId, ct));
 
             if (ct.IsCancellationRequested)
                 return null;
 
             var supportedTribeIds = villageTribeIds.Values.Distinct().ToList();
-            var tribeInfo = await (
+            var tribeInfo = await Profiling.AddAsyncRecord("High scores - fetch tribeInfo", (
                 from tribe in CurrentSets.Ally
                 where supportedTribeIds.Contains(tribe.TribeId)
                 select new { tribe.TribeId, tribe.TribeName, tribe.Tag }
-            ).ToDictionaryAsync(d => d.TribeId, d => new { Name = d.TribeName, d.Tag }, ct);
+            ).ToDictionaryAsync(d => d.TribeId, d => new { Name = d.TribeName, d.Tag }, ct));
 
             if (ct.IsCancellationRequested)
                 return null;

@@ -33,6 +33,11 @@ namespace TW.Vault.Scaffold
         public short WorldId { get; set; }
         public DateTime? LastUpdated { get; set; }
 
+        public override string ToString()
+        {
+            return this.ScaffoldToString();
+        }
+
         public ICollection<CurrentVillage> CurrentVillageArmyAtHome { get; set; }
         public ICollection<CurrentVillage> CurrentVillageArmyOwned { get; set; }
         public ICollection<CurrentVillage> CurrentVillageArmyRecentLosses { get; set; }

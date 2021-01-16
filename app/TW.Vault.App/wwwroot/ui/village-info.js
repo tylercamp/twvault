@@ -49,7 +49,7 @@
                     bodyHandler: () => `<b>${lib.translate(lib.itlcodes.BACKTIME_BB_CODE_HOVER)}</b>`
                 });
             })
-            .error((xhr) => {
+            .fail((xhr) => {
                 if (xhr.status == 423) {
                     if (showedNeedsUploadMessage) {
                         return;
@@ -131,7 +131,7 @@
                         $container.find('#vault-commands-backtime-bbcode').css('display', 'block');
                         $container.find('textarea').val(makePlanBbCode(data));
                     })
-                    .error(() => {
+                    .fail(() => {
                         enableButton();
                         alert(lib.messages.GENERIC_ERROR);
                     });

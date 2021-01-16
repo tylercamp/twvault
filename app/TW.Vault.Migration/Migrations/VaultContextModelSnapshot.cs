@@ -434,7 +434,7 @@ namespace TW.Vault.Migration.Migrations
                     b.Property<short?>("Wood")
                         .HasColumnName("wood");
 
-                    b.HasKey("WorldId", "VillageId", "AccessGroupId");
+                    b.HasKey("WorldId", "VillageId", "AccessGroupId").HasName("current_building_pkey");
 
                     b.HasIndex("VillageId");
 
@@ -499,7 +499,7 @@ namespace TW.Vault.Migration.Migrations
                     b.Property<DateTime?>("LoyaltyLastUpdated")
                         .HasColumnName("loyalty_last_updated");
 
-                    b.HasKey("WorldId", "VillageId", "AccessGroupId");
+                    b.HasKey("WorldId", "VillageId", "AccessGroupId").HasName("villages_pk");
 
                     b.HasIndex("WorldId", "ArmyAtHomeId");
 

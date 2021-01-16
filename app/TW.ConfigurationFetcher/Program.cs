@@ -75,7 +75,7 @@ namespace TW.ConfigurationFetcher
 
             var vaultContext = new VaultContext(
                 new DbContextOptionsBuilder<VaultContext>()
-                    .UseNpgsql(connectionString, opt => opt.CommandTimeout((int)TimeSpan.FromMinutes(30).TotalSeconds))
+                    .UseNpgsql(connectionString, opt => opt.CommandTimeout((int)TimeSpan.FromMinutes(180).TotalSeconds))
                     .Options
             );
 
@@ -97,6 +97,12 @@ namespace TW.ConfigurationFetcher
 
                     return distinctLocales.FirstOrDefault();
                 });
+
+                foreach (var tld in tlds)
+                {
+                    if (hostLocales[tld] == null)
+                        hostLocales.Remove(tld);
+                }
 
                 foreach (var template in Vault.Scaffold.Seed.WorldSettingsTemplate.Templates)
                 {
@@ -153,12 +159,14 @@ namespace TW.ConfigurationFetcher
             var serverListUrl = $"http://www.{tldHostname}/backend/get_servers.php";
             var response = httpClient.GetStringAsync(serverListUrl).Result;
             var activeWorldMatches = activeWorldRegex.Matches(response);
-            return activeWorldMatches.Select(m => m.Groups[1].Value).ToList();
+            return activeWorldMatches.Select(m => m.Groups[1].Value).Where(w => !w.StartsWith("www")).ToList();
         }
 
         private static void FetchWorldData(VaultContext context, List<World> worlds, Dictionary<String, LocaleSettings> hostLocales, String hostname, bool overwrite)
         {
             var host = HostFor(hostname);
+
+            var localeSettings = hostLocales.ContainsKey(host) ? hostLocales[host] : null;
 
             var fetchers = new IFetcher[]
             {
@@ -166,7 +174,7 @@ namespace TW.ConfigurationFetcher
                 new ConfigFetcher()
                 {
                     Overwrite = overwrite,
-                    DefaultTimeZoneId = hostLocales.ContainsKey(host) ? hostLocales[host].TimeZoneId : "Europe/London"
+                    DefaultTimeZoneId = localeSettings?.TimeZoneId ?? "Europe/London"
                 },
                 new UnitFetcher()
             };
@@ -175,7 +183,7 @@ namespace TW.ConfigurationFetcher
             if (world == null)
             {
                 short translationId;
-                if (hostLocales.ContainsKey(host)) translationId = hostLocales[host].DefaultTranslationId;
+                if (localeSettings != null) translationId = localeSettings.DefaultTranslationId;
                 else
                 {
                     translationId = 1;
@@ -228,11 +236,12 @@ namespace TW.ConfigurationFetcher
 
             var worldSettings = context.WorldSettings.Where(s => s.WorldId == world.Id).First();
             String timezoneId;
-            if (hostLocales.ContainsKey(host)) timezoneId = hostLocales[host].TimeZoneId;
+            if (localeSettings != null) timezoneId = hostLocales[host].TimeZoneId;
             else
             {
                 Console.WriteLine($"Warning: No timezone ID could be found for {hostname}, please manually enter a timezone ID for the server.");
                 Console.WriteLine("An exhaustive list of Timezone IDs can be found at: https://nodatime.org/TimeZones");
+                Console.WriteLine("(The default for .net and .co.uk is 'Europe/London'.)");
 
                 do
                 {
@@ -245,6 +254,9 @@ namespace TW.ConfigurationFetcher
                         timezoneId = null;
                     }
                 } while (timezoneId == null);
+
+                
+                hostLocales.Add(host, new LocaleSettings { DefaultTranslationId = world.DefaultTranslationId, TimeZoneId = timezoneId });
             }
 
             worldSettings.TimeZoneId = timezoneId;
@@ -281,7 +293,7 @@ namespace TW.ConfigurationFetcher
 
             Console.WriteLine("Deleting non-trivial datatypes...");
             Console.WriteLine("Deleting UserUploadHistory entries...");
-            vaultContext.UserUploadHistory.RemoveRange(vaultContext.UserUploadHistory.Include(h => h.U).Where(h => h.U.WorldId == world.Id));
+            vaultContext.UserUploadHistory.RemoveRange(vaultContext.UserUploadHistory.Where(h => h.U.WorldId == world.Id));
             vaultContext.SaveChanges();
 
             var numJobsDone = 0;

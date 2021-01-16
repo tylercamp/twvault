@@ -14,6 +14,29 @@ namespace TW.Vault.Scaffold
             Village = new HashSet<Village>();
         }
 
+        public override int GetHashCode()
+        {
+            return
+                PlayerId.GetHashCode() ^
+                PlayerName.GetHashCode() ^
+                (TribeId?.GetHashCode() ?? 0) ^
+                (Villages?.GetHashCode() ?? 0) ^
+                (Points?.GetHashCode() ?? 0) ^
+                (PlayerRank?.GetHashCode() ?? 0) ^
+                WorldId.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (Object.ReferenceEquals(obj, null)) return false;
+            return obj is Player && obj.GetHashCode() == this.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return $"Player {PlayerName} (id={PlayerId})";
+        }
+
         public long PlayerId { get; set; }
         public string PlayerName { get; set; }
         public long? TribeId { get; set; }

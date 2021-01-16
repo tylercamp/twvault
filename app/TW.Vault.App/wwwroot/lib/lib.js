@@ -729,12 +729,12 @@ var lib = (() => {
 
         saveAsFile: function saveAsFile(filename, fileContents) {
             //  https://gist.github.com/liabru/11263260
-            let blob = new Blob([fileContents], { type: 'text/plain' });
+            let blob = new Blob([fileContents], { type: 'application/octet-stream' });
             let anchor = $('<a>')[0];
 
             anchor.download = filename;
             anchor.href = (window.URL || window.webkitURL).createObjectURL(blob);
-            anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
+            anchor.dataset.downloadurl = ['application/octet-stream', anchor.download, anchor.href].join(':');
             anchor.click();
         },
 
@@ -798,11 +798,11 @@ var lib = (() => {
                 return url;
             }
 
-            let serverBase = 'https://v.tylercamp.me';
+            let serverBase = 'https://%V<HOSTNAME>';
 
             //  Check if running from dev or from real server
             let host = lib.getScriptHost();
-            let path = host.match(/tylercamp.me\/(.*)/)[1];
+            let path = host.match(/%V<HOSTNAME>\/(.*)/)[1];
 
             let pathParts = path.split('/');
 
@@ -926,19 +926,7 @@ var lib = (() => {
 
         //  Gets the URL that the script was requested from
         getScriptHost: function getScriptHost() {
-            if (storedScriptHost)
-                return storedScriptHost;
-
-            let ex = new Error();
-            let stack = ex.stack.split('\n').map(p => p.trim());
-            let firstScope = stack[1];
-            let sourceUrl = firstScope.match(/(https:\/\/.+\.js)/);
-            if (sourceUrl)
-                sourceUrl = sourceUrl[1].trim();
-            if (sourceUrl && sourceUrl.contains('\n'))
-                sourceUrl = null; // Clear detected source URL if parsing failed
-
-            return sourceUrl || 'https://v.tylercamp.me/script/main.js';
+            return 'https://%V<HOSTNAME>/script/main.js';
         },
 
         setScriptHost: function setScriptHost(scriptHost) {

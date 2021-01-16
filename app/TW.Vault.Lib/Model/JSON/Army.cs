@@ -210,6 +210,20 @@ namespace TW.Vault.Model.JSON
             return this == obj as Army;
         }
 
+        public override string ToString()
+        {
+            if (this.IsEmpty()) return "<Empty Army Dict.>";
+            var total = 0;
+            var parts = new List<String>(this.Count);
+            foreach (var (type, count) in this.Tupled())
+            {
+                total += count;
+                parts.Add($"{count} {type}");
+            }
+
+            return $"{total} total: {String.Join(", ", parts)}";
+        }
+
         public override int GetHashCode() => base.GetHashCode();
     }
 }

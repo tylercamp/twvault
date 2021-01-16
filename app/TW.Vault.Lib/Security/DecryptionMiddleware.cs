@@ -20,7 +20,7 @@ namespace TW.Vault.Security
 
         public async Task InvokeAsync(HttpContext context, Scaffold.VaultContext vaultContext)
         {
-            var bodyContents = new StreamReader(context.Request.Body).ReadToEnd();
+            var bodyContents = await new StreamReader(context.Request.Body).ReadToEndAsync();
 
             if (!String.IsNullOrWhiteSpace(bodyContents))
             {

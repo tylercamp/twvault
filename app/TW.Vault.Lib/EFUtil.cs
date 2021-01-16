@@ -63,83 +63,83 @@ namespace TW.Vault
 
         #region FromWorld
 
-        public static IQueryable<Report> FromWorld(this IQueryable<Report> reportsQuery, long worldId) =>
+        public static IQueryable<Report> FromWorld(this IQueryable<Report> reportsQuery, short worldId) =>
             reportsQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<IgnoredReport> FromWorld(this IQueryable<IgnoredReport> ignoredReportsQuery, long worldId) =>
+        public static IQueryable<IgnoredReport> FromWorld(this IQueryable<IgnoredReport> ignoredReportsQuery, short worldId) =>
             ignoredReportsQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<Command> FromWorld(this IQueryable<Command> commandsQuery, long worldId) =>
+        public static IQueryable<Command> FromWorld(this IQueryable<Command> commandsQuery, short worldId) =>
             commandsQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<WorldSettings> FromWorld(this IQueryable<WorldSettings> worldSettingsQuery, long worldId) =>
+        public static IQueryable<WorldSettings> FromWorld(this IQueryable<WorldSettings> worldSettingsQuery, short worldId) =>
             worldSettingsQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<Ally> FromWorld(this IQueryable<Ally> alliesQuery, long worldId) =>
+        public static IQueryable<Ally> FromWorld(this IQueryable<Ally> alliesQuery, short worldId) =>
             alliesQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<CommandArmy> FromWorld(this IQueryable<CommandArmy> commandArmiesQuery, long worldId) =>
+        public static IQueryable<CommandArmy> FromWorld(this IQueryable<CommandArmy> commandArmiesQuery, short worldId) =>
             commandArmiesQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<Conquer> FromWorld(this IQueryable<Conquer> conquersQuery, long worldId) =>
+        public static IQueryable<Conquer> FromWorld(this IQueryable<Conquer> conquersQuery, short worldId) =>
             conquersQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<CurrentArmy> FromWorld(this IQueryable<CurrentArmy> currentArmiesQuery, long worldId) =>
+        public static IQueryable<CurrentArmy> FromWorld(this IQueryable<CurrentArmy> currentArmiesQuery, short worldId) =>
             currentArmiesQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<CurrentBuilding> FromWorld(this IQueryable<CurrentBuilding> currentBuildingsQuery, long worldId) =>
+        public static IQueryable<CurrentBuilding> FromWorld(this IQueryable<CurrentBuilding> currentBuildingsQuery, short worldId) =>
             currentBuildingsQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<CurrentVillage> FromWorld(this IQueryable<CurrentVillage> currentVillagesQuery, long worldId) =>
+        public static IQueryable<CurrentVillage> FromWorld(this IQueryable<CurrentVillage> currentVillagesQuery, short worldId) =>
             currentVillagesQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<Player> FromWorld(this IQueryable<Player> currentPlayersQuery, long worldId) =>
+        public static IQueryable<Player> FromWorld(this IQueryable<Player> currentPlayersQuery, short worldId) =>
             currentPlayersQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<ReportArmy> FromWorld(this IQueryable<ReportArmy> currentReportArmiesQuery, long worldId) =>
+        public static IQueryable<ReportArmy> FromWorld(this IQueryable<ReportArmy> currentReportArmiesQuery, short worldId) =>
             currentReportArmiesQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<ReportBuilding> FromWorld(this IQueryable<ReportBuilding> currentReportBuildingsQuery, long worldId) =>
+        public static IQueryable<ReportBuilding> FromWorld(this IQueryable<ReportBuilding> currentReportBuildingsQuery, short worldId) =>
             currentReportBuildingsQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<Village> FromWorld(this IQueryable<Village> currentVillagesQuery, long worldId) =>
+        public static IQueryable<Village> FromWorld(this IQueryable<Village> currentVillagesQuery, short worldId) =>
             currentVillagesQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<CurrentPlayer> FromWorld(this IQueryable<CurrentPlayer> currentPlayerQuery, long worldId) =>
+        public static IQueryable<CurrentPlayer> FromWorld(this IQueryable<CurrentPlayer> currentPlayerQuery, short worldId) =>
             currentPlayerQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<CurrentVillageSupport> FromWorld(this IQueryable<CurrentVillageSupport> currentVillageSupportQuery, long worldId) =>
+        public static IQueryable<CurrentVillageSupport> FromWorld(this IQueryable<CurrentVillageSupport> currentVillageSupportQuery, short worldId) =>
             currentVillageSupportQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<User> FromWorld(this IQueryable<User> userQuery, long worldId) =>
+        public static IQueryable<User> FromWorld(this IQueryable<User> userQuery, short worldId) =>
             userQuery
                 .Where(q => q.WorldId == null || q.WorldId == worldId);
 
-        public static IQueryable<UserLog> FromWorld(this IQueryable<UserLog> userLogQuery, long worldId) =>
+        public static IQueryable<UserLog> FromWorld(this IQueryable<UserLog> userLogQuery, short worldId) =>
             userLogQuery
                 .Where(q => q.WorldId == null || q.WorldId == worldId);
 
-        public static IQueryable<Transaction> FromWorld(this IQueryable<Transaction> transactionQuery, long worldId) =>
+        public static IQueryable<Transaction> FromWorld(this IQueryable<Transaction> transactionQuery, short worldId) =>
             transactionQuery
                 .Where(q => q.WorldId == worldId);
 
-        public static IQueryable<EnemyTribe> FromWorld(this IQueryable<EnemyTribe> enemyTribeQuery, long worldId) =>
+        public static IQueryable<EnemyTribe> FromWorld(this IQueryable<EnemyTribe> enemyTribeQuery, short worldId) =>
             enemyTribeQuery
                 .Where(q => q.WorldId == worldId);
 

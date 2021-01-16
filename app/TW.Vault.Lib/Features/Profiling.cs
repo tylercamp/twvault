@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,6 +21,16 @@ namespace TW.Vault.Features
         {
             ConcurrentBag<TimeSpan> currentRecords = PerformanceRecords.GetOrAdd(label, (k) => new ConcurrentBag<TimeSpan>());
             currentRecords.Add(duration);
+        }
+
+        public static Task<T> AddAsyncRecord<T>(String label, Task<T> task)
+        {
+            var sw = Stopwatch.StartNew();
+            return task.ContinueWith(r =>
+            {
+                AddRecord(label, sw.Elapsed);
+                return r.Result;
+            });
         }
 
         public static async Task StoreData(Scaffold.VaultContext context, bool force = false, bool rollover = true)

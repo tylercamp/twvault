@@ -128,14 +128,12 @@ namespace TW.Vault
 
                 // Also copy main.js for faster file serving
                 logger.Information("Copying main.js...");
-                var mainJsPath = asputil.GetFilePath("main.js");
+                var mainJsContents = compiler.Compile("main.js");
                 var targetMainJsPath = Path.Combine(scriptsOutputPath, "main.js");
                 if (File.Exists(targetMainJsPath))
                     File.Delete(targetMainJsPath);
-                File.Copy(mainJsPath, targetMainJsPath);
+                File.WriteAllText(targetMainJsPath, mainJsContents);
             }
-
-            app.UseCors("AllOrigins");
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
@@ -146,6 +144,9 @@ namespace TW.Vault
             app.UseVaultContentDecryption();
 
             app.UseRouting();
+
+            app.UseCors("AllOrigins");
+
             app.UseEndpoints(e => e.MapControllers());
         }
     }

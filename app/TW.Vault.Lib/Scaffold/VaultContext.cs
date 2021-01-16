@@ -19,10 +19,10 @@ namespace TW.Vault.Scaffold
         {
             if (!optionsBuilder.IsConfigured)
             {
-                //optionsBuilder.UseNpgsql(
-                //    "Server=localhost; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??",
-                //    x => x.MigrationsAssembly("TW.Vault.Migration")
-                //);
+                optionsBuilder.UseNpgsql(
+                    "Server=localhost; Database=vault; User Id=u_vault; Password=password",
+                    x => x.MigrationsAssembly("TW.Vault.Migration")
+                );
             }
         }
 
@@ -369,7 +369,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentBuilding>(entity =>
             {
-                entity.HasKey(e => new { e.WorldId, e.VillageId, e.AccessGroupId });
+                entity.HasKey(e => new { e.WorldId, e.VillageId, e.AccessGroupId }).HasName("current_building_pkey");
 
                 entity.ToTable("current_building", "tw");
 
@@ -464,7 +464,7 @@ namespace TW.Vault.Scaffold
 
             modelBuilder.Entity<CurrentVillage>(entity =>
             {
-                entity.HasKey(e => new { e.WorldId, e.VillageId, e.AccessGroupId });
+                entity.HasKey(e => new { e.WorldId, e.VillageId, e.AccessGroupId }).HasName("villages_pk");
 
                 entity.ToTable("current_village", "tw");
 
@@ -552,7 +552,8 @@ namespace TW.Vault.Scaffold
 
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
-                    .HasDefaultValueSql("nextval('tw.current_village_support_id_seq'::regclass)");
+                    .HasDefaultValueSql("nextval('tw.current_village_support_id_seq'::regclass)")
+                    .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.LastUpdatedAt).HasColumnName("last_updated_at");
 

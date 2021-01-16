@@ -44,7 +44,8 @@ namespace TW.Vault.Controllers
             var invalidPlayerIds = await (
                     from player in CurrentSets.Player
                     join user in CurrentSets.User on player.PlayerId equals user.PlayerId into user
-                    where user.Any(u => u.Enabled) || (player.TribeId != null && invalidTribeIds.Contains(player.TribeId.Value))
+                    from u in user.DefaultIfEmpty()
+                    where u.Enabled || (player.TribeId != null && invalidTribeIds.Contains(player.TribeId.Value))
                     select player.PlayerId
                 ).ToListAsync();
 

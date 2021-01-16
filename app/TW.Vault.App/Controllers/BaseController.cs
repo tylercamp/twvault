@@ -72,9 +72,9 @@ namespace TW.Vault.Controllers
 
         protected class CurrentContextDbSets
         {
-            int worldId, accessGroupId;
+            short worldId, accessGroupId;
             VaultContext context;
-            public CurrentContextDbSets(VaultContext context, int worldId, int accessGroupId)
+            public CurrentContextDbSets(VaultContext context, short worldId, short accessGroupId)
             {
                 this.worldId = worldId;
                 this.accessGroupId = accessGroupId;
@@ -112,7 +112,7 @@ namespace TW.Vault.Controllers
             get
             {
                 if (_currentSets == null)
-                    _currentSets = new CurrentContextDbSets(context, CurrentWorldId, CurrentAccessGroupId);
+                    _currentSets = new CurrentContextDbSets(context, CurrentWorldId, (short)CurrentAccessGroupId);
                 return _currentSets;
             }
         }
@@ -362,7 +362,7 @@ namespace TW.Vault.Controllers
         {
             return WithTemporaryContext((ctx) =>
             {
-                var tempSets = new CurrentContextDbSets(ctx, CurrentWorldId, CurrentAccessGroupId);
+                var tempSets = new CurrentContextDbSets(ctx, CurrentWorldId, (short)CurrentAccessGroupId);
                 return op(tempSets);
             });
         }
