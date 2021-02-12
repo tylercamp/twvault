@@ -25,6 +25,11 @@ namespace TW.Vault.Features
 
         public void InitCommonVars()
         {
+            var hostname = Configuration.Initialization.ServerHostname;
+            var basePath = Configuration.Initialization.ServerBasePath.Trim(' ', '/');
+            if (basePath.Length > 0) basePath = "/" + basePath + "/";
+            else basePath = "/";
+
             //String ToBase64(String text) => System.Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(text));
             CompileTimeVars = new Dictionary<string, string>
             {
@@ -33,6 +38,9 @@ namespace TW.Vault.Features
                 { "ENC_SWAP_INTERVAL", ((int)EncryptionSeedProvider.SwapInterval.TotalMilliseconds).ToString() },
                 { "ENC_ENABLED", Configuration.Security.Encryption.UseEncryption.ToString().ToLower() },
                 { "HOSTNAME", Configuration.Initialization.ServerHostname },
+                { "BASE_PATH", Configuration.Initialization.ServerBasePath },
+                { "APP_BASE_PATH", $"https://{hostname}{basePath}" },
+                { "F_FAKE_SCRIPT_ENABLED", (!Configuration.Behavior.DisableFakeScript).ToString().ToLower() }
             };
         }
 

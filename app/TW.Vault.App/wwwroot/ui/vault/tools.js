@@ -6,14 +6,14 @@ function makeToolsTab() {
     let tabs = [
         fakeTab,
         backtimeTab
-    ];
+    ].filter(t => t != null);
 
     let toolsTab = {
         label: lib.translate(lib.itlcodes.TAB_TOOLS),
         containerId: 'vault-tools-container',
 
         getContent: function () {
-            return uilib.mkTabbedContainer(fakeTab, tabs);
+            return uilib.mkTabbedContainer(fakeTab || backtimeTab, tabs);
         }
     };
 
@@ -23,6 +23,8 @@ function makeToolsTab() {
 
 
 function makeFakeScriptTab() {
+    if (!lib.config.fakeScriptEnabled) return null;
+
     return {
         label: lib.translate(lib.itlcodes.TAB_FAKE_SCRIPT),
         containerId: 'vault-fake-script-tools',

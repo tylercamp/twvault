@@ -28,9 +28,6 @@
     // Basic metrics
     $.post('https://v.tylercamp.me/hc/twvault');
 
-    //  Store current script host for dependent scripts that rely on it
-    lib.setScriptHost(lib.getScriptHost());
-
     if (!lib.checkUserHasPremium()) {
         alert(lib.translate(lib.itlcodes.REQUIRE_PREMIUM_ACCOUNT, { _escaped: false }));
         return;

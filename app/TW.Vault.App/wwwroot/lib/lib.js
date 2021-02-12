@@ -13,8 +13,6 @@ var lib = (() => {
     let cookiePrefix = 'vc-';
     let serverSettings = null;
 
-    var storedScriptHost = null;
-
     var authToken = window.vaultToken || null;
     var authUserId = null;
     var authTribeId = null;
@@ -179,11 +177,13 @@ var lib = (() => {
                 year: '\\d+'
             };
 
-            var extraDateFormats = lib.translate(lib.itlcodes.TIME_EXTRA_DATE_FORMATS).split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            var extraTimeFormats = lib.translate(lib.itlcodes.TIME_EXTRA_TIME_FORMATS).split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const itlNoEscape = { _escaped: false };
+
+            var extraDateFormats = lib.translate(lib.itlcodes.TIME_EXTRA_DATE_FORMATS, itlNoEscape).split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            var extraTimeFormats = lib.translate(lib.itlcodes.TIME_EXTRA_TIME_FORMATS, itlNoEscape).split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
             var extraFullFormats = lib.hasTranslation(lib.itlcodes.TIME_EXTRA_FULL_FORMATS)
-                ? lib.translate(lib.itlcodes.TIME_EXTRA_FULL_FORMATS).split('\n').map(l => l.trim()).filter(l => l.length > 0)
+                ? lib.translate(lib.itlcodes.TIME_EXTRA_FULL_FORMATS, itlNoEscape).split('\n').map(l => l.trim()).filter(l => l.length > 0)
                 : [];
 
             let extraDateTimePermutations = extraDateFormats.map(d => extraTimeFormats.map(t => ({ date: d, time: t }))).flat();
@@ -798,24 +798,7 @@ var lib = (() => {
                 return url;
             }
 
-            let serverBase = 'https://%V<HOSTNAME>';
-
-            //  Check if running from dev or from real server
-            let host = lib.getScriptHost();
-            let path = host.match(/%V<HOSTNAME>\/(.*)/)[1];
-
-            let pathParts = path.split('/');
-
-            //  Known server API base paths
-            let rootPaths = [
-                'api',
-                'script'
-            ];
-
-            var apiBasePath;
-            rootPaths.forEach((p) => path.contains(p) ? apiBasePath = path.substr(0, path.indexOf(p)) : null);
-
-            let result = `${serverBase.trim('/')}${apiBasePath ? '/' + apiBasePath.trim('/') : ''}/${url}`;
+            let result = lib.config.appBasePath + url;
             return result;
         },
 
@@ -922,15 +905,6 @@ var lib = (() => {
                 result[lib.twstats.unitTypes[i].canonicalName] = array[i];
             }
             return result;
-        },
-
-        //  Gets the URL that the script was requested from
-        getScriptHost: function getScriptHost() {
-            return 'https://%V<HOSTNAME>/script/main.js';
-        },
-
-        setScriptHost: function setScriptHost(scriptHost) {
-            storedScriptHost = scriptHost;
         },
 
         getCookie: function getCookie(name) {
@@ -1426,6 +1400,15 @@ var lib = (() => {
 
     //  Make sure all page types have validators
     lib.objForEach(lib.pageTypes, (type) => !pageValidators[type] ? console.warn('No pageValidator set for pageType: ', type) : null);
+
+    //  Expose config props
+    lib.config = {
+        fakeScriptEnabled: `%V<F_FAKE_SCRIPT_ENABLED>`,
+
+        serverHostname: "%V<HOSTNAME>",
+        serverBasePath: "%V<BASE_PATH>",
+        appBasePath: "%V<APP_BASE_PATH>",
+    }
 
     return lib;
 

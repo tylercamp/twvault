@@ -36,6 +36,8 @@ namespace TW.Vault.Controllers
         [HttpGet("fake.js")]
         public async Task<IActionResult> GetFakeScript()
         {
+            if (Configuration.Behavior.DisableFakeScript) return NotFound();
+
             IEnumerable<String> TrimAndFilter(IEnumerable<String> e) => e.Select(s => s.Trim()).Where(s => !String.IsNullOrWhiteSpace(s)).OrderBy(s => s);
 
             var players = TrimAndFilter(Request.Query["player"].ToString().Split(',')).ToList();

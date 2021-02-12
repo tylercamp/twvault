@@ -152,6 +152,8 @@ namespace TW.Vault
     {
         public MapBehaviorConfiguration Map { get; set; }
         public TaggingBehaviorConfiguration Tagging { get; set; }
+
+        public bool DisableFakeScript { get; set; } = false;
     }
 
     public class MapBehaviorConfiguration
@@ -174,6 +176,7 @@ namespace TW.Vault
     {
         public String ScriptCompilationOutputPath { get; set; } = "obfuscated";
         public String ServerHostname { get; set; } = "v.tylercamp.me";
+        public String ServerBasePath { get; set; } = "";
     }
 
     public class RankingsConfiguration
