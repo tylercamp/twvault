@@ -1,0 +1,19 @@
+[Unit]
+Description=TWVault Management App
+
+[Service]
+WorkingDirectory=/var/aspnetcore/hitcounter
+ExecStart=/var/aspnetcore/hitcounter/HitCounter
+Restart=always
+RestartSec=10
+SyslogIdentifier=aspnet-hitcounter
+User=asp_host
+
+### ASP.NET Built-in shit
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+Environment=Kestrel__EndPoints__Http__Url=http://*:5050
+
+[Install]
+WantedBy=multi-user.target

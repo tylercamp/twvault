@@ -1,0 +1,42 @@
+[Unit]
+Description=Staging container [1] for TWVault ASP.NET Core Web Server
+
+[Service]
+WorkingDirectory=/var/aspnetcore/twvault-qa1
+ExecStart=/var/aspnetcore/twvault-qa1/TW.Vault.App
+Restart=always
+RestartSec=10
+SyslogIdentifier=aspnet-twvault-qa-c1
+User=asp_host
+
+### ASP.NET Built-in shit
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+Environment="urls=http://*:5010"
+
+#Environment=ConnectionStrings__Vault="Server=192.168.1.250; Port=22342; Database=vault_dev; User Id=twu_vault; Password=!!TWV@ult4Us??"
+
+### Logging
+Environment=Serilog__WriteTo__0__Args__configureLogger__WriteTo__2__Args__configure__0__Args__pathFormat="../QA-Log/log-qa1-{Date}.log"
+Environment=Serilog__WriteTo__1__Args__configureLogger__WriteTo__0__Args__configure__0__Args__pathFormat="../QA-Log/log-qa1-{Date}-ip.log"
+Environment=Serilog__WriteTo__0__Args__configureLogger__MinimumLevel__Default=Warning
+
+
+### Security config
+Environment=Security__RestrictAccessWithinTribe=false
+# Limit scripts that are publically accessible
+Environment=Security__EnableScriptFilter=true
+Environment=Security__PublicScripts__0=main.js
+Environment=Security__PublicScripts__1=vault.js
+
+
+### Initialization
+# Enable required files check to make sure we remember to generate/update obfuscated version of main.js
+Environment=Initialization__EnableRequiredFiles=true
+Environment=Initialization__RequiredFiles__0="../../obfuscated/qa/s1/main.js"
+Environment=Initialization__RequiredFiles__1="../../obfuscated/qa/s1/vault.js"
+
+
+[Install]
+WantedBy=multi-user.target

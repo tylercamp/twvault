@@ -1,0 +1,28 @@
+[Unit]
+Description=TWVault Map Data Updater
+
+[Service]
+WorkingDirectory=/var/aspnetcore/twvault-map-fetcher
+ExecStart=/var/aspnetcore/twvault-map-fetcher/TW.Vault.MapDataFetcher
+Restart=always
+RestartSec=10
+SyslogIdentifier=aspnet-twvault-map-fetch
+User=asp_host
+
+### ASP.NET Built-in shit
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+Environment="urls=http://*:5020"
+
+#Environment=ConnectionStrings__Vault="Server=192.168.1.250; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??"
+
+Environment=Serilog__MinimumLevel__Override__Microsoft=Warning
+Environment=Serilog__WriteTo__2__Args__configure__0__Args__pathFormat=../Logs/log-mapfetcher-{Date}.log
+
+Environment=CachingFilePath=../map-cache
+Environment=DataBatchSize=500
+Environment=CheckDelaySeconds=300
+
+[Install]
+WantedBy=multi-user.target

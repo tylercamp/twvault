@@ -1,0 +1,45 @@
+[Unit]
+Description=Staging container [1] for TWVault ASP.NET Core Web Server
+
+[Service]
+WorkingDirectory=/var/aspnetcore/twvault-s1
+ExecStart=/var/aspnetcore/twvault-s1/TW.Vault.App
+Restart=always
+RestartSec=10
+SyslogIdentifier=aspnet-twvault-c1
+User=asp_host
+
+### ASP.NET Built-in shit
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+Environment="urls=http://*:5000"
+
+Environment=ConnectionStrings__Vault="Server=localhost; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??"
+
+### Logging
+Environment=Serilog__WriteTo__0__Args__configureLogger__WriteTo__2__Args__configure__0__Args__pathFormat="../Logs/log-s1-{Date}.log"
+Environment=Serilog__WriteTo__1__Args__configureLogger__WriteTo__0__Args__configure__0__Args__pathFormat="../Logs/log-s1-{Date}-ip.log"
+Environment=Serilog__WriteTo__0__Args__configureLogger__MinimumLevel__Default=Warning
+
+
+### Security config
+Environment=Security__RestrictAccessWithinTribe=false
+# Limit scripts that are publically accessible
+Environment=Security__EnableScriptFilter=true
+Environment=Security__PublicScripts__0=main.js
+Environment=Security__PublicScripts__1=vault.js
+
+Environment=Security__Encryption__SeedSalt=82260089
+Environment=Security__Encryption__SeedPrime=970172857
+
+
+### Initialization
+# Enable required files check to make sure we remember to generate/update obfuscated version of main.js
+Environment=Initialization__EnableRequiredFiles=true
+Environment=Initialization__RequiredFiles__0="../../obfuscated/release/s1/main.js"
+Environment=Initialization__RequiredFiles__1="../../obfuscated/release/s1/vault.js"
+
+
+[Install]
+WantedBy=multi-user.target

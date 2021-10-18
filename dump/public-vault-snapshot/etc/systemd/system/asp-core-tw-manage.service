@@ -1,0 +1,24 @@
+[Unit]
+Description=TWVault Management App
+
+[Service]
+WorkingDirectory=/var/aspnetcore/twvault-manage
+ExecStart=/var/aspnetcore/twvault-manage/TW.Vault.Manage
+Restart=always
+RestartSec=10
+SyslogIdentifier=aspnet-twvault-manage
+User=asp_host
+
+### ASP.NET Built-in shit
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+Environment="urls=http://*:5030"
+
+Environment=ConnectionStrings__Vault="Server=127.0.0.1; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??"
+
+#Environment=Serilog__MinimumLevel__Override__Microsoft=Information
+Environment=Serilog__WriteTo__2__Args__configure__0__Args__pathFormat=../Logs/log-manage-{Date}.log
+
+[Install]
+WantedBy=multi-user.target

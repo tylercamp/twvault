@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        html {
+            font-family: Helvetica, sans-serif;
+        }
+
+        #container {
+            max-width: 800px;
+            margin: 3em auto;
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+
+        textarea {
+            width: 600px;
+            max-width: 100%;
+            min-height: 6em;
+        }
+
+        table {
+            text-align: left;
+        }
+
+        tr > td:first-of-type {
+            padding-right: 0.5em;
+        }
+
+        form {
+            margin-bottom: 2em;
+        }
+
+        .g-recaptcha {
+            display: inline-block;
+        }
+
+        hr {
+            margin: 2em;
+        }
+
+        form > * {
+            margin: 1em;
+        }
+
+        #description > p {
+            font-size: 1.2em;
+        }
+
+        .donate {
+            margin-top: 1em;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <script src="https://www.google.com/recaptcha/api.js"></script>
+    <div id="container">
+        <div id="description">
+            <h1>Tribal Wars Vault Script</h1>
+
+            <p>
+                <em>Vault scripts, get your vault scripts here!</em>
+            </p>
+            <p>
+                Please read <a href="https://forum.tribalwars.net/index.php?threads/vault.282252/">the official forum thread</a> for the Vault before making a script for yourself.
+            </p>
+            <p>
+                You should <strong>NOT</strong> use this page to make scripts for your tribemates - read the forum thread!
+            </p>
+        </div>
+
+        <hr />
+
+        <form action="user" method="post">
+            <div style="display: inline-block">
+                <table>
+                    <tr>
+                        <td><label for="tw-server">Server</label></td>
+                        <td><select id="tw-server"></select></td>
+                    </tr>
+
+                    <tr>
+                        <td><label for="tw-world">World</label></td>
+                        <td><select id="tw-world"></select></td>
+                    </tr>
+
+                    <tr>
+                        <td><label for="player-name">Player Name</label></td>
+                        <td><input id="player-name" type="text" /></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="g-recaptcha" data-sitekey="6LePwaYUAAAAAMYte7qFaG9A1Igz3cpxfT9P0PmN" data-callback="onCaptchaFinished"></div>
+
+            <p>
+                <em>Is your server/world not listed? Contact me in the forum link above and request it.</em>
+            </p>
+
+            <div>
+                <input type="submit" disabled value="Get Script" />
+            </div>
+        </form>
+        <div>
+            <textarea id="script-target" readonly placeholder="Your script will appear here"></textarea>
+        </div>
+        <div class="donate">
+            Want to support development and hosting? You can donate with <a href="https://paypal.me/twvault?locale.x=en_US">Paypal</a>
+            and <a href="https://www.patreon.com/twvault">Patreon</a>. (Donating will not give any extra features - this is illegal under TW rules. You do get the nice
+            fuzzy feeling of doing something good though.)
+        </div>
+    </div>
+
+    <script>
+        var currentCaptchaResponse = null;
+        function onCaptchaFinished(captchaResponse) {
+            currentCaptchaResponse = captchaResponse;
+        }
+
+        var worldInfo = null;
+
+        function updateWorldSelect() {
+            let serverName = $('#tw-server').val();
+            let worlds = worldInfo[serverName];
+
+            let $worldSelect = $('#tw-world');
+            $worldSelect.empty();
+
+            worlds.forEach((world) => {
+                $worldSelect.append(`<option value="${world.id}">${world.name}</option>`);
+            });
+        }
+
+        $.get('servers').done((data) => {
+            if (typeof data == 'string')
+                data = JSON.parse(data);
+
+            let $serverSelect = $('#tw-server');
+
+            let nameRegex = /^([^.]+)\.(.+)$/
+
+            worldInfo = {};
+            data.forEach((world) => {
+                let match = world.name.match(nameRegex);
+                let worldName = match[1];
+                let serverName = match[2];
+
+                if (!worldInfo[serverName]) {
+                    worldInfo[serverName] = [];
+                    $serverSelect.append(`<option value="${serverName}">${serverName}</option>`);
+                }
+
+                worldInfo[serverName].push({
+                    name: worldName,
+                    id: world.id
+                });
+            });
+
+            updateWorldSelect();
+            $serverSelect.change(updateWorldSelect);
+
+            $('input[type=submit]').attr('disabled', false);
+        });
+
+        $('input[type=submit]').click((e) => {
+            e.preventDefault();
+
+            let worldId = $('#tw-world').val();
+            let playerName = $('#player-name').val();
+
+            if (!worldId) {
+                alert('Select a valid TW server');
+                return;
+            }
+
+            if (!playerName.trim()) {
+                alert('Enter the player name');
+                return;
+            }
+
+            if (!currentCaptchaResponse) {
+                alert('Complete the captcha first');
+                return;
+            }
+
+            $.ajax({
+                url: 'user',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    worldId: worldId,
+                    name: playerName,
+                    captchaToken: currentCaptchaResponse
+                })
+            }).done((response) => {
+                currentCaptchaResponse = null;
+
+                if (typeof response == 'string')
+                    response = JSON.parse(response);
+
+                if (response.error) {
+                    alert(response.error);
+                } else {
+                    $('#script-target').val(`javascript:window.vaultToken='${response.token}';$.getScript('https://v.tylercamp.me/script/main.js')`);
+                }
+
+                grecaptcha.reset();
+            });
+        });
+    </script>
+</body>
+</html>
