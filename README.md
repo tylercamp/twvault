@@ -4,6 +4,10 @@ This is the original, full source code for my Tribal Wars Vault: https://forum.t
 
 If you're seeing this README, the public Vault has been taken down and this code is no longer maintained by myself. I encourage others to fork this repository. I may accept pull requests, but it's preferred for others to make a copy and manage PRs independent of this one.
 
+Questions about the project can be submitted as GitHub issues on this repository. Please review existing issues before submitted a new one. Ask the question even if you're unsure whether it'll be answered - if I don't respond, it can still be used for discussion with others.
+
+General discussion can be had on the [Vault discord server](https://discord.gg/7N4UUX8D) or the general [TW Scripts discord server](https://discord.gg/9F5K2rSS).
+
 # Repository Overview
 
 Main folders:

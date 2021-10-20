@@ -1,8 +1,28 @@
+# Overview
+
+This project contains logic for the Vault webapp. Note that a large chunk of the logic is in the `TW.Vault.Lib` project instead.
+
+### Configuration
+
+Main configuration files are `appsettings.json` and `hosting.json`. All Vault config is done in `appsettings.json`. When running locally via Visual Studio, `appsettings.Development.json` is used and overrides any configs from the standard `appsettings.json` file.
+
+`ConnectionStrings.Vault` is the only required configuration property.
+
+`Initialization.AutoObfuscatePrimaryScript` requires that [`javascript-obfuscator`](https://github.com/javascript-obfuscator/javascript-obfuscator) be locally installed via npm.
+
+`Initialization.ServerHostname` and `ServerBasePath` affect URL generation by the Vault.
+
+`Security.UseEncryption` determines whether the Vault script will obfuscate data before sending to the server.
+
+`Security.ForcedKey`, `ForcedPlayerId`, and `ForcedTribeId` are used to force the Vault to use a specific user when receiving requests. This allows us to spoof our identity and access data from other players, without needing to sign into their account in TW. This was used when troubleshooting bug discovered by players.
+
+Fields in `Behavior` are the requirements for players to use the Map and Tagging features in Vault. (This prevents players from using main features without uploading frequently.)
+
 ### Controllers
 Each class under `TW.Vault.App.Controllers` serves a different base endpoint, eg `AdminController` serves content for `/api/admin`, etc. Endpoints generally take the form `/api/{worldName}/...`. All controllers that provide app features will inherit from `BaseController`, which has utilities for retrieving info on:
 - The current authenticated user (from headers)
 - The Tribal Wars world that was requested and its config (from URL parameters)
-- Translation utilities
+- Translations
 - Database collection classes scoped to the current user and world (class `CurrentContextDbSets` and property `CurrentSets`)
 
 Utility controllers such as `Script` and `Performance` don't provide TW-specific features and don't use this base class.

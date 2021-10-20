@@ -19,9 +19,12 @@
 # Default server configuration
 #
 
+# rate limiting for general requests
 limit_req_zone $binary_remote_addr zone=wwwroot:10m rate=5r/s;
+# rate limiting for Vault requests (further customized by `proxy_tw_general.cfg`)
 limit_req_zone $binary_remote_addr zone=asptwv:10m rate=50r/s;
 
+# rate-limit by IP
 limit_conn_zone $binary_remote_addr zone=addr:10m;
 
 server {
@@ -35,6 +38,7 @@ server {
 	gzip_comp_level	4;
 	gzip_types	application/json application/javascript text/javascript;
 
+	# limit upload rate to 800kbps per connection
 	limit_rate	800k;
 
 	location / {
@@ -44,36 +48,43 @@ server {
 		try_files $uri $uri/ =404;
 	}
 
+	# Reverse-proxy configs
 	location ~ ^/api/forcerefresh {
+		# Expose the `api/forcerefresh` endpoint for map data fetcher
 		proxy_pass http://localhost:5020;
 		proxy_set_header X-Original-Url $request_uri;
 
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
 	}
 
 	location ~ ^/(api|script)/ {
+		# Forward requests for main Vault app
 		proxy_pass http://localhost:5000;
 		proxy_set_header X-Original-Url $request_uri;
 				
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
+		# (Public Vault had two copies of Vault webapp, one on port 5000 and another
+		# on 5001. When updating the Vault, the new version was started, port number
+		# here is changed, and NGINX config is reloaded, before stopping the older
+		# version.)
 	}
 
 	location /register/ {
+		# Forward requests for registration app
+		# (requests to `/register/x` are rewritten as `/x` before forwarding to registration webapp)
 		rewrite ^/register/(.*)$ /$1 break;
 		proxy_pass http://localhost:5030;
 		proxy_set_header X-Original-Url $request_uri;
 
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
 	}
 
+
 	location /hc/ {
+		# Hitcounter app for devs
 		rewrite ^/hc/(.*)$ /hitcounter/$1 break;
 		proxy_pass http://localhost:5050;
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
 	}
 
 	# Configure so /dev/ redirects to my dev machine while testing
@@ -87,7 +98,6 @@ server {
 		#deny all;
 
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
 	}
 
 	# Configure so /dev2/ redirects to my secondary dev machine while testing
@@ -98,7 +108,6 @@ server {
         proxy_set_header X-Original-Url $request_uri;
 
         include proxy_tw_general.cfg;
-        include proxy_tw_enable_cors.cfg;
 	}
 
 	# Explicit stage1 endpoint for testing before hot-swap
@@ -109,7 +118,6 @@ server {
 		proxy_set_header X-Original-Url $request_uri;
 		
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
 	}
 
 	# Explicit stage2 endpoint for testing before hot-swap
@@ -120,7 +128,6 @@ server {
 		proxy_set_header X-Original-Url $request_uri;
 		
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
 	}
 
 	# Configure general QA server endpoint
@@ -131,42 +138,38 @@ server {
 		proxy_set_header X-Original-Url $request_uri;
 
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
 	}
 
 	# Configure QA stage 1 server endpoint
-        location /qa1/ {
-                rewrite ^/qa1/(.*)$ /$1 break;
+	location /qa1/ {
+		rewrite ^/qa1/(.*)$ /$1 break;
 
-                proxy_pass http://localhost:5010;
-                proxy_set_header X-Original-Url $request_uri;
+		proxy_pass http://localhost:5010;
+		proxy_set_header X-Original-Url $request_uri;
 
-                include proxy_tw_general.cfg;
-                include proxy_tw_enable_cors.cfg;
-        }
+		include proxy_tw_general.cfg;
+	}
 
 
-        # Configure QA stage 2 server endpoint
-        location /qa2/ {
-                rewrite ^/qa2/(.*)$ /$1 break;
+	# Configure QA stage 2 server endpoint
+	location /qa2/ {
+		rewrite ^/qa2/(.*)$ /$1 break;
 
-                proxy_pass http://localhost:5011;
-                proxy_set_header X-Original-Url $request_uri;
+		proxy_pass http://localhost:5011;
+		proxy_set_header X-Original-Url $request_uri;
 
-                include proxy_tw_general.cfg;
-                include proxy_tw_enable_cors.cfg;
-        }
+		include proxy_tw_general.cfg;
+	}
 
 
 	# Configure so /dev-glen/ redirects to glen's IP while testing
 	location /dev-glen/ {
 		rewrite ^/dev-glen/(.*)$ /$1 break;
 
-		proxy_pass http://96.241.144.106:5000;
+		proxy_pass http://REDACTED:5000;
 		proxy_set_header X-Original-Url $request_uri;
 
 		include proxy_tw_general.cfg;
-		include proxy_tw_enable_cors.cfg;
 	}
 
 	listen 443 ssl; # managed by Certbot
@@ -204,7 +207,7 @@ server {
 	}
 }
 
-
+# For NGINX Amplify
 server {
 
 	listen 127.0.0.1:80;

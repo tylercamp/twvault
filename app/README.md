@@ -21,11 +21,19 @@ The following options are available but no longer necessary, and can be ignored:
 - `Initialization.RequiredFiles`
 - `Security.PublicScripts`
 
+The [TW.Vault.App README](TW.Vault.App) has more details on configuration. Database connection config options are reused by all Vault-related services (Manage, MapDataFetcher).
+
 # Managing Security
 
 Since all communications between user and server are managed by the Vault JS file, all attempts at protections can be inspected by any user and reverse-engineered. To mitigate this, the vault.js file is obfuscated automatically upon startup, and all data transmitted from the script to the server (including headers) is heavily obfuscated.
 
-The data obfuscation method is simple. In order, the steps are: LZ-string compress the payload, base64 encode it, and "swizzle" various sets of bits from the data. The "swizzling" operation is based on a seed, salt, and the UTC timestamp (snapped to 15-second intervals). By using timestamp as an obfuscation parameter, the data can have different obfuscated versions depending on when it was generated. The seed and salt are configurable for the Vault server and are injected into the `vault.js` script on startup. When receiving data, the Vault server uses these same parameters to recover the original data.
+The data obfuscation method is simple. In order, the steps are:
+
+1. LZ-string compress the payload
+2. Base64 encode it
+3. "Swizzle" various sets of bits from the data (take random-length chunks of payload bytes, reverse the order of each chunk, then place the reversed chunk into the output)
+
+The "swizzling" operation is based on a seed, salt, and the UTC timestamp (snapped to 15-second intervals). By using timestamp as an obfuscation parameter, the data can have different obfuscated versions depending on when it was generated, preventing replay attacks. The seed and salt are configurable for the Vault server and are injected into the `vault.js` script on startup. When receiving data from the script, the Vault server uses these same parameters to recover the original data.
 
 This "security" is adequate at best. It's only reliable when details of the process are kept hidden. Once the obfuscation method is known, you only need to find the seed and salt from the `vault.js` script in order to start crafting your own custom requests to the Vault to bypass authorization checks.
 
@@ -46,9 +54,6 @@ A tool for automatically fetching config info for Tribal Wars game servers and s
 ## TW.Vault.Manage
 Public web interface for generating a new script from the vault, previously exposed at https://v.tylercamp.me/register.
 
-## TW.Testing
-A tool for miscellaneous testing of different features. Not intended to actually be used. Can be checked as a reference for how to use some different utilities in the project.
-
 ## TW.Vault.App
 The web server application for the vault. Provides .NET Web API controllers for all endpoints handled by the vault, as well as JavaScript files for the main `vault.js` file that is served.
 
@@ -62,3 +67,13 @@ Contains most of the TW-specific calculations and model types, as well as misc. 
 
 ## TW.Vault.MapDataFetcher
 Utility for retrieving the latest village, player, tribe, and conquer data from all worlds in the provided database. Automatically refreshes data hourly and provides an endpoint for forcing an update.
+
+## TW.Testing
+A tool for miscellaneous testing of different features. Not intended to actually be used. Can be checked as a reference for how to use some different utilities in the project.
+
+# Known Outstanding Issues
+
+- Building/recruitment calculators use values hard-coded for w100
+- Map overlay script always requests the full set of tags for the entire world, rather than just requesting for what's currently visible
+- High scores service runs updates for all groups at the same time, causing regular spikes in CPU usage (these updates should be spaced evenly rather than running all at once)
+- (... plus various others I've forgotten or am unaware of)
