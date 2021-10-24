@@ -134,6 +134,7 @@ namespace TW.Vault.Controllers
             return Content(scriptContents, "application/javascript");
         }
 
+#if DEBUG
         [HttpGet("real/{authToken}/{*name}", Name = "GetCompiledUnobfuscatedScript")]
         public async Task<IActionResult> GetCompiledUnobfuscated(String authToken, String name)
         {
@@ -186,7 +187,7 @@ namespace TW.Vault.Controllers
 
             return Content(scriptContents, "application/javascript");
         }
-        
+
         // GET: raw/scriptName.js
         [HttpGet("raw/{authToken}/{*name}", Name = "GetRawUnobfuscatedScript")]
         public IActionResult GetRaw(String authToken, String name)
@@ -197,6 +198,7 @@ namespace TW.Vault.Controllers
             else
                 return Content(contents, "application/javascript");
         }
+#endif
 
         private String GetFileContents(String name)
         {

@@ -32,6 +32,7 @@ namespace TW.Vault.Controllers
         {
         }
 
+#if DEBUG
         [HttpGet(Name = "GetVillages")]
         public async Task<IActionResult> Get()
         {
@@ -67,6 +68,7 @@ namespace TW.Vault.Controllers
             else
                 return NotFound();
         }
+#endif
 
         //  I pity whoever tries to follow this whole function without guidance...
         [HttpGet("{villageId}/army", Name = "GetKnownArmy")]

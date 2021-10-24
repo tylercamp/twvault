@@ -27,6 +27,7 @@ namespace TW.Vault.Controllers
         {
         }
 
+#if DEBUG
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
@@ -86,6 +87,7 @@ namespace TW.Vault.Controllers
             var jsonReports = reports.Select(ReportConvert.ModelToJson);
             return Ok(jsonReports);
         }
+#endif
 
         [HttpPost("check-existing-reports")]
         public async Task<IActionResult> GetExistingReports([FromBody]List<long> reportIds)

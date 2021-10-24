@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace TW.Vault.Controllers
 {
+#if DEBUG
     [Produces("application/json")]
     [Route("api/{worldName}/Ally")]
     [EnableCors("AllOrigins")]
@@ -75,4 +76,5 @@ namespace TW.Vault.Controllers
                 return NotFound();
         }
     }
+#endif
 }

@@ -34,6 +34,7 @@ namespace TW.Vault.Controllers
         {
         }
 
+#if DEBUG
         [HttpGet("{id}", Name = "Get")]
         public Task<IActionResult> Get(long id)
         {
@@ -94,6 +95,7 @@ namespace TW.Vault.Controllers
             var jsonCommands = commands.Select(CommandConvert.ModelToJson);
             return Ok(jsonCommands);
         }
+#endif
 
         [HttpPost("check-existing-commands")]
         public async Task<IActionResult> GetExistingCommands([FromBody]List<long> commandIds)

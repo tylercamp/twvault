@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using TW.Vault.Scaffold;
 
 namespace TW.ConfigurationFetcher
 {
@@ -14,8 +16,26 @@ namespace TW.ConfigurationFetcher
         public List<String> ExtraServers { get; private set; } = new List<string>();
         public bool FetchExisting { get; private set; }
         public bool AcceptAll { get; private set; }
+        public List<PropertyInfo> ResetOnDiff { get; private set; } = new List<PropertyInfo>();
 
         public bool IsValid => ConnectionString != null;
+
+        public Config()
+        {
+            var defaultResetProps = new List<String> { "GameSpeed", "UnitSpeed", "ArchersEnabled", "MoraleEnabled" };
+            ResetOnDiff = defaultResetProps.Select(ConvertNameToProperty).Where(p => p != null).ToList();
+        }
+
+        private static PropertyInfo ConvertNameToProperty(String name)
+        {
+            var type = typeof(WorldSettings);
+            var props = type.GetProperties();
+            var match = props.SingleOrDefault(p => p.Name.ToLower() == name.ToLower());
+            if (match == null)
+                Console.WriteLine($"Warning: WorldSettings property '{name}' does not exist");
+
+            return match;
+        }
 
         private static Dictionary<String, String> ParseConnectionString(String connectionString)
         {
@@ -73,6 +93,10 @@ namespace TW.ConfigurationFetcher
                     case "-fetch-all": result.FetchTldServers = true; break;
                     case "-fetch-old": result.FetchExisting = true; break;
                     case "-accept": result.AcceptAll = true; break;
+                    case "-reset-on-diff" when !isLast:
+                        ++i;
+                        result.ResetOnDiff = args[i].ToLower().Split(",").Select(f => f.Trim()).Where(f => f.Length > 0).Select(ConvertNameToProperty).Where(p => p != null).ToList();
+                        break;
                 }
             }
 
@@ -122,7 +146,7 @@ Options:
 {Note: Options below not implemented}
 
     -reset-on-diff : If specified with -fetch-old, deletes and recreates any worlds whose config differ
-                     on the given property. Specify a property with -reset-on-diff=a,b. The default value
+                     on the given property. Specify a property with ""-reset-on-diff a,b"". The default value
                      is ""GameSpeed,UnitSpeed,ArchersEnabled,MoraleEnabled""
 
     -accept      : If specified with -fetch-old, any prompts to modify old worlds will be accepted.

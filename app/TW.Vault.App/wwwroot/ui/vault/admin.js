@@ -59,7 +59,7 @@ function makeEnemyTribesTab() {
             if (!confirm(lib.translate(lib.itlcodes.ADMIN_REMOVE_ENEMY, { tribeName: tribe.tag })))
                 return;
 
-            lib.deleteApi(`admin/enemies/${tribe.tag}`)
+            lib.deleteApi(`admin/enemies/${encodeURIComponent(tribe.tag)}`)
                 .done(() => {
                     $row.remove();
                 })
@@ -99,7 +99,7 @@ function makeEnemyTribesTab() {
                 if (!nameOrTag)
                     return;
 
-                lib.postApi(`admin/enemies/${nameOrTag}`)
+                lib.postApi(`admin/enemies/${encodeURIComponent(nameOrTag)}`)
                     .done((tribe) => insertEnemyTribe($container.find('#enemies-table'), tribe))
                     .fail((xhr) => {
                         if (!lib.isUnloading()) {
@@ -409,9 +409,9 @@ function makeAdminUsersInterface($container) {
         var scriptString = 'javascript:';
         scriptString += `window.vaultToken="${user.key}";`;
 
-        let scriptPath = lib.getScriptHost();
+        let scriptPath = lib.config.appBasePath;
         //let scriptPath = `https://v.tylercamp.me/script/main.js`;
-        scriptString += `$.getScript("${scriptPath}");`;
+        scriptString += `$.getScript("${scriptPath}script/main.js");`;
 
         $('#key-script-container textarea').val(scriptString);
         $('#key-script-container').css('display', 'block');

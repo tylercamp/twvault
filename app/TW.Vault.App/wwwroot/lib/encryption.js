@@ -56,7 +56,7 @@
 
             //  Prefix all encrypted data with "vault:" as a validation measure during
             //  decryption
-            let dataString = lib.jsonStringify(`vault:${data}`);
+            let dataString = 'vault:' + lib.jsonStringify(data);
             let lzString = lib.lzstr.compressToEncodedURIComponent(dataString);
             let swizzleSizes = makeSwizzleSizesFromSeed(seed);
             let swizzleParts = [];
