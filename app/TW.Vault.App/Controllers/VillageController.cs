@@ -68,7 +68,6 @@ namespace TW.Vault.Controllers
                 return NotFound();
         }
 
-        //  I pity whoever tries to follow this whole function without guidance...
         [HttpGet("{villageId}/army", Name = "GetKnownArmy")]
         public async Task<IActionResult> GetVillageArmy(long villageId, int? morale)
         {

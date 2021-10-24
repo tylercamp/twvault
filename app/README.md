@@ -4,12 +4,15 @@ Requirements:
 
 - Visual Studio Community
 - dotnet core 3.1 SDK
+- A Postgres 10 DB
 
 Open the `TW.Vault.sln` file to open the project in Visual Studio. All projects should be buildable as-is.
 
-When debugging TW.Vault.App, change the debug target from "IIS Express" to the standalone server option.
+When debugging TW.Vault.App, Manage, or AppDataFetcher, change the debug target from "IIS Express" to the standalone server option.
 
-When debugging TW.Vault.App, TW.ConfigurationFetcher, TW.Vault.Manage, or TW.Vault.MapDataFetcher, make sure to modify the environment variables for the application before attempting to run it. Specify the `ConnectionStrings__Vault` environment variable and assign it to a valid EntityFramework connection string, eg `Server=localhost; Port=5432; Database=vault; User Id=twu_vault; Password=password`.
+When debugging TW.Vault.App, TW.ConfigurationFetcher, TW.Vault.Manage, or TW.Vault.MapDataFetcher, make sure to modify the environment variables / startup parameters for the application before attempting to run it. Specify the `ConnectionStrings__Vault` environment variable and assign it to a valid EntityFramework connection string, eg `Server=localhost; Port=5432; Database=vault; User Id=twu_vault; Password=password`.
+
+The Postgres DB should be initialized using `TW.Vault.Migration` before attempting to run any of the other services locally.
 
 # Configuration
 
