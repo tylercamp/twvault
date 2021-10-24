@@ -1,0 +1,117 @@
+    9  apt install postgresql-10
+   11  systemctl status postgresql-10
+   12  systemctl start postgresql-10
+   13  apt-get install dotnet-sdk-3.1
+   15  mkdir /etc/twvault
+   23  wget https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+   24  sudo dpkg -i packages-microsoft-prod.deb
+   25  sudo add-apt-repository universe
+   27  sudo apt-get install apt-transport-https
+   28  sudo apt-get update
+   32  cd /etc/twvault/
+   33  cd dbinstall/
+   34  chmod +x TW.Vault.Migration
+   41  dotnet TW.Vault.Migration.dll "Server=localhost; Database=DB_REDACTED; User Id=USER_REDACTED; Password=REDACTED"
+   42  cd ..
+   44  mkdir webmanage
+   48  nano manageconfig.sh
+   49  chmod +x manageconfig.sh 
+   63  ufw allow http
+   64  ufw allow https
+   68  systemctl restart postgresql
+   76  cd dbinstall/
+   77  dotnet TW.Vault.Migration.dll "Server=localhost; Database=DB_REDACTED; User Id=USER_REDACTED; Password=REDACTED"
+   82  cd ..
+   83  ./manageconfig.sh -extraTLD tribalwars.net -fetchall
+   84  nano /etc/systemd/system/twvault-map-fetcher.service
+   85  systemctl enable twvault-map-fetcher
+   86  systemctl daemon-reload
+   88  systemctl enable twvault-map-fetcher
+   89  systemctl start twvault-map-fetcher
+   95  apt-get install nginx
+   96  sudo add-apt-repository ppa:certbot/certbot
+   97  apt install python-certbot-nginx
+   98  nano /etc/nginx/sites-available/default 
+   99  curl https://getmic.ro | bash
+  100  mv micro /usr/bin/
+  113  nginx -s reload
+  116  certbot --nginx -d cicada-tw.xyz
+  117  micro /etc/nginx/sites-enabled/default 
+  118  nginx -s reload
+  120  micro webmanage/wwwroot/index.html 
+  121  nano webmanage/wwwroot/index.html 
+  122  nano webmanage/appsettings.json 
+  123  nano /etc/systemd/system/twvault-manage.service
+  124  systemctl enable twvault-manage
+  125  systemctl start twvault-manage
+  126  micro /etc/nginx/sites-available/default 
+  127  nginx -s reload
+  130  nano /etc/systemd/system/twvault-app.service
+  132  systemctl enable twvault-app
+  134  systemctl start twvault-app
+  139  systemctl stop twvault-app
+  140  systemctl stop twvault-manage
+  141  systemctl stop twvault-map-fetcher
+  142  cd /etc/twvault/app/
+  143  ./TW.Vault.App.exe
+  144  chmod +x TW.Vault.App.exe
+  147  systemctl start twvault-app
+  157  systemctl start twvault-app
+  166  cd /etc/twvault/
+  175  systemctl start twvault-map-update
+  178  systemctl stop twvault-app
+  179  systemctl start twvault-manage
+  181  chmod +x app/start.sh 
+  186  chmod +x mapupdate/start.sh 
+  187  chmod +x webmanage/start.sh 
+  188  systemctl restart twvault-manage
+  191  nano /etc/twvault/webmanage/start.sh
+  198  systemctl restart twvault-manage
+  200  cd webmanage/
+  202  ./start.sh 
+  203  nano /etc/systemd/system/twvault-manage.service 
+  204  systemctl daemon-reload
+  205  systemctl restart twvault-manage
+  207  systemctl start twvault-map-update
+  208  systemctl restart twvault-map-fetcher
+  211  cd ..
+  213  nano app/start.sh 
+  214  nano mapupdate/start.sh 
+  215  systemctl restart twvault-map-fetcher
+  217  systemctl start twvault-app
+  221  apt-get install npm -y
+  222  npm install -g javascript-obfuscator
+  223  systemctl restart twvault-app
+  240  systemctl restart twvault-app
+  247  nano /etc/systemd/system/twvault-app.service 
+  264  systemctl daemon-reload
+  265  systemctl restart twvault-app
+  267  micro /etc/nginx/sites-available/default 
+  268  micro /etc/nginx/tw_general.cfg 
+  280  nginx -s reload
+  281  micro /etc/nginx/sites-available/default 
+  284  systemctl stop twvault-app
+  290  systemctl stop twvault-manage
+  293  systemctl stop twvault-map-update
+  297  systemctl stop twvault-map-fetcher
+  300  cd /etc/twvault/
+  304  cd dbinstall/
+  306  dotnet TW.Vault.Migration.dll "Server=localhost; Database=DB_REDACTED; User Id=USER_REDACTED; Password=PASS_REDACTED"
+  307  cd ..
+  310  dotnet manage/TW.ConfigurationFetcher.dll
+  313  ./manageconfig.sh -extraTLD tribalwars.net -fetch-all
+  316  systemctl start twvault-map-fetcher
+  318  systemctl start twvault-manage
+  319  systemctl start twvault-app
+  324  systemctl stop twvault-app
+  325  systemctl stop twvault-map-fetcher
+  326  systemctl twvault-manage
+  327  systemctl stop twvault-manage
+  329  ./manageconfig.sh -extraTLD tribalwars.net -fetch-all
+  331  cd dbinstall/
+  332  dotnet TW.Vault.Migration.dll "Server=localhost; Database=DB_REDACTED; User Id=USER_REDACTED; Password=PASS_REDACTED"
+  333  cd ..
+  334  ./manageconfig.sh -extraTLD tribalwars.net -fetch-all
+  335  systemctl start twvault-map-fetcher
+  342  systemctl start twvault-manage
+  343  systemctl start twvault-app

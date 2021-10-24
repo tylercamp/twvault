@@ -1,0 +1,32 @@
+Maintenance info for your server:
+
+# Supporting Applications
+
+The following applications were installed:
+- dotnet-core runtime 3.1
+- postgres 10
+- nginx (acting as reverse-proxy)
+- letsencrypt/certbot (automatically manages and renews HTTPS certs for your domain and registers them with NGINX)
+
+Multiple vault services were installed (detailed below) and are accessible from the web. NGINX is being used as a reverse-proxy, so that HTTP requests to your server go to the right internal app. (Eg it's configured to forward requests to `/register` to the registration webapp, requests to `/api/forcerefresh` are forwarded to the map updating service, and other requests to `/api/` and `/scripts/` are forwarded to the main webapp.)
+
+NGINX can also be configured to provide rate-limiting, whitelisting/blacklisting of IPs, and metrics via nginx-amplify. Up to you if you want to configure any of these.
+
+# Vault
+
+Vault stuff is installed to `/etc/twvault`. All services were installed running as root. There are the following apps:
+
+- app: Main webapp that serves the script
+- webmanage: Webapp providing `/register` page
+- mapupdate: Webapp performing hourly auto-updates of all worlds registered in your DB
+- dbinstall: Utility for initializing a newly-installed postgres database
+- manage: Command-line utility for registering new worlds and deleting old ones. `manageconfig.sh` script was added to `/etc/twvault/` to make it easier to run. Use `cd /etc/twvault/manage && dotnet TW.ConfigurationFetcher.dll` to see its usage
+
+The following apps are installed as services, which run on startup:
+- `twvault-app`
+- `twvault-manage`
+- `twvault-map-fetcher`
+
+Service definitions were installed to `/etc/systemd/system`. Services can be managed using `systemctl <start|stop|restart|status> service-name`.
+
+Log files are found in `/etc/twvault/Logs`. Logs are available for all running vault services, named based on the service. The main webapp also includes IP logs.

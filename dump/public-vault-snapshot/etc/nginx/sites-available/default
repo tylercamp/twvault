@@ -1,0 +1,240 @@
+##
+# You should look at the following URL's in order to grasp a solid understanding
+# of Nginx configuration files in order to fully unleash the power of Nginx.
+# https://www.nginx.com/resources/wiki/start/
+# https://www.nginx.com/resources/wiki/start/topics/tutorials/config_pitfalls/
+# https://wiki.debian.org/Nginx/DirectoryStructure
+#
+# In most cases, administrators will remove this file from sites-enabled/ and
+# leave it as reference inside of sites-available where it will continue to be
+# updated by the nginx packaging team.
+#
+# This file will automatically load configuration files provided by other
+# applications, such as Drupal or Wordpress. These applications will be made
+# available underneath a path with that package name, such as /drupal8.
+#
+# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
+##
+
+# Default server configuration
+#
+
+# rate limiting for general requests
+limit_req_zone $binary_remote_addr zone=wwwroot:10m rate=5r/s;
+# rate limiting for Vault requests (further customized by `proxy_tw_general.cfg`)
+limit_req_zone $binary_remote_addr zone=asptwv:10m rate=50r/s;
+
+# rate-limit by IP
+limit_conn_zone $binary_remote_addr zone=addr:10m;
+
+server {
+
+	proxy_pass_request_headers on;
+
+
+	server_name	v.tylercamp.me v.tylercamp.us;
+	root		/var/www/html;
+	gzip		on;
+	gzip_comp_level	4;
+	gzip_types	application/json application/javascript text/javascript;
+
+	# limit upload rate to 800kbps per connection
+	limit_rate	800k;
+
+	location / {
+		limit_req zone=wwwroot;
+		limit_conn addr 3;
+
+		try_files $uri $uri/ =404;
+	}
+
+	# Reverse-proxy configs
+	location ~ ^/api/forcerefresh {
+		# Expose the `api/forcerefresh` endpoint for map data fetcher
+		proxy_pass http://localhost:5020;
+		proxy_set_header X-Original-Url $request_uri;
+
+		include proxy_tw_general.cfg;
+	}
+
+	location ~ ^/(api|script)/ {
+		# Forward requests for main Vault app
+		proxy_pass http://localhost:5000;
+		proxy_set_header X-Original-Url $request_uri;
+				
+		include proxy_tw_general.cfg;
+		# (Public Vault had two copies of Vault webapp, one on port 5000 and another
+		# on 5001. When updating the Vault, the new version was started, port number
+		# here is changed, and NGINX config is reloaded, before stopping the older
+		# version.)
+	}
+
+	location /register/ {
+		# Forward requests for registration app
+		# (requests to `/register/x` are rewritten as `/x` before forwarding to registration webapp)
+		rewrite ^/register/(.*)$ /$1 break;
+		proxy_pass http://localhost:5030;
+		proxy_set_header X-Original-Url $request_uri;
+
+		include proxy_tw_general.cfg;
+	}
+
+
+	location /hc/ {
+		# Hitcounter app for devs
+		rewrite ^/hc/(.*)$ /hitcounter/$1 break;
+		proxy_pass http://localhost:5050;
+		include proxy_tw_general.cfg;
+	}
+
+	# Configure so /dev/ redirects to my dev machine while testing
+	location /dev/ {
+		rewrite ^/dev/(.*)$ /$1 break;
+
+		proxy_pass http://192.168.1.9:5000;
+		proxy_set_header X-Original-Url $request_uri;
+
+		#allow 192.168.1.0/24;
+		#deny all;
+
+		include proxy_tw_general.cfg;
+	}
+
+	# Configure so /dev2/ redirects to my secondary dev machine while testing
+	location /dev2/ {
+		rewrite ^/dev2/(.*)$ /$1 break;
+
+        proxy_pass http://192.168.1.130:5000;
+        proxy_set_header X-Original-Url $request_uri;
+
+        include proxy_tw_general.cfg;
+	}
+
+	# Explicit stage1 endpoint for testing before hot-swap
+	location /s1/ {
+		rewrite ^/s1/(.*)$ /$1 break;
+		
+		proxy_pass http://localhost:5000;
+		proxy_set_header X-Original-Url $request_uri;
+		
+		include proxy_tw_general.cfg;
+	}
+
+	# Explicit stage2 endpoint for testing before hot-swap
+	location /s2/ {
+		rewrite ^/s2/(.*)$ /$1 break;
+
+		proxy_pass http://localhost:5001;
+		proxy_set_header X-Original-Url $request_uri;
+		
+		include proxy_tw_general.cfg;
+	}
+
+	# Configure general QA server endpoint
+	location /qa/ {
+		rewrite ^/qa/(.*)$ /$1 break;
+
+		proxy_pass http://localhost:5010;
+		proxy_set_header X-Original-Url $request_uri;
+
+		include proxy_tw_general.cfg;
+	}
+
+	# Configure QA stage 1 server endpoint
+	location /qa1/ {
+		rewrite ^/qa1/(.*)$ /$1 break;
+
+		proxy_pass http://localhost:5010;
+		proxy_set_header X-Original-Url $request_uri;
+
+		include proxy_tw_general.cfg;
+	}
+
+
+	# Configure QA stage 2 server endpoint
+	location /qa2/ {
+		rewrite ^/qa2/(.*)$ /$1 break;
+
+		proxy_pass http://localhost:5011;
+		proxy_set_header X-Original-Url $request_uri;
+
+		include proxy_tw_general.cfg;
+	}
+
+
+	# Configure so /dev-glen/ redirects to glen's IP while testing
+	location /dev-glen/ {
+		rewrite ^/dev-glen/(.*)$ /$1 break;
+
+		proxy_pass http://REDACTED:5000;
+		proxy_set_header X-Original-Url $request_uri;
+
+		include proxy_tw_general.cfg;
+	}
+
+	listen 443 ssl; # managed by Certbot
+	ssl_certificate /etc/letsencrypt/live/v.tylercamp.us/fullchain.pem; # managed by Certbot
+	ssl_certificate_key /etc/letsencrypt/live/v.tylercamp.us/privkey.pem; # managed by Certbot
+	include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+	ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+	underscores_in_headers on;
+}
+
+server {
+
+	limit_req zone=wwwroot;
+	limit_conn addr 3;
+
+    if ($host = v.tylercamp.me) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    if ($host = v.tylercamp.us) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+	listen 80;
+	
+	server_name v.tylercamp.me v.tylercamp.us;
+
+	root /var/www/html;
+
+	location / {
+		try_files $uri $uri/ =404;
+	}
+}
+
+# For NGINX Amplify
+server {
+
+	listen 127.0.0.1:80;
+	server_name 127.0.0.1;
+	location /nginx_status {
+		stub_status on;
+		allow 127.0.0.1;
+		deny all;
+	}
+}
+
+
+# Virtual Host configuration for example.com
+#
+# You can move that to a different file under sites-available/ and symlink that
+# to sites-enabled/ to enable it.
+#
+#server {
+#	listen 80;
+#	listen [::]:80;
+#
+#	server_name example.com;
+#
+#	root /var/www/example.com;
+#	index index.html;
+#
+#	location / {
+#		try_files $uri $uri/ =404;
+#	}
+#}
