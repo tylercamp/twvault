@@ -131,7 +131,7 @@
         }
 
         if (lockedDataReasons) {
-            makeFuckYouContainer();
+            makeLockedAccessContainer();
             return;
         }
 
@@ -177,7 +177,7 @@
         }
 
         if (lockedDataReasons) {
-            makeFuckYouContainer();
+            makeLockedAccessContainer();
             return;
         }
 
@@ -681,7 +681,7 @@
                 `.trim());
     }
 
-    function makeFuckYouContainer() {
+    function makeLockedAccessContainer() {
         if ($('#vault_info').length)
             return;
 
@@ -689,12 +689,12 @@
 
         let $villageInfoContainer = makeOutputContainer();
 
-        let fuckYouMessage = '';
+        let message = '';
         for (var i = 0; i < lockedDataReasons.length; i++) {
-            if (fuckYouMessage.length && i != lockedDataReasons.length - 1) {
-                fuckYouMessage += ', ';
+            if (message.length && i != lockedDataReasons.length - 1) {
+                message += ', ';
             }
-            fuckYouMessage += lockedDataReasons[i];
+            message += lockedDataReasons[i];
         }
 
         // MAP_UPLOAD_DATA_REQUIRED
@@ -703,7 +703,7 @@
                 ${lib.translate(lib.itlcodes.MAP_UPLOAD_DATA_REQUIRED)}
                 <br>
                 <br>
-                ${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS, { _escaped: false })} ${fuckYouMessage}
+                ${lib.translate(lib.itlcodes.UPLOAD_DATA_REQUIRED_REASONS, { _escaped: false })} ${message}
             </h3>
         `);
     }

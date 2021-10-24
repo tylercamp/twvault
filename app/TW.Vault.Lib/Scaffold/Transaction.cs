@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 
-namespace TW.Vault.Scaffold
+namespace TW.Vault.Lib.Scaffold
 {
     public partial class Transaction
     {

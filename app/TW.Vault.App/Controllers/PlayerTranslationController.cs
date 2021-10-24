@@ -9,10 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Scaffold;
-using JSON = TW.Vault.Model.JSON;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Scaffold;
+using JSON = TW.Vault.Lib.Model.JSON;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     //  Creation and modification of translations done within a player
     //  context to prevent users from editing each other's translations
@@ -21,7 +22,7 @@ namespace TW.Vault.Controllers
     [Produces("application/json")]
     [Route("api/{worldName}/PlayerTranslation")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class PlayerTranslationController : BaseController
     {
 
@@ -64,7 +65,7 @@ namespace TW.Vault.Controllers
             if (!ValidateRegistry(newRegistry.Entries, out validationResult))
                 return BadRequest(validationResult.FailureReasons);
 
-            var scaffoldRegistry = new Scaffold.TranslationRegistry
+            var scaffoldRegistry = new Lib.Scaffold.TranslationRegistry
             {
                 AuthorPlayerId = CurrentPlayerId,
                 Author = CurrentSets.Player.Where(p => p.PlayerId == CurrentPlayerId).First().PlayerName,
@@ -84,7 +85,7 @@ namespace TW.Vault.Controllers
                 if (String.IsNullOrWhiteSpace(value))
                     continue;
 
-                var newEntry = new Scaffold.TranslationEntry
+                var newEntry = new Lib.Scaffold.TranslationEntry
                 {
                     KeyId = translationKeys[key],
                     TranslationId = scaffoldRegistry.Id,
@@ -153,7 +154,7 @@ namespace TW.Vault.Controllers
             {
                 var keyId = translationKeys[addedKeyName];
 
-                var scaffoldEntry = new Scaffold.TranslationEntry
+                var scaffoldEntry = new Lib.Scaffold.TranslationEntry
                 {
                     KeyId = keyId,
                     TranslationId = scaffoldRegistry.Id,

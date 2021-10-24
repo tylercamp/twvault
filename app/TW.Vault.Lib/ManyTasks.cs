@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TW.Vault
+namespace TW.Vault.Lib
 {
     public static class ManyTasks
     {

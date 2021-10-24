@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Model.JSON
+namespace TW.Vault.Lib.Model.JSON
 {
     public class Report
     {

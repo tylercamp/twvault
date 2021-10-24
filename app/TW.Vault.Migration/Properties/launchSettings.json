@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TW.Vault.Migration": {
+      "commandName": "Project",
+      "commandLineArgs": "\"Server=minikube.local; Port=5432; Database=vault; User Id=u_vault; Password=vaulttest\""
+    }
+  }
+}

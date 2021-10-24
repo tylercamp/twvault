@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
 
-namespace TW.Vault.Features.CommandClassification.FakeDetectionRules
+namespace TW.Vault.Lib.Features.CommandClassification.FakeDetectionRules
 {
     //  This might be unused since it's very strict
     public class NoTravelingTroopsRule : IFakeDetectionRule

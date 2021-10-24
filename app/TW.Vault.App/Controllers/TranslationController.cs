@@ -6,18 +6,19 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using JSON = TW.Vault.Model.JSON;
+using TW.Vault.Lib;
+using JSON = TW.Vault.Lib.Model.JSON;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/Translation")]
     [EnableCors("AllOrigins")]
     public class TranslationController : Controller
     {
-        Scaffold.VaultContext context;
+        Lib.Scaffold.VaultContext context;
 
-        public TranslationController(Scaffold.VaultContext vaultContext)
+        public TranslationController(Lib.Scaffold.VaultContext vaultContext)
         {
             this.context = vaultContext;
         }

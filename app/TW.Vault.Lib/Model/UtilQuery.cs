@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Model
+namespace TW.Vault.Lib.Model
 {
     //  Miscellaneous queries that I don't want to throw into a controller
 

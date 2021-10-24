@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Features.CommandClassification.FakeDetectionRules
+namespace TW.Vault.Lib.Features.CommandClassification.FakeDetectionRules
 {
     [Flags]
     public enum FakeClassification

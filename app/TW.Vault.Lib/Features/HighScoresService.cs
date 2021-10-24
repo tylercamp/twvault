@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Features.Simulation;
-using TW.Vault.Model;
-using TW.Vault.Model.JSON;
-using TW.Vault.Model.Native;
+using TW.Vault.Lib.Features.Simulation;
+using TW.Vault.Lib.Model;
+using TW.Vault.Lib.Model.JSON;
+using TW.Vault.Lib.Model.Native;
 
-namespace TW.Vault.Features
+namespace TW.Vault.Lib.Features
 {
     public class HighScoresService : BackgroundService
     {

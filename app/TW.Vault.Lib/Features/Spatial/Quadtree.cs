@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Model;
+using TW.Vault.Lib.Model;
 
-namespace TW.Vault.Features.Spatial
+namespace TW.Vault.Lib.Features.Spatial
 {
     public class Quadtree
     {

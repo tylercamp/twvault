@@ -1,17 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using TW.ConfigurationFetcher.Fetcher;
-using TW.Vault.Scaffold;
-using TW.Vault;
-using ShellProgressBar;
+using TW.Vault.Lib.Scaffold;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using Npgsql;
-using System.Diagnostics;
+using System.Threading.Tasks;
+using System.IO;
+using System.Xml;
+using System.Xml.XPath;
+using System.Reflection;
+using ShellProgressBar;
 using System.Threading;
 
 namespace TW.ConfigurationFetcher
@@ -20,6 +19,8 @@ namespace TW.ConfigurationFetcher
     {
         public short DefaultTranslationId { get; set; }
         public String TimeZoneId { get; set; }
+
+        public static LocaleSettings FromWorld(World world) => new LocaleSettings { DefaultTranslationId = world.DefaultTranslationId, TimeZoneId = world.WorldSettings.TimeZoneId };
 
         public override bool Equals(object obj)
         {
@@ -39,13 +40,29 @@ namespace TW.ConfigurationFetcher
         }
     }
 
+    
+
     class Program
     {
-        private static String HostFor(String hostname) => String.Join('.', hostname.Split('.').Skip(1)).ToLower();
-        private static String HostOf(World world) => HostFor(world.Hostname);
+        public static bool Confirm(String message, Config config)
+        {
+            bool? response = null;
+            if (config.AcceptAll) response = true;
+            while (!response.HasValue)
+            {
+                Console.Write(message + " [y/n] ");
+                var r = Console.ReadLine().ToLower();
+                if (r == "y") response = true;
+                if (r == "n") response = false;
+            }
+            return response.Value;
+        }
+
+        public static String HostFor(String hostname) => String.Join('.', hostname.Split('.').Skip(1)).ToLower();
+        public static String HostOf(World world) => HostFor(world.Hostname);
 
         private static HttpClient _httpClient = null;
-        private static HttpClient httpClient
+        public static HttpClient httpClient
         {
             get
             {
@@ -54,6 +71,244 @@ namespace TW.ConfigurationFetcher
                 return _httpClient;
             }
         }
+
+        static List<T> AwaitManyWithProgressBar<T>(String label, List<Task<T>> tasks)
+        {
+
+            using (var pb = new ProgressBar(tasks.Count, label))
+            {
+                int NumComplete() => tasks.Count(t => t.IsCompleted);
+                do
+                {
+                    Task.WaitAny(tasks.ToArray());
+                    int numComplete = NumComplete();
+                    pb.Tick(numComplete, $"{label} ({numComplete}/{pb.MaxTicks})");
+                } while (tasks.Any(t => !t.IsCompleted));
+                pb.Tick(tasks.Count);
+            }
+
+            return tasks.Select(t => t.Result).ToList();
+        }
+
+        static List<IJob> BuildUpdateTasks(Config config, List<WorldDescriptor> currentState, List<WorldDescriptor> targetState)
+        {
+            var currentStateByHash = currentState.GroupBy(s => s.EffectiveHash(config)).ToDictionary(g => g.Key, g => g.Single());
+            var targetStateByHash = targetState.GroupBy(s => s.EffectiveHash(config)).ToDictionary(g => g.Key, g => g.Single());
+
+            var toAdd = targetStateByHash.Where(kvp => !currentStateByHash.ContainsKey(kvp.Key)).Select(kvp => kvp.Value).ToList();
+            var toRemove = currentStateByHash.Where(kvp => !targetStateByHash.ContainsKey(kvp.Key)).Select(kvp => kvp.Value).ToList();
+            var toUpdate = currentStateByHash
+                .Where(kvp => targetStateByHash.ContainsKey(kvp.Key))
+                .Select(kvp =>
+                {
+                    var current = currentStateByHash[kvp.Key];
+                    var target = targetStateByHash[kvp.Key];
+                    return new { Current = current, Target = target, ChangedProperties = current.CompareTo(target) };
+                })
+                .Where(cmp => cmp.ChangedProperties.Any())
+                .ToList();
+
+            var jobs = new List<IJob>();
+            jobs.AddRange(toRemove.Select(d => new WorldDeletionJob(d, targetState.SingleOrDefault(t => t.Hostname == d.Hostname))));
+            jobs.AddRange(toAdd.Select(d => new WorldCreationJob(d)));
+            jobs.AddRange(toUpdate.Select(c => new WorldSettingsChangeJob(c.Current, c.ChangedProperties)));
+
+            return jobs;
+        }
+
+        static async Task<WorldSettings> FetchLatestSettings(String hostname, String defaultTimeZoneId)
+        {
+            var endpoint = $"https://{hostname}/interface.php?func=get_config";
+            var rawResponse = await httpClient.GetAsync(endpoint).ConfigureAwait(false);
+            if (!rawResponse.IsSuccessStatusCode) return null;
+
+            var response = await rawResponse.Content.ReadAsStringAsync();
+
+            var readerSettings = new XmlReaderSettings
+            {
+                ConformanceLevel = ConformanceLevel.Fragment,
+                DtdProcessing = DtdProcessing.Ignore
+            };
+
+            var doc = new XPathDocument(XmlReader.Create(new StringReader(response), readerSettings));
+            var xml = new XmlParser(doc.CreateNavigator());
+
+            return new WorldSettings
+            {
+                CanDemolishBuildings = xml.Get<bool>("/config/build/destroy"),
+                AccountSittingEnabled = xml.Get<bool>("/config/sitter/allow"),
+                ArchersEnabled = xml.Get<bool>("/config/game/archer"),
+                BonusVillagesEnabled = xml.Get<int, bool>("/config/coord/bonus_villages", i => i > 0),
+                ChurchesEnabled = xml.Get<bool>("/config/game/church"),
+                // I think this one's right? There's no obvious XML property for flags
+                FlagsEnabled = xml.Get<int, bool>("/config/game/event", i => i > 0),
+                // No direct properties for noble loyalty drop range either
+                NoblemanLoyaltyMin = 20,
+                NoblemanLoyaltyMax = 35,
+                GameSpeed = xml.Get<decimal>("/config/speed"),
+                MaxNoblemanDistance = xml.Get<short>("/config/snob/max_dist"),
+                // No direct properties for militia enabled?
+                MilitiaEnabled = true,
+                MillisecondsEnabled = xml.Get<bool>("/config/commands/millis_arrival"),
+                // Yes XML has a typo, morale -> moral
+                MoraleEnabled = xml.Get<int, bool>("/config/moral", i => i > 0),
+                NightBonusEnabled = xml.Get<int, bool>("/config/night/active", i => i > 0),
+                PaladinEnabled = xml.Get<int, bool>("/config/game/knight", i => i > 0),
+                PaladinSkillsEnabled = xml.Get<int, bool>("/config/game/knight", i => i > 1),
+                PaladinItemsEnabled = xml.Get<int, bool>("/config/game/knight_new_items", i => i > 0),
+                UnitSpeed = xml.Get<decimal>("/config/unit_speed"),
+                WatchtowerEnabled = xml.Get<int, bool>("/config/game/watchtower", i => i > 0),
+                TimeZoneId = defaultTimeZoneId
+            };
+        }
+
+        static List<String> FetchPendingHostnames(VaultContext context, Config config)
+        {
+            var existingHostnames = context.World.Where(w => !w.IsPendingDeletion && !w.IsBeta).Select(w => w.Hostname).ToList();
+            var knownHostnames = existingHostnames.Concat(config.ExtraServers);
+            var allTlds = config.ExtraTLDs.Concat(knownHostnames.Select(HostFor)).Select(s => s.ToLower()).Distinct().ToList();
+            if (!config.FetchTldServers) allTlds.Clear();
+
+            List<String> activeWorldHostnames;
+            if (config.FetchTldServers)
+            {
+                activeWorldHostnames = AwaitManyWithProgressBar(
+                    "Fetch list of active servers from TLD indexes",
+                    allTlds.Select(async h => await FetchAvailableWorlds(h).ConfigureAwait(false)).ToList()
+                ).SelectMany(s => s).ToList();
+            }
+            else
+            {
+                activeWorldHostnames = new List<string>();
+            }
+
+            var allWorldHostnames = activeWorldHostnames.Concat(knownHostnames).Select(s => s.ToLower()).Distinct().ToList();
+            return allWorldHostnames;
+        }
+
+        static Dictionary<String, LocaleSettings> CollectLocaleTemplates(VaultContext context, Config config, List<String> targetHostnames)
+        {
+            var result = new Dictionary<String, LocaleSettings>();
+            var tlds = targetHostnames.Select(HostFor).Select(h => h.ToLower()).Distinct().ToList();
+            var worlds = context.World.ToList();
+            foreach (var tld in tlds)
+            {
+                var samples = worlds.Where(w => HostFor(w.Hostname.ToLower()) == tld).ToList();
+                // fetches all configs for worlds from the given tld and
+                // selects the most common config
+                var localeSettings = samples
+                    .Select(LocaleSettings.FromWorld)
+                    .GroupBy(s => s)
+                    .Select(g => new { Settings = g.Key, Count = g.Count() })
+                    .OrderByDescending(s => s.Count)
+                    // new tlds won't have any samples
+                    .FirstOrDefault()
+                    ?.Settings;
+
+                if (localeSettings == null)
+                {
+                    Console.WriteLine($"New TLD \"{tld}\" needs locale settings: TimeZoneId, DefaultTranslationId");
+
+                    String timezoneId;
+                    short defaultTranslationId = -1;
+
+                    if (config.AcceptAll)
+                    {
+                        Console.WriteLine("AcceptAll is enabled, filling with defaults (TimeZoneId=Europe/London, DefaultTranslationId=1)");
+                        timezoneId = "Europe/London";
+                        defaultTranslationId = 1;
+                    }
+                    else
+                    {
+                        #region TimeZoneId Prompt
+
+                        Console.WriteLine("An exhaustive list of Timezone IDs can be found at: https://nodatime.org/TimeZones");
+                        Console.WriteLine("(The default for .net and .co.uk is 'Europe/London'.)");
+
+                        do
+                        {
+                            Console.Write("\tTimezone ID: ");
+                            timezoneId = Console.ReadLine().Trim();
+
+                            if (NodaTime.TimeZones.TzdbDateTimeZoneSource.Default.ForId(timezoneId) == null)
+                            {
+                                Console.WriteLine($"\tInvalid ID: {timezoneId} - An exhaustive list of Timezone IDs can be found at: https://nodatime.org/TimeZones");
+                                timezoneId = null;
+                            }
+                        } while (timezoneId == null);
+                        #endregion
+
+                        #region DefaultTranslationId Prompt
+
+                        Console.WriteLine("The default ID for English is '1'.");
+
+                        do
+                        {
+                            do Console.Write("\tTranslation ID: ");
+                            while (!short.TryParse(Console.ReadLine(), out defaultTranslationId));
+
+                            var translation = context.TranslationRegistry
+                                .Where(r => r.Id == defaultTranslationId)
+                                .Include(nameof(TranslationRegistry.Language))
+                                .FirstOrDefault();
+
+                            if (translation == null)
+                            {
+                                Console.WriteLine("\tTranslation does not exist");
+                                defaultTranslationId = -1;
+                                continue;
+                            }
+
+                            if (!Confirm($"\t{translation.Language.Name}: {translation.Name} by {translation.Author}?", config))
+                            {
+                                defaultTranslationId = -1;
+                                continue;
+                            }
+
+                        } while (defaultTranslationId < 0);
+
+                        #endregion
+                    }
+
+                    localeSettings = new LocaleSettings
+                    {
+                        DefaultTranslationId = defaultTranslationId,
+                        TimeZoneId = timezoneId
+                    };
+                }
+
+                foreach (var hostname in targetHostnames.Where(h => HostFor(h) == tld))
+                    result.Add(hostname, localeSettings);
+            }
+            return result;
+        }
+
+        static List<WorldDescriptor> GenerateTargetState(VaultContext context, Config config)
+        {
+            var pendingHostnames = FetchPendingHostnames(context, config);
+            var localeTemplates = CollectLocaleTemplates(context, config, pendingHostnames);
+
+            var sem = new SemaphoreSlim(4);
+            var pendingHostnameSettingsTasks = pendingHostnames.Select(h => new { Hostname = h, SettingsTask = FetchLatestSettings(h, localeTemplates[h].TimeZoneId) }).ToList();
+            AwaitManyWithProgressBar("Fetch server settings", pendingHostnameSettingsTasks.Select(p => p.SettingsTask).ToList());
+
+            return pendingHostnameSettingsTasks.Where(t => t.SettingsTask.Result != null).Select(t => new WorldDescriptor {
+                Hostname = t.Hostname,
+                Settings = t.SettingsTask.Result,
+                DefaultTranslationId = localeTemplates[t.Hostname].DefaultTranslationId
+            }).ToList();
+        }
+
+        static List<WorldDescriptor> GenerateCurrentState(VaultContext context)
+        {
+            return context.World.Include(w => w.WorldSettings).ToList().Select(w => new WorldDescriptor
+            {
+                Hostname = w.Hostname,
+                Settings = w.WorldSettings,
+                DefaultTranslationId = w.DefaultTranslationId
+            }).ToList();
+        }
+        
 
         static void Main(string[] args)
         {
@@ -81,298 +336,68 @@ namespace TW.ConfigurationFetcher
 
             using (vaultContext)
             {
-                var worlds = vaultContext.World.Where(w => !w.IsPendingDeletion).Include(w => w.WorldSettings).ToList();
-                var tlds = worlds.Select(HostOf).Concat(extraTLDs).Distinct().ToList();
+                Console.WriteLine("Assessing current DB state...");
+                var currentState = GenerateCurrentState(vaultContext);
+                Console.WriteLine("Assessing target DB state...");
+                var targetState = GenerateTargetState(vaultContext, config);
+                var jobs = BuildUpdateTasks(config, currentState, targetState);
 
-                var hostLocales = tlds.ToDictionary(h => h, h =>
+
+
+                Console.WriteLine("Job collection done. Summary:");
+                if (jobs.Count > 0)
                 {
-                    var matchedWorlds = worlds.Where(w => HostOf(w) == h).ToList();
-                    var distinctLocales = matchedWorlds
-                        .Select(w => new LocaleSettings { DefaultTranslationId = w.DefaultTranslationId, TimeZoneId = w.WorldSettings.TimeZoneId })
-                        .Distinct()
-                        .ToList();
+                    var workByJobType = jobs.GroupBy(j => j.GetType());
+                    foreach (var group in workByJobType)
+                    {
+                        Console.WriteLine($"\n{group.Key.Name}: {group.Count()} Tasks");
+                        var lines = new List<String>();
+                        foreach (var item in group.Select(j => j.WorkSummary))
+                        {
+                            var innerLines = item.Split("\n");
+                            lines.Add("- " + innerLines[0]);
+                            foreach (var line in innerLines.Skip(1))
+                                lines.Add("  " + line);
+                        }
 
-                    if (distinctLocales.Count > 1)
-                        throw new Exception($"Expected one time zone for host {h}, got {distinctLocales.Count}");
-
-                    return distinctLocales.FirstOrDefault();
-                });
-
-                foreach (var tld in tlds)
+                        foreach (var line in lines)
+                            Console.WriteLine("  " + line);
+                    }
+                }
+                else
                 {
-                    if (hostLocales[tld] == null)
-                        hostLocales.Remove(tld);
+                    Console.WriteLine("Everything up to date");
                 }
 
-                foreach (var template in Vault.Scaffold.Seed.WorldSettingsTemplate.Templates)
+                Console.WriteLine();
+
+                if (!config.AcceptAll)
                 {
-                    if (!hostLocales.ContainsKey(template.TldHostname) || hostLocales[template.TldHostname] == null)
-                        hostLocales[template.TldHostname] = new LocaleSettings { TimeZoneId = template.TimeZoneId, DefaultTranslationId = template.DefaultTranslationId };
-                }
-
-                var activeWorldHostnames = tlds.SelectMany(h => FetchAvailableWorlds(h)).ToList();
-
-                var allWorldHostnames =
-                    extraServers.Concat(fetchNewServers
-                        ? activeWorldHostnames
-                        : worlds.Select(w => w.Hostname)
-                    ).Distinct().ToList();
-
-                Console.WriteLine($"Creating and pulling {allWorldHostnames.Count} worlds...");
-                foreach (var hostname in allWorldHostnames)
-                    FetchWorldData(vaultContext, worlds, hostLocales, hostname, config.FetchExisting);
-
-                if (deleteOldWorlds)
-                {
-                    Console.WriteLine("Cleaning old world data...");
-                    var oldWorlds = vaultContext.World.Include(w => w.WorldSettings).ToList().Where(w => w.IsPendingDeletion || !activeWorldHostnames.Contains(w.Hostname)).ToList();
-                    Console.WriteLine("Found {0} old worlds to be cleaned:", oldWorlds.Count);
-                    foreach (var w in oldWorlds)
-                        Console.WriteLine("- " + w.Hostname);
-
-                    Console.WriteLine("Press Enter to continue.");
+                    Console.WriteLine("Press Enter to confirm.");
                     Console.ReadLine();
+                }
 
-                    Console.WriteLine("Marking worlds as pending deletion...");
-                    foreach (var w in oldWorlds)
-                        w.IsPendingDeletion = true;
-                    vaultContext.SaveChanges();
-
-                    foreach (var w in oldWorlds)
-                        DeleteWorld(vaultContext, w);
+                foreach (var job in jobs)
+                {
+                    Console.WriteLine("Running " + job);
+                    job.Run(vaultContext, config);
                 }
             }
-
-            vaultContext.Dispose();
-            
 
             Console.WriteLine("FINISHED.");
             Console.ReadLine();
         }
 
-        private static List<String> FetchAvailableWorlds(String tldHostname)
+        private static async Task<List<String>> FetchAvailableWorlds(String tldHostname)
         {
             var activeWorldRegex = new Regex("\"https?\\:\\/\\/([^\"]+)\"");
             var hostActiveWorlds = new Dictionary<String, List<String>>();
 
-            Console.WriteLine("Fetching active servers for {0}...", tldHostname);
+            //Console.WriteLine("Fetching active servers for {0}...", tldHostname);
             var serverListUrl = $"http://www.{tldHostname}/backend/get_servers.php";
-            var response = httpClient.GetStringAsync(serverListUrl).Result;
+            var response = await httpClient.GetStringAsync(serverListUrl);
             var activeWorldMatches = activeWorldRegex.Matches(response);
             return activeWorldMatches.Select(m => m.Groups[1].Value).Where(w => !w.StartsWith("www")).ToList();
-        }
-
-        private static void FetchWorldData(VaultContext context, List<World> worlds, Dictionary<String, LocaleSettings> hostLocales, String hostname, bool overwrite)
-        {
-            var host = HostFor(hostname);
-
-            var localeSettings = hostLocales.ContainsKey(host) ? hostLocales[host] : null;
-
-            var fetchers = new IFetcher[]
-            {
-                new BuildingFetcher(),
-                new ConfigFetcher()
-                {
-                    Overwrite = overwrite,
-                    DefaultTimeZoneId = localeSettings?.TimeZoneId ?? "Europe/London"
-                },
-                new UnitFetcher()
-            };
-
-            var world = worlds.Where(w => w.Hostname == hostname).SingleOrDefault();
-            if (world == null)
-            {
-                short translationId;
-                if (localeSettings != null) translationId = localeSettings.DefaultTranslationId;
-                else
-                {
-                    translationId = 1;
-                    Console.WriteLine($"Warning: No default translation could be found for {hostname}, defaulting to primary English translation.");
-                }
-
-                world = new World
-                {
-                    Name = hostname.Split('.')[0],
-                    Hostname = hostname,
-                    DefaultTranslationId = translationId
-                };
-                context.Add(world);
-            }
-
-            var pendingFetchers = fetchers.Where(f => f.NeedsUpdate(world)).ToList();
-            if (pendingFetchers.Count > 0)
-                Console.WriteLine("Pulling for world {0}...", world.Hostname);
-            else
-                Console.WriteLine("World {0} is up to date", world.Hostname);
-
-            var baseUrl = $"https://{world.Hostname}";
-
-            foreach (var fetcher in pendingFetchers)
-            {
-                var url = $"{baseUrl}{fetcher.Endpoint}";
-                Console.Write("Fetching {0} ... ", url); Console.Out.Flush();
-
-                var response = httpClient.GetAsync(url).Result;
-                if ((int)response.StatusCode >= 300 && (int)response.StatusCode < 400)
-                {
-                    Console.WriteLine("Warning: server {0} seems to have ended (redirection occurred)", world.Hostname);
-                    break;
-                }
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine("ERROR: Request failed with code {0}", response.StatusCode);
-                    Environment.ExitCode = 1;
-                    continue;
-                }
-
-                Console.Write("Processing... "); Console.Out.Flush();
-
-                var data = response.Content.ReadAsStringAsync().Result;
-                fetcher.Process(context, world, data);
-
-                Console.WriteLine("Done.");
-            }
-
-            var worldSettings = context.WorldSettings.Where(s => s.WorldId == world.Id).First();
-            String timezoneId;
-            if (localeSettings != null) timezoneId = hostLocales[host].TimeZoneId;
-            else
-            {
-                Console.WriteLine($"Warning: No timezone ID could be found for {hostname}, please manually enter a timezone ID for the server.");
-                Console.WriteLine("An exhaustive list of Timezone IDs can be found at: https://nodatime.org/TimeZones");
-                Console.WriteLine("(The default for .net and .co.uk is 'Europe/London'.)");
-
-                do
-                {
-                    Console.Write("Timezone ID: ");
-                    timezoneId = Console.ReadLine().Trim();
-
-                    if (NodaTime.TimeZones.TzdbDateTimeZoneSource.Default.ForId(timezoneId) == null)
-                    {
-                        Console.WriteLine("Invalid ID: " + timezoneId);
-                        timezoneId = null;
-                    }
-                } while (timezoneId == null);
-
-                
-                hostLocales.Add(host, new LocaleSettings { DefaultTranslationId = world.DefaultTranslationId, TimeZoneId = timezoneId });
-            }
-
-            worldSettings.TimeZoneId = timezoneId;
-            context.SaveChanges();
-        }
-
-        private static void DeleteWorld(VaultContext vaultContext, World world)
-        {
-            vaultContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-
-            List<Type> typeJobs = new List<Type>
-            {
-                typeof(User),
-                typeof(UserLog),
-                typeof(Command),
-                typeof(CurrentBuilding),
-                typeof(CurrentVillage),
-                typeof(CurrentVillageSupport),
-                typeof(CurrentArmy),
-                typeof(CommandArmy),
-                typeof(CurrentPlayer),
-                typeof(EnemyTribe),
-                typeof(IgnoredReport),
-                typeof(Report),
-                typeof(ReportArmy),
-                typeof(ReportBuilding),
-                typeof(Transaction),
-                typeof(Village),
-                typeof(Player),
-                typeof(Ally),
-                typeof(Conquer),
-                typeof(AccessGroup)
-            };
-
-            Console.WriteLine("Deleting non-trivial datatypes...");
-            Console.WriteLine("Deleting UserUploadHistory entries...");
-            vaultContext.UserUploadHistory.RemoveRange(vaultContext.UserUploadHistory.Where(h => h.U.WorldId == world.Id));
-            vaultContext.SaveChanges();
-
-            var numJobsDone = 0;
-            String JobsProgressMessage() => $"Deleting data for {world.Hostname} (id={world.Id}) ({numJobsDone}/{typeJobs.Count} done)";
-
-            using (var dataProgressBar = new ProgressBar(typeJobs.Count, JobsProgressMessage()))
-            {
-                foreach (var type in typeJobs)
-                {
-                    using (var jobProgressBar = dataProgressBar.Spawn(1, ""))
-                    {
-                        Console.Out.Flush();
-                        Thread.Sleep(100);
-                        DeleteForWorld(vaultContext, jobProgressBar, type, world.Id);
-                    }
-
-                    numJobsDone++;
-                    dataProgressBar.Tick(JobsProgressMessage());
-                }
-            }
-
-            Console.WriteLine("Deleting world settings...");
-            if (world.WorldSettings != null)
-            {
-                vaultContext.Remove(world.WorldSettings);
-                vaultContext.SaveChanges();
-            }
-
-            Console.WriteLine("Deleting world...");
-            vaultContext.Remove(world);
-            vaultContext.SaveChanges();
-
-            Console.WriteLine("Deleted all data for {0}.", world.Hostname);
-
-            vaultContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.TrackAll;
-        }
-
-        private static void DeleteForWorld(VaultContext context, IProgressBar progressBar, Type type, int worldId)
-        {
-            var entityType = context.Model.FindEntityType(type);
-            var table = entityType.GetTableName();
-            var schema = entityType.GetSchema();
-            var primaryKeys = entityType.FindPrimaryKey().Properties.Select(p => p.Name).Where(n => n != "WorldId" && n != "AccessGroupId").ToList();
-            if (primaryKeys.Count != 1)
-            {
-                Console.WriteLine("Unexpected number of primary keys for {0}, got {1} but expected 1", type.Name, primaryKeys.Count);
-            }
-
-            var primaryKey = primaryKeys.Single();
-            var numTotal = 0;
-
-            progressBar.Tick(0, $"Counting {type.Name} entities...");
-            using (var command = context.Database.GetDbConnection().CreateCommand())
-            {
-                command.CommandText = $"SELECT COUNT(1) FROM {schema}.{table} WHERE world_id = {worldId}";
-                context.Database.OpenConnection();
-                using (var result = command.ExecuteReader())
-                {
-                    result.Read();
-                    numTotal = result.GetInt32(0);
-                }
-            }
-
-            if (numTotal == 0)
-            {
-                progressBar.Tick(progressBar.MaxTicks);
-                return;
-            }
-
-            progressBar.Message = $"Deleting {numTotal} entries of type {type.Name} with single transaction...";
-            progressBar.MaxTicks = numTotal;
-
-            int numDeleted = context.Database.ExecuteSqlRaw($"DELETE FROM {schema}.{table} WHERE world_id = {worldId}");
-            if (numDeleted != numTotal)
-            {
-                Console.WriteLine("Deletion failed for {0}, expected to delete {1} but deleted {2} instead", type.Name, numTotal, numDeleted);
-            }
-
-            progressBar.Tick(numTotal);
         }
     }
 }

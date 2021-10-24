@@ -9,19 +9,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Features.Planning.Requirements;
-using TW.Vault.Features.Planning.Requirements.Modifiers;
-using TW.Vault.Model;
-using TW.Vault.Model.Native;
-using TW.Vault.Scaffold;
-using JSON = TW.Vault.Model.JSON;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Features.Planning.Requirements;
+using TW.Vault.Lib.Features.Planning.Requirements.Modifiers;
+using TW.Vault.Lib.Model;
+using TW.Vault.Lib.Model.Native;
+using TW.Vault.Lib.Scaffold;
+using JSON = TW.Vault.Lib.Model.JSON;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/{worldName}/Alert")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class AlertController : BaseController
     {
         public AlertController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
@@ -47,7 +48,7 @@ namespace TW.Vault.Controllers
             ).ToListAsync();
 
             var vaultPlayerIds = await CurrentSets.ActiveUser.Select(u => u.PlayerId).ToListAsync();
-            var ownVillageMap = new Features.Spatial.Quadtree(ownVillageData.Select(v => new Coordinate { X = v.X, Y = v.Y }));
+            var ownVillageMap = new Lib.Features.Spatial.Quadtree(ownVillageData.Select(v => new Coordinate { X = v.X, Y = v.Y }));
 
             async Task<object> GetRecapSuggestions(CurrentContextDbSets CurrentSets)
             {
@@ -88,7 +89,7 @@ namespace TW.Vault.Controllers
                     CurrentSets.Player.Where(p => relevantPlayerIds.Contains(p.PlayerId))
                     .ToDictionaryAsync(p => p.PlayerId, p => p.PlayerName);
 
-                var loyaltyCalculator = new Features.Simulation.LoyaltyCalculator(CurrentWorldSettings.GameSpeed);
+                var loyaltyCalculator = new Lib.Features.Simulation.LoyaltyCalculator(CurrentWorldSettings.GameSpeed);
                 var possibleLoyalties = capturedVillages.ToDictionary(
                     v => v.VillageId,
                     v => loyaltyCalculator.PossibleLoyalty(25, serverTime - v.OccurredAt)
@@ -157,7 +158,7 @@ namespace TW.Vault.Controllers
                     select new { Village = village, CurrentVillage = currentVillage }
                 ).ToDictionaryAsync(d => d.Village, d => d.CurrentVillage);
 
-                var planner = new Features.Planning.CommandOptionsCalculator(CurrentWorldSettings);
+                var planner = new Lib.Features.Planning.CommandOptionsCalculator(CurrentWorldSettings);
                 var timeRequirement = new MaximumTravelTimeRequirement();
                 planner.Requirements.Add(new MinimumDefenseRequirement { MinimumDefense = 10000 }.LimitTroopType(ArmyStats.DefensiveTroopTypes));
                 planner.Requirements.Add(timeRequirement);
@@ -167,7 +168,7 @@ namespace TW.Vault.Controllers
                     .Where(info =>
                     {
                         var defPop = ArmyStats.CalculateTotalPopulation(info.CurrentVillage.ArmyStationed, ArmyStats.DefensiveTroopTypes);
-                        var numDVsStationed = defPop / (float)Features.CommandClassification.Utils.FullArmyPopulation;
+                        var numDVsStationed = defPop / (float)Lib.Features.CommandClassification.Utils.FullArmyPopulation;
                         return numDVsStationed < 2;
                     })
                     // Make a plan for each train
@@ -210,7 +211,7 @@ namespace TW.Vault.Controllers
                     select new Coordinate { X = village.X.Value, Y = village.Y.Value }
                 ).ToListAsync();
 
-                var enemyMap = new Features.Spatial.Quadtree(enemyVillages);
+                var enemyMap = new Lib.Features.Spatial.Quadtree(enemyVillages);
                 var frontlineVillages = ownVillageData.Where(v => enemyMap.ContainsInRange(v.X, v.Y, 4.0f)).ToList();
                 var frontlineVillageIds = frontlineVillages.Select(v => v.VillageId).ToList();
 
@@ -246,7 +247,7 @@ namespace TW.Vault.Controllers
                     // Get population of offensive troops
                     .Select(kvp => new { kvp.Key, OffensivePop = ArmyStats.CalculateTotalPopulation(kvp.Army, ArmyStats.OffensiveTroopTypes.Except(new[] { JSON.TroopType.Heavy }).ToArray()) })
                     // Filter by full nukes
-                    .Where(kvp => kvp.OffensivePop > 0.65f * Features.CommandClassification.Utils.FullArmyPopulation)
+                    .Where(kvp => kvp.OffensivePop > 0.65f * Lib.Features.CommandClassification.Utils.FullArmyPopulation)
                     .Select(kvp => kvp.Key)
                     .ToList();
 
@@ -258,7 +259,7 @@ namespace TW.Vault.Controllers
                 foreach (var support in supportToFrontline)
                     pendingSupportPerVillage[support.TargetVillageId] += support.Army;
 
-                var battleSimulator = new Features.Simulation.BattleSimulator();
+                var battleSimulator = new Lib.Features.Simulation.BattleSimulator();
                 var nukesEatablePerVillage = frontlineVillages.ToDictionary(
                     v => v.VillageId,
                     v => battleSimulator.EstimateRequiredNukes(v.ArmyStationed + pendingSupportPerVillage[v.VillageId], 20, CurrentWorldSettings.ArchersEnabled, 100).NukesRequired
@@ -296,9 +297,9 @@ namespace TW.Vault.Controllers
                     select new { X = village.X.Value, Y = village.Y.Value, village.VillageId, village.Points, currentVillage.Loyalty, currentVillage.LoyaltyLastUpdated, currentVillage.ArmyStationed, village.PlayerId, VillageName = village.VillageName.UrlDecode(), PlayerName = village.Player.PlayerName.UrlDecode() }
                 ).ToListAsync();
 
-                var villageMap = new Features.Spatial.Quadtree(villasWithNobles);
+                var villageMap = new Lib.Features.Spatial.Quadtree(villasWithNobles);
 
-                var loyaltyCalculator = new Features.Simulation.LoyaltyCalculator(CurrentWorldSettings.GameSpeed);
+                var loyaltyCalculator = new Lib.Features.Simulation.LoyaltyCalculator(CurrentWorldSettings.GameSpeed);
                 var possibleTargets = enemyCurrentVillas
                     .Where(v => villageMap.ContainsInRange(v.X, v.Y, 7.5f)) // Only consider enemy villas within 7.5 fields of any villa with nobles
                     .Select(v =>
@@ -307,7 +308,7 @@ namespace TW.Vault.Controllers
                             ? loyaltyCalculator.PossibleLoyalty(v.Loyalty.Value, serverTime - v.LoyaltyLastUpdated.Value)
                             : 100;
 
-                        var stationedDVs = ArmyStats.CalculateTotalPopulation(v.ArmyStationed, ArmyStats.DefensiveTroopTypes) / (float)Features.CommandClassification.Utils.FullArmyPopulation;
+                        var stationedDVs = ArmyStats.CalculateTotalPopulation(v.ArmyStationed, ArmyStats.DefensiveTroopTypes) / (float)Lib.Features.CommandClassification.Utils.FullArmyPopulation;
 
                         // Select "confidence" in selecting the given target as a suggestion
                         // If < 0.75 DV stationed or loyalty under 50, 100% confident in the suggestion
@@ -381,7 +382,7 @@ namespace TW.Vault.Controllers
                         select new { X = village.X.Value, Y = village.Y.Value, VillageName = village.VillageName.UrlDecode(), village.VillageId }
                     ).ToListAsync();
 
-                var enemyMap = new Features.Spatial.Quadtree(enemyVillages);
+                var enemyMap = new Lib.Features.Spatial.Quadtree(enemyVillages);
                 
                 var backlineVillages = ownVillageData.Where(v => !enemyMap.ContainsInRange(new Coordinate { X = v.X, Y = v.Y }, 10));
 
@@ -459,7 +460,7 @@ namespace TW.Vault.Controllers
                 v => v.CurrentVillage
             );
 
-            var planner = new Features.Planning.CommandOptionsCalculator(CurrentWorldSettings);
+            var planner = new Lib.Features.Planning.CommandOptionsCalculator(CurrentWorldSettings);
             planner.Requirements.Add(new MinimumDefenseRequirement { MinimumDefense = 10000 }.LimitTroopType(ArmyStats.DefensiveTroopTypes));
             planner.Requirements.Add(new MaximumTravelTimeRequirement { MaximumTime = TimeSpan.FromSeconds(maxTravelSeconds) });
 
@@ -500,12 +501,12 @@ namespace TW.Vault.Controllers
                 .Where(v => ArmyStats.CalculateTotalPopulation(v.CurrentVillage.ArmyAtHome) / (float)(ArmyStats.CalculateTotalPopulation(v.CurrentVillage.ArmyOwned) + 1) > 0.2f)
                 .ToList();
 
-            var enemyMap = new Features.Spatial.Quadtree(enemyVillages);
+            var enemyMap = new Lib.Features.Spatial.Quadtree(enemyVillages);
             var backlineSupport = currentVillages
                 .Where(s => !enemyMap.ContainsInRange(s.Village.X.Value, s.Village.Y.Value, 10))
                 .ToDictionary(s => s.Village, s => s.CurrentVillage);
 
-            var planner = new Features.Planning.CommandOptionsCalculator(CurrentWorldSettings);
+            var planner = new Lib.Features.Planning.CommandOptionsCalculator(CurrentWorldSettings);
             planner.Requirements.Add(new MinimumDefenseRequirement { MinimumDefense = 10000 }.LimitTroopType(ArmyStats.DefensiveTroopTypes));
             if (maxTravelSeconds != null)
                 planner.Requirements.Add(new MaximumTravelTimeRequirement { MaximumTime = TimeSpan.FromSeconds(maxTravelSeconds.Value) });

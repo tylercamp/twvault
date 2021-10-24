@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TW.Vault
+namespace TW.Vault.Lib
 {
     public class ASPUtil
     {

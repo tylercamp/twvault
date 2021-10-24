@@ -6,38 +6,39 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Model.Convert;
+using TW.Vault.Lib.Model.Convert;
 
-using JSON = TW.Vault.Model.JSON;
+using JSON = TW.Vault.Lib.Model.JSON;
 using Microsoft.AspNetCore.Cors;
 using Newtonsoft.Json;
-using TW.Vault.Model.Validation;
-using TW.Vault.Model;
-using Native = TW.Vault.Model.Native;
-using TW.Vault.Features.Planning.Requirements;
-using TW.Vault.Features.Planning;
+using TW.Vault.Lib.Model.Validation;
+using TW.Vault.Lib.Model;
+using Native = TW.Vault.Lib.Model.Native;
+using TW.Vault.Lib.Features.Planning.Requirements;
+using TW.Vault.Lib.Features.Planning;
 using System.Net;
-using TW.Vault.Features.Simulation;
-using TW.Vault.Model.Native;
+using TW.Vault.Lib.Features.Simulation;
+using TW.Vault.Lib.Model.Native;
 using Microsoft.Extensions.DependencyInjection;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/{worldName}/Command")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class CommandController : BaseController
     {
-        public CommandController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
+        public CommandController(Lib.Scaffold.VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
 
+#if DEBUG
         [HttpGet("{id}", Name = "Get")]
         public Task<IActionResult> Get(long id)
         {
-            return SelectOr404<Scaffold.Command>(
+            return SelectOr404<Lib.Scaffold.Command>(
                 q => q.Where(c => c.CommandId == id).FromWorld(CurrentWorldId),
                 c => CommandConvert.ModelToJson(c)
             );
@@ -94,6 +95,7 @@ namespace TW.Vault.Controllers
             var jsonCommands = commands.Select(CommandConvert.ModelToJson);
             return Ok(jsonCommands);
         }
+#endif
 
         [HttpPost("check-existing-commands")]
         public async Task<IActionResult> GetExistingCommands([FromBody]List<long> commandIds)
@@ -145,7 +147,7 @@ namespace TW.Vault.Controllers
                 if (allVillagesMissingCurrentEntries.Count > 0)
                 {
                     foreach (var id in allVillagesMissingCurrentEntries)
-                        context.Add(new CurrentVillage
+                        context.Add(new Lib.Scaffold.CurrentVillage
                         {
                             VillageId = id,
                             AccessGroupId = CurrentAccessGroupId,
@@ -219,7 +221,7 @@ namespace TW.Vault.Controllers
                         if (scaffoldCommand?.Army != null)
                             continue;
 
-                        var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
+                        var travelCalculator = new Lib.Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
                         var timeRemaining = jsonCommand.LandsAt.Value - CurrentServerTime;
                         var sourceVillage = villagesById[jsonCommand.SourceVillageId.Value];
                         var targetVillage = villagesById[jsonCommand.TargetVillageId.Value];
@@ -242,7 +244,7 @@ namespace TW.Vault.Controllers
 
                         if (scaffoldCommand == null)
                         {
-                            scaffoldCommand = new Scaffold.Command();
+                            scaffoldCommand = new Lib.Scaffold.Command();
                             scaffoldCommand.World = CurrentWorld;
                             scaffoldCommand.AccessGroupId = CurrentAccessGroupId;
                             jsonCommand.ToModel(CurrentWorldId, CurrentAccessGroupId, scaffoldCommand, CurrentServerTime, context);
@@ -253,7 +255,7 @@ namespace TW.Vault.Controllers
                             var existingJsonCommand = CommandConvert.ModelToJson(scaffoldCommand);
                             if (existingJsonCommand.IsReturning == jsonCommand.IsReturning && existingJsonCommand != jsonCommand)
                             {
-                                context.ConflictingDataRecord.Add(new Scaffold.ConflictingDataRecord
+                                context.ConflictingDataRecord.Add(new Lib.Scaffold.ConflictingDataRecord
                                 {
                                     OldTxId = scaffoldCommand.TxId.Value,
                                     ConflictingTx = tx
@@ -320,7 +322,7 @@ namespace TW.Vault.Controllers
             //  Load in actual CurrentArmy data for incomings
             //  (Didn't need this previously but EF Core can be dumb, .Include on a `join .. into` doesn't actually include the given properties)
             {
-                IEnumerable<long> SelectCurrentArmyIds(Scaffold.CurrentVillage currentVillage)
+                IEnumerable<long> SelectCurrentArmyIds(Lib.Scaffold.CurrentVillage currentVillage)
                 {
                     if (currentVillage == null)
                         yield break;
@@ -396,8 +398,8 @@ namespace TW.Vault.Controllers
                 select new { VillageId = villageCommands.Key, Count = villageCommands.Count() }
             ).ToDictionaryAsync(vc => vc.VillageId, vc => vc.Count));
 
-            var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
-            DateTime CommandLaunchedAt(Scaffold.Command command) => command.LandsAt - travelCalculator.CalculateTravelTime(
+            var travelCalculator = new Lib.Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
+            DateTime CommandLaunchedAt(Lib.Scaffold.Command command) => command.LandsAt - travelCalculator.CalculateTravelTime(
                 (command.TroopType ?? "ram").ToTroopType(),
                 relevantVillages[command.SourceVillageId].X, relevantVillages[command.SourceVillageId].Y,
                 relevantVillages[command.TargetVillageId].X, relevantVillages[command.TargetVillageId].Y
@@ -419,7 +421,7 @@ namespace TW.Vault.Controllers
                 ).ToListAsync());
 
                 bool updatedCommands = false;
-                var result = commandSourceVillageIds.ToDictionary(vid => vid, vid => new List<Scaffold.Command>());
+                var result = commandSourceVillageIds.ToDictionary(vid => vid, vid => new List<Lib.Scaffold.Command>());
 
                 Profile("Update command returning and sort into dictionary", () =>
                 {
@@ -463,15 +465,15 @@ namespace TW.Vault.Controllers
                 cmd => CommandLaunchedAt(cmd)
             );
 
-            IEnumerable<Scaffold.Command> RelevantCommandsForIncoming(Scaffold.Command incoming)
+            IEnumerable<Lib.Scaffold.Command> RelevantCommandsForIncoming(Lib.Scaffold.Command incoming)
             {
                 if (!relevantVillages.ContainsKey(incoming.SourceVillageId))
-                    return Enumerable.Empty<Scaffold.Command>();
+                    return Enumerable.Empty<Lib.Scaffold.Command>();
 
                 var launchTime = CommandLaunchedAt(incoming);
                 var returningCommands = commandsReturningByVillageId.GetValueOrDefault(incoming.SourceVillageId);
                 if (returningCommands == null)
-                    return Enumerable.Empty<Scaffold.Command>();
+                    return Enumerable.Empty<Lib.Scaffold.Command>();
 
                 return returningCommands.Where(cmd => cmd.ReturnsAt > launchTime || (launchTimesByCommandId.ContainsKey(cmd.CommandId) && launchTimesByCommandId[cmd.CommandId] > launchTime));
             }
@@ -521,7 +523,7 @@ namespace TW.Vault.Controllers
                             troopsReturning += ArmyConvert.ArmyToJson(command.Army);
                     }
 
-                    Scaffold.CurrentArmy recentArmy = null;
+                    Lib.Scaffold.CurrentArmy recentArmy = null;
                     bool isConfidentArmy = true;
                     if (armyOwned != null)
                     {

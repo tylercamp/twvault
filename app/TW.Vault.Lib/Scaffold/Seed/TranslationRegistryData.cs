@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace TW.Vault.Scaffold.Seed
+namespace TW.Vault.Lib.Scaffold.Seed
 {
     public static class TranslationRegistryData
     {

@@ -10,8 +10,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using TW.Vault.Lib;
 
-namespace TW.Vault
+namespace TW.Vault.App
 {
     public class Program
     {

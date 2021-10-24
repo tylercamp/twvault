@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Features.Planning.Requirements.Modifiers
+namespace TW.Vault.Lib.Features.Planning.Requirements.Modifiers
 {
     public static class ModifierExtensions
     {

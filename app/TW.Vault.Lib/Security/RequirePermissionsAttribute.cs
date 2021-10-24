@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Security
+namespace TW.Vault.Lib.Security
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class RequirePermissionsAttribute : Attribute, IActionFilter

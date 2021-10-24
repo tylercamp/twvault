@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
 
 namespace TW.Vault.Migration.Migrations
 {
@@ -40,7 +40,7 @@ namespace TW.Vault.Migration.Migrations
                 .HasAnnotation("Relational:Sequence:tw_provided.conquers_vault_id_seq", "'conquers_vault_id_seq', 'tw_provided', '1', '1', '', '', 'Int32', 'False'")
                 .HasAnnotation("Relational:Sequence:tw_provided.world_id_seq", "'world_id_seq', 'tw_provided', '1', '1', '', '', 'Int16', 'False'");
 
-            modelBuilder.Entity("TW.Vault.Scaffold.AccessGroup", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.AccessGroup", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -59,7 +59,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("access_group","security");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Ally", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Ally", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -97,7 +97,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("ally","tw_provided");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Command", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Command", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -187,7 +187,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("command","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CommandArmy", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CommandArmy", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -246,7 +246,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("command_army","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.ConflictingDataRecord", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.ConflictingDataRecord", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -270,7 +270,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("conflicting_data_record","security");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Conquer", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Conquer", b =>
                 {
                     b.Property<int>("VaultId")
                         .ValueGeneratedOnAdd()
@@ -299,7 +299,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("conquer","tw_provided");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentArmy", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentArmy", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -363,7 +363,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("current_army","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentBuilding", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentBuilding", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -443,7 +443,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("current_building","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentPlayer", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentPlayer", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -464,7 +464,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("current_player","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentVillage", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentVillage", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -518,7 +518,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("current_village","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentVillageSupport", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentVillageSupport", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -559,7 +559,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("current_village_support","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.EnemyTribe", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.EnemyTribe", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -589,7 +589,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("enemy_tribe","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.FailedAuthorizationRecord", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.FailedAuthorizationRecord", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -627,7 +627,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("failed_authorization_record","security");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.IgnoredReport", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.IgnoredReport", b =>
                 {
                     b.Property<long>("ReportId")
                         .HasColumnName("report_id");
@@ -645,7 +645,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("ignored_report","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.InvalidDataRecord", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.InvalidDataRecord", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -675,7 +675,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("invalid_data_record","security");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.PerformanceRecord", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.PerformanceRecord", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -707,7 +707,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("performance_record","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Player", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Player", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -742,7 +742,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("player","tw_provided");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Report", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Report", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -835,7 +835,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("report","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.ReportArmy", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.ReportArmy", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -892,7 +892,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("report_army","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.ReportBuilding", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.ReportBuilding", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -967,7 +967,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("report_building","tw");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Transaction", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Transaction", b =>
                 {
                     b.Property<long>("TxId")
                         .ValueGeneratedOnAdd()
@@ -999,7 +999,7 @@ namespace TW.Vault.Migration.Migrations
                     b.ToTable("transaction","security");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.TranslationEntry", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.TranslationEntry", b =>
                 {
                     b.Property<short>("TranslationId")
                         .HasColumnName("translation_id");
@@ -3954,7 +3954,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         });
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.TranslationKey", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.TranslationKey", b =>
                 {
                     b.Property<short>("Id")
                         .ValueGeneratedOnAdd()
@@ -7402,7 +7402,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         });
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.TranslationLanguage", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.TranslationLanguage", b =>
                 {
                     b.Property<short>("Id")
                         .ValueGeneratedOnAdd()
@@ -7425,7 +7425,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         });
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.TranslationParameter", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.TranslationParameter", b =>
                 {
                     b.Property<short>("Id")
                         .ValueGeneratedOnAdd()
@@ -8018,7 +8018,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         });
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.TranslationRegistry", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.TranslationRegistry", b =>
                 {
                     b.Property<short>("Id")
                         .ValueGeneratedOnAdd()
@@ -8062,7 +8062,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                         });
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.User", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.User", b =>
                 {
                     b.Property<int>("Uid")
                         .ValueGeneratedOnAdd()
@@ -8128,7 +8128,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.ToTable("user","security");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.UserLog", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.UserLog", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -8191,7 +8191,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.ToTable("user_log","security");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.UserUploadHistory", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.UserUploadHistory", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -8220,7 +8220,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.ToTable("user_upload_history","security");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Village", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Village", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -8261,7 +8261,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.ToTable("village","tw_provided");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.World", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.World", b =>
                 {
                     b.Property<short>("Id")
                         .ValueGeneratedOnAdd()
@@ -8294,7 +8294,7 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.ToTable("world","tw_provided");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.WorldSettings", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.WorldSettings", b =>
                 {
                     b.Property<short>("WorldId")
                         .HasColumnName("world_id");
@@ -8364,412 +8364,412 @@ Requests to this script will only be IP-logged to protect against abuse. Informa
                     b.ToTable("world_settings","tw_provided");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Ally", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Ally", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("Ally")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Command", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Command", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.Transaction", "Tx")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Transaction", "Tx")
                         .WithMany("Command")
                         .HasForeignKey("TxId")
                         .HasConstraintName("fk_tx_id");
 
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("Command")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.CommandArmy", "Army")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CommandArmy", "Army")
                         .WithMany("Command")
                         .HasForeignKey("WorldId", "ArmyId")
                         .HasConstraintName("fk_army");
 
-                    b.HasOne("TW.Vault.Scaffold.Player", "SourcePlayer")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Player", "SourcePlayer")
                         .WithMany("CommandSourcePlayer")
                         .HasForeignKey("WorldId", "SourcePlayerId")
                         .HasConstraintName("fk_source_player")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.Village", "SourceVillage")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Village", "SourceVillage")
                         .WithMany("CommandSourceVillage")
                         .HasForeignKey("WorldId", "SourceVillageId")
                         .HasConstraintName("fk_source_village")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.Player", "TargetPlayer")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Player", "TargetPlayer")
                         .WithMany("CommandTargetPlayer")
                         .HasForeignKey("WorldId", "TargetPlayerId")
                         .HasConstraintName("fk_target_player");
 
-                    b.HasOne("TW.Vault.Scaffold.Village", "TargetVillage")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Village", "TargetVillage")
                         .WithMany("CommandTargetVillage")
                         .HasForeignKey("WorldId", "TargetVillageId")
                         .HasConstraintName("fk_target_village")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CommandArmy", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CommandArmy", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("CommandArmy")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.ConflictingDataRecord", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.ConflictingDataRecord", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.Transaction", "ConflictingTx")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Transaction", "ConflictingTx")
                         .WithMany("ConflictingDataRecordConflictingTx")
                         .HasForeignKey("ConflictingTxId")
                         .HasConstraintName("fk_conflicting_tx_id");
 
-                    b.HasOne("TW.Vault.Scaffold.Transaction", "OldTx")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Transaction", "OldTx")
                         .WithMany("ConflictingDataRecordOldTx")
                         .HasForeignKey("OldTxId")
                         .HasConstraintName("fk_old_tx_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Conquer", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Conquer", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("Conquer")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentBuilding", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentBuilding", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("CurrentBuilding")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.CurrentVillage", "Village")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CurrentVillage", "Village")
                         .WithOne("CurrentBuilding")
-                        .HasForeignKey("TW.Vault.Scaffold.CurrentBuilding", "WorldId", "VillageId", "AccessGroupId")
+                        .HasForeignKey("TW.Vault.Lib.Scaffold.CurrentBuilding", "WorldId", "VillageId", "AccessGroupId")
                         .HasConstraintName("buildings_villages_fk")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentPlayer", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentPlayer", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("CurrentPlayer")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentVillage", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentVillage", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("CurrentVillage")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
 
-                    b.HasOne("TW.Vault.Scaffold.CurrentArmy", "ArmyAtHome")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CurrentArmy", "ArmyAtHome")
                         .WithMany("CurrentVillageArmyAtHome")
                         .HasForeignKey("WorldId", "ArmyAtHomeId")
                         .HasConstraintName("fk_army_at_home");
 
-                    b.HasOne("TW.Vault.Scaffold.CurrentArmy", "ArmyOwned")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CurrentArmy", "ArmyOwned")
                         .WithMany("CurrentVillageArmyOwned")
                         .HasForeignKey("WorldId", "ArmyOwnedId")
                         .HasConstraintName("fk_owned_army")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("TW.Vault.Scaffold.CurrentArmy", "ArmyRecentLosses")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CurrentArmy", "ArmyRecentLosses")
                         .WithMany("CurrentVillageArmyRecentLosses")
                         .HasForeignKey("WorldId", "ArmyRecentLossesId")
                         .HasConstraintName("current_village_current_army_fk")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("TW.Vault.Scaffold.CurrentArmy", "ArmyStationed")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CurrentArmy", "ArmyStationed")
                         .WithMany("CurrentVillageArmyStationed")
                         .HasForeignKey("WorldId", "ArmyStationedId")
                         .HasConstraintName("fk_stationed_army")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("TW.Vault.Scaffold.CurrentArmy", "ArmySupporting")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CurrentArmy", "ArmySupporting")
                         .WithMany("CurrentVillageArmySupporting")
                         .HasForeignKey("WorldId", "ArmySupportingId")
                         .HasConstraintName("fk_army_supporting");
 
-                    b.HasOne("TW.Vault.Scaffold.CurrentArmy", "ArmyTraveling")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CurrentArmy", "ArmyTraveling")
                         .WithMany("CurrentVillageArmyTraveling")
                         .HasForeignKey("WorldId", "ArmyTravelingId")
                         .HasConstraintName("fk_traveling_army")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("TW.Vault.Scaffold.Village", "Village")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Village", "Village")
                         .WithMany("CurrentVillage")
                         .HasForeignKey("WorldId", "VillageId")
                         .HasConstraintName("fk_village");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.CurrentVillageSupport", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.CurrentVillageSupport", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.Transaction", "Tx")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Transaction", "Tx")
                         .WithMany("CurrentVillageSupport")
                         .HasForeignKey("TxId")
                         .HasConstraintName("fk_tx_id");
 
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("CurrentVillageSupport")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
 
-                    b.HasOne("TW.Vault.Scaffold.Village", "SourceVillage")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Village", "SourceVillage")
                         .WithMany("CurrentVillageSupportSourceVillage")
                         .HasForeignKey("WorldId", "SourceVillageId")
                         .HasConstraintName("fk_source_village");
 
-                    b.HasOne("TW.Vault.Scaffold.CurrentArmy", "SupportingArmy")
+                    b.HasOne("TW.Vault.Lib.Scaffold.CurrentArmy", "SupportingArmy")
                         .WithMany("CurrentVillageSupport")
                         .HasForeignKey("WorldId", "SupportingArmyId")
                         .HasConstraintName("fk_supporting_army");
 
-                    b.HasOne("TW.Vault.Scaffold.Village", "TargetVillage")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Village", "TargetVillage")
                         .WithMany("CurrentVillageSupportTargetVillage")
                         .HasForeignKey("WorldId", "TargetVillageId")
                         .HasConstraintName("fk_target_village");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.EnemyTribe", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.EnemyTribe", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.AccessGroup", "AccessGroup")
+                    b.HasOne("TW.Vault.Lib.Scaffold.AccessGroup", "AccessGroup")
                         .WithMany()
                         .HasForeignKey("AccessGroupId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.Transaction", "Tx")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Transaction", "Tx")
                         .WithMany("EnemyTribe")
                         .HasForeignKey("TxId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("EnemyTribe")
                         .HasForeignKey("WorldId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.InvalidDataRecord", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.InvalidDataRecord", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.User", "User")
+                    b.HasOne("TW.Vault.Lib.Scaffold.User", "User")
                         .WithMany("InvalidDataRecord")
                         .HasForeignKey("UserId")
                         .HasConstraintName("fk_user_id")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Player", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Player", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("Player")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
 
-                    b.HasOne("TW.Vault.Scaffold.Ally", "Tribe")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Ally", "Tribe")
                         .WithMany("Players")
                         .HasForeignKey("WorldId", "TribeId");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Report", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Report", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.Transaction", "Tx")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Transaction", "Tx")
                         .WithMany("Report")
                         .HasForeignKey("TxId")
                         .HasConstraintName("fk_tx_id");
 
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("Report")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
 
-                    b.HasOne("TW.Vault.Scaffold.ReportArmy", "AttackerArmy")
+                    b.HasOne("TW.Vault.Lib.Scaffold.ReportArmy", "AttackerArmy")
                         .WithMany("ReportAttackerArmy")
                         .HasForeignKey("WorldId", "AttackerArmyId")
                         .HasConstraintName("fk_attacker_army");
 
-                    b.HasOne("TW.Vault.Scaffold.ReportArmy", "AttackerLossesArmy")
+                    b.HasOne("TW.Vault.Lib.Scaffold.ReportArmy", "AttackerLossesArmy")
                         .WithMany("ReportAttackerLossesArmy")
                         .HasForeignKey("WorldId", "AttackerLossesArmyId")
                         .HasConstraintName("fk_attacker_army_losses");
 
-                    b.HasOne("TW.Vault.Scaffold.Player", "AttackerPlayer")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Player", "AttackerPlayer")
                         .WithMany("ReportAttackerPlayer")
                         .HasForeignKey("WorldId", "AttackerPlayerId")
                         .HasConstraintName("fk_attacker_player");
 
-                    b.HasOne("TW.Vault.Scaffold.Village", "AttackerVillage")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Village", "AttackerVillage")
                         .WithMany("ReportAttackerVillage")
                         .HasForeignKey("WorldId", "AttackerVillageId")
                         .HasConstraintName("fk_attacker_village");
 
-                    b.HasOne("TW.Vault.Scaffold.ReportBuilding", "Building")
+                    b.HasOne("TW.Vault.Lib.Scaffold.ReportBuilding", "Building")
                         .WithMany("Report")
                         .HasForeignKey("WorldId", "BuildingId")
                         .HasConstraintName("fk_building");
 
-                    b.HasOne("TW.Vault.Scaffold.ReportArmy", "DefenderArmy")
+                    b.HasOne("TW.Vault.Lib.Scaffold.ReportArmy", "DefenderArmy")
                         .WithMany("ReportDefenderArmy")
                         .HasForeignKey("WorldId", "DefenderArmyId")
                         .HasConstraintName("fk_defender_army");
 
-                    b.HasOne("TW.Vault.Scaffold.ReportArmy", "DefenderLossesArmy")
+                    b.HasOne("TW.Vault.Lib.Scaffold.ReportArmy", "DefenderLossesArmy")
                         .WithMany("ReportDefenderLossesArmy")
                         .HasForeignKey("WorldId", "DefenderLossesArmyId")
                         .HasConstraintName("fk_defender_army_losses");
 
-                    b.HasOne("TW.Vault.Scaffold.Player", "DefenderPlayer")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Player", "DefenderPlayer")
                         .WithMany("ReportDefenderPlayer")
                         .HasForeignKey("WorldId", "DefenderPlayerId")
                         .HasConstraintName("fk_defender_player");
 
-                    b.HasOne("TW.Vault.Scaffold.ReportArmy", "DefenderTravelingArmy")
+                    b.HasOne("TW.Vault.Lib.Scaffold.ReportArmy", "DefenderTravelingArmy")
                         .WithMany("ReportDefenderTravelingArmy")
                         .HasForeignKey("WorldId", "DefenderTravelingArmyId")
                         .HasConstraintName("fk_defender_traveling_army");
 
-                    b.HasOne("TW.Vault.Scaffold.Village", "DefenderVillage")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Village", "DefenderVillage")
                         .WithMany("ReportDefenderVillage")
                         .HasForeignKey("WorldId", "DefenderVillageId")
                         .HasConstraintName("fk_defender_village");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.ReportArmy", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.ReportArmy", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("ReportArmy")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.ReportBuilding", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.ReportBuilding", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("ReportBuilding")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Transaction", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Transaction", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("Transaction")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.TranslationEntry", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.TranslationEntry", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.TranslationKey", "Key")
+                    b.HasOne("TW.Vault.Lib.Scaffold.TranslationKey", "Key")
                         .WithMany("TranslationEntries")
                         .HasForeignKey("KeyId")
                         .HasConstraintName("fk_translation_key_id")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.TranslationRegistry", "Translation")
+                    b.HasOne("TW.Vault.Lib.Scaffold.TranslationRegistry", "Translation")
                         .WithMany("Entries")
                         .HasForeignKey("TranslationId")
                         .HasConstraintName("fk_translation_registry_id")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.TranslationParameter", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.TranslationParameter", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.TranslationKey", "Key")
+                    b.HasOne("TW.Vault.Lib.Scaffold.TranslationKey", "Key")
                         .WithMany("Parameters")
                         .HasForeignKey("KeyId")
                         .HasConstraintName("fk_translation_key_id")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.TranslationRegistry", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.TranslationRegistry", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.TranslationLanguage", "Language")
+                    b.HasOne("TW.Vault.Lib.Scaffold.TranslationLanguage", "Language")
                         .WithMany("Translations")
                         .HasForeignKey("LanguageId")
                         .HasConstraintName("fk_registry_language_id")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.User", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.User", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.AccessGroup", "AccessGroup")
+                    b.HasOne("TW.Vault.Lib.Scaffold.AccessGroup", "AccessGroup")
                         .WithMany("Users")
                         .HasForeignKey("AccessGroupId")
                         .HasConstraintName("fk_access_group_id")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.Transaction", "Tx")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Transaction", "Tx")
                         .WithMany("User")
                         .HasForeignKey("TxId")
                         .HasConstraintName("fk_tx_id");
 
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("User")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.UserLog", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.UserLog", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.Transaction", "Tx")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Transaction", "Tx")
                         .WithMany("UserLog")
                         .HasForeignKey("TxId")
                         .HasConstraintName("fk_tx_id");
 
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("UserLog")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.UserUploadHistory", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.UserUploadHistory", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.User", "U")
+                    b.HasOne("TW.Vault.Lib.Scaffold.User", "U")
                         .WithMany("UserUploadHistory")
                         .HasForeignKey("Uid")
                         .HasConstraintName("fk_uid")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.Village", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.Village", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithMany("Village")
                         .HasForeignKey("WorldId")
                         .HasConstraintName("fk_world_id")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("TW.Vault.Scaffold.Player", "Player")
+                    b.HasOne("TW.Vault.Lib.Scaffold.Player", "Player")
                         .WithMany("Village")
                         .HasForeignKey("WorldId", "PlayerId")
                         .HasConstraintName("fk_player_id");
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.World", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.World", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.TranslationRegistry", "DefaultTranslation")
+                    b.HasOne("TW.Vault.Lib.Scaffold.TranslationRegistry", "DefaultTranslation")
                         .WithMany("DefaultWorlds")
                         .HasForeignKey("DefaultTranslationId")
                         .HasConstraintName("fk_default_translation_id")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("TW.Vault.Scaffold.WorldSettings", b =>
+            modelBuilder.Entity("TW.Vault.Lib.Scaffold.WorldSettings", b =>
                 {
-                    b.HasOne("TW.Vault.Scaffold.World", "World")
+                    b.HasOne("TW.Vault.Lib.Scaffold.World", "World")
                         .WithOne("WorldSettings")
-                        .HasForeignKey("TW.Vault.Scaffold.WorldSettings", "WorldId")
+                        .HasForeignKey("TW.Vault.Lib.Scaffold.WorldSettings", "WorldId")
                         .HasConstraintName("fk_world_id")
                         .OnDelete(DeleteBehavior.Cascade);
                 });

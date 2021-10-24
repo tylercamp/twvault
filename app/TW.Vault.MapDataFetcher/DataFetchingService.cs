@@ -12,11 +12,13 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using TW.Vault.Features;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Features;
+using Scaffold = TW.Vault.Lib.Scaffold;
 
 namespace TW.Vault.MapDataFetcher
 {
-    public class DataFetchingService : TW.Vault.Features.BackgroundService
+    public class DataFetchingService : TW.Vault.Lib.Features.BackgroundService
     {
         public DataFetchingService(IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory, IHostApplicationLifetime applicationLifetime) : base(scopeFactory, loggerFactory)
         {

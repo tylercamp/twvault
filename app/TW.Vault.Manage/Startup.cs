@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
 
 namespace TW.Vault.Manage
 {
@@ -29,7 +29,7 @@ namespace TW.Vault.Manage
         {
             services.AddControllers();
 
-            String connectionString = Vault.Configuration.ConnectionString;
+            String connectionString = Vault.Lib.Configuration.ConnectionString;
             services.AddDbContext<VaultContext>(options => options.UseNpgsql(connectionString));
         }
 

@@ -5,9 +5,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TW.Vault.Security;
+using TW.Vault.Lib.Security;
 
-namespace TW.Vault.Features
+namespace TW.Vault.Lib.Features
 {
     public class InvalidStringEncryptionException : Exception
     {

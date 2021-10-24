@@ -12,11 +12,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Caching;
-using TW.Vault.Scaffold;
-using TW.Vault.Security;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Caching;
+using TW.Vault.Lib.Scaffold;
+using TW.Vault.Lib.Security;
+using TW.Vault.Lib.Model;
+using TW.Vault.Lib.Features;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Route("script")]
     [EnableCors("AllOrigins")]
@@ -66,7 +69,7 @@ namespace TW.Vault.Controllers
                 if (worldId == null)
                     return null;
 
-                var query = new Features.VillageSearch.Query
+                var query = new VillageSearch.Query
                 {
                     WorldId = worldId.Value,
                     PlayerNames = players,
@@ -77,23 +80,23 @@ namespace TW.Vault.Controllers
                 if (!string.IsNullOrWhiteSpace(minCoord))
                 {
                     var minParts = minCoord.Split('|');
-                    query.MinCoord = new Model.Coordinate { X = int.Parse(minParts[0]), Y = int.Parse(minParts[1]) };
+                    query.MinCoord = new Coordinate { X = int.Parse(minParts[0]), Y = int.Parse(minParts[1]) };
                 }
 
                 if (!string.IsNullOrWhiteSpace(maxCoord))
                 {
                     var maxParts = maxCoord.Split('|');
-                    query.MaxCoord = new Model.Coordinate { X = int.Parse(maxParts[0]), Y = int.Parse(maxParts[1]) };
+                    query.MaxCoord = new Coordinate { X = int.Parse(maxParts[0]), Y = int.Parse(maxParts[1]) };
                 }
 
                 if (!string.IsNullOrWhiteSpace(center))
                 {
                     var centerParts = center.Split('|');
-                    query.CenterCoord = new Model.Coordinate { X = int.Parse(centerParts[0]), Y = int.Parse(centerParts[1]) };
+                    query.CenterCoord = new Coordinate { X = int.Parse(centerParts[0]), Y = int.Parse(centerParts[1]) };
                     query.MaxDistance = float.Parse(centerParts[2]);
                 }
 
-                var coordString = await Features.VillageSearch.ListCoords(context, query);
+                var coordString = await VillageSearch.ListCoords(context, query);
 
                 var baseScript = GetFileContents("fakes.js");
 
@@ -134,6 +137,7 @@ namespace TW.Vault.Controllers
             return Content(scriptContents, "application/javascript");
         }
 
+#if DEBUG
         [HttpGet("real/{authToken}/{*name}", Name = "GetCompiledUnobfuscatedScript")]
         public async Task<IActionResult> GetCompiledUnobfuscated(String authToken, String name)
         {
@@ -186,7 +190,7 @@ namespace TW.Vault.Controllers
 
             return Content(scriptContents, "application/javascript");
         }
-        
+
         // GET: raw/scriptName.js
         [HttpGet("raw/{authToken}/{*name}", Name = "GetRawUnobfuscatedScript")]
         public IActionResult GetRaw(String authToken, String name)
@@ -197,6 +201,7 @@ namespace TW.Vault.Controllers
             else
                 return Content(contents, "application/javascript");
         }
+#endif
 
         private String GetFileContents(String name)
         {
@@ -235,7 +240,7 @@ namespace TW.Vault.Controllers
 
         private String MakeCompiled(String name, Action<String> onError, Action<String> onNotFound)
         {
-            var scriptCompiler = new Features.ScriptCompiler();
+            var scriptCompiler = new ScriptCompiler();
             scriptCompiler.InitCommonVars();
 
             List<String> failedFiles = new List<string>();

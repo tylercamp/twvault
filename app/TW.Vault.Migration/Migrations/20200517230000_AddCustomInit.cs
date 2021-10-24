@@ -7,7 +7,7 @@ using System.Text;
 
 namespace TW.Vault.Migration.Migrations
 {
-    [DbContext(typeof(Scaffold.VaultContext))]
+    [DbContext(typeof(Lib.Scaffold.VaultContext))]
     [Migration("20200517230000_AddCustomInit")]
     public class AddCustomInit : Microsoft.EntityFrameworkCore.Migrations.Migration
     {

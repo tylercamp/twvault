@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Model.Convert;
-using TW.Vault.Model.JSON;
-using TW.Vault.Model.Native;
+using TW.Vault.Lib.Model.Convert;
+using TW.Vault.Lib.Model.JSON;
+using TW.Vault.Lib.Model.Native;
 
-namespace TW.Vault.Features.Simulation
+namespace TW.Vault.Lib.Features.Simulation
 {
     // https://forum.tribalwars.net/index.php?threads/battle-formula.183466/
     // https://forum.tribalwars.net/index.php?threads/defence-calculation.132254/

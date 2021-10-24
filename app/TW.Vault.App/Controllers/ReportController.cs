@@ -7,26 +7,28 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using JSON = TW.Vault.Model.JSON;
-using Native = TW.Vault.Model.Native;
-using TW.Vault.Model.Convert;
-using TW.Vault.Model.Validation;
+using JSON = TW.Vault.Lib.Model.JSON;
+using Native = TW.Vault.Lib.Model.Native;
+using TW.Vault.Lib.Model.Convert;
+using TW.Vault.Lib.Model.Validation;
 using Newtonsoft.Json;
 using Microsoft.Extensions.DependencyInjection;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
+using TW.Vault.Lib;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/{worldName}/Report")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class ReportController : BaseController
     {
         public ReportController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
         {
         }
 
+#if DEBUG
         [HttpGet("count")]
         public async Task<IActionResult> GetCount()
         {
@@ -36,7 +38,7 @@ namespace TW.Vault.Controllers
         [HttpGet("{reportId}", Name = "GetReport")]
         public Task<IActionResult> Get(long reportId)
         {
-            return Profile("Get report by ID", () => SelectOr404<Scaffold.Report>(
+            return Profile("Get report by ID", () => SelectOr404<Lib.Scaffold.Report>(
                 q => q.Where(r => r.ReportId == reportId).IncludeReportData().FromWorld(CurrentWorldId),
                 r => ReportConvert.ModelToJson(r)
             ));
@@ -86,6 +88,7 @@ namespace TW.Vault.Controllers
             var jsonReports = reports.Select(ReportConvert.ModelToJson);
             return Ok(jsonReports);
         }
+#endif
 
         [HttpPost("check-existing-reports")]
         public async Task<IActionResult> GetExistingReports([FromBody]List<long> reportIds)
@@ -137,7 +140,7 @@ namespace TW.Vault.Controllers
 
             foreach (var id in reportsToIgnore)
             {
-                var newRecord = new Scaffold.IgnoredReport
+                var newRecord = new Lib.Scaffold.IgnoredReport
                 {
                     ReportId = id,
                     WorldId = CurrentWorldId,
@@ -246,7 +249,7 @@ namespace TW.Vault.Controllers
                     {
                         if (scaffoldReport == null)
                         {
-                            scaffoldReport = new Scaffold.Report();
+                            scaffoldReport = new Lib.Scaffold.Report();
                             scaffoldReport.WorldId = CurrentWorldId;
                             scaffoldReport.AccessGroupId = CurrentAccessGroupId;
                             context.Report.Add(scaffoldReport);
@@ -257,7 +260,7 @@ namespace TW.Vault.Controllers
 
                             if (existingJsonReport != jsonReport && scaffoldReport.TxId.HasValue)
                             {
-                                context.ConflictingDataRecord.Add(new Scaffold.ConflictingDataRecord
+                                context.ConflictingDataRecord.Add(new Lib.Scaffold.ConflictingDataRecord
                                 {
                                     ConflictingTx = tx,
                                     OldTxId = scaffoldReport.TxId.Value
@@ -276,7 +279,7 @@ namespace TW.Vault.Controllers
                         {
                             var lostAllTroops = jsonReport.AttackingArmy == jsonReport.AttackingArmyLosses;
 
-                            var command = await Model.UtilQuery.FindCommandForReport(scaffoldReport, context);
+                            var command = await Lib.Model.UtilQuery.FindCommandForReport(scaffoldReport, context);
 
                             if (command == null && !lostAllTroops && (jsonReport.Loyalty == null || jsonReport.Loyalty > 0))
                             {
@@ -292,7 +295,7 @@ namespace TW.Vault.Controllers
                                     throw e;
                                 }
 
-                                command = new Scaffold.Command();
+                                command = new Lib.Scaffold.Command();
                                 command.Tx = tx;
                                 command.WorldId = CurrentWorldId;
                                 command.AccessGroupId = CurrentAccessGroupId;
@@ -312,7 +315,7 @@ namespace TW.Vault.Controllers
                                 {
                                     try
                                     {
-                                        command.CommandId = Random.NextLong >> 14;
+                                        command.CommandId = Lib.Random.NextLong >> 14;
                                         context.Add(command);
                                         await context.SaveChangesAsync();
                                         madeCommand = true;
@@ -351,7 +354,7 @@ namespace TW.Vault.Controllers
                                                                         .Where(v => v.VillageId == jsonReport.DefendingVillageId)
                                                                         .FirstOrDefaultAsync();
 
-                                var travelCalculator = new Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
+                                var travelCalculator = new Lib.Features.Simulation.TravelCalculator(CurrentWorldSettings.GameSpeed, CurrentWorldSettings.UnitSpeed);
                                 var travelTime = travelCalculator.CalculateTravelTime(slowestType.Value, attackingVillage, defendingVillage);
 
                                 command.TroopType = slowestType.Value.ToTroopString();

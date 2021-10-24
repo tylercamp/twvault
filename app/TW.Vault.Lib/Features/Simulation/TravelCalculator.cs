@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Model.Convert;
-using JSON = TW.Vault.Model.JSON;
-using Native = TW.Vault.Model.Native;
+using TW.Vault.Lib.Model.Convert;
+using JSON = TW.Vault.Lib.Model.JSON;
+using Native = TW.Vault.Lib.Model.Native;
 
-namespace TW.Vault.Features.Simulation
+namespace TW.Vault.Lib.Features.Simulation
 {
     public class TravelCalculator
     {

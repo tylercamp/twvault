@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using JSON = TW.Vault.Model.JSON;
-using static TW.Vault.Model.Convert.ConvertUtil;
+using JSON = TW.Vault.Lib.Model.JSON;
+using static TW.Vault.Lib.Model.Convert.ConvertUtil;
 
-namespace TW.Vault.Model.Convert
+namespace TW.Vault.Lib.Model.Convert
 {
     public static class ArmyConvert
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Model.JSON
+namespace TW.Vault.Lib.Model.JSON
 {
     public enum TroopType
     {

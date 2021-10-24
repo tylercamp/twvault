@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Model.Convert;
+using TW.Vault.Lib.Model.Convert;
 
-namespace TW.Vault.Model.Validation
+namespace TW.Vault.Lib.Model.Validation
 {
     public static class ArmyValidate
     {

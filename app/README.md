@@ -14,6 +14,8 @@ When debugging TW.Vault.App, TW.ConfigurationFetcher, TW.Vault.Manage, or TW.Vau
 
 The Postgres DB should be initialized using `TW.Vault.Migration` before attempting to run any of the other services locally.
 
+The `launchSettings.json` files have been included, which have values used for debugging as a point of reference. If maintaining your own Vault, make sure not to commit local `launchSettings.json` changes to your repository, since these contain usernames and passwords.
+
 # Configuration
 
 These projects use the standard `appsettings.json` file to manage configuration properties. These can be modified directly, or can be overridden via environment variables. See the released sample configuration files under `/etc/systemd` for example usage.
@@ -49,7 +51,7 @@ These comments only relate to securing communications with the Vault webapp. Mea
 # Project Overview
 
 ## TW.Vault.Migration
-Used to initialize a Postgres database with all necessary schemas, tables, and stored procedures.
+Used to initialize a Postgres database with all necessary schemas, tables, and stored procedures. This was generated using the `dotnet ef migrate` tool, but some manual tweaks to the codebase were required to get it working, which have since been reverted since they were only necessary for generating migrations. I don't recall the exact details, but when updating the Migration tool, tinkering and troubleshooting will be necessary. Make sure not to change existing migration steps - new changes should go into a new migration step instead.
 
 ## TW.ConfigurationFetcher
 A tool for automatically fetching config info for Tribal Wars game servers and storing in Vault DB. 

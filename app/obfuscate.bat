@@ -1,1 +1,0 @@
-javascript-obfuscator vault.js -o vault.obf.js --compact true --control-flow-flattening true --dead-code-injection true --dead-code-injection-threshold 0.2 --rename-globals true --self-defending true --string-array-encoding 'rc4' --string-array-threshold 1 --transform-object-keys true

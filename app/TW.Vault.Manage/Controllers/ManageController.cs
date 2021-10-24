@@ -7,17 +7,18 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using TW.Vault.Lib;
 
 namespace TW.Vault.Manage.Controllers
 {
     [ApiController]
     public class ManageController : ControllerBase
     {
-        Scaffold.VaultContext context;
+        Lib.Scaffold.VaultContext context;
         ILogger logger;
 
 
-        public ManageController(Scaffold.VaultContext context, ILoggerFactory factory)
+        public ManageController(Lib.Scaffold.VaultContext context, ILoggerFactory factory)
         {
             this.context = context;
             logger = factory.CreateLogger<ManageController>();
@@ -32,7 +33,7 @@ namespace TW.Vault.Manage.Controllers
         [HttpGet("/captcha-sitekey")]
         public ActionResult GetCaptchaInfo()
         {
-            return Ok(Configuration.Instance["CaptchaSiteKey"]);
+            return Ok(Lib.Configuration.Instance["CaptchaSiteKey"]);
         }
 
         [HttpGet("/servers")]
@@ -93,7 +94,7 @@ namespace TW.Vault.Manage.Controllers
                 return Ok(new { error = "An error occurred while verifying captcha" });
             }
 
-            var tx = new Scaffold.Transaction
+            var tx = new Lib.Scaffold.Transaction
             {
                 OccurredAt = DateTime.UtcNow,
                 WorldId = world.Id,
@@ -101,14 +102,14 @@ namespace TW.Vault.Manage.Controllers
             };
             context.Add(tx);
 
-            var accessGroup = new Scaffold.AccessGroup();
+            var accessGroup = new Lib.Scaffold.AccessGroup();
             accessGroup.WorldId = userInfo.WorldId;
             accessGroup.Label = userInfo.Name;
             context.AccessGroup.Add(accessGroup);
             context.SaveChanges();
 
             var authToken = Guid.NewGuid();
-            var user = new Scaffold.User
+            var user = new Lib.Scaffold.User
             {
                 AccessGroupId = accessGroup.Id,
                 WorldId = (short)userInfo.WorldId,

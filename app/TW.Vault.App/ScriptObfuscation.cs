@@ -33,7 +33,7 @@ namespace TW.Vault.App
         {
             var psi = new ProcessStartInfo();
             psi.FileName = ShellName;
-            psi.Arguments = ToShellParams($"javascript-obfuscator {inputFile} -o {targetFile} {Configuration.Instance.GetSection("Security")["ObfuscatorParams"] ?? String.Join(" ", defaultObfuscationParams)}");
+            psi.Arguments = ToShellParams($"javascript-obfuscator {inputFile} -o {targetFile} {Lib.Configuration.Instance.GetSection("Security")["ObfuscatorParams"] ?? String.Join(" ", defaultObfuscationParams)}");
             psi.CreateNoWindow = true;
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;

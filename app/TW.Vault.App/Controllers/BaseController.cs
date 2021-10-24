@@ -12,11 +12,12 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
-using TW.Vault.Features;
-using TW.Vault.Scaffold;
-using TW.Vault.Security;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Features;
+using TW.Vault.Lib.Scaffold;
+using TW.Vault.Lib.Security;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     public abstract class BaseController : Controller
     {
@@ -81,24 +82,33 @@ namespace TW.Vault.Controllers
                 this.context = context;
             }
 
+            private IQueryable<T> FromAG<T>(IQueryable<T> query, Func<IQueryable<T>, int, IQueryable<T>> mod)
+            {
+                return mod(query, accessGroupId);
+            }
+
+            public IQueryable<CurrentVillageSupport> CurrentVillageSupport => FromAG(context.CurrentVillageSupport.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<CurrentBuilding> CurrentBuilding => FromAG(context.CurrentBuilding.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<CurrentPlayer> CurrentPlayer => FromAG(context.CurrentPlayer.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<CurrentVillage> CurrentVillage => FromAG(context.CurrentVillage.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<Command> Command => FromAG(context.Command.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<Report> Report => FromAG(context.Report.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<IgnoredReport> IgnoredReport => FromAG(context.IgnoredReport.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<EnemyTribe> EnemyTribe => FromAG(context.EnemyTribe.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<User> User => FromAG(context.User.FromWorld(worldId), EFUtil.FromAccessGroup);
+            public IQueryable<UserLog> UserLog => FromAG(context.UserLog.FromWorld(worldId), EFUtil.FromAccessGroup);
+
+
             public IQueryable<Ally> Ally => context.Ally.FromWorld(worldId);
-            public IQueryable<Command> Command => context.Command.FromWorld(worldId).FromAccessGroup(accessGroupId);
             public IQueryable<CommandArmy> CommandArmy => context.CommandArmy.FromWorld(worldId);
             public IQueryable<Conquer> Conquer => context.Conquer.FromWorld(worldId);
             public IQueryable<CurrentArmy> CurrentArmy => context.CurrentArmy.FromWorld(worldId);
-            public IQueryable<CurrentBuilding> CurrentBuilding => context.CurrentBuilding.FromWorld(worldId).FromAccessGroup(accessGroupId);
-            public IQueryable<CurrentPlayer> CurrentPlayer => context.CurrentPlayer.FromWorld(worldId).FromAccessGroup(accessGroupId);
-            public IQueryable<CurrentVillage> CurrentVillage => context.CurrentVillage.FromWorld(worldId).FromAccessGroup(accessGroupId);
-            public IQueryable<CurrentVillageSupport> CurrentVillageSupport => context.CurrentVillageSupport.FromWorld(worldId).FromAccessGroup(accessGroupId);
-            public IQueryable<EnemyTribe> EnemyTribe => context.EnemyTribe.FromWorld(worldId).FromAccessGroup(accessGroupId);
+
+            
             public IQueryable<Player> Player => context.Player.FromWorld(worldId);
-            public IQueryable<Report> Report => context.Report.FromWorld(worldId).FromAccessGroup(accessGroupId);
-            public IQueryable<IgnoredReport> IgnoredReport => context.IgnoredReport.FromWorld(worldId).FromAccessGroup(accessGroupId);
             public IQueryable<ReportArmy> ReportArmy => context.ReportArmy.FromWorld(worldId);
             public IQueryable<ReportBuilding> ReportBuilding => context.ReportBuilding.FromWorld(worldId);
             public IQueryable<Transaction> Transaction => context.Transaction.FromWorld(worldId);
-            public IQueryable<User> User => context.User.FromWorld(worldId).FromAccessGroup(accessGroupId);
-            public IQueryable<UserLog> UserLog => context.UserLog.FromWorld(worldId).FromAccessGroup(accessGroupId);
             public IQueryable<Village> Village => context.Village.FromWorld(worldId);
 
 

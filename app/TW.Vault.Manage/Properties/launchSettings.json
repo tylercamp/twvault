@@ -1,0 +1,24 @@
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:58452",
+      "sslPort": 0
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "TW.Vault.Manage": {
+      "commandName": "Project",
+      "launchUrl": "api/values",
+      "environmentVariables": {
+        "CaptchaSiteKey": "6LePwaYUAAAAAMYte7qFaG9A1Igz3cpxfT9P0PmN",
+        "ConnectionStrings__Vault": "Server=192.168.1.250; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??",
+        "CaptchaSecretKey": "6LePwaYUAAAAADOCT4gVRQhhQKY34uoImDsNaXFE",
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:5000"
+    }
+  }
+}
