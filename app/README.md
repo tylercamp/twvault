@@ -7,9 +7,9 @@ Requirements:
 
 Open the `TW.Vault.sln` file to open the project in Visual Studio. All projects should be buildable as-is.
 
-When debugging TW.Vault.App, change the debug target from "IIS Express" to the standalone server option.
-
 When debugging TW.Vault.App, TW.ConfigurationFetcher, TW.Vault.Manage, or TW.Vault.MapDataFetcher, make sure to modify the environment variables for the application before attempting to run it. Specify the `ConnectionStrings__Vault` environment variable and assign it to a valid EntityFramework connection string, eg `Server=localhost; Port=5432; Database=vault; User Id=twu_vault; Password=password`.
+
+The `launchSettings.json` files have been included, which have values used for debugging as a point of reference. If maintaining your own Vault, make sure not to commit local `launchSettings.json` changes to your repository, since these contain usernames and passwords.
 
 # Configuration
 
@@ -46,7 +46,7 @@ These comments only relate to securing communications with the Vault webapp. Mea
 # Project Overview
 
 ## TW.Vault.Migration
-Used to initialize a Postgres database with all necessary schemas, tables, and stored procedures.
+Used to initialize a Postgres database with all necessary schemas, tables, and stored procedures. This was generated using the `dotnet ef migrate` tool, but some manual tweaks to the codebase were required to get it working, which have since been reverted since they were only necessary for generating migrations. I don't recall the exact details, but when updating the Migration tool, tinkering and troubleshooting will be necessary. Make sure not to change existing migration steps - new changes should go into a new migration step instead.
 
 ## TW.ConfigurationFetcher
 A tool for automatically fetching config info for Tribal Wars game servers and storing in Vault DB. 

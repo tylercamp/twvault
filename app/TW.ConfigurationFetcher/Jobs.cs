@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
 
 namespace TW.ConfigurationFetcher
 {
