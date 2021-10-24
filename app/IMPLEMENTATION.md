@@ -1,8 +1,6 @@
 
 This document contains notes regarding implementation of several features.
 
-!! TODO !! Make namespaces consistent with project names (eg TW.Vault.Security should be TW.Vault.Lib.Security)
-
 ## Authentication and Permissions
 
 Authentication is done via the `X-V-TOKEN` header, which contains a string formatted `PlayerId:TribeId:VaultKey:IsSitter` (`TW.Vault.Lib.Security.AuthenticationUtil`). This can easily be spoofed by manually constructing a request; obfuscation of this data can prevent this sort of attack.
@@ -75,5 +73,22 @@ Since translations are provided by users and are unvetted, this is a potential v
 
 The list of available translation keys are maintained at `TW.Vault.App/wwwroot/lib/translationCodes.js`. This is mostly used to provide autocomplete to the code editor, making it easier to code without constantly referencing the list of keys.
 
-# Script UI
+## Script UI
 
+Logic for the tabbed UI layout is mostly handled in `TW.Vault.App/wwwroot/ui/ui-lib.js`. All files in `TW.Vault.App/wwwroot/ui/vault` make use of it. The `ui/vault.js` file initializes the UI.
+
+The `ui-lib.js` file also has utilities for syncing UI changes to object values, which is used wherever there are text inputs ie Map overlay and Tagging.
+
+## Script Utilities
+
+The file `TW.Vault.App/wwwroot/lib/lib.js` has utilities for:
+
+- Parsing datetime strings with a variety of formats (`parseTimeString`)
+- Translating text (`translate` / `hasTranslation`)
+- Making authenticated requests to the Vault server (`getApi`, `postApi`, `putApi`, `deleteApi`)
+- Checking for captcha (`checkContainsCaptcha`)
+- Formatting text (`formatDateTime`, `formatDuration`, `namedReplace`)
+- Parsing text (`namedMatch`)
+- Accessing local storage and cookies (`setLocalStorage`, `getLocalStorage`) with default values for missing entries
+- JSON generation/parsing (`jsonParse`, `jsonStringify`) with extra handling for Date objects
+- ... and many others
