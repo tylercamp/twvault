@@ -15,13 +15,15 @@ The Cicada information may be used for an overview of the process, and the Publi
 
 The Public copy has all original usernames/passwords in plaintext (as the server has already been shut down and wiped) while the Cicada copy has credentials redacted.
 
+## Public Database Contents
+
+World config and translation data has been exported from the public Vault to CSV form and are available in `db.zip`. Importing this to your own DB must be done [manually](https://dataschool.com/learn-sql/importing-data-from-csv-in-postgresql/).
+
 ## Building the Programs
 
 Clone the original Vault repo from https://github.com/tylercamp/twvault and install the ASP.NET Core 3.1 SDK on your machine. If you're planning on modifying the Vault, use Microsoft Visual Studio Community for convenience.
 
-!! TODO !!
-
-Use the `build-release.bat` (windows) / `build-release.sh` (unix) scripts to generate standalone linux binaries.
+Use the `build-release.bat` scripts to generate standalone linux binaries for each app.
 
 ## Minimum Deployment Requirements
 
