@@ -12,11 +12,12 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
-using TW.Vault.Features;
-using TW.Vault.Scaffold;
-using TW.Vault.Security;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Features;
+using TW.Vault.Lib.Scaffold;
+using TW.Vault.Lib.Security;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     public abstract class BaseController : Controller
     {

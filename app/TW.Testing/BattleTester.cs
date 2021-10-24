@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TW.Vault.Features.Simulation;
-using TW.Vault.Model.JSON;
+using TW.Vault.Lib.Features.Simulation;
+using TW.Vault.Lib.Model.JSON;
 
 namespace TW.Testing
 {

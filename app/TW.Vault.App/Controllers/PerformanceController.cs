@@ -7,17 +7,17 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/Performance")]
     [EnableCors("AllOrigins")]
     public class PerformanceController : Controller
     {
-        Scaffold.VaultContext context;
+        Lib.Scaffold.VaultContext context;
         ILogger logger;
 
-        public PerformanceController(Scaffold.VaultContext context, ILoggerFactory loggerFactory)
+        public PerformanceController(Lib.Scaffold.VaultContext context, ILoggerFactory loggerFactory)
         {
             this.context = context;
             this.logger = loggerFactory.CreateLogger<PerformanceController>();
@@ -28,8 +28,8 @@ namespace TW.Vault.Controllers
         {
             logger.LogInformation("Force-flushing performance logs for IP {0}", HttpContext.Connection.RemoteIpAddress.ToString());
 
-            var numRecords = Features.Profiling.NumPendingRecords;
-            await Features.Profiling.StoreData(context, force: true, rollover: false);
+            var numRecords = Lib.Features.Profiling.NumPendingRecords;
+            await Lib.Features.Profiling.StoreData(context, force: true, rollover: false);
 
             return Ok(numRecords);
         }

@@ -8,24 +8,26 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-using JSON = TW.Vault.Model.JSON;
-using TW.Vault.Model.Convert;
-using TW.Vault.Features.Simulation;
+using JSON = TW.Vault.Lib.Model.JSON;
+using TW.Vault.Lib.Model.Convert;
+using TW.Vault.Lib.Features.Simulation;
 using Newtonsoft.Json;
-using TW.Vault.Model.Native;
-using TW.Vault.Model;
-using TW.Vault.Model.Validation;
+using TW.Vault.Lib.Model.Native;
+using TW.Vault.Lib.Model;
+using TW.Vault.Lib.Model.Validation;
 using System.Net;
-using TW.Vault.Model.JSON;
+using TW.Vault.Lib.Model.JSON;
 using Microsoft.Extensions.DependencyInjection;
-using TW.Vault.Scaffold;
+using Scaffold = TW.Vault.Lib.Scaffold;
+using TW.Vault.Lib.Scaffold;
+using TW.Vault.Lib;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/{worldName}/Village")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class VillageController : BaseController
     {
         public VillageController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
@@ -664,7 +666,7 @@ namespace TW.Vault.Controllers
             var tribes = TrimAndFilter(tribe.Split(',')).ToList();
             var continents = TrimAndFilter(k.Split(',')).ToList();
 
-            var query = new Features.VillageSearch.Query
+            var query = new Lib.Features.VillageSearch.Query
             {
                 WorldId = CurrentWorldId,
                 PlayerNames = players,
@@ -704,7 +706,7 @@ namespace TW.Vault.Controllers
                 query.MaxDistance = float.Parse(centerParts[2]);
             }
 
-            var coords = await Features.VillageSearch.ListCoords(context, query);
+            var coords = await Lib.Features.VillageSearch.ListCoords(context, query);
 
             return Ok(new { coords });
         }

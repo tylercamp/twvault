@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
 
 namespace TW.Vault.Migration
 {

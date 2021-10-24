@@ -4,14 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using TW.Vault.Features.Simulation;
-using TW.Vault.Model.JSON;
-using TW.Vault;
+using TW.Vault.Lib.Features.Simulation;
+using TW.Vault.Lib.Model.JSON;
 using Microsoft.EntityFrameworkCore;
-using TW.Vault.Model.Native;
+using TW.Vault.Lib.Model.Native;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using TW.Vault.Lib;
 
 namespace TW.Testing
 {
@@ -35,7 +35,7 @@ namespace TW.Testing
 
         struct ReportSignature
         {
-            public ReportSignature(Vault.Scaffold.Report report)
+            public ReportSignature(Vault.Lib.Scaffold.Report report)
             {
                 AttackerPlayerId = report.AttackerPlayerId;
                 DefenderPlayerId = report.DefenderPlayerId;
@@ -79,8 +79,8 @@ namespace TW.Testing
         {
             Console.WriteLine("Creating connection...");
 
-            using (var context = new Vault.Scaffold.VaultContext(
-                    new DbContextOptionsBuilder<Vault.Scaffold.VaultContext>()
+            using (var context = new Vault.Lib.Scaffold.VaultContext(
+                    new DbContextOptionsBuilder<Vault.Lib.Scaffold.VaultContext>()
                         .UseNpgsql("Server=v.tylercamp.me; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??")
                         .Options
                 ))
@@ -89,15 +89,15 @@ namespace TW.Testing
 
                 Console.WriteLine("Getting player IDs...");
                 var playerIds = context.User.OrderBy(g => g.PlayerId).Select(g => g.PlayerId).ToList().Distinct().ToList();
-                var playerReports = new ConcurrentBag<List<Vault.Scaffold.Report>>();
+                var playerReports = new ConcurrentBag<List<Vault.Lib.Scaffold.Report>>();
 
                 sw.Restart();
                 Console.WriteLine("Getting all reports...");
                 int numPlayersLoaded = 0;
                 Parallel.ForEach(playerIds, new ParallelOptions { MaxDegreeOfParallelism = 64 }, (id) =>
                 {
-                    using (var playerContext = new Vault.Scaffold.VaultContext(
-                        new DbContextOptionsBuilder<Vault.Scaffold.VaultContext>()
+                    using (var playerContext = new Vault.Lib.Scaffold.VaultContext(
+                        new DbContextOptionsBuilder<Vault.Lib.Scaffold.VaultContext>()
                             .UseNpgsql("Server=v.tylercamp.me; Port=22342; Database=vault; User Id=twu_vault; Password=!!TWV@ult4Us??")
                             .Options
                     ))
@@ -110,7 +110,7 @@ namespace TW.Testing
                         Console.Title = "Loaded " + numPlayersLoaded + "/" + playerIds.Count;
                 });
 
-                Console.WriteLine("Got {0} reports in {1}s", playerReports.DefaultIfEmpty(new List<Vault.Scaffold.Report>()).Sum(l => l.Count), sw.ElapsedMilliseconds / 1000);
+                Console.WriteLine("Got {0} reports in {1}s", playerReports.DefaultIfEmpty(new List<Vault.Lib.Scaffold.Report>()).Sum(l => l.Count), sw.ElapsedMilliseconds / 1000);
 
                 sw.Restart();
                 Console.Write("Pre-categorizing reports... ");
@@ -125,14 +125,14 @@ namespace TW.Testing
 
                 sw.Restart();
                 Console.Write("Generating concurrent set... ");
-                var reportsQueue = new BlockingCollection<List<Vault.Scaffold.Report>>(new ConcurrentBag<List<Vault.Scaffold.Report>>(categorizedReports));
+                var reportsQueue = new BlockingCollection<List<Vault.Lib.Scaffold.Report>>(new ConcurrentBag<List<Vault.Lib.Scaffold.Report>>(categorizedReports));
                 reportsQueue.CompleteAdding();
                 categorizedReports = null;
                 GC.Collect();
                 Console.WriteLine("Took {0}ms", sw.ElapsedMilliseconds);
 
                 int totalJobs = reportsQueue.Count;
-                var allDuplicates = new ConcurrentBag<List<Vault.Scaffold.Report>>();
+                var allDuplicates = new ConcurrentBag<List<Vault.Lib.Scaffold.Report>>();
 
                 sw.Restart();
                 Console.Write("Checking for duplicates within " + reportsQueue.Count + " categories... ");
@@ -142,12 +142,12 @@ namespace TW.Testing
                     {
                         foreach (var group in reportsQueue.GetConsumingEnumerable())
                         {
-                            var reportsBySignature = new Dictionary<ReportSignature, List<Vault.Scaffold.Report>>();
+                            var reportsBySignature = new Dictionary<ReportSignature, List<Vault.Lib.Scaffold.Report>>();
                             foreach (var report in group)
                             {
                                 var sign = new ReportSignature(report);
                                 if (!reportsBySignature.ContainsKey(sign))
-                                    reportsBySignature[sign] = new List<Vault.Scaffold.Report>();
+                                    reportsBySignature[sign] = new List<Vault.Lib.Scaffold.Report>();
                                 reportsBySignature[sign].Add(report);
                             }
 
@@ -164,7 +164,7 @@ namespace TW.Testing
                 }
 
                 Console.WriteLine("Took {0}m {1}s", (int)sw.Elapsed.TotalMinutes, sw.Elapsed.Seconds);
-                Console.WriteLine("Total of {0} reports that were duplicated ({1} total duplicate reports)", allDuplicates.Count, allDuplicates.DefaultIfEmpty(new List<Vault.Scaffold.Report>()).Sum(l => l.Count));
+                Console.WriteLine("Total of {0} reports that were duplicated ({1} total duplicate reports)", allDuplicates.Count, allDuplicates.DefaultIfEmpty(new List<Vault.Lib.Scaffold.Report>()).Sum(l => l.Count));
 
                 sw.Restart();
                 var updateSw = Stopwatch.StartNew();
@@ -209,7 +209,7 @@ namespace TW.Testing
 
                 Console.Write("Determining best copies and removable reports... ");
                 sw.Restart();
-                var removableReports = new List<Vault.Scaffold.Report>();
+                var removableReports = new List<Vault.Lib.Scaffold.Report>();
                 foreach (var group in allDuplicates)
                 {
                     var scores = group.Select(r => { return new { Score = r.Loyalty != null ? 1 : 0, Report = r }; }).OrderByDescending(s => s.Score);
@@ -274,7 +274,7 @@ namespace TW.Testing
         static void TestHighScores()
         {
             Console.WriteLine("Making high-scores service");
-            var highScoresService = new Vault.Features.HighScoresService(new Shim.ServiceScopeFactory(), new Shim.LoggerFactory());
+            var highScoresService = new Vault.Lib.Features.HighScoresService(new Shim.ServiceScopeFactory(), new Shim.LoggerFactory());
 
             Dictionary<String, UserStats> generatedStats;
 
@@ -299,7 +299,7 @@ namespace TW.Testing
                 .Select(c => new { X = short.Parse(c[0]), Y = short.Parse(c[1]) })
                 .ToList();
 
-            using (var context = new Shim.ServiceScopeFactory().CreateScope().ServiceProvider.GetRequiredService<Vault.Scaffold.VaultContext>())
+            using (var context = new Shim.ServiceScopeFactory().CreateScope().ServiceProvider.GetRequiredService<Vault.Lib.Scaffold.VaultContext>())
             {
                 var villages = (
                         from village in context.Village.FromWorld(1)

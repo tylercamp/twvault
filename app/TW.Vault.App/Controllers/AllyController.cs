@@ -7,18 +7,19 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
 using TW;
-using TW.Vault.Model.Convert;
+using TW.Vault.Lib.Model.Convert;
 using Microsoft.Extensions.DependencyInjection;
+using TW.Vault.Lib;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
 #if DEBUG
     [Produces("application/json")]
     [Route("api/{worldName}/Ally")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class AllyController : BaseController
     {
         public AllyController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)

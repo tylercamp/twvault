@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Model.JSON;
-using TW.Vault.Model.Native;
+using TW.Vault.Lib.Model.JSON;
+using TW.Vault.Lib.Model.Native;
 
-namespace TW.Vault.Features.Simulation
+namespace TW.Vault.Lib.Features.Simulation
 {
     /* NOTE - LOTS OF HARD-CODED VALUES FOR EN100!! */
     public class ConstructionCalculator

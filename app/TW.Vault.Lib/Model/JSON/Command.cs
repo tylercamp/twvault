@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace TW.Vault.Model.JSON
+namespace TW.Vault.Lib.Model.JSON
 {
     public enum CommandType
     {

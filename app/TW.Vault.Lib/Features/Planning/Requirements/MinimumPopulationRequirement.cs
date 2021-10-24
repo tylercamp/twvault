@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Model;
-using TW.Vault.Model.JSON;
-using TW.Vault.Model.Native;
+using TW.Vault.Lib.Model;
+using TW.Vault.Lib.Model.JSON;
+using TW.Vault.Lib.Model.Native;
 
-namespace TW.Vault.Features.Planning.Requirements
+namespace TW.Vault.Lib.Features.Planning.Requirements
 {
     public class MinimumPopulationRequirement : ICommandRequirements
     {

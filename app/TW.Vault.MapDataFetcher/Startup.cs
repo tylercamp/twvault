@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Hosting = Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Hosting;
 
@@ -44,7 +44,7 @@ namespace TW.Vault.MapDataFetcher
 
             services.AddSingleton<Hosting.IHostedService, DataFetchingService>();
 
-            String connectionString = Vault.Configuration.ConnectionString;
+            String connectionString = Vault.Lib.Configuration.ConnectionString;
             services.AddDbContext<VaultContext>(options => options.UseNpgsql(connectionString));
         }
 

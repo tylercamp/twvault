@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using TW.Vault.Security;
+using TW.Vault.Lib.Security;
 
-namespace TW.Vault.Features
+namespace TW.Vault.Lib.Features
 {
     public class ScriptCompiler
     {

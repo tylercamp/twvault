@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Model.JSON;
+using TW.Vault.Lib.Model.JSON;
 
-namespace TW.Vault.Features.Planning
+namespace TW.Vault.Lib.Features.Planning
 {
     public class CommandInstruction
     {

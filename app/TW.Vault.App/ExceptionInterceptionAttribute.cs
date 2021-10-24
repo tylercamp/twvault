@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Serilog;
 
-namespace TW.Vault
+namespace TW.Vault.App
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class ExceptionInterceptionAttribute : ExceptionFilterAttribute
@@ -24,8 +24,8 @@ namespace TW.Vault
 
         public override void OnException(ExceptionContext context)
         {
-            Security.AuthHeaders auth = null;
-            try { auth = Security.AuthenticationUtil.ParseHeaders(context.HttpContext.Request.Headers); }
+            Lib.Security.AuthHeaders auth = null;
+            try { auth = Lib.Security.AuthenticationUtil.ParseHeaders(context.HttpContext.Request.Headers); }
             catch { }
 
             if (!(context.Exception is TaskCanceledException))

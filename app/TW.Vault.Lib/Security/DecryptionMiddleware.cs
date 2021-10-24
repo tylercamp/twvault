@@ -5,9 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TW.Vault.Features;
+using TW.Vault.Lib.Features;
 
-namespace TW.Vault.Security
+namespace TW.Vault.Lib.Security
 {
     public class DecryptionMiddleware
     {

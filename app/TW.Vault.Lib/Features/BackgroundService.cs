@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Features
+namespace TW.Vault.Lib.Features
 {
     // Copyright (c) .NET Foundation. Licensed under the Apache License, Version 2.0.
     /// <summary>

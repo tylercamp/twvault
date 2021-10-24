@@ -3,7 +3,7 @@ using NodaTime.Extensions;
 using System;
 using System.Collections.Generic;
 
-namespace TW.Vault.Scaffold
+namespace TW.Vault.Lib.Scaffold
 {
     public partial class WorldSettings
     {

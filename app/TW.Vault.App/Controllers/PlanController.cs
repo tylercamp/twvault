@@ -10,18 +10,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Features.Planning.Requirements.Modifiers;
-using TW.Vault.Scaffold;
-using JSON = TW.Vault.Model.JSON;
-using Planning = TW.Vault.Features.Planning;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Features.Planning.Requirements.Modifiers;
+using TW.Vault.Lib.Scaffold;
+using JSON = TW.Vault.Lib.Model.JSON;
+using Planning = TW.Vault.Lib.Features.Planning;
 
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/{worldName}/Plan")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class PlanController : BaseController
     {
         public PlanController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
@@ -74,14 +75,14 @@ namespace TW.Vault.Controllers
                 ).ToListAsync();
 
             var offensiveTypes = new[] { JSON.TroopType.Axe, JSON.TroopType.Light, JSON.TroopType.Heavy, JSON.TroopType.Ram, JSON.TroopType.Catapult };
-            var allInstructions = new ConcurrentDictionary<Scaffold.Command, List<Planning.CommandInstruction>>();
+            var allInstructions = new ConcurrentDictionary<Lib.Scaffold.Command, List<Planning.CommandInstruction>>();
 
             var ownVillagesById = ownVillages.Keys.ToDictionary(v => v.VillageId, v => v);
 
-            bool MeetsMinimumPopulation(Scaffold.Command command)
+            bool MeetsMinimumPopulation(Lib.Scaffold.Command command)
             {
                 var army = (JSON.Army)command.Army;
-                return army != null && 2000 < Model.Native.ArmyStats.CalculateTotalPopulation(army, offensiveTypes);
+                return army != null && 2000 < Lib.Model.Native.ArmyStats.CalculateTotalPopulation(army, offensiveTypes);
             }
 
             var targetPlayerIdsTmp = new ConcurrentDictionary<long, byte>();
@@ -131,11 +132,11 @@ namespace TW.Vault.Controllers
                     select new { village.VillageId, village.ArmyStationed }
                 ).ToDictionaryAsync(v => v.VillageId, v => v.ArmyStationed);
 
-            var battleSimulator = new Features.Simulation.BattleSimulator();
+            var battleSimulator = new Lib.Features.Simulation.BattleSimulator();
             var existingBacktimesPerCommand = allInstructions.Keys.ToDictionary(c => c.CommandId, id => 0);
             foreach (var command in commandsToBacktimedVillages)
             {
-                Scaffold.Command backtimedCommand = null;
+                Lib.Scaffold.Command backtimedCommand = null;
                 var commandsReturningToVillage = allInstructions.Keys.Where(c => c.SourceVillageId == command.TargetVillageId);
                 foreach (var returning in commandsReturningToVillage)
                 {
@@ -148,8 +149,8 @@ namespace TW.Vault.Controllers
 
                 var backtimedArmy = (JSON.Army)backtimedCommand.Army;
                 var battleResult = battleSimulator.SimulateAttack(command.Army, backtimedArmy, 20, CurrentWorldSettings.ArchersEnabled);
-                var originalPopulation = (float)Model.Native.ArmyStats.CalculateTotalPopulation(backtimedArmy, offensiveTypes);
-                var newPopulation = (float)Model.Native.ArmyStats.CalculateTotalPopulation(battleResult.DefendingArmy, offensiveTypes);
+                var originalPopulation = (float)Lib.Model.Native.ArmyStats.CalculateTotalPopulation(backtimedArmy, offensiveTypes);
+                var newPopulation = (float)Lib.Model.Native.ArmyStats.CalculateTotalPopulation(battleResult.DefendingArmy, offensiveTypes);
 
                 var percentLost = 1 - newPopulation / originalPopulation;
                 if (percentLost > 0.85f)
@@ -184,7 +185,7 @@ namespace TW.Vault.Controllers
                 if (troopsAtBacktimedVillages[targetVillage.VillageId] != null)
                 {
                     var stationedTroops = troopsAtBacktimedVillages[targetVillage.VillageId];
-                    var defensePower = Features.Simulation.BattleSimulator.TotalDefensePower(stationedTroops);
+                    var defensePower = Lib.Features.Simulation.BattleSimulator.TotalDefensePower(stationedTroops);
                     isStacked = defensePower > 1000000;
                 }
 
@@ -192,7 +193,7 @@ namespace TW.Vault.Controllers
                 return new JSON.BacktimeInfo
                 {
                     //  General info
-                    TravelingArmyPopulation = Model.Native.ArmyStats.CalculateTotalPopulation(command.Army, offensiveTypes),
+                    TravelingArmyPopulation = Lib.Model.Native.ArmyStats.CalculateTotalPopulation(command.Army, offensiveTypes),
                     TargetPlayerName = targetPlayer.PlayerName.UrlDecode(),
                     TargetTribeName = targetTribe?.TribeName?.UrlDecode(),
                     TargetTribeTag = targetTribe?.Tag?.UrlDecode(),
@@ -213,9 +214,9 @@ namespace TW.Vault.Controllers
                             TravelTimeSeconds = (int)instruction.TravelTime.TotalSeconds,
 
                             TroopType = instruction.TroopType.ToString().ToLower(),
-                            CommandPopulation = Model.Native.ArmyStats.CalculateTotalPopulation(instructionArmy),
-                            CommandAttackPower = Features.Simulation.BattleSimulator.TotalAttackPower(instructionArmy),
-                            CommandDefensePower = Features.Simulation.BattleSimulator.TotalDefensePower(instructionArmy),
+                            CommandPopulation = Lib.Model.Native.ArmyStats.CalculateTotalPopulation(instructionArmy),
+                            CommandAttackPower = Lib.Features.Simulation.BattleSimulator.TotalAttackPower(instructionArmy),
+                            CommandDefensePower = Lib.Features.Simulation.BattleSimulator.TotalDefensePower(instructionArmy),
 
                             SourceVillageId = instruction.SendFrom,
                             TargetVillageId = instruction.SendTo,

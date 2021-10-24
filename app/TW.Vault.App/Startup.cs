@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TW.Vault.Scaffold;
-using TW.Vault.Security;
+using TW.Vault.Lib.Scaffold;
+using TW.Vault.Lib.Security;
 using Microsoft.AspNetCore.HttpOverrides;
 using Newtonsoft.Json.Converters;
 using System.IO;
@@ -18,7 +18,7 @@ using Newtonsoft.Json.Serialization;
 using TW.Vault.App;
 using Serilog;
 
-namespace TW.Vault
+namespace TW.Vault.App
 {
     public class Startup
     {
@@ -60,7 +60,7 @@ namespace TW.Vault
 
             services
                 .AddScoped<RequireAuthAttribute>()
-                .AddSingleton<Hosting.IHostedService, Features.HighScoresService>();
+                .AddSingleton<Hosting.IHostedService, Lib.Features.HighScoresService>();
 
             String connectionString = Configuration.GetConnectionString("Vault");
             services.AddDbContext<VaultContext>(options => options.UseNpgsql(connectionString));
@@ -75,7 +75,7 @@ namespace TW.Vault
             }
 
             // Build obfuscated vault.js and copy to script output path
-            var asputil = new ASPUtil(env);
+            var asputil = new Lib.ASPUtil(env);
             if (asputil.UseProductionScripts)
             {
                 logger.Information("In production mode or script obfuscation was force-enabled, preparing production-ready scripts...");
@@ -92,7 +92,7 @@ namespace TW.Vault
                 logger.Information("Compiling vault.js...");
                 var primaryScriptTargetPath = Path.Join(scriptsOutputPath, "vault.js");
                 
-                var compiler = new Features.ScriptCompiler();
+                var compiler = new Lib.Features.ScriptCompiler();
                 compiler.InitCommonVars();
                 compiler.DependencyResolver = name => File.ReadAllText(asputil.GetFilePath(name));
 

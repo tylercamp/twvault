@@ -9,20 +9,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using TW.Vault.Features.Simulation;
-using TW.Vault.Features.Spatial;
-using TW.Vault.Model;
-using TW.Vault.Model.Convert;
-using TW.Vault.Model.Native;
-using TW.Vault.Scaffold;
-using JSON = TW.Vault.Model.JSON;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Features.Simulation;
+using TW.Vault.Lib.Features.Spatial;
+using TW.Vault.Lib.Model;
+using TW.Vault.Lib.Model.Convert;
+using TW.Vault.Lib.Model.Native;
+using TW.Vault.Lib.Scaffold;
+using JSON = TW.Vault.Lib.Model.JSON;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/{worldName}/Player")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class PlayerController : BaseController
     {
         public PlayerController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
@@ -45,7 +46,7 @@ namespace TW.Vault.Controllers
         [HttpGet("{id}", Name = "GetPlayer")]
         public Task<IActionResult> Get(int id)
         {
-            return SelectOr404<Scaffold.Player>((q) => q.Where(p => p.PlayerId == id).FromWorld(CurrentWorldId), PlayerConvert.ModelToJson);
+            return SelectOr404<Lib.Scaffold.Player>((q) => q.Where(p => p.PlayerId == id).FromWorld(CurrentWorldId), PlayerConvert.ModelToJson);
         }
 
         [HttpGet("{id}/villages")]
@@ -142,12 +143,12 @@ namespace TW.Vault.Controllers
                 return Ok(new JSON.UserStats());
 
             currentPlayerName = currentPlayerName.UrlDecode();
-            var stats = Features.HighScoresService.Instance?[CurrentAccessGroupId]?.GetValueOrDefault(currentPlayerName);
+            var stats = Lib.Features.HighScoresService.Instance?[CurrentAccessGroupId]?.GetValueOrDefault(currentPlayerName);
 
             return Ok(stats ?? new JSON.UserStats());
         }
 
         [HttpGet("high-scores")]
-        public IActionResult GetTribeHighScores() => Ok(Features.HighScoresService.Instance?[CurrentAccessGroupId] ?? new Dictionary<string, JSON.UserStats>());
+        public IActionResult GetTribeHighScores() => Ok(Lib.Features.HighScoresService.Instance?[CurrentAccessGroupId] ?? new Dictionary<string, JSON.UserStats>());
     }
 }

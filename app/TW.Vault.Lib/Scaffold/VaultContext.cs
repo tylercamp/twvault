@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace TW.Vault.Scaffold
+namespace TW.Vault.Lib.Scaffold
 {
     public partial class VaultContext : DbContext
     {

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Features
+namespace TW.Vault.Lib.Features
 {
     public static class Profiling
     {

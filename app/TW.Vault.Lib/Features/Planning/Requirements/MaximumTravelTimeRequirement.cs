@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Features.Simulation;
-using TW.Vault.Model;
-using TW.Vault.Model.JSON;
+using TW.Vault.Lib.Features.Simulation;
+using TW.Vault.Lib.Model;
+using TW.Vault.Lib.Model.JSON;
 
-namespace TW.Vault.Features.Planning.Requirements
+namespace TW.Vault.Lib.Features.Planning.Requirements
 {
     public class MaximumTravelTimeRequirement : ICommandRequirements
     {

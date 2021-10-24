@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TW.Vault.Scaffold;
+using TW.Vault.Lib.Scaffold;
 using Microsoft.EntityFrameworkCore;
 
-namespace TW.Vault
+namespace TW.Vault.Lib
 {
     public static class EFUtil
     {

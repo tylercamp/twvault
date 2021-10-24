@@ -7,10 +7,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Scaffold;
-using TW.Vault.Security;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Scaffold;
+using TW.Vault.Lib.Security;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     public class AccessGroupRequest
     {
@@ -83,12 +84,12 @@ namespace TW.Vault.Controllers
             var escapedName = groupRequest.FirstPlayerName?.UrlEncode();
             var playerId = groupRequest.FirstPlayerId ?? context.Player.FromWorld(CurrentWorldId).Where(p => p.PlayerName == escapedName).First().PlayerId;
 
-            var newGroup = new Scaffold.AccessGroup();
+            var newGroup = new Lib.Scaffold.AccessGroup();
             newGroup.WorldId = CurrentWorldId;
             context.Add(newGroup);
             context.SaveChanges();
 
-            var newUser = new Scaffold.User();
+            var newUser = new Lib.Scaffold.User();
             newUser.TransactionTime = DateTime.UtcNow;
             newUser.AccessGroupId = newGroup.Id;
             newUser.AuthToken = Guid.NewGuid();

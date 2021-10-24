@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace TW.Vault.Model.Native
+namespace TW.Vault.Lib.Model.Native
 {
     public enum BuildingType
     {

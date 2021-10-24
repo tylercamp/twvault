@@ -9,19 +9,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TW.Vault.Features;
-using TW.Vault.Features.Simulation;
-using TW.Vault.Model.Convert;
-using TW.Vault.Model.Native;
-using TW.Vault.Scaffold;
-using JSON = TW.Vault.Model.JSON;
+using TW.Vault.Lib;
+using TW.Vault.Lib.Features;
+using TW.Vault.Lib.Features.Simulation;
+using TW.Vault.Lib.Model.Convert;
+using TW.Vault.Lib.Model.Native;
+using TW.Vault.Lib.Scaffold;
+using JSON = TW.Vault.Lib.Model.JSON;
 
-namespace TW.Vault.Controllers
+namespace TW.Vault.App.Controllers
 {
     [Produces("application/json")]
     [Route("api/{worldName}/Admin")]
     [EnableCors("AllOrigins")]
-    [ServiceFilter(typeof(Security.RequireAuthAttribute))]
+    [ServiceFilter(typeof(Lib.Security.RequireAuthAttribute))]
     public class AdminController : BaseController
     {
         public AdminController(VaultContext context, IServiceScopeFactory scopeFactory, ILoggerFactory loggerFactory) : base(context, scopeFactory, loggerFactory)
@@ -104,7 +105,7 @@ namespace TW.Vault.Controllers
                         {
                             if (log.PermissionsLevel != previousLog.PermissionsLevel)
                             {
-                                if (log.PermissionsLevel < (short)Security.PermissionLevel.Admin)
+                                if (log.PermissionsLevel < (short)Lib.Security.PermissionLevel.Admin)
                                     description.Add(Translate("ADMIN_LOG_REVOKED_PRIVELEGES_FOR", new { playerName }));
                                 else
                                     description.Add(Translate("ADMIN_LOG_GAVE_PRIVELEGES_TO", new { playerName }));
@@ -194,7 +195,7 @@ namespace TW.Vault.Controllers
                     join tribe in CurrentSets.Ally on player.TribeId equals tribe.TribeId into maybeTribe
                     from tribe in maybeTribe.DefaultIfEmpty()
                     where CurrentUser.KeySource == null || user.KeySource == CurrentUserId || !Configuration.Security.RestrictAccessWithinTribes
-                    where (user.PermissionsLevel < (short)Security.PermissionLevel.System) || CurrentUserIsSystem
+                    where (user.PermissionsLevel < (short)Lib.Security.PermissionLevel.System) || CurrentUserIsSystem
                     orderby tribe.Tag, player.PlayerName
                     select new { user, playerName = player.PlayerName, tribe = tribe }
                 ).ToListAsync();
@@ -225,7 +226,7 @@ namespace TW.Vault.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            Scaffold.Player player;
+            Lib.Scaffold.Player player;
             if (keyRequest.PlayerId.HasValue)
             {
                 long playerId = keyRequest.PlayerId.Value;
@@ -282,7 +283,7 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = Translate("ADMIN_PLAYER_HAS_KEY") });
             }
 
-            var newAuthUser = new Scaffold.User();
+            var newAuthUser = new Lib.Scaffold.User();
             newAuthUser.WorldId = CurrentWorldId;
             newAuthUser.PlayerId = player.PlayerId;
             newAuthUser.AccessGroupId = CurrentAccessGroupId;
@@ -296,9 +297,9 @@ namespace TW.Vault.Controllers
             newAuthUser.Tx = BuildTransaction();
 
             if (keyRequest.NewUserIsAdmin)
-                newAuthUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;
+                newAuthUser.PermissionsLevel = (short)Lib.Security.PermissionLevel.Admin;
             else
-                newAuthUser.PermissionsLevel = (short)Security.PermissionLevel.Default;
+                newAuthUser.PermissionsLevel = (short)Lib.Security.PermissionLevel.Default;
 
             context.User.Add(newAuthUser);
             await context.SaveChangesAsync();
@@ -354,12 +355,12 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = Translate("ADMIN_DELETE_OWN_KEY") });
             }
 
-            if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System)
+            if (requestedUser.PermissionsLevel >= (short)Lib.Security.PermissionLevel.System)
             {
                 return BadRequest(new { error = Translate("ADMIN_DELETE_SYSTEM_KEY") });
             }
 
-            if (requestedUser.PermissionsLevel == (short)Security.PermissionLevel.Admin)
+            if (requestedUser.PermissionsLevel == (short)Lib.Security.PermissionLevel.Admin)
             {
                 if (!CurrentUserIsSystem && requestedUser.KeySource.HasValue && requestedUser.KeySource.Value != CurrentUserId)
                 {
@@ -421,15 +422,15 @@ namespace TW.Vault.Controllers
                 return BadRequest(new { error = Translate("ADMIN_CHANGE_OWN_KEY") });
             }
 
-            if (requestedUser.PermissionsLevel >= (short)Security.PermissionLevel.System && requestedUser.AdminAuthToken != CurrentUser.AuthToken)
+            if (requestedUser.PermissionsLevel >= (short)Lib.Security.PermissionLevel.System && requestedUser.AdminAuthToken != CurrentUser.AuthToken)
             {
                 return BadRequest(new { error = Translate("ADMIN_CHANGE_OTHER_ADMIN") });
             }
 
             if (updateRequest.HasAdmin)
-                requestedUser.PermissionsLevel = (short)Security.PermissionLevel.Admin;
+                requestedUser.PermissionsLevel = (short)Lib.Security.PermissionLevel.Admin;
             else
-                requestedUser.PermissionsLevel = (short)Security.PermissionLevel.Default;
+                requestedUser.PermissionsLevel = (short)Lib.Security.PermissionLevel.Default;
 
             requestedUser.TransactionTime = DateTime.UtcNow;
             requestedUser.Tx = BuildTransaction(requestedUser.Tx?.TxId);
@@ -518,7 +519,7 @@ namespace TW.Vault.Controllers
             var allArmies = await Profile("Fetch current armies", () => context.CurrentArmy.Where(a => armyIds.Contains(a.ArmyId)).ToDictionaryAsync(a => a.ArmyId, a => a));
             foreach (var village in tribeVillages.Where(v => v.currentVillage != null))
             {
-                Scaffold.CurrentArmy FindArmy(long? armyId) => armyId == null ? null : allArmies.GetValueOrDefault(armyId.Value);
+                Lib.Scaffold.CurrentArmy FindArmy(long? armyId) => armyId == null ? null : allArmies.GetValueOrDefault(armyId.Value);
 
                 var cv = village.currentVillage;
                 cv.ArmyAtHome = FindArmy(cv.ArmyAtHomeId);
@@ -617,8 +618,8 @@ namespace TW.Vault.Controllers
 
             tribeIds = tribeIds.Concat(nonTribeTargetTribesByVillageId.Values.Distinct()).Distinct().ToList();
 
-            var villagesSupportByPlayerId = new Dictionary<long, List<Scaffold.CurrentVillageSupport>>();
-            var villagesSupportByPlayerIdByTargetTribeId = new Dictionary<long, Dictionary<long, List<Scaffold.CurrentVillageSupport>>>();
+            var villagesSupportByPlayerId = new Dictionary<long, List<Lib.Scaffold.CurrentVillageSupport>>();
+            var villagesSupportByPlayerIdByTargetTribeId = new Dictionary<long, Dictionary<long, List<Lib.Scaffold.CurrentVillageSupport>>>();
 
 
             //  Only check support with players that have registered villas
@@ -629,8 +630,8 @@ namespace TW.Vault.Controllers
 
                 villagesSupportByPlayerId.Add(player.PlayerId, supportFromPlayer);
 
-                var supportByTribe = tribeIds.ToDictionary(tid => tid, _ => new List<Scaffold.CurrentVillageSupport>());
-                supportByTribe.Add(-1, new List<Scaffold.CurrentVillageSupport>());
+                var supportByTribe = tribeIds.ToDictionary(tid => tid, _ => new List<Lib.Scaffold.CurrentVillageSupport>());
+                supportByTribe.Add(-1, new List<Lib.Scaffold.CurrentVillageSupport>());
 
                 foreach (var support in supportFromPlayer)
                 {
@@ -683,7 +684,7 @@ namespace TW.Vault.Controllers
             {
                 var nearbyEnemyVillage = enemyVillages.FirstOrDefault(v =>
                 {
-                    var distance = Model.Coordinate.Distance(v.X, v.Y, village.X, village.Y);
+                    var distance = Lib.Model.Coordinate.Distance(v.X, v.Y, village.X, village.Y);
                     return distance < 10;
                 });
 
@@ -876,7 +877,7 @@ namespace TW.Vault.Controllers
             if (existingEnemy != null)
                 return Conflict();
 
-            var newEnemy = new Scaffold.EnemyTribe
+            var newEnemy = new Lib.Scaffold.EnemyTribe
             {
                 EnemyTribeId = discoveredTribe.TribeId,
                 WorldId = CurrentWorldId,

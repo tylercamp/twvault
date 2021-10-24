@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace TW.Vault.Scaffold.Seed
+namespace TW.Vault.Lib.Scaffold.Seed
 {
     public class WorldSettingsTemplate
     {
