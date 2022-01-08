@@ -143,8 +143,6 @@ Options:
                         compared to the stored settings for that server. If they don't match, a warning will be
                         logged showing the change and will wait for confirmation before overwriting.
 
-{Note: Options below not implemented}
-
     -reset-on-diff : If specified with -fetch-old, deletes and recreates any worlds whose config differ
                      on the given property. Specify a property with ""-reset-on-diff a,b"". The default value
                      is ""GameSpeed,UnitSpeed,ArchersEnabled,MoraleEnabled""
