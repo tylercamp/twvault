@@ -70,6 +70,13 @@ namespace TW.Vault.App
 
             logger.Information("javascript-obfuscator completed successfully");
 
+            logger.Information("Modifying with wrapper function");
+
+            var scriptContent = File.ReadAllText(targetFile);
+            var newContent = $"(() => {{ {scriptContent} }})()";
+
+            File.WriteAllText(targetFile, newContent);
+
             return true;
         }
     }
