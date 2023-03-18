@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -16,11 +17,6 @@ namespace TW.Vault.Manage
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
-        }
-
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
-        {
             var config = new ConfigurationBuilder()
                 .ApplyVaultConfiguration()
                 .Build();
@@ -31,11 +27,21 @@ namespace TW.Vault.Manage
                 .ReadFrom.Configuration(config)
                 .CreateLogger();
 
-            return WebHost.CreateDefaultBuilder(args)
+            var builder = WebApplication.CreateBuilder(args);
+            // https://learn.microsoft.com/en-us/aspnet/core/migration/50-to-60?view=aspnetcore-7.0&tabs=visual-studio#use-startup-with-the-new-minimal-hosting-model
+            var startup = new Startup(config);
+
+            startup.ConfigureServices(builder.Services);
+            builder.Host.UseSerilog();
+
+            builder.WebHost
                 .UseKestrel()
-                .UseSerilog()
-                .UseConfiguration(config)
-                .UseStartup<Startup>();
+                .UseConfiguration(config);
+
+            var app = builder.Build();
+            startup.Configure(app, app.Environment);
+
+            app.Run();
         }
     }
 }
