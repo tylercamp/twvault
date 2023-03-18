@@ -275,10 +275,10 @@ namespace TW.Vault.Lib.Scaffold
                 entity.Property(e => e.OldTxId).HasColumnName("old_tx_id");
 
                 entity.HasIndex(e => e.ConflictingTxId)
-                    .HasName("fki_fk_conflicting_data_record_conflicting_tx_id");
+                    .HasDatabaseName("fki_fk_conflicting_data_record_conflicting_tx_id");
 
                 entity.HasIndex(e => e.OldTxId)
-                    .HasName("fki_fk_conflicting_data_record_old_tx_id");
+                    .HasDatabaseName("fki_fk_conflicting_data_record_old_tx_id");
 
                 entity.HasOne(d => d.ConflictingTx)
                     .WithMany(p => p.ConflictingDataRecordConflictingTx)

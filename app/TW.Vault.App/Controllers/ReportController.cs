@@ -286,14 +286,7 @@ namespace TW.Vault.App.Controllers
                                 //  WARNING - This will auto-generate a command with a random ID,
                                 //      if a new TW command is uploaded with the given ID any backtime
                                 //      calculations for this old command will get screwy
-                                try
-                                {
-                                    await context.SaveChangesAsync();
-                                }
-                                catch (Exception e)
-                                {
-                                    throw e;
-                                }
+                                await context.SaveChangesAsync();
 
                                 command = new Lib.Scaffold.Command();
                                 command.Tx = tx;

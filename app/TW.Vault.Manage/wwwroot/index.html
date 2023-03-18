@@ -59,13 +59,20 @@
 </head>
 <body>
     <script>
+        var useCaptcha = false;
+        $.get('use-captcha').done(data => {
+            useCaptcha = JSON.parse(data)
+        })
+
         function captchaOnloadCallback() {
-            $.get('captcha-sitekey').done(data => {
-                grecaptcha.render(document.querySelector('#captcha-container'), {
-                    'sitekey': data,
-                    'callback': onCaptchaFinished
+            if (useCaptcha) {
+                $.get('captcha-sitekey').done(data => {
+                    grecaptcha.render(document.querySelector('#captcha-container'), {
+                        'sitekey': data,
+                        'callback': onCaptchaFinished
+                    })
                 })
-            })
+            }
         }
     </script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"
@@ -198,7 +205,7 @@
                 return;
             }
 
-            if (!currentCaptchaResponse) {
+            if (useCaptcha && !currentCaptchaResponse) {
                 alert('Complete the captcha first');
                 return;
             }

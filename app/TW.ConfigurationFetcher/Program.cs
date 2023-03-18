@@ -230,7 +230,12 @@ namespace TW.ConfigurationFetcher
                             Console.Write("\tTimezone ID: ");
                             timezoneId = Console.ReadLine().Trim();
 
-                            if (NodaTime.TimeZones.TzdbDateTimeZoneSource.Default.ForId(timezoneId) == null)
+                            bool succeeded = true;
+
+                            try { succeeded = NodaTime.TimeZones.TzdbDateTimeZoneSource.Default.ForId(timezoneId) != null; }
+                            catch { succeeded = false; }
+
+                            if (!succeeded)
                             {
                                 Console.WriteLine($"\tInvalid ID: {timezoneId} - An exhaustive list of Timezone IDs can be found at: https://nodatime.org/TimeZones");
                                 timezoneId = null;

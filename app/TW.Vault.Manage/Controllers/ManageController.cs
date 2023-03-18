@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -14,10 +15,12 @@ namespace TW.Vault.Manage.Controllers
     [ApiController]
     public class ManageController : ControllerBase
     {
-        Lib.Scaffold.VaultContext context;
-        ILogger logger;
+        readonly Lib.Scaffold.VaultContext context;
+        readonly ILogger logger;
 
+        private bool useCaptcha => Lib.Configuration.Instance["UseCaptcha"] == "true";
 
+        private static readonly HttpClient client = new();
         public ManageController(Lib.Scaffold.VaultContext context, ILoggerFactory factory)
         {
             this.context = context;
@@ -29,6 +32,9 @@ namespace TW.Vault.Manage.Controllers
             public int Id { get; set; }
             public string Name { get; set; }
         }
+
+        [HttpGet("/use-captcha")]
+        public ActionResult UseCaptcha() => Ok(useCaptcha);
 
         [HttpGet("/captcha-sitekey")]
         public ActionResult GetCaptchaInfo()
@@ -57,7 +63,7 @@ namespace TW.Vault.Manage.Controllers
 
         // POST api/values
         [HttpPost("/user")]
-        public ActionResult Post([FromBody] UserInfo userInfo)
+        public async Task<ActionResult> Post([FromBody] UserInfo userInfo)
         {
             var world = context.World.Where(w => w.Id == userInfo.WorldId).SingleOrDefault();
             if (world == null)
@@ -70,15 +76,15 @@ namespace TW.Vault.Manage.Controllers
 
             var remoteIp = HttpContext.Connection.RemoteIpAddress;
 
-            try
+            if (useCaptcha)
             {
-                var captchaPrivateKey = Configuration.Instance["CaptchaSecretKey"];
-                var captchaUrl = $"https://www.google.com/recaptcha/api/siteverify?secret={captchaPrivateKey}&response={userInfo.CaptchaToken}&remoteip={remoteIp}";
-                var captchaRequest = (HttpWebRequest)WebRequest.Create(captchaUrl);
-                using (var response = captchaRequest.GetResponse())
-                using (var stream = new StreamReader(response.GetResponseStream()))
+                try
                 {
-                    var responseObject = JObject.Parse(stream.ReadToEnd());
+                    var captchaPrivateKey = Configuration.Instance["CaptchaSecretKey"];
+                    var captchaUrl = $"https://www.google.com/recaptcha/api/siteverify?secret={captchaPrivateKey}&response={userInfo.CaptchaToken}&remoteip={remoteIp}";
+                    var captchaRequest = await client.GetAsync(captchaUrl);
+                    var responseObject = JObject.Parse(await captchaRequest.Content.ReadAsStringAsync());
+
                     var success = responseObject.Value<bool>("success");
                     if (!success)
                     {
@@ -87,11 +93,11 @@ namespace TW.Vault.Manage.Controllers
                         return Ok(new { error = "Captcha verification failed" });
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                logger.LogError("Captcha error occured: {ex}", e);
-                return Ok(new { error = "An error occurred while verifying captcha" });
+                catch (Exception e)
+                {
+                    logger.LogError("Captcha error occured: {ex}", e);
+                    return Ok(new { error = "An error occurred while verifying captcha" });
+                }
             }
 
             var tx = new Lib.Scaffold.Transaction
@@ -102,9 +108,11 @@ namespace TW.Vault.Manage.Controllers
             };
             context.Add(tx);
 
-            var accessGroup = new Lib.Scaffold.AccessGroup();
-            accessGroup.WorldId = userInfo.WorldId;
-            accessGroup.Label = userInfo.Name;
+            var accessGroup = new Lib.Scaffold.AccessGroup
+            {
+                WorldId = userInfo.WorldId,
+                Label = userInfo.Name
+            };
             context.AccessGroup.Add(accessGroup);
             context.SaveChanges();
 

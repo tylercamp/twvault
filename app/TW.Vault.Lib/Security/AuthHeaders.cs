@@ -12,6 +12,6 @@ namespace TW.Vault.Lib.Security
         public long? PlayerId { get; set; }
         public bool IsSitter { get; set; }
 
-        public bool IsValid => AuthToken != null && TribeId != null && PlayerId != null;
+        public bool IsValid => AuthToken != null && PlayerId != null;
     }
 }

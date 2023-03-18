@@ -2725,7 +2725,8 @@ namespace TW.Vault.Migration.Migrations
                     { (short)1, (short)158, "No players found!" },
                     { (short)1, (short)157, "Quick Support" },
                     { (short)1, (short)124, "(No recaps)" },
-                    { (short)1, (short)560, "Receiving nukes" }
+                    { (short)1, (short)560, "Receiving nukes" },
+                    { (short)1, (short)2, "Open Vault" }
                 });
 
             migrationBuilder.CreateIndex(

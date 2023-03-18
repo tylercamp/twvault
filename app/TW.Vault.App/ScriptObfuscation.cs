@@ -18,7 +18,7 @@ namespace TW.Vault.App
             "--compact true",
             "--transform-object-keys true",
             "--string-array-threshold 1",
-            "--string-array-encoding 'rc4'",
+            "--string-array-encoding rc4",
             "--self-defending true",
             "--dead-code-injection-threshold 0.2",
             "--dead-code-injection true",

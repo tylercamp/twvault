@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -24,14 +25,21 @@ namespace TW.Vault.MapDataFetcher
                 .ReadFrom.Configuration(config)
                 .CreateLogger();
 
-            var host = WebHost.CreateDefaultBuilder(args)
+            var builder = WebApplication.CreateBuilder(args);
+            // https://learn.microsoft.com/en-us/aspnet/core/migration/50-to-60?view=aspnetcore-7.0&tabs=visual-studio#use-startup-with-the-new-minimal-hosting-model
+            var startup = new Startup(config);
+
+            startup.ConfigureServices(builder.Services);
+            builder.Host.UseSerilog();
+
+            builder.WebHost
                 .UseKestrel()
-                .UseConfiguration(config)
-                .UseStartup<Startup>()
-                .UseSerilog()
-                .Build();
-            
-            host.Run();
+                .UseConfiguration(config);
+
+            var app = builder.Build();
+            startup.Configure(app, app.Environment);
+
+            app.Run();
         }
     }
 }

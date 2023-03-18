@@ -180,7 +180,7 @@ namespace TW.Vault.Lib.Security
                     : discoveredUser.PermissionsLevel;
 
             context.HttpContext.Items["PlayerId"] = authHeaders.PlayerId.Value;
-            context.HttpContext.Items["TribeId"] = authHeaders.TribeId.Value;
+            context.HttpContext.Items["TribeId"] = authHeaders.TribeId;
             context.HttpContext.Items["AuthToken"] = authHeaders.AuthToken.Value;
             context.HttpContext.Items["AccessGroupId"] = discoveredUser.AccessGroupId;
 
