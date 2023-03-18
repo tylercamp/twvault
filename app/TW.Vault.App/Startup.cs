@@ -69,11 +69,6 @@ namespace TW.Vault.App
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
             // Build obfuscated vault.js and copy to script output path
             var asputil = new Lib.ASPUtil(env);
             if (asputil.UseProductionScripts)
@@ -118,7 +113,7 @@ namespace TW.Vault.App
                 catch (Exception e)
                 {
                     logger.Error(e, "Script obfuscation failed, was 'javascript-obfuscator' installed with npm?");
-                    throw e;
+                    throw;
                 }
                 finally
                 {
