@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -14,10 +15,10 @@ namespace TW.Vault.Manage.Controllers
     [ApiController]
     public class ManageController : ControllerBase
     {
-        Lib.Scaffold.VaultContext context;
-        ILogger logger;
+        readonly Lib.Scaffold.VaultContext context;
+        readonly ILogger logger;
 
-
+        private static readonly HttpClient client = new();
         public ManageController(Lib.Scaffold.VaultContext context, ILoggerFactory factory)
         {
             this.context = context;
@@ -57,7 +58,7 @@ namespace TW.Vault.Manage.Controllers
 
         // POST api/values
         [HttpPost("/user")]
-        public ActionResult Post([FromBody] UserInfo userInfo)
+        public async Task<ActionResult> Post([FromBody] UserInfo userInfo)
         {
             var world = context.World.Where(w => w.Id == userInfo.WorldId).SingleOrDefault();
             if (world == null)
@@ -74,18 +75,15 @@ namespace TW.Vault.Manage.Controllers
             {
                 var captchaPrivateKey = Configuration.Instance["CaptchaSecretKey"];
                 var captchaUrl = $"https://www.google.com/recaptcha/api/siteverify?secret={captchaPrivateKey}&response={userInfo.CaptchaToken}&remoteip={remoteIp}";
-                var captchaRequest = (HttpWebRequest)WebRequest.Create(captchaUrl);
-                using (var response = captchaRequest.GetResponse())
-                using (var stream = new StreamReader(response.GetResponseStream()))
+                var captchaRequest = await client.GetAsync(captchaUrl);
+                var responseObject = JObject.Parse(await captchaRequest.Content.ReadAsStringAsync());
+
+                var success = responseObject.Value<bool>("success");
+                if (!success)
                 {
-                    var responseObject = JObject.Parse(stream.ReadToEnd());
-                    var success = responseObject.Value<bool>("success");
-                    if (!success)
-                    {
-                        var errorCodes = responseObject.GetValue("error-codes").Values<string>();
-                        logger.LogWarning("Got error codes from captcha when verifying for remote IP {0}: [{1}]", remoteIp, string.Join(", ", errorCodes));
-                        return Ok(new { error = "Captcha verification failed" });
-                    }
+                    var errorCodes = responseObject.GetValue("error-codes").Values<string>();
+                    logger.LogWarning("Got error codes from captcha when verifying for remote IP {0}: [{1}]", remoteIp, string.Join(", ", errorCodes));
+                    return Ok(new { error = "Captcha verification failed" });
                 }
             }
             catch (Exception e)
@@ -102,9 +100,11 @@ namespace TW.Vault.Manage.Controllers
             };
             context.Add(tx);
 
-            var accessGroup = new Lib.Scaffold.AccessGroup();
-            accessGroup.WorldId = userInfo.WorldId;
-            accessGroup.Label = userInfo.Name;
+            var accessGroup = new Lib.Scaffold.AccessGroup
+            {
+                WorldId = userInfo.WorldId,
+                Label = userInfo.Name
+            };
             context.AccessGroup.Add(accessGroup);
             context.SaveChanges();
 

@@ -11,12 +11,11 @@ namespace TW.Vault.App
     public class ExceptionInterceptionAttribute : ExceptionFilterAttribute
     {
         private static ILogger _logger = null;
-        private static ILogger logger
+        private static ILogger Logger
         {
             get
             {
-                if (_logger == null)
-                    _logger = Log.ForContext<ExceptionInterceptionAttribute>();
+                _logger ??= Log.ForContext<ExceptionInterceptionAttribute>();
                 return _logger;
             }
         }
@@ -28,14 +27,14 @@ namespace TW.Vault.App
             try { auth = Lib.Security.AuthenticationUtil.ParseHeaders(context.HttpContext.Request.Headers); }
             catch { }
 
-            if (!(context.Exception is TaskCanceledException))
+            if (context.Exception is not TaskCanceledException)
             {
                 String message = "Exception thrown at endpoint: {endpoint}";
                 if (auth != null)
                     message += " from request by user with token: " + auth.AuthToken;
                 else
                     message += " (auth token unavailable)";
-                logger.Error(message, context.HttpContext.Request.Path.Value);
+                Logger.Error(message, context.HttpContext.Request.Path.Value);
             }
 
             base.OnException(context);
