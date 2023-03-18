@@ -21,7 +21,7 @@ namespace TW.Vault.Manage
                 .ApplyVaultConfiguration()
                 .Build();
 
-            Configuration.Require("CaptchaSecretKey", "CaptchaSiteKey");
+            Configuration.Require("UseCaptcha");
 
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(config)

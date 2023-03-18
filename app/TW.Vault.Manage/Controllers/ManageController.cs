@@ -18,6 +18,8 @@ namespace TW.Vault.Manage.Controllers
         readonly Lib.Scaffold.VaultContext context;
         readonly ILogger logger;
 
+        private bool useCaptcha => Lib.Configuration.Instance["UseCaptcha"] == "true";
+
         private static readonly HttpClient client = new();
         public ManageController(Lib.Scaffold.VaultContext context, ILoggerFactory factory)
         {
@@ -30,6 +32,9 @@ namespace TW.Vault.Manage.Controllers
             public int Id { get; set; }
             public string Name { get; set; }
         }
+
+        [HttpGet("/use-captcha")]
+        public ActionResult UseCaptcha() => Ok(useCaptcha);
 
         [HttpGet("/captcha-sitekey")]
         public ActionResult GetCaptchaInfo()
@@ -71,25 +76,28 @@ namespace TW.Vault.Manage.Controllers
 
             var remoteIp = HttpContext.Connection.RemoteIpAddress;
 
-            try
+            if (useCaptcha)
             {
-                var captchaPrivateKey = Configuration.Instance["CaptchaSecretKey"];
-                var captchaUrl = $"https://www.google.com/recaptcha/api/siteverify?secret={captchaPrivateKey}&response={userInfo.CaptchaToken}&remoteip={remoteIp}";
-                var captchaRequest = await client.GetAsync(captchaUrl);
-                var responseObject = JObject.Parse(await captchaRequest.Content.ReadAsStringAsync());
-
-                var success = responseObject.Value<bool>("success");
-                if (!success)
+                try
                 {
-                    var errorCodes = responseObject.GetValue("error-codes").Values<string>();
-                    logger.LogWarning("Got error codes from captcha when verifying for remote IP {0}: [{1}]", remoteIp, string.Join(", ", errorCodes));
-                    return Ok(new { error = "Captcha verification failed" });
+                    var captchaPrivateKey = Configuration.Instance["CaptchaSecretKey"];
+                    var captchaUrl = $"https://www.google.com/recaptcha/api/siteverify?secret={captchaPrivateKey}&response={userInfo.CaptchaToken}&remoteip={remoteIp}";
+                    var captchaRequest = await client.GetAsync(captchaUrl);
+                    var responseObject = JObject.Parse(await captchaRequest.Content.ReadAsStringAsync());
+
+                    var success = responseObject.Value<bool>("success");
+                    if (!success)
+                    {
+                        var errorCodes = responseObject.GetValue("error-codes").Values<string>();
+                        logger.LogWarning("Got error codes from captcha when verifying for remote IP {0}: [{1}]", remoteIp, string.Join(", ", errorCodes));
+                        return Ok(new { error = "Captcha verification failed" });
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                logger.LogError("Captcha error occured: {ex}", e);
-                return Ok(new { error = "An error occurred while verifying captcha" });
+                catch (Exception e)
+                {
+                    logger.LogError("Captcha error occured: {ex}", e);
+                    return Ok(new { error = "An error occurred while verifying captcha" });
+                }
             }
 
             var tx = new Lib.Scaffold.Transaction
