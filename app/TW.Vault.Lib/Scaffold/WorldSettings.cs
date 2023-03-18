@@ -36,7 +36,9 @@ namespace TW.Vault.Lib.Scaffold
                 var timeZone = DateTimeZoneProviders.Tzdb[TimeZoneId];
                 var zonedClock = SystemClock.Instance.InZone(timeZone);
                 var zonedDateTime = zonedClock.GetCurrentZonedDateTime();
-                return zonedDateTime.ToDateTimeUnspecified();
+
+                var asUnspecified = zonedDateTime.ToDateTimeUnspecified();
+                return new DateTime(asUnspecified.Ticks, DateTimeKind.Utc);
             }
         }
 
