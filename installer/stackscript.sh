@@ -235,9 +235,8 @@ Environment="urls=http://*:5000"
 Environment=ConnectionStrings__Vault="$DB_CONNECTION_STRING"
 
 ### Logging
-Environment=Serilog__WriteTo__0__Args__configureLogger__WriteTo__2__Args__configure__0__Args__pathFormat="/vault/logs/webapp/log-{Date}.log"
-Environment=Serilog__WriteTo__1__Args__configureLogger__WriteTo__0__Args__configure__0__Args__pathFormat="/vault/logs/webapp/log-{Date}-ip.log"
-Environment=Serilog__WriteTo__0__Args__configureLogger__MinimumLevel__Default=Information
+Environment=Serilog__WriteTo__MainLogger__Args__configureLogger__WriteTo__AsyncSink__Args__configure__0__Args__path="/vault/logs/webapp/log-.log"
+Environment=Serilog__WriteTo__IpLogger__Args__configureLogger__WriteTo__AsyncSink__Args__configure__0__Args__path="/vault/logs/webapp/log-ip-.log"
 
 ### Initialization
 Environment=Initialization__ServerHostname="$SERVER_HOSTNAME"
@@ -290,7 +289,7 @@ Environment=UseCaptcha=false
 Environment=CaptchaSecretKey="your captcha secret key if captcha is enabled"
 Environment=CaptchaSiteKey="your captcha site key if captcha is enabled"
 
-Environment=Serilog__WriteTo__2__Args__configure__0__Args__pathFormat=/vault/logs/manage/log-{Date}.log
+Environment=Serilog__WriteTo__MainLogger__Args__configureLogger__WriteTo__AsyncSink__Args__configure__0__Args__path=/vault/logs/manage/log-.log
 
 [Install]
 WantedBy=multi-user.target
@@ -313,7 +312,7 @@ Environment="urls=http://*:5020"
 Environment=ConnectionStrings__Vault="$DB_CONNECTION_STRING"
 
 Environment=Serilog__MinimumLevel__Override__Microsoft=Warning
-Environment=Serilog__WriteTo__2__Args__configure__0__Args__pathFormat=/vault/logs/update/log-{Date}.log
+Environment=Serilog__WriteTo__MainLogger__Args__configureLogger__WriteTo__AsyncSink__Args__configure__0__Args__path=/vault/logs/update/log-.log
 
 Environment=CachingFilePath=/vault/map-cache
 Environment=DataBatchSize=500
