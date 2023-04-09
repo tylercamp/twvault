@@ -2,6 +2,54 @@
 set -e
 exec >/root/stackscript.log 2>&1
 
+source <ssinclude StackScriptID="1">
+
+#######################################################
+# (References)
+###
+#
+# https://www.linode.com/community/questions/479/stackscript-guide#answer-70895
+# https://www.linode.com/docs/products/compute/compute-instances/guides/set-up-and-secure/
+# https://cloud.linode.com/stackscripts/1 (StackScript Bash Library)
+
+# https://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-a-bash-variable
+trim() {
+    local var="$*"
+    # remove leading whitespace characters
+    var="${var#"${var%%[![:space:]]*}"}"
+    # remove trailing whitespace characters
+    var="${var%"${var##*[![:space:]]}"}"
+    printf '%s' "$var"
+}
+
+# <UDF name="SSP_SERVER_HOSTNAME" label="Domain Name" example="myvault.com">
+# <UDF name="SSP_DB_USER" label="Database User" example="twu_vault" default="twu_vault">
+# <UDF name="SSP_DB_PASSWORD" label="Database Password" example="password123" default="password123">
+# <UDF name="SSP_VAULT_REPO" label="Vault Git repository" default="https://github.com/tylercamp/twvault">
+# <UDF name="SSP_EMAIL" label="Email for HTTPS notifications">
+
+# trim surrounding whitespace from all params to minimize user error
+
+SERVER_HOSTNAME=$(trim $SSP_SERVER_HOSTNAME)
+DB_USER=$(trim $SSP_DB_USER)
+DB_PASSWORD=$(trim $SSP_DB_PASSWORD)
+VAULT_REPO=$(trim $SSP_VAULT_REPO)
+EMAIL=$(trim $SSP_EMAIL)
+
+#######################################################
+# Basic security config
+###
+
+apt update
+ufw_install
+configure_basic_firewall
+add_ports 80 443
+save_firewall
+enable_fail2ban
+
+# ensure NTP is configured to prevent time drift; vault encryption relies on accurate time tracking
+system_configure_ntp
+
 # (install `micro` editor in case user wants to edit files, less annoying than nano or vi)
 curl https://getmic.ro | bash
 mv micro /usr/bin
@@ -15,8 +63,6 @@ wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt
 apt update
 apt install postgresql-15 -y
 
-# <UDF name="DB_USER" label="Database User" example="twu_vault" default="twu_vault">
-# <UDF name="DB_PASSWORD" label="Database Password" example="password123" default="password123">
 sudo -u postgres psql -c "CREATE USER $DB_USER SUPERUSER PASSWORD '$DB_PASSWORD'"
 
 DB_CONNECTION_STRING="Server=localhost; Database=vault; User Id=$DB_USER; Password=$DB_PASSWORD; Port=5432"
@@ -34,8 +80,6 @@ npm install -g javascript-obfuscator
 ###
 
 apt install nginx -y
-
-# <UDF name="SERVER_HOSTNAME" label="Domain Name" example="myvault.com">
 
 # modify global HTTP config to remove some proxy warnings
 # https://www.jamiebalfour.scot/devkit/sed/
@@ -292,20 +336,6 @@ systemctl start twvault-manage
 systemctl start twvault-app
 
 #######################################################
-# Configure HTTPS
-###
-
-# <UDF name="EMAIL" label="Email for HTTPS notifications">
-
-apt install snapd -y
-snap install core
-snap refresh core
-snap install --classic certbot
-
-# https://eff-certbot.readthedocs.io/en/stable/using.html#certbot-command-line-options
-certbot --nginx -n -d "$SERVER_HOSTNAME" --agree-tos -m "$EMAIL" --no-eff-email
-
-#######################################################
 # Create a utility script for running the configuration tool
 ###
 
@@ -331,7 +361,35 @@ chmod +x /vault/configure.sh /vault/configure-help.sh /vault/fetch-latest-server
 
 /vault/configure.sh -extraTLD tribalwars.net -fetch-all -accept
 
+#######################################################
+# Configure HTTPS
+###
+
+# Wait for DNS name to match this VM
+EXPECTED_IP=$(system_primary_ip)
+EXPECTED_IP=$(trim $EXPECTED_IP)
+CURRENT_IP=""
+
+printf "Waiting for $SERVER_HOSTNAME to resolve to this VM's IP ($EXPECTED_IP)"
+while [[ "$CURRENT_IP" != "$EXPECTED_IP" ]]
+do
+  printf .
+  sleep 5
+  CURRENT_IP=$(dig @8.8.8.8 +short $SERVER_HOSTNAME)
+  CURRENT_IP=$(trim $CURRENT_IP)
+done
+
+# Install and run certbot
+
+apt install snapd -y
+snap install core
+snap refresh core
+snap install --classic certbot
+
+# https://eff-certbot.readthedocs.io/en/stable/using.html#certbot-command-line-options
+certbot --nginx -n -d "$SERVER_HOSTNAME" --agree-tos -m "$EMAIL" --no-eff-email
+
 echo "=========="
 echo "Done!"
 echo "Get a Vault script at https://$SERVER_HOSTNAME/register/ (you might need to wait ~10 minutes for world data to be fetched)"
-echo '(Then run "micro /etc/nginx/sites-enabled/default" and remove the "#" from the "#deny all" line so others can't use your vault to make their own scripts. Ctrl+S to save, Ctrl+Q to exit micro.)'
+echo "'(Then run 'micro /etc/nginx/sites-enabled/default' and remove the '#' from the '#deny all' line so others can't use your vault to make their own scripts. Ctrl+S to save, Ctrl+Q to exit micro.)"
