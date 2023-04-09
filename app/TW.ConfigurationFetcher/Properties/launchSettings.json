@@ -2,7 +2,7 @@
   "profiles": {
     "TW.ConfigurationFetcher": {
       "commandName": "Project",
-      "commandLineArgs": "\"Server=localhost; Database=vault; User Id=twu_vault; Password=password; Port=54321\" -clean -fetch-all -fetch-old -extraTLD tribalwars.net"
+      "commandLineArgs": "\"Server=localhost; Database=vault; User Id=twu_vault; Password=password; Port=54321\" -clean -fetch-all -fetch-old -extraTLD tribalwars.us"
     },
     "vaulttest": {
       "commandName": "Project",
