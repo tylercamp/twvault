@@ -254,6 +254,7 @@ Environment=Security__Encryption__SeedPrime=$ENC_SEED_PRIME
 
 # Disabled by default to be safe, may enable depending on server rules
 Environment=Behavior__DisableFakeScript=true
+Environment=Behavior__DisableAutoTagger=true
 
 # Vault will deny access to some features if the user hasn't uploaded in a while, limits are defined here
 Environment=Behavior__Map__MaxDaysSinceReportUpload=1
