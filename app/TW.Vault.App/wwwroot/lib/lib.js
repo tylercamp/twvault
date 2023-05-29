@@ -1404,6 +1404,7 @@ var lib = (() => {
     //  Expose config props
     lib.config = {
         fakeScriptEnabled: `%V<F_FAKE_SCRIPT_ENABLED>`,
+        autoTaggerEnabled: `%V<F_INCOMING_TAGGER_ENABELD>`,
 
         serverHostname: "%V<HOSTNAME>",
         serverBasePath: "%V<BASE_PATH>",

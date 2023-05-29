@@ -73,7 +73,8 @@
             //     });
             // })
             .onPage(lib.pageTypes.INCOMINGS_OVERVIEW, () => {
-                tagOnIncomingsOverviewPage();
+                if (lib.config.autoTaggerEnabled) tagOnIncomingsOverviewPage();
+                else displayMainVaultUI();
             })
             .onPage(lib.pageTypes.VILLAGE_INFO, () => {
                 enhanceVillageInfoPage();

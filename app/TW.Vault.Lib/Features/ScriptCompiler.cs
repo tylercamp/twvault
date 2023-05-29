@@ -40,7 +40,8 @@ namespace TW.Vault.Lib.Features
                 { "HOSTNAME", Configuration.Initialization.ServerHostname },
                 { "BASE_PATH", Configuration.Initialization.ServerBasePath },
                 { "APP_BASE_PATH", $"https://{hostname}{basePath}" },
-                { "F_FAKE_SCRIPT_ENABLED", (!Configuration.Behavior.DisableFakeScript).ToString().ToLower() }
+                { "F_FAKE_SCRIPT_ENABLED", (!Configuration.Behavior.DisableFakeScript).ToString().ToLower() },
+                { "F_INCOMING_TAGGER_ENABELD", (!Configuration.Behavior.DisableAutoTagger).ToString().ToLower() },
             };
         }
 

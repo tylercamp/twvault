@@ -154,6 +154,7 @@ namespace TW.Vault.Lib
         public TaggingBehaviorConfiguration Tagging { get; set; }
 
         public bool DisableFakeScript { get; set; } = false;
+        public bool DisableAutoTagger { get; set; } = false;
     }
 
     public class MapBehaviorConfiguration
