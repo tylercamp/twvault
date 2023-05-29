@@ -1,6 +1,6 @@
 ## Overview
 
-The given `stackscript.sh` is available as a public StackScript on Linode for automatically deploying + configuring all needed Vault services, a database, and HTTPS, into a new VM. It can also be ran manually on Ubuntu 22.x. (It may work for older versions, but I haven't tested it.)
+The given [`stackscript.sh`](./stackscript.sh) is available as a public StackScript on Linode for automatically deploying + configuring all needed Vault services, a database, and HTTPS, into a new VM. It can also be ran manually on Ubuntu 22.x. (It may work for older versions, but I haven't tested it.)
 
 It will:
 
@@ -20,7 +20,7 @@ It will NOT:
 - **Install or configure any security-related services**
 - **Configure firewalls or apply other best-practices for Linux server hardening (eg all services run as `root`)**
 - Configure NGINX rate-limiting
-- Include the Fake Scripts feature by default (just to be safe; you can [edit the service](#customizing-after-installation) to enable it if the server you're using allows the fake script)
+- Include the Fake Scripts or Incomming Tagging features by default (just to be safe; you can [edit the service](#customizing-after-installation) to enable it if the server you're using allows the fake script)
 - Include any translations for non-english servers
 - Do any performance optimizations on the PostgreSQL database config
 
@@ -81,8 +81,78 @@ You can use the `fetch-latest-servers.sh` script to automatically fetch the late
 
 The Vault's map-update service will automatically fetch data for any worlds that were added. It may take ~10 minutes for the Vault to load data for new worlds.
 
+**Updating the Vault**
+
+If new updates are made for the Vault at https://github.com/tylercamp/twvault (or whatever repo you used), you can update the installed services:
+
+1. Stop the services with `systemctl stop twvault-app && systemctl stop twvault-manage && sytemctl stop twvault-map-fetcher`
+2. Fetch the latest source code with `cd /vault/src && git pull`
+3. Run the commands below to rebuild the binaries with the latest changes
+4. Start the services again with `systemctl start twvault-app && systemctl start twvault-manage && sytemctl start twvault-map-fetcher`
+
+All data and settings will be preserved.
+
+Commands for rebuilding the binaries:
+
+```bash
+cd /vault/src/app/TW.Vault.App
+dotnet publish -c Release -r linux-x64 --no-self-contained -o /vault/bin/webapp
+
+cd /vault/src/app/TW.ConfigurationFetcher
+dotnet publish -c Release -r linux-x64 --no-self-contained -o /vault/bin/tools
+
+cd /vault/src/app/TW.Vault.Manage
+dotnet publish -c Release -r linux-x64 --no-self-contained -o /vault/bin/manage
+
+cd /vault/src/app/TW.Vault.MapDataFetcher
+dotnet publish -c Release -r linux-x64 --no-self-contained -o /vault/bin/update
+
+cd /vault/src/app/TW.Vault.Migration
+dotnet publish -c Release -r linux-x64 --no-self-contained -o /vault/bin/init
+```
+
 ### Known Issues
 
 - Logging isn't configured properly for Vault services; they are set to log to `/vault/logs/` but no files are created. The current logging config is based on the Public/Cicada Vault dumps which use an older version of the Serilog logging library. This is likely caused by recent changes to the Vault which updated all dependencies to their latest versions
 - The script isn't set up to handle non-english servers. You can still add them manually using the scripts in `/vault` created by the installer, but the only available language option for translations is "English". Fortunately the "language" option is only used for organization. You can create a new translation for your language, mark it as an "English" translation, and you can still use your translation on non-english servers. You'll need to manually edit the World Settings entries in the database (`vault.tw_provided.world.default_translation_id`) to set it as the default translation for the server(s) you're playing on.
 - The script hasn't been tested extensively, there are probably issues not mentioned here
+
+## Script Approval
+
+Each Vault must be approved separately by support. You'll need to provide them with an unobfuscated copy of `vault.js` by accessing your server via SSH:
+
+1. Edit `twvault-app.service` with the command `sudo micro /etc/systemd/system/twvault-app.service`
+2. Edit the `Environment=ASPNETCORE_ENVIRONMENT=Production` line, change `Production` to `Development`
+3. Save (`Ctrl+S`), exit the editor (`Ctrl+Q`)
+4. Restart the Vault app with `systemctl daemon-reload` and `systemctl restart twvault-app`
+5. Wait for the app to come back up, go to `https://yoursite.com/script/vault.js`
+6. (That's the unobfuscated script, save that file and send to support)
+7. Edit the `twvault-app.service` file again and set it back to `Production`, restart the service as described in (4)
+
+### Enabling/Disabling Features
+
+The file `/etc/systemd/system/twvault-app.service` has this section:
+
+```bash
+# Disabled by default to be safe, may enable depending on server rules
+Environment=Behavior__DisableFakeScript=true
+Environment=Behavior__DisableAutoTagger=true
+```
+
+These can be [modified and changes applied](#customizing-after-installation) to enable some of the features known to be problematic in different servers. These will take effect once the `twvault-app` service has restarted.
+
+### For TW Support
+
+The feature flags above _do_ modify the behavior of the script, but they _do not_ remove the offending code. Whether these code paths get hit is determined by this block in the unobfuscated script:
+
+```
+        //  Expose config props
+        lib.config = {
+            fakeScriptEnabled: false,
+            autoTaggerEnabled: false,
+
+            ...
+        }
+```
+
+This should be used as an indicator of what features are enabled. You can assume that any features not mentioned in that block are enabled.
