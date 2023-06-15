@@ -36,16 +36,7 @@ DB_PASSWORD=$(trim $SSP_DB_PASSWORD)
 VAULT_REPO=$(trim $SSP_VAULT_REPO)
 EMAIL=$(trim $SSP_EMAIL)
 
-#######################################################
-# Basic security config
-###
-
 apt update
-ufw_install
-configure_basic_firewall
-add_ports 80 443
-save_firewall
-enable_fail2ban
 
 # ensure NTP is configured to prevent time drift; vault encryption relies on accurate time tracking
 system_configure_ntp
@@ -183,6 +174,32 @@ cd /vault/bin/init
 dotnet TW.Vault.Migration.dll "$DB_CONNECTION_STRING"
 
 #######################################################
+# Create a utility script for running the configuration tool
+###
+
+cat <<EOT >> /vault/configure.sh
+dotnet /vault/bin/tools/TW.ConfigurationFetcher.dll "$DB_CONNECTION_STRING" \$@
+EOT
+
+cat <<EOT >> /vault/configure-help.sh
+echo "Note: 'connection-string' is provided automatically by configure.sh"
+echo "All displayed flags can be given directly to configure.sh"
+dotnet /vault/bin/tools/TW.ConfigurationFetcher.dll
+EOT
+
+cat <<EOT >> /vault/fetch-latest-servers.sh
+/vault/configure.sh -clean -fetch-all -reset-on-diff
+EOT
+
+chmod +x /vault/configure.sh /vault/configure-help.sh /vault/fetch-latest-servers.sh
+
+#######################################################
+# Register the .net TLD server
+###
+
+/vault/configure.sh -extraTLD tribalwars.net -fetch-all -accept
+
+#######################################################
 # Configure Vault programs as services which run on start
 ###
 
@@ -249,7 +266,6 @@ Environment=Security__Encryption__SeedPrime=$ENC_SEED_PRIME
 
 # Disabled by default to be safe, may enable depending on server rules
 Environment=Behavior__DisableFakeScript=true
-Environment=Behavior__DisableAutoTagger=true
 
 # Vault will deny access to some features if the user hasn't uploaded in a while, limits are defined here
 Environment=Behavior__Map__MaxDaysSinceReportUpload=1
@@ -331,32 +347,6 @@ systemctl start twvault-manage
 systemctl start twvault-app
 
 #######################################################
-# Create a utility script for running the configuration tool
-###
-
-cat <<EOT >> /vault/configure.sh
-dotnet /vault/bin/tools/TW.ConfigurationFetcher.dll "$DB_CONNECTION_STRING" \$@
-EOT
-
-cat <<EOT >> /vault/configure-help.sh
-echo "Note: 'connection-string' is provided automatically by configure.sh"
-echo "All displayed flags can be given directly to configure.sh"
-dotnet /vault/bin/tools/TW.ConfigurationFetcher.dll
-EOT
-
-cat <<EOT >> /vault/fetch-latest-servers.sh
-/vault/configure.sh -clean -fetch-all -reset-on-diff
-EOT
-
-chmod +x /vault/configure.sh /vault/configure-help.sh /vault/fetch-latest-servers.sh
-
-#######################################################
-# Register the .net TLD server
-###
-
-/vault/configure.sh -extraTLD tribalwars.net -fetch-all -accept
-
-#######################################################
 # Configure HTTPS
 ###
 
@@ -365,15 +355,6 @@ EXPECTED_IP=$(system_primary_ip)
 EXPECTED_IP=$(trim $EXPECTED_IP)
 CURRENT_IP=""
 
-printf "Waiting for $SERVER_HOSTNAME to resolve to this VM's IP ($EXPECTED_IP)"
-while [[ "$CURRENT_IP" != "$EXPECTED_IP" ]]
-do
-  printf .
-  sleep 5
-  CURRENT_IP=$(dig @8.8.8.8 +short $SERVER_HOSTNAME)
-  CURRENT_IP=$(trim $CURRENT_IP)
-done
-
 # Install and run certbot
 
 apt install snapd -y
@@ -381,10 +362,45 @@ snap install core
 snap refresh core
 snap install --classic certbot
 
-# https://eff-certbot.readthedocs.io/en/stable/using.html#certbot-command-line-options
-certbot --nginx -n -d "$SERVER_HOSTNAME" --agree-tos -m "$EMAIL" --no-eff-email
+echo "Attempting to fetch HTTPS certificate"
 
-echo "=========="
-echo "Done!"
-echo "Get a Vault script at https://$SERVER_HOSTNAME/register/ (you might need to wait ~10 minutes for world data to be fetched)"
-echo "'(Then run 'micro /etc/nginx/sites-enabled/default' and remove the '#' from the '#deny all' line so others can't use your vault to make their own scripts. Ctrl+S to save, Ctrl+Q to exit micro.)"
+# https://eff-certbot.readthedocs.io/en/stable/using.html#certbot-command-line-options
+until certbot --nginx -n -d "$SERVER_HOSTNAME" --agree-tos -m "$EMAIL" --no-eff-email
+do
+  sleep 900 # rate limit 4x per hour
+done
+
+#######################################################
+# Basic security config
+###
+
+ufw_install
+configure_basic_firewall
+add_ports 80 443
+save_firewall
+enable_fail2ban
+
+cat << EOF
+
+===
+
+
+# Done!
+
+Get a Vault script at:
+https://$SERVER_HOSTNAME/register/
+
+Then use the commands below to update NGINX to disable the Register page.
+(Otherwise someone else can use your server for themselves.)
+
+Run this to edit the file:
+   micro /etc/nginx/sites-enabled/default
+
+Look for the "#deny all;" text around line 116 and remove the "#" so the rule gets
+applied and all requests to the Register page are blocked.
+(Ctrl+S to save, Ctrl+Q to close.)
+
+Then run this to save your changes:
+   nginx -s reload
+
+EOF
