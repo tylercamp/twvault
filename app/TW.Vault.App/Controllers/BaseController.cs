@@ -135,7 +135,7 @@ namespace TW.Vault.App.Controllers
         protected long CurrentPlayerId => (long)HttpContext.Items["PlayerId"];
         protected short CurrentUserPermissions => (short)HttpContext.Items["UserPermissions"];
         protected bool IsSitter => (bool)HttpContext.Items["UserIsSitter"];
-        protected long CurrentTribeId => (long)HttpContext.Items["TribeId"];
+        protected long? CurrentTribeId => (long?)HttpContext.Items["TribeId"];
         protected Guid CurrentAuthToken => (Guid)HttpContext.Items["AuthToken"];
         protected int CurrentAccessGroupId => (int)HttpContext.Items["AccessGroupId"];
 
