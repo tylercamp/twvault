@@ -2,7 +2,11 @@
 
 This is the original, full source code for my Tribal Wars Vault: https://forum.tribalwars.net/index.php?threads/vault.282252/
 
-If you're seeing this README, the public Vault has been taken down and this code is no longer maintained by myself. I encourage others to fork this repository. I may accept pull requests, but it's preferred for others to make a copy and manage PRs independent of this one.
+The public Vault has been taken down but you can host your own Vault. See [this video](https://www.youtube.com/watch?v=IRPJ-ld-3xQ) for a demonstration on deploying it in under 10 minutes on Linode. You'll need to buy a domain name.
+
+## Development
+
+This code is not being regularly maintained. I encourage others to fork this repository. I may accept pull requests, but it's preferred for others to make a copy and manage PRs independent of this one.
 
 Questions about the project can be submitted as GitHub issues on this repository. Please review existing issues before submitted a new one. Ask the question even if you're unsure whether it'll be answered - if I don't respond, it can still be used for discussion with others.
 
