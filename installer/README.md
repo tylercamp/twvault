@@ -85,10 +85,10 @@ The Vault's map-update service will automatically fetch data for any worlds that
 
 If new updates are made for the Vault at https://github.com/tylercamp/twvault (or whatever repo you used), you can update the installed services:
 
-1. Stop the services with `systemctl stop twvault-app && systemctl stop twvault-manage && sytemctl stop twvault-map-fetcher`
+1. Stop the services with `systemctl stop twvault-app && systemctl stop twvault-manage && systemctl stop twvault-map-fetcher`
 2. Fetch the latest source code with `cd /vault/src && git pull`
 3. Run the commands below to rebuild the binaries with the latest changes
-4. Start the services again with `systemctl start twvault-app && systemctl start twvault-manage && sytemctl start twvault-map-fetcher`
+4. Start the services again with `systemctl start twvault-app && systemctl start twvault-manage && systemctl start twvault-map-fetcher`
 
 All data and settings will be preserved.
 
